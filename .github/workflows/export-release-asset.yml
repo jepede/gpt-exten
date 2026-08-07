@@ -3,15 +3,18 @@ name: Export Release Asset
 on:
   push:
     branches: [main]
+    paths:
+      - .github/workflows/export-release-asset.yml
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   export:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Download release asset
         run: |
           set -euo pipefail
@@ -27,3 +30,11 @@ jobs:
           path: aosp_android_arm64_qemu_rootfs.tar.xz
           compression-level: 0
           retention-days: 1
+      - name: Publish run id marker
+        run: |
+          printf '%s\n' "$GITHUB_RUN_ID" > .release-artifact-run-id
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .release-artifact-run-id
+          git commit -m 'ci: publish release export run id'
+          git push
