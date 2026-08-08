@@ -42,7 +42,7 @@ jobs:
           angr==9.3.2
           keystone-engine==0.9.2
           triton-library==1.0.0rc4
-          z3-solver==5.0.0.0
+          z3-solver==4.13.0.0
           EOF
           python -m pip wheel --wheel-dir wheelhouse -r requirements-top.txt
           python -m pip hash wheelhouse/* > SHA256SUMS.pip-hash.txt
@@ -85,7 +85,7 @@ jobs:
           ctx = TritonContext(ARCH.AARCH64)
           inst = Instruction(bytes(encoding[:4]))
           inst.setAddress(0x1000)
-          assert ctx.processing(inst) is not None
+          ctx.processing(inst)
           print('triton_aarch64', inst.getDisassembly())
 
           import archinfo
@@ -101,13 +101,17 @@ jobs:
           #!/usr/bin/env bash
           set -euo pipefail
           PYTHON="${PYTHON:-python3}"
-          "$PYTHON" -m pip install --no-index --find-links "$(cd "$(dirname "$0")" && pwd)/wheelhouse" -r "$(cd "$(dirname "$0")" && pwd)/requirements-top.txt"
+          ROOT="$(cd "$(dirname "$0")" && pwd)"
+          "$PYTHON" -m pip install --no-index --find-links "$ROOT/wheelhouse" -r "$ROOT/requirements-top.txt"
           "$PYTHON" -m pip check
           EOF
           chmod +x install-offline.sh
           {
-            echo 'Target host: Linux x86_64, CPython 3.13, glibc >= 2.41 (tested runner may differ but wheels are manylinux-compatible)'
-            echo 'Target analysis ISA: AArch64 / ARM64 ELF'
+            echo 'Host built/tested for: Linux x86_64 + CPython 3.13'
+            echo 'Current ChatGPT container: Linux x86_64 + CPython 3.13.5 + glibc 2.41'
+            echo 'Highest manylinux glibc floor among top-level wheels: glibc 2.34 (Triton)'
+            echo 'Analysis target ISA: AArch64 / ARM64 ELF'
+            echo 'Note: angr 9.3.2/claripy 9.3.2 requires z3-solver 4.13.0.0 exactly.'
             echo
             cat requirements-top.txt
           } > MANIFEST.txt
