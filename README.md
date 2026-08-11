@@ -1,1 +1,1 @@
-# gpt-thought-environment-extension
+# gpt-exten
