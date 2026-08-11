@@ -17,22 +17,45 @@ jobs:
       - name: Download Android NDK r28c for Linux
         run: |
           set -euxo pipefail
-          mkdir -p artifact
+          mkdir -p artifact parts
           curl -fL --retry 5 --retry-delay 2 \
             -o artifact/android-ndk-r28c-linux.zip \
             https://dl.google.com/android/repository/android-ndk-r28c-linux.zip
 
-      - name: Verify SHA-1
+      - name: Verify SHA-1 and split for connector limit
         run: |
           set -euxo pipefail
           echo 'a7b54a5de87fecd125a17d54f73c446199e72a64  artifact/android-ndk-r28c-linux.zip' | sha1sum -c -
           stat -c '%n %s bytes' artifact/android-ndk-r28c-linux.zip
+          split -b 240M -d -a 2 artifact/android-ndk-r28c-linux.zip parts/ndk-r28c.part.
+          ls -lh parts/
+          test -f parts/ndk-r28c.part.00
+          test -f parts/ndk-r28c.part.01
+          test -f parts/ndk-r28c.part.02
 
-      - name: Upload NDK artifact
+      - name: Upload part 00
         uses: actions/upload-artifact@v4
         with:
-          name: android-ndk-r28c-linux
-          path: artifact/android-ndk-r28c-linux.zip
+          name: ndk-r28c-part-00
+          path: parts/ndk-r28c.part.00
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+      - name: Upload part 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndk-r28c-part-01
+          path: parts/ndk-r28c.part.01
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+      - name: Upload part 02
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndk-r28c-part-02
+          path: parts/ndk-r28c.part.02
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
