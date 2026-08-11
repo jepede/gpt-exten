@@ -1,0 +1,38 @@
+name: Download Android NDK r28c
+
+on:
+  push:
+    paths:
+      - '.github/workflows/download-ndk-r28c.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Download Android NDK r28c for Linux
+        run: |
+          set -euxo pipefail
+          mkdir -p artifact
+          curl -fL --retry 5 --retry-delay 2 \
+            -o artifact/android-ndk-r28c-linux.zip \
+            https://dl.google.com/android/repository/android-ndk-r28c-linux.zip
+
+      - name: Verify SHA-1
+        run: |
+          set -euxo pipefail
+          echo 'a7b54a5de87fecd125a17d54f73c446199e72a64  artifact/android-ndk-r28c-linux.zip' | sha1sum -c -
+          stat -c '%n %s bytes' artifact/android-ndk-r28c-linux.zip
+
+      - name: Upload NDK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-ndk-r28c-linux
+          path: artifact/android-ndk-r28c-linux.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
