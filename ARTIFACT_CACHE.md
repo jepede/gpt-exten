@@ -9,6 +9,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | Android NDK | r28c | Linux | x86_64 | `31684150811` | SPLIT × 2 | `2026-11-11T08:54:22Z` |
 | USDA FoodData Central Foundation Foods CSV | 2026-04-30 | Any | Any | `31695314247` | SINGLE | `2026-11-11T11:23:52Z` |
 | USDA FoodData Central SR Legacy CSV | 2018-04 | Any | Any | `31695560856` | SINGLE | `2026-11-11T11:27:10Z` |
+| CulinaryDB CSV bundle | 2018-03-15 | Any | Any | `31723890750` | SINGLE | `2026-11-11T17:04:36Z` |
 
 ## Android NDK r28c
 
@@ -116,3 +117,41 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 ### Restore
 
 下载 Artifact `9179147903`，解压得到原始 USDA ZIP 与 `SHA256SUMS.txt`，校验原始文件 SHA256 后再解压 SR Legacy CSV 数据集。
+
+## CulinaryDB CSV bundle 2018-03-15
+
+- Workflow: `.github/workflows/fetch-culinarydb.yml`
+- Run ID: `31723890750`
+- Source: `https://cosylab.iiitd.edu.in/culinarydb/static/data/CulinaryDB.zip`
+- Repository Visibility: `Public`
+- Dataset License: `CC BY-NC-SA 3.0` (non-commercial/share-alike; keep derived evidence optional)
+- Requested Retention: `400 days`
+- Effective Retention: `90 days` (GitHub public-repository cap)
+- Storage Mode: `SINGLE`
+- Artifact Name: `culinarydb-2017-csv`
+- Artifact ID: `9190437874`
+- File: `CulinaryDB.zip`
+- Artifact Archive Size: `5310899` bytes
+- Artifact Digest: `sha256:c0bf58f37048f26f9cedea382f54164e111f808715ae329fcacf611bdaa732ba`
+- Original File: `CulinaryDB.zip`
+- Original Size: `5310046` bytes
+- Original SHA256: `ca8bd2e94e31990f7c5c0989ee9409a7959b05bc3daf9acabba93f2f8ef52b4e`
+- Part Count: `1`
+- Created At: `2026-08-13T17:04:53Z`
+- Expires At: `2026-11-11T17:04:36Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| CulinaryDB CSV bundle | 2018-03-15 | Any | Any | `CulinaryDB.zip` | `ca8bd2e94e31990f7c5c0989ee9409a7959b05bc3daf9acabba93f2f8ef52b4e` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Raw Size | Raw SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9190437874` | `culinarydb-2017-csv` | `5310046` | `ca8bd2e94e31990f7c5c0989ee9409a7959b05bc3daf9acabba93f2f8ef52b4e` | `5310899` | `sha256:c0bf58f37048f26f9cedea382f54164e111f808715ae329fcacf611bdaa732ba` | `2026-08-13T17:04:53Z` | `2026-11-11T17:04:36Z` |
+
+### Restore
+
+下载 Artifact `9190437874`，解压得到原始 `CulinaryDB.zip`、`SHA256SUMS.txt` 与 `CONTENTS.txt`；校验原始 ZIP SHA256 后再解压 CSV。由于数据许可为 CC BY-NC-SA 3.0，项目中的 CulinaryDB 派生先验应保持可选并明确标注非商业许可边界。
