@@ -8,6 +8,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 |---|---|---|---|---:|---|---|
 | Android NDK | r28c | Linux | x86_64 | `31684150811` | SPLIT × 2 | `2026-11-11T08:54:22Z` |
 | USDA FoodData Central Foundation Foods CSV | 2026-04-30 | Any | Any | `31695314247` | SINGLE | `2026-11-11T11:23:52Z` |
+| USDA FoodData Central SR Legacy CSV | 2018-04 | Any | Any | `31695560856` | SINGLE | `2026-11-11T11:27:10Z` |
 
 ## Android NDK r28c
 
@@ -78,3 +79,40 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 ### Restore
 
 下载 Artifact `9179050974`，解压得到原始 USDA ZIP 与 `SHA256SUMS.txt`，校验原始文件 SHA256 后再解压 Foundation Foods CSV 数据集。
+
+## USDA FoodData Central SR Legacy CSV 2018-04
+
+- Workflow: `.github/workflows/fetch-fdc-sr-legacy-2018-04.yml`
+- Run ID: `31695560856`
+- Source: `https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip`
+- Repository Visibility: `Public`
+- Requested Retention: `400 days`
+- Effective Retention: `90 days` (GitHub public-repository cap)
+- Storage Mode: `SINGLE`
+- Artifact Name: `fdc-sr-legacy-2018-04-csv`
+- Artifact ID: `9179147903`
+- File: `FoodData_Central_sr_legacy_food_csv_2018-04.zip`
+- Artifact Archive Size: `6075034` bytes
+- Artifact Archive SHA256: `10588dc4e136782a6575356fd9a08327d8bbfa686836aea831a137a7704c6419`
+- Original File: `FoodData_Central_sr_legacy_food_csv_2018-04.zip`
+- Original Size: `6074592` bytes
+- Original SHA256: `b80817294b8850530aaedf2e515c02593b1824f763a0ff356e5c2081643e6fd0`
+- Part Count: `1`
+- Created At: `2026-08-13T11:27:15Z`
+- Expires At: `2026-11-11T11:27:10Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| USDA FoodData Central SR Legacy CSV | 2018-04 | Any | Any | `FoodData_Central_sr_legacy_food_csv_2018-04.zip` | `b80817294b8850530aaedf2e515c02593b1824f763a0ff356e5c2081643e6fd0` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Raw Size | Raw SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9179147903` | `fdc-sr-legacy-2018-04-csv` | `6074592` | `b80817294b8850530aaedf2e515c02593b1824f763a0ff356e5c2081643e6fd0` | `6075034` | `sha256:10588dc4e136782a6575356fd9a08327d8bbfa686836aea831a137a7704c6419` | `2026-08-13T11:27:15Z` | `2026-11-11T11:27:10Z` |
+
+### Restore
+
+下载 Artifact `9179147903`，解压得到原始 USDA ZIP 与 `SHA256SUMS.txt`，校验原始文件 SHA256 后再解压 SR Legacy CSV 数据集。
