@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
 | Android NDK | r28c | Linux | x86_64 | `31684150811` | SPLIT × 2 | `2026-11-11T08:54:22Z` |
+| USDA FoodData Central Foundation Foods CSV | 2026-04-30 | Any | Any | `31695314247` | SINGLE | `2026-11-11T11:23:52Z` |
 
 ## Android NDK r28c
 
@@ -40,3 +41,40 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 ### Restore
 
 下载两个 Artifact，分别解压出 `ndk-r28c.part.00` 和 `ndk-r28c.part.01`，按顺序拼接为 `android-ndk-r28c-linux.zip`，最后校验完整文件 SHA256。
+
+## USDA FoodData Central Foundation Foods CSV 2026-04-30
+
+- Workflow: `.github/workflows/fetch-fdc-foundation-2026-04.yml`
+- Run ID: `31695314247`
+- Source: `https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_csv_2026-04-30.zip`
+- Repository Visibility: `Public`
+- Requested Retention: `400 days`
+- Effective Retention: `90 days` (GitHub public-repository cap)
+- Storage Mode: `SINGLE`
+- Artifact Name: `fdc-foundation-foods-2026-04-csv`
+- Artifact ID: `9179050974`
+- File: `FoodData_Central_foundation_food_csv_2026-04-30.zip`
+- Artifact Archive Size: `3825971` bytes
+- Artifact Archive SHA256: `e8b10363483702a565a896acda1ad521becf7be476313a6c4aafaf7affed9cb3`
+- Original File: `FoodData_Central_foundation_food_csv_2026-04-30.zip`
+- Original Size: `3825517` bytes
+- Original SHA256: `d6d4f41dcd19a46abcdd67775379cb6f0292ff08daa7e0680fdd0982830bf57b`
+- Part Count: `1`
+- Created At: `2026-08-13T11:23:58Z`
+- Expires At: `2026-11-11T11:23:52Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| USDA FoodData Central Foundation Foods CSV | 2026-04-30 | Any | Any | `FoodData_Central_foundation_food_csv_2026-04-30.zip` | `d6d4f41dcd19a46abcdd67775379cb6f0292ff08daa7e0680fdd0982830bf57b` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Raw Size | Raw SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9179050974` | `fdc-foundation-foods-2026-04-csv` | `3825517` | `d6d4f41dcd19a46abcdd67775379cb6f0292ff08daa7e0680fdd0982830bf57b` | `3825971` | `sha256:e8b10363483702a565a896acda1ad521becf7be476313a6c4aafaf7affed9cb3` | `2026-08-13T11:23:58Z` | `2026-11-11T11:23:52Z` |
+
+### Restore
+
+下载 Artifact `9179050974`，解压得到原始 USDA ZIP 与 `SHA256SUMS.txt`，校验原始文件 SHA256 后再解压 Foundation Foods CSV 数据集。
