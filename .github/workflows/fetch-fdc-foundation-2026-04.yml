@@ -1,0 +1,38 @@
+name: Fetch USDA FDC Foundation Foods 2026-04
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fetch-fdc-foundation-2026-04.yml'
+
+permissions:
+  contents: read
+
+env:
+  FDC_URL: https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_csv_2026-04-30.zip
+  FDC_FILE: FoodData_Central_foundation_food_csv_2026-04-30.zip
+  ARTIFACT_NAME: fdc-foundation-foods-2026-04-csv
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download USDA Foundation Foods CSV
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 5 --retry-delay 3 "$FDC_URL" -o "$FDC_FILE"
+          sha256sum "$FDC_FILE" | tee SHA256SUMS.txt
+          stat -c '%n %s bytes' "$FDC_FILE"
+
+      - name: Upload dataset artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            ${{ env.FDC_FILE }}
+            SHA256SUMS.txt
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
