@@ -1,1 +1,42 @@
-# ARTIFACT_CACHE.md
+# Artifact Cache
+
+GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Version + Platform + Architecture` 查询；是否仍可用以 GitHub 实际返回的 `expires_at` 为准。
+
+## Index
+
+| Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
+|---|---|---|---|---:|---|---|
+| Android NDK | r28c | Linux | x86_64 | `31684150811` | SPLIT × 2 | `2026-11-11T08:54:22Z` |
+
+## Android NDK r28c
+
+- Workflow: `.github/workflows/download-ndk-r28c.yml`
+- Run ID: `31684150811`
+- Source: `https://dl.google.com/android/repository/android-ndk-r28c-linux.zip`
+- Repository Visibility: `Public`
+- Requested Retention: `400 days`
+- Effective Retention: `90 days` (GitHub public-repository cap)
+- Storage Mode: `SPLIT`
+- Original File: `android-ndk-r28c-linux.zip`
+- Original Size: `722261334` bytes
+- Original SHA-1: `a7b54a5de87fecd125a17d54f73c446199e72a64`
+- Original SHA256: `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f`
+- Part Count: `2`
+- Expires At: `2026-11-11T08:54:22Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Android NDK | r28c | Linux | x86_64 | `android-ndk-r28c-linux.zip` | `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f` |
+
+### Artifacts
+
+| Part | Artifact ID | Artifact Name | Raw Size | Raw SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/2 | `9174697344` | `ndk-r28c-part-00` | `398458880` | `6e87d3bb98c2bfcdb9a703affd174b85ef00fff69b9aa0056372f79046308fa1` | `398459026` | `sha256:07ce7d79e2c15bfa567e2c97e961b812eb879e96fcdfe13761889fff492adf97` | `2026-08-13T08:54:33Z` | `2026-11-11T08:54:22Z` |
+| 2/2 | `9174699121` | `ndk-r28c-part-01` | `323802454` | `bf9baef30047e4a7e1040034619728cce0b291d76e4d67b44a0d5d0554c0197c` | `323802600` | `sha256:40693e9180b35cdbcb23ac27e1d274d783d93af3667ca126e4fd4b98febda894` | `2026-08-13T08:54:37Z` | `2026-11-11T08:54:22Z` |
+
+### Restore
+
+下载两个 Artifact，分别解压出 `ndk-r28c.part.00` 和 `ndk-r28c.part.01`，按顺序拼接为 `android-ndk-r28c-linux.zip`，最后校验完整文件 SHA256。
