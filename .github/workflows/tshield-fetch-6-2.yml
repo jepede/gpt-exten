@@ -13,43 +13,35 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          echo '=== DNS ===' | tee fetch_meta.txt
-          getent ahosts japi.t3yanzheng.com | tee -a fetch_meta.txt || true
-          echo '=== HTTP ===' | tee -a fetch_meta.txt
+          echo '=== HTTP ===' | tee fetch_meta.txt
           set +e
-          curl -sS -v --connect-timeout 15 --max-time 60 \
+          curl -sS --raw -i --connect-timeout 15 --max-time 60 \
             -H 'Accept: */*' \
             -H 'Accept-Language: zh-CN' \
             -H 'Connection: Keep-Alive' \
             -H 'User-Agent: SDK C++ http client' \
-            -H 'X-Rt-Inst: eebbabca25432e82abd44840b9221802' \
-            -H 'X-Rt-Nonce: ecAeOPlIJfFYpqSnDsgAEMYmh8wfUwbV' \
+            -H 'X-Rt-Inst: b96e936bbd4541b61ef6a687a0181e96' \
+            -H 'X-Rt-Nonce: KP4BjYjGb9LKGTAhKGd1OaMMce6IQxwJ' \
             -H 'X-Rt-Seq: 1' \
-            -H 'X-Rt-Sign: 1256582799ff320e3dbff005eac5e6cd' \
+            -H 'X-Rt-Sign: cd94de672c203973f62a64878666b822' \
             -H 'X-Rt-Token: mrpcs_1787188288533_RtBuSBCZepXlokKNthJVIWnQF0aL5tNw' \
-            -H 'X-Rt-Ts: 1787308842' \
-            -D response_headers.txt \
-            -o asset.bin \
+            -H 'X-Rt-Ts: 1787309452' \
+            -o response.raw \
             -w 'HTTP_CODE=%{http_code}\nREMOTE_IP=%{remote_ip}\nSIZE=%{size_download}\n' \
             'http://japi.t3yanzheng.com/v1/assets/u0cbfa4m308w35kvikzynwznnlhy6rbx' | tee -a fetch_meta.txt
           rc=${PIPESTATUS[0]}
           echo "CURL_RC=$rc" | tee -a fetch_meta.txt
           set -e
-          test -f response_headers.txt || : > response_headers.txt
-          test -f asset.bin || : > asset.bin
-          wc -c asset.bin response_headers.txt | tee -a fetch_meta.txt
-          sha256sum asset.bin response_headers.txt | tee SHA256SUMS.txt
-          echo '=== RESPONSE HEADERS ===' | tee -a fetch_meta.txt
-          cat response_headers.txt | tee -a fetch_meta.txt
-          echo '=== BODY PREFIX ===' | tee -a fetch_meta.txt
-          xxd -l 2048 asset.bin | tee -a fetch_meta.txt || true
+          test -f response.raw || : > response.raw
+          wc -c response.raw | tee -a fetch_meta.txt
+          sha256sum response.raw | tee SHA256SUMS.txt
+          xxd -l 2048 response.raw | tee -a fetch_meta.txt || true
       - name: Upload response
         uses: actions/upload-artifact@v4
         with:
-          name: tshield-6-2-asset
+          name: tshield-6-2-live-response
           path: |
-            asset.bin
-            response_headers.txt
+            response.raw
             fetch_meta.txt
             SHA256SUMS.txt
           retention-days: 90
