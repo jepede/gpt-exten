@@ -1,4 +1,4 @@
-name: TShield 6.2 Manifest Fetch
+name: TShield 6.2 Live Bridge
 
 on:
   pull_request:
@@ -9,11 +9,10 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch signed TShield manifest
+      - name: Fetch exact live request
         shell: bash
         run: |
           set -uo pipefail
-          echo '=== HTTP ===' | tee fetch_meta.txt
           set +e
           curl -sS --raw -i --connect-timeout 15 --max-time 60 \
             -H 'Accept: */*' \
@@ -21,25 +20,22 @@ jobs:
             -H 'Connection: Keep-Alive' \
             -H 'User-Agent: SDK C++ http client' \
             -H 'X-Rt-Inst: b96e936bbd4541b61ef6a687a0181e96' \
-            -H 'X-Rt-Nonce: GEdEEztPhjh6Hf9AW9v5MIRxTNu3HRLo' \
+            -H 'X-Rt-Nonce: yHFHNF0fqVPuHGSO4Jb0O3WHX0HXlQva' \
             -H 'X-Rt-Seq: 0' \
-            -H 'X-Rt-Sign: 4af9bc0c4259755f5a3ab13c762742e0' \
+            -H 'X-Rt-Sign: b3199377da25b992c3341b44754d3a39' \
             -H 'X-Rt-Token: mrpcs_1787188288533_RtBuSBCZepXlokKNthJVIWnQF0aL5tNw' \
-            -H 'X-Rt-Ts: 1787313054' \
+            -H 'X-Rt-Ts: 1787313318' \
             -o response.raw \
             -w 'HTTP_CODE=%{http_code}\nREMOTE_IP=%{remote_ip}\nSIZE=%{size_download}\n' \
-            'http://japi.t3yanzheng.com/v1/assets/u0cbfa4m308w35kvikzynwznnlhy6rbx/manifest' | tee -a fetch_meta.txt
-          rc=${PIPESTATUS[0]}
-          echo "CURL_RC=$rc" | tee -a fetch_meta.txt
-          set -e
-          test -f response.raw || : > response.raw
-          wc -c response.raw | tee -a fetch_meta.txt
+            'http://japi.t3yanzheng.com/v1/assets/u0cbfa4m308w35kvikzynwznnlhy6rbx/manifest' | tee fetch_meta.txt
+          rc=${PIPESTATUS[0]}; echo "CURL_RC=$rc" | tee -a fetch_meta.txt
+          set -e; test -f response.raw || : > response.raw
           sha256sum response.raw | tee SHA256SUMS.txt
           xxd -l 4096 response.raw | tee -a fetch_meta.txt || true
       - name: Upload response
         uses: actions/upload-artifact@v4
         with:
-          name: tshield-6-2-manifest-response
+          name: tshield-live-bridge-response
           path: |
             response.raw
             fetch_meta.txt
