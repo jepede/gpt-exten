@@ -21,11 +21,11 @@ jobs:
             -H 'Connection: Keep-Alive' \
             -H 'User-Agent: SDK C++ http client' \
             -H 'X-Rt-Inst: b96e936bbd4541b61ef6a687a0181e96' \
-            -H 'X-Rt-Nonce: lR9PLM6nkb38L6xFf7rhqJfqa0RJ1Fcu' \
+            -H 'X-Rt-Nonce: GEdEEztPhjh6Hf9AW9v5MIRxTNu3HRLo' \
             -H 'X-Rt-Seq: 0' \
-            -H 'X-Rt-Sign: 45c9699b6ce24c8732b81e1e7ce662a5' \
+            -H 'X-Rt-Sign: 4af9bc0c4259755f5a3ab13c762742e0' \
             -H 'X-Rt-Token: mrpcs_1787188288533_RtBuSBCZepXlokKNthJVIWnQF0aL5tNw' \
-            -H 'X-Rt-Ts: 1787312943' \
+            -H 'X-Rt-Ts: 1787313054' \
             -o response.raw \
             -w 'HTTP_CODE=%{http_code}\nREMOTE_IP=%{remote_ip}\nSIZE=%{size_download}\n' \
             'http://japi.t3yanzheng.com/v1/assets/u0cbfa4m308w35kvikzynwznnlhy6rbx/manifest' | tee -a fetch_meta.txt
