@@ -20,11 +20,11 @@ jobs:
             -H 'Connection: Keep-Alive' \
             -H 'User-Agent: SDK C++ http client' \
             -H 'X-Rt-Inst: b96e936bbd4541b61ef6a687a0181e96' \
-            -H 'X-Rt-Nonce: cVKayp24pLOyGbpXKVgxSSy9TR1sOOHH' \
+            -H 'X-Rt-Nonce: dlR4h7D4trSeMcBsulIuJ81AFLCSovzn' \
             -H 'X-Rt-Seq: 0' \
-            -H 'X-Rt-Sign: 37980b12b11d5779b110f772a8531357' \
+            -H 'X-Rt-Sign: 207601fdec204ac95db054d91c0b744c' \
             -H 'X-Rt-Token: mrpcs_1787188288533_RtBuSBCZepXlokKNthJVIWnQF0aL5tNw' \
-            -H 'X-Rt-Ts: 1787313475' \
+            -H 'X-Rt-Ts: 1787313790' \
             -o response.raw \
             -w 'HTTP_CODE=%{http_code}\nREMOTE_IP=%{remote_ip}\nSIZE=%{size_download}\n' \
             'http://japi.t3yanzheng.com/v1/assets/u0cbfa4m308w35kvikzynwznnlhy6rbx/digest' | tee fetch_meta.txt
