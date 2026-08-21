@@ -1,9 +1,6 @@
 name: TShield 6.2 Asset Fetch
 
 on:
-  push:
-    branches:
-      - tshield-fetch-6-2-20260821
   pull_request:
     branches:
       - main
@@ -25,12 +22,12 @@ jobs:
             -H 'Accept-Language: zh-CN' \
             -H 'Connection: Keep-Alive' \
             -H 'User-Agent: SDK C++ http client' \
-            -H 'X-Rt-Inst: ca2864677b17fb907b01f8ebd985e4b7' \
-            -H 'X-Rt-Nonce: j0aWkOOnR6w42HMSri6q0OaO5CWyz066' \
+            -H 'X-Rt-Inst: eebbabca25432e82abd44840b9221802' \
+            -H 'X-Rt-Nonce: ecAeOPlIJfFYpqSnDsgAEMYmh8wfUwbV' \
             -H 'X-Rt-Seq: 1' \
-            -H 'X-Rt-Sign: 7fd41d0a96b87b04d7f82ad9ba9c770a' \
+            -H 'X-Rt-Sign: 1256582799ff320e3dbff005eac5e6cd' \
             -H 'X-Rt-Token: mrpcs_1787188288533_RtBuSBCZepXlokKNthJVIWnQF0aL5tNw' \
-            -H 'X-Rt-Ts: 1787308777' \
+            -H 'X-Rt-Ts: 1787308842' \
             -D response_headers.txt \
             -o asset.bin \
             -w 'HTTP_CODE=%{http_code}\nREMOTE_IP=%{remote_ip}\nSIZE=%{size_download}\n' \
@@ -45,7 +42,7 @@ jobs:
           echo '=== RESPONSE HEADERS ===' | tee -a fetch_meta.txt
           cat response_headers.txt | tee -a fetch_meta.txt
           echo '=== BODY PREFIX ===' | tee -a fetch_meta.txt
-          xxd -l 1024 asset.bin | tee -a fetch_meta.txt || true
+          xxd -l 2048 asset.bin | tee -a fetch_meta.txt || true
       - name: Upload response
         uses: actions/upload-artifact@v4
         with:
