@@ -1,4 +1,4 @@
-name: TShield 6.2 Asset Fetch
+name: TShield 6.2 Manifest Fetch
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch signed TShield asset
+      - name: Fetch signed TShield manifest
         shell: bash
         run: |
           set -uo pipefail
@@ -21,25 +21,25 @@ jobs:
             -H 'Connection: Keep-Alive' \
             -H 'User-Agent: SDK C++ http client' \
             -H 'X-Rt-Inst: b96e936bbd4541b61ef6a687a0181e96' \
-            -H 'X-Rt-Nonce: KP4BjYjGb9LKGTAhKGd1OaMMce6IQxwJ' \
-            -H 'X-Rt-Seq: 1' \
-            -H 'X-Rt-Sign: cd94de672c203973f62a64878666b822' \
+            -H 'X-Rt-Nonce: lR9PLM6nkb38L6xFf7rhqJfqa0RJ1Fcu' \
+            -H 'X-Rt-Seq: 0' \
+            -H 'X-Rt-Sign: 45c9699b6ce24c8732b81e1e7ce662a5' \
             -H 'X-Rt-Token: mrpcs_1787188288533_RtBuSBCZepXlokKNthJVIWnQF0aL5tNw' \
-            -H 'X-Rt-Ts: 1787309452' \
+            -H 'X-Rt-Ts: 1787312943' \
             -o response.raw \
             -w 'HTTP_CODE=%{http_code}\nREMOTE_IP=%{remote_ip}\nSIZE=%{size_download}\n' \
-            'http://japi.t3yanzheng.com/v1/assets/u0cbfa4m308w35kvikzynwznnlhy6rbx' | tee -a fetch_meta.txt
+            'http://japi.t3yanzheng.com/v1/assets/u0cbfa4m308w35kvikzynwznnlhy6rbx/manifest' | tee -a fetch_meta.txt
           rc=${PIPESTATUS[0]}
           echo "CURL_RC=$rc" | tee -a fetch_meta.txt
           set -e
           test -f response.raw || : > response.raw
           wc -c response.raw | tee -a fetch_meta.txt
           sha256sum response.raw | tee SHA256SUMS.txt
-          xxd -l 2048 response.raw | tee -a fetch_meta.txt || true
+          xxd -l 4096 response.raw | tee -a fetch_meta.txt || true
       - name: Upload response
         uses: actions/upload-artifact@v4
         with:
-          name: tshield-6-2-live-response
+          name: tshield-6-2-manifest-response
           path: |
             response.raw
             fetch_meta.txt
