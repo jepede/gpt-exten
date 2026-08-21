@@ -20,14 +20,14 @@ jobs:
             -H 'Connection: Keep-Alive' \
             -H 'User-Agent: SDK C++ http client' \
             -H 'X-Rt-Inst: b96e936bbd4541b61ef6a687a0181e96' \
-            -H 'X-Rt-Nonce: yHFHNF0fqVPuHGSO4Jb0O3WHX0HXlQva' \
+            -H 'X-Rt-Nonce: cVKayp24pLOyGbpXKVgxSSy9TR1sOOHH' \
             -H 'X-Rt-Seq: 0' \
-            -H 'X-Rt-Sign: b3199377da25b992c3341b44754d3a39' \
+            -H 'X-Rt-Sign: 37980b12b11d5779b110f772a8531357' \
             -H 'X-Rt-Token: mrpcs_1787188288533_RtBuSBCZepXlokKNthJVIWnQF0aL5tNw' \
-            -H 'X-Rt-Ts: 1787313318' \
+            -H 'X-Rt-Ts: 1787313475' \
             -o response.raw \
             -w 'HTTP_CODE=%{http_code}\nREMOTE_IP=%{remote_ip}\nSIZE=%{size_download}\n' \
-            'http://japi.t3yanzheng.com/v1/assets/u0cbfa4m308w35kvikzynwznnlhy6rbx/manifest' | tee fetch_meta.txt
+            'http://japi.t3yanzheng.com/v1/assets/u0cbfa4m308w35kvikzynwznnlhy6rbx/digest' | tee fetch_meta.txt
           rc=${PIPESTATUS[0]}; echo "CURL_RC=$rc" | tee -a fetch_meta.txt
           set -e; test -f response.raw || : > response.raw
           sha256sum response.raw | tee SHA256SUMS.txt
