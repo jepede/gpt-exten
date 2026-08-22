@@ -1,0 +1,79 @@
+name: Recover cquant holdout artifact marker
+
+on:
+  push:
+    paths:
+      - '.github/workflows/recover-cquant-holdout-artifact-marker.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find existing artifact and verify inner archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME='cquant-binance-spot-15m-holdout-20250101-20260821'
+          ARTIFACT=''
+          for i in $(seq 1 40); do
+            ARTIFACT="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${NAME}&per_page=20" --jq '.artifacts | map(select(.expired == false)) | sort_by(.created_at) | last // empty')"
+            if [[ -n "$ARTIFACT" && "$ARTIFACT" != null ]]; then break; fi
+            sleep 20
+          done
+          if [[ -z "$ARTIFACT" || "$ARTIFACT" == null ]]; then
+            echo 'No non-expired existing holdout artifact found; refusing to redownload market data.' >&2
+            exit 1
+          fi
+          printf '%s\n' "$ARTIFACT" > /tmp/artifact.json
+          id="$(jq -r '.id' /tmp/artifact.json)"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" > /tmp/artifact.zip
+          mkdir -p /tmp/artifact
+          unzip -q /tmp/artifact.zip -d /tmp/artifact
+          tarball="/tmp/artifact/cquant-binance-spot-15m-holdout-20250101-20260821.tar.gz"
+          test -f "$tarball"
+          (cd /tmp/artifact && sha256sum -c cquant-binance-spot-15m-holdout-20250101-20260821.tar.gz.sha256)
+          artifact_sha="$(sha256sum /tmp/artifact.zip | awk '{print $1}')"
+          tar_sha="$(sha256sum "$tarball" | awk '{print $1}')"
+          tar_size="$(stat -c '%s' "$tarball")"
+          mkdir -p artifact-markers
+          python3 - "$artifact_sha" "$tar_sha" "$tar_size" <<'PY'
+          import json,sys
+          from pathlib import Path
+          api=json.loads(Path('/tmp/artifact.json').read_text())
+          marker={
+            'dataset_name':'cquant Binance Spot Klines external holdout',
+            'version':'2025-01-01_2026-08-21-15m-holdout-v1',
+            'platform':'Any','architecture':'Any',
+            'workflow':'.github/workflows/fetch-cquant-binance-spot-15m-holdout-20250101-20260821.yml',
+            'run_id':api['workflow_run']['id'],
+            'artifact_id':api['id'],
+            'artifact_name':api['name'],
+            'artifact_size_in_bytes':api['size_in_bytes'],
+            'artifact_digest':api.get('digest') or ('sha256:'+sys.argv[1]),
+            'downloaded_artifact_zip_sha256':sys.argv[1],
+            'created_at':api['created_at'],'expires_at':api['expires_at'],
+            'original_file':'cquant-binance-spot-15m-holdout-20250101-20260821.tar.gz',
+            'original_size':int(sys.argv[3]),'original_sha256':sys.argv[2],
+            'part_count':1,'storage_mode':'SINGLE'
+          }
+          Path('artifact-markers/cquant-binance-spot-15m-holdout-20250101-20260821.json').write_text(json.dumps(marker,indent=2)+'\n')
+          PY
+      - name: Commit recovered marker safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add artifact-markers/cquant-binance-spot-15m-holdout-20250101-20260821.json
+          git commit -m 'Recover cquant external holdout artifact metadata'
+          git pull --rebase origin main
+          git push origin HEAD:main
