@@ -7,13 +7,17 @@ on:
       - '.github/workflows/fetch-cquant-binance-spot-15m-20250101-20260821.yml'
 
 permissions:
-  contents: read
+  contents: write
+  actions: read
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
+      - name: Checkout metadata repository
+        uses: actions/checkout@v4
+
       - name: Download and verify Binance public data
         shell: bash
         run: |
@@ -44,7 +48,6 @@ jobs:
             printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$kind" "$symbol" "$INTERVAL" "$period" "$url" "$actual" "$bytes" "$rows" >> "$MANIFEST"
           }
 
-          # Full monthly files through July 2026.
           month=2025-01
           while [[ "$month" != "2026-08" ]]; do
             for symbol in "${SYMBOLS[@]}"; do
@@ -54,7 +57,6 @@ jobs:
             month="$(date -u -d "${month}-01 +1 month" +%Y-%m)"
           done
 
-          # August 2026 through the last fully available UTC day requested.
           for day in $(seq -w 1 21); do
             period="2026-08-${day}"
             for symbol in "${SYMBOLS[@]}"; do
@@ -63,7 +65,6 @@ jobs:
             done
           done
 
-          # Detect accidental duplicate/open-time disorder after concatenation.
           python3 - <<'PY'
           from pathlib import Path
           import csv, json
@@ -105,6 +106,7 @@ jobs:
           stat -c 'archive-bytes=%s' out/cquant-binance-spot-15m-20250101-20260821.tar.gz
 
       - name: Upload dataset artifact
+        id: upload
         uses: actions/upload-artifact@v4
         with:
           name: cquant-binance-spot-15m-20250101-20260821
@@ -112,3 +114,45 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 400
+
+      - name: Publish artifact metadata marker
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifact-markers
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}" > /tmp/artifact.json
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          api = json.loads(Path('/tmp/artifact.json').read_text())
+          archive = Path('out/cquant-binance-spot-15m-20250101-20260821.tar.gz')
+          marker = {
+              'dataset_name': 'cquant Binance Spot Klines',
+              'version': '2025-01-01_2026-08-21-15m-v1',
+              'platform': 'Any',
+              'architecture': 'Any',
+              'workflow': '.github/workflows/fetch-cquant-binance-spot-15m-20250101-20260821.yml',
+              'run_id': int(os.environ['GITHUB_RUN_ID']),
+              'artifact_id': int(os.environ['ARTIFACT_ID']),
+              'artifact_name': api['name'],
+              'artifact_size_in_bytes': api['size_in_bytes'],
+              'artifact_digest': os.environ.get('ARTIFACT_DIGEST') or api.get('digest'),
+              'created_at': api['created_at'],
+              'expires_at': api['expires_at'],
+              'original_file': archive.name,
+              'original_size': archive.stat().st_size,
+              'original_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
+              'part_count': 1,
+              'storage_mode': 'SINGLE'
+          }
+          Path('artifact-markers/cquant-binance-spot-15m-20250101-20260821.json').write_text(json.dumps(marker, indent=2) + '\n')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add artifact-markers/cquant-binance-spot-15m-20250101-20260821.json
+          git commit -m 'Record cquant market dataset artifact metadata'
+          git push
