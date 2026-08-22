@@ -1,0 +1,109 @@
+name: Fetch cquant Binance Spot 15m external holdout dataset
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fetch-cquant-binance-spot-15m-holdout-20250101-20260821.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download, verify, and pack holdout Klines
+        shell: bash
+        run: |
+          set -euo pipefail
+          INTERVAL=15m
+          SYMBOLS=(TRXUSDT LTCUSDT BCHUSDT DOTUSDT NEARUSDT)
+          BASE=https://data.binance.vision/data/spot
+          mkdir -p work/zips work/raw out
+          printf 'kind\tsymbol\tinterval\tperiod\turl\tsha256\tzip_bytes\trows\n' > work/SOURCE_MANIFEST.tsv
+          fetch_one() {
+            local kind="$1" symbol="$2" period="$3" url="$4"
+            local zip="work/zips/${symbol}-${INTERVAL}-${period}.zip" checksum="${zip}.CHECKSUM"
+            curl -fL --retry 5 --retry-delay 2 --connect-timeout 20 "$url" -o "$zip"
+            curl -fL --retry 5 --retry-delay 2 --connect-timeout 20 "${url}.CHECKSUM" -o "$checksum"
+            local expected actual bytes rows
+            expected="$(awk '{print $1}' "$checksum" | tr 'A-F' 'a-f')"
+            actual="$(sha256sum "$zip" | awk '{print $1}')"
+            test "$actual" = "$expected"
+            unzip -p "$zip" >> "work/raw/${symbol}.csv"
+            bytes="$(stat -c '%s' "$zip")"; rows="$(unzip -p "$zip" | wc -l)"
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$kind" "$symbol" "$INTERVAL" "$period" "$url" "$actual" "$bytes" "$rows" >> work/SOURCE_MANIFEST.tsv
+          }
+          month=2025-01
+          while [[ "$month" != 2026-08 ]]; do
+            for symbol in "${SYMBOLS[@]}"; do
+              fetch_one monthly "$symbol" "$month" "$BASE/monthly/klines/$symbol/$INTERVAL/${symbol}-${INTERVAL}-${month}.zip"
+            done
+            month="$(date -u -d "${month}-01 +1 month" +%Y-%m)"
+          done
+          for day in $(seq -w 1 21); do
+            period="2026-08-${day}"
+            for symbol in "${SYMBOLS[@]}"; do
+              fetch_one daily "$symbol" "$period" "$BASE/daily/klines/$symbol/$INTERVAL/${symbol}-${INTERVAL}-${period}.zip"
+            done
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          import csv,json
+          meta={'source':'Binance Public Data / data.binance.vision','market':'spot','role':'external_symbol_holdout','quote':'USDT','interval':'15m','start_utc':'2025-01-01T00:00:00Z','end_utc_inclusive':'2026-08-21T23:45:00Z','timestamp_unit':'microseconds for this date range','symbols':[]}
+          for p in sorted(Path('work/raw').glob('*.csv')):
+              first=last=None; n=0
+              with p.open(newline='') as f:
+                  for row in csv.reader(f):
+                      if not row: continue
+                      ts=int(row[0])
+                      if first is None: first=ts
+                      if last is not None and ts <= last: raise SystemExit(f'non-increasing {p}: {last}->{ts}')
+                      last=ts; n+=1
+              meta['symbols'].append({'symbol':p.stem,'rows':n,'first_open_time':first,'last_open_time':last})
+          Path('work/DATASET_METADATA.json').write_text(json.dumps(meta,indent=2)+'\n')
+          PY
+          (cd work && sha256sum raw/*.csv SOURCE_MANIFEST.tsv DATASET_METADATA.json > DATASET_MANIFEST.sha256)
+          cp work/SOURCE_MANIFEST.tsv work/DATASET_METADATA.json work/DATASET_MANIFEST.sha256 out/
+          tar -C work -czf out/cquant-binance-spot-15m-holdout-20250101-20260821.tar.gz raw SOURCE_MANIFEST.tsv DATASET_METADATA.json DATASET_MANIFEST.sha256
+          (cd out && sha256sum cquant-binance-spot-15m-holdout-20250101-20260821.tar.gz > cquant-binance-spot-15m-holdout-20250101-20260821.tar.gz.sha256)
+          stat -c 'archive-bytes=%s' out/cquant-binance-spot-15m-holdout-20250101-20260821.tar.gz
+
+      - name: Upload holdout artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: cquant-binance-spot-15m-holdout-20250101-20260821
+          path: out/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Publish artifact marker
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}" > /tmp/artifact.json
+          mkdir -p artifact-markers
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          api=json.loads(Path('/tmp/artifact.json').read_text())
+          archive=Path('out/cquant-binance-spot-15m-holdout-20250101-20260821.tar.gz')
+          marker={'dataset_name':'cquant Binance Spot Klines external holdout','version':'2025-01-01_2026-08-21-15m-holdout-v1','platform':'Any','architecture':'Any','workflow':'.github/workflows/fetch-cquant-binance-spot-15m-holdout-20250101-20260821.yml','run_id':int(os.environ['GITHUB_RUN_ID']),'artifact_id':int(os.environ['ARTIFACT_ID']),'artifact_name':api['name'],'artifact_size_in_bytes':api['size_in_bytes'],'artifact_digest':os.environ.get('ARTIFACT_DIGEST') or api.get('digest'),'created_at':api['created_at'],'expires_at':api['expires_at'],'original_file':archive.name,'original_size':archive.stat().st_size,'original_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'part_count':1,'storage_mode':'SINGLE'}
+          Path('artifact-markers/cquant-binance-spot-15m-holdout-20250101-20260821.json').write_text(json.dumps(marker,indent=2)+'\n')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add artifact-markers/cquant-binance-spot-15m-holdout-20250101-20260821.json
+          git commit -m 'Record cquant external holdout dataset artifact metadata'
+          git push
