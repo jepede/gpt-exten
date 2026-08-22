@@ -1,0 +1,19 @@
+{
+  "dataset_name": "cquant Binance Spot Klines",
+  "version": "2025-01-01_2026-08-21-15m-v1",
+  "platform": "Any",
+  "architecture": "Any",
+  "workflow": ".github/workflows/fetch-cquant-binance-spot-15m-20250101-20260821.yml",
+  "run_id": 32575307131,
+  "artifact_id": 9476457085,
+  "artifact_name": "cquant-binance-spot-15m-20250101-20260821",
+  "artifact_size_in_bytes": 27277451,
+  "artifact_digest": "06c0d11a87c9c85119d473d80643f7f23d7c2f95c09387470bf9f8e8e368cda0",
+  "created_at": "2026-08-22T13:23:00Z",
+  "expires_at": "2026-11-20T13:16:44Z",
+  "original_file": "cquant-binance-spot-15m-20250101-20260821.tar.gz",
+  "original_size": 27195970,
+  "original_sha256": "a433ff6bebc4b715d3a1c53fa36cf11442bf3eae779a3d46eb42a792e7d14923",
+  "part_count": 1,
+  "storage_mode": "SINGLE"
+}
