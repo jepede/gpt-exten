@@ -1,0 +1,114 @@
+name: Fetch cquant Binance Spot 15m dataset 2025-01-01 to 2026-08-21
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fetch-cquant-binance-spot-15m-20250101-20260821.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Download and verify Binance public data
+        shell: bash
+        run: |
+          set -euo pipefail
+          INTERVAL=15m
+          SYMBOLS=(BTCUSDT ETHUSDT BNBUSDT SOLUSDT XRPUSDT DOGEUSDT ADAUSDT LINKUSDT SUIUSDT AVAXUSDT)
+          BASE=https://data.binance.vision/data/spot
+          mkdir -p work/zips work/raw out
+          MANIFEST=work/SOURCE_MANIFEST.tsv
+          printf 'kind\tsymbol\tinterval\tperiod\turl\tsha256\tzip_bytes\trows\n' > "$MANIFEST"
+
+          fetch_one() {
+            local kind="$1" symbol="$2" period="$3" url="$4"
+            local zip="work/zips/${symbol}-${INTERVAL}-${period}.zip"
+            local checksum="${zip}.CHECKSUM"
+            curl -fL --retry 5 --retry-delay 2 --connect-timeout 20 "$url" -o "$zip"
+            curl -fL --retry 5 --retry-delay 2 --connect-timeout 20 "${url}.CHECKSUM" -o "$checksum"
+            local expected actual bytes rows
+            expected="$(awk '{print $1}' "$checksum" | tr 'A-F' 'a-f')"
+            actual="$(sha256sum "$zip" | awk '{print $1}')"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "checksum mismatch for $url expected=$expected actual=$actual" >&2
+              exit 1
+            fi
+            unzip -p "$zip" >> "work/raw/${symbol}.csv"
+            bytes="$(stat -c '%s' "$zip")"
+            rows="$(unzip -p "$zip" | wc -l)"
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$kind" "$symbol" "$INTERVAL" "$period" "$url" "$actual" "$bytes" "$rows" >> "$MANIFEST"
+          }
+
+          # Full monthly files through July 2026.
+          month=2025-01
+          while [[ "$month" != "2026-08" ]]; do
+            for symbol in "${SYMBOLS[@]}"; do
+              url="$BASE/monthly/klines/$symbol/$INTERVAL/${symbol}-${INTERVAL}-${month}.zip"
+              fetch_one monthly "$symbol" "$month" "$url"
+            done
+            month="$(date -u -d "${month}-01 +1 month" +%Y-%m)"
+          done
+
+          # August 2026 through the last fully available UTC day requested.
+          for day in $(seq -w 1 21); do
+            period="2026-08-${day}"
+            for symbol in "${SYMBOLS[@]}"; do
+              url="$BASE/daily/klines/$symbol/$INTERVAL/${symbol}-${INTERVAL}-${period}.zip"
+              fetch_one daily "$symbol" "$period" "$url"
+            done
+          done
+
+          # Detect accidental duplicate/open-time disorder after concatenation.
+          python3 - <<'PY'
+          from pathlib import Path
+          import csv, json
+          meta = {
+              "source": "Binance Public Data / data.binance.vision",
+              "market": "spot",
+              "quote": "USDT",
+              "interval": "15m",
+              "start_utc": "2025-01-01T00:00:00Z",
+              "end_utc_inclusive": "2026-08-21T23:45:00Z",
+              "timestamp_unit": "microseconds for this date range",
+              "columns": ["open_time","open","high","low","close","volume","close_time","quote_volume","trades","taker_buy_base_volume","taker_buy_quote_volume","ignore"],
+              "symbols": []
+          }
+          for p in sorted(Path('work/raw').glob('*.csv')):
+              last = None
+              count = 0
+              first = None
+              with p.open(newline='') as f:
+                  for row in csv.reader(f):
+                      if not row:
+                          continue
+                      ts = int(row[0])
+                      if first is None:
+                          first = ts
+                      if last is not None and ts <= last:
+                          raise SystemExit(f'non-increasing open_time in {p}: {last} -> {ts}')
+                      last = ts
+                      count += 1
+              meta['symbols'].append({"symbol": p.stem, "rows": count, "first_open_time": first, "last_open_time": last})
+          Path('work/DATASET_METADATA.json').write_text(json.dumps(meta, indent=2) + '\n')
+          PY
+
+          (cd work && sha256sum raw/*.csv SOURCE_MANIFEST.tsv DATASET_METADATA.json > DATASET_MANIFEST.sha256)
+          cp work/SOURCE_MANIFEST.tsv work/DATASET_METADATA.json work/DATASET_MANIFEST.sha256 out/
+          tar -C work -czf out/cquant-binance-spot-15m-20250101-20260821.tar.gz raw SOURCE_MANIFEST.tsv DATASET_METADATA.json DATASET_MANIFEST.sha256
+          sha256sum out/cquant-binance-spot-15m-20250101-20260821.tar.gz > out/cquant-binance-spot-15m-20250101-20260821.tar.gz.sha256
+          du -h out/*
+          stat -c 'archive-bytes=%s' out/cquant-binance-spot-15m-20250101-20260821.tar.gz
+
+      - name: Upload dataset artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cquant-binance-spot-15m-20250101-20260821
+          path: out/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
