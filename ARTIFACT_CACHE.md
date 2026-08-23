@@ -11,7 +11,8 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | USDA FoodData Central SR Legacy CSV | 2018-04 | Any | Any | `31695560856` | SINGLE | `2026-11-11T11:27:10Z` |
 | CulinaryDB CSV bundle | 2018-03-15 | Any | Any | `31723890750` | SINGLE | `2026-11-11T17:04:36Z` |
 | cquant Binance Spot 15m Klines | 2025-01-01_2026-08-21-15m-v1 | Any | Any | `32575307131` | SINGLE | `2026-11-20T13:16:44Z` |
-| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `32617341667` | SINGLE | `2026-11-21T04:13:42Z` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `32617341667` | SINGLE | `2026-11-21T04:13:42Z` || cquant Binance Spot 15m Golden Holdout | 2025-01-01_2026-08-21-15m-golden-holdout-v1 | Any | Any | `32618059050` | SINGLE | `2026-11-21T04:30:49Z` |
+
 
 ## Android NDK r28c
 
@@ -258,3 +259,42 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 ### Restore
 
 Download the single Artifact, verify the inner tar.gz SHA256, extract it, then run `sha256sum -c DATASET_MANIFEST.sha256`.
+
+## cquant Binance Spot 15m Golden Holdout 2025-01-01 to 2026-08-21
+
+- Workflow: `.github/workflows/fetch-cquant-binance-spot-15m-golden-holdout-20250101-20260821.yml`
+- Run ID: `32618059050`
+- Source: `https://data.binance.vision/data/spot/{monthly,daily}/klines/...`
+- Symbols: `AAVEUSDT ATOMUSDT ETCUSDT FILUSDT UNIUSDT`
+- Role: pristine symbol holdout for the frozen Regime Rotation v1 protocol
+- Storage Mode: `SINGLE`
+- Artifact Name: `cquant-binance-spot-15m-golden-holdout-20250101-20260821`
+- Artifact ID: `9487571958`
+- Artifact Size: `12256350` bytes
+- Artifact Digest: `sha256:d94b8041f7cfa1caac744b9e66ad85c283210c9c47724b7b5535195d889a3fea`
+- Original File: `cquant-binance-spot-15m-golden-holdout-20250101-20260821.tar.gz`
+- Original Size: `12214339` bytes
+- Original SHA256: `01f00b9c63644e594f9d28482bc56e292309628adfd6baffb6967a9deeff6161`
+- Part Count: `1`
+- Created At: `2026-08-23T04:33:38Z`
+- Expires At: `2026-11-21T04:30:49Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| cquant Binance Spot 15m Golden Holdout | 2025-01-01_2026-08-21-15m-golden-holdout-v1 | Any | Any | `raw/AAVEUSDT.csv` | `76b418f8629f930eb1b8b8f7d649e6bc192a98927a821191e780121dbc8fea7e` |
+| cquant Binance Spot 15m Golden Holdout | 2025-01-01_2026-08-21-15m-golden-holdout-v1 | Any | Any | `raw/ATOMUSDT.csv` | `4d590d1a1e48caa3d4656d13969aefabfa7e31a7e7fd4920b2c373030e2fe83e` |
+| cquant Binance Spot 15m Golden Holdout | 2025-01-01_2026-08-21-15m-golden-holdout-v1 | Any | Any | `raw/ETCUSDT.csv` | `12d6cc349dfb50bc7417558ec83cf6d94c94242832de6c65765f21c175e49e79` |
+| cquant Binance Spot 15m Golden Holdout | 2025-01-01_2026-08-21-15m-golden-holdout-v1 | Any | Any | `raw/FILUSDT.csv` | `8f0ab12a650fa7a3049ae6ab15f0ee0c67c2f1e5cc3686f8b2217008bd406a4a` |
+| cquant Binance Spot 15m Golden Holdout | 2025-01-01_2026-08-21-15m-golden-holdout-v1 | Any | Any | `raw/UNIUSDT.csv` | `97d9765483b8b453dda783c11e18e714772b9c22edbb4b6d87ff76c732d0fd5d` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9487571958` | `cquant-binance-spot-15m-golden-holdout-20250101-20260821` | `12214339` | `01f00b9c63644e594f9d28482bc56e292309628adfd6baffb6967a9deeff6161` | `12256350` | `sha256:d94b8041f7cfa1caac744b9e66ad85c283210c9c47724b7b5535195d889a3fea` | `2026-08-23T04:33:38Z` | `2026-11-21T04:30:49Z` |
+
+### Restore
+
+Download the single Artifact, verify the inner tar.gz SHA256, extract, then run `sha256sum -c DATASET_MANIFEST.sha256`.

@@ -1,0 +1,19 @@
+{
+  "dataset_name": "cquant Binance Spot 15m Golden Holdout",
+  "version": "2025-01-01_2026-08-21-15m-golden-holdout-v1",
+  "platform": "Any",
+  "architecture": "Any",
+  "workflow": ".github/workflows/fetch-cquant-binance-spot-15m-golden-holdout-20250101-20260821.yml",
+  "run_id": 32618059050,
+  "artifact_id": 9487571958,
+  "artifact_name": "cquant-binance-spot-15m-golden-holdout-20250101-20260821",
+  "artifact_size_in_bytes": 12256350,
+  "artifact_digest": "sha256:d94b8041f7cfa1caac744b9e66ad85c283210c9c47724b7b5535195d889a3fea",
+  "created_at": "2026-08-23T04:33:38Z",
+  "expires_at": "2026-11-21T04:30:49Z",
+  "original_file": "cquant-binance-spot-15m-golden-holdout-20250101-20260821.tar.gz",
+  "original_size": 12214339,
+  "original_sha256": "01f00b9c63644e594f9d28482bc56e292309628adfd6baffb6967a9deeff6161",
+  "part_count": 1,
+  "storage_mode": "SINGLE"
+}
