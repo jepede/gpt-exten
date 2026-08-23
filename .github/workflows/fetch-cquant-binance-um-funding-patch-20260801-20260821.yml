@@ -1,0 +1,146 @@
+name: Fetch cquant Binance USD-M funding patch 2026-08-01 to 2026-08-21
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-cquant-binance-um-funding-patch-20260801-20260821.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch funding rate history patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/raw/funding
+          python3 - <<'PY'
+          import csv, hashlib, json, time, urllib.parse, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          symbols = ['BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT']
+          api = 'https://fapi.binance.com/fapi/v1/fundingRate'
+          start_ms = int(datetime(2026,7,31,0,0,tzinfo=timezone.utc).timestamp()*1000)
+          existing_last_ms = int(datetime(2026,7,31,16,0,tzinfo=timezone.utc).timestamp()*1000)
+          end_ms = int(datetime(2026,8,22,0,0,tzinfo=timezone.utc).timestamp()*1000) - 1
+          metadata = {'source': api, 'symbols': symbols, 'start_utc': '2026-08-01T00:00:00Z',
+                      'end_utc_inclusive': '2026-08-21T23:59:59.999Z', 'series': {}}
+          manifest = []
+          for sym in symbols:
+              qs = urllib.parse.urlencode({'symbol':sym,'startTime':start_ms,'endTime':end_ms,'limit':1000})
+              req = urllib.request.Request(api+'?'+qs, headers={'User-Agent':'cquant-research/0.3'})
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  rows = json.load(resp)
+              if not isinstance(rows, list) or not rows:
+                  raise SystemExit(f'empty funding response for {sym}')
+              rows.sort(key=lambda x:int(x['fundingTime']))
+              out_rows=[]
+              prev=None
+              for item in rows:
+                  t=int(item['fundingTime']); rate=float(item['fundingRate'])
+                  if prev is not None:
+                      delta=t-prev
+                      hours=round(delta/3600000)
+                      if hours < 1 or hours > 24 or abs(delta-hours*3600000) > 120000:
+                          raise SystemExit(f'bad funding cadence {sym} {prev}->{t}')
+                  else:
+                      hours=8
+                  if t > existing_last_ms and t <= end_ms:
+                      out_rows.append((t,hours,format(rate,'.12g')))
+                  prev=t
+              if not out_rows:
+                  raise SystemExit(f'no patch rows for {sym}')
+              p=Path('out/raw/funding')/(sym+'.csv')
+              with p.open('w', newline='') as f:
+                  w=csv.writer(f, lineterminator='\n')
+                  w.writerow(['calc_time','funding_interval_hours','last_funding_rate'])
+                  w.writerows(out_rows)
+              blob=p.read_bytes(); sha=hashlib.sha256(blob).hexdigest()
+              manifest.append((sha,str(p.relative_to('out'))))
+              metadata['series'][sym]={'rows':len(out_rows),'first_timestamp':out_rows[0][0],
+                                       'last_timestamp':out_rows[-1][0], 'sha256':sha}
+              time.sleep(0.25)
+          Path('out/DATASET_METADATA.json').write_text(json.dumps(metadata,indent=2)+'\n')
+          manifest.append((hashlib.sha256(Path('out/DATASET_METADATA.json').read_bytes()).hexdigest(),'DATASET_METADATA.json'))
+          Path('out/DATASET_MANIFEST.sha256').write_text(''.join(f'{sha}  {path}\n' for sha,path in manifest))
+          PY
+          tar -C out -czf out/cquant-binance-um-funding-patch-20260801-20260821.tar.gz raw DATASET_METADATA.json DATASET_MANIFEST.sha256
+          (cd out && sha256sum cquant-binance-um-funding-patch-20260801-20260821.tar.gz > cquant-binance-um-funding-patch-20260801-20260821.tar.gz.sha256)
+          test "$(stat -c '%s' out/cquant-binance-um-funding-patch-20260801-20260821.tar.gz)" -lt 500000000
+
+      - name: Upload funding patch artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: cquant-binance-um-funding-patch-20260801-20260821
+          path: out/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Record artifact metadata and cache entry
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}" > /tmp/artifact.json
+          mkdir -p artifact-markers
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          api=json.loads(Path('/tmp/artifact.json').read_text())
+          archive=Path('out/cquant-binance-um-funding-patch-20260801-20260821.tar.gz')
+          version='2026-08-01_2026-08-21-um-funding-patch-v1'
+          marker={
+            'dataset_name':'cquant Binance USD-M Funding Patch','version':version,
+            'platform':'Any','architecture':'Any',
+            'workflow':'.github/workflows/fetch-cquant-binance-um-funding-patch-20260801-20260821.yml',
+            'run_id':int(os.environ['GITHUB_RUN_ID']),'artifact_id':api['id'],'artifact_name':api['name'],
+            'artifact_size_in_bytes':api['size_in_bytes'],'artifact_digest':api.get('digest'),
+            'created_at':api['created_at'],'expires_at':api['expires_at'],
+            'original_file':archive.name,'original_size':archive.stat().st_size,
+            'original_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),
+            'part_count':1,'storage_mode':'SINGLE'
+          }
+          marker_path=Path('artifact-markers/cquant-binance-um-funding-patch-20260801-20260821.json')
+          marker_path.write_text(json.dumps(marker,indent=2)+'\n')
+          cache_path=Path('ARTIFACT_CACHE.md'); cache=cache_path.read_text()
+          row=f'| cquant Binance USD-M Funding Patch | {version} | Any | Any | `{marker["run_id"]}` | SINGLE | `{marker["expires_at"]}` |\n'
+          if version not in cache:
+              idx=cache.find('\n\n## ', cache.find('## Index'))
+              cache=cache[:idx]+row+cache[idx:]
+              cache += '\n## cquant Binance USD-M Funding Patch 2026-08-01 to 2026-08-21\n\n'
+              cache += f'- Workflow: `{marker["workflow"]}`\n- Run ID: `{marker["run_id"]}`\n'
+              cache += '- Source: `https://fapi.binance.com/fapi/v1/fundingRate`\n'
+              cache += '- Symbols: `BTCUSDT ETHUSDT BNBUSDT SOLUSDT XRPUSDT`\n'
+              cache += '- Storage Mode: `SINGLE`\n'
+              cache += f'- Artifact Name: `{marker["artifact_name"]}`\n- Artifact ID: `{marker["artifact_id"]}`\n'
+              cache += f'- Artifact Size: `{marker["artifact_size_in_bytes"]}` bytes\n- Artifact Digest: `{marker["artifact_digest"]}`\n'
+              cache += f'- Original File: `{marker["original_file"]}`\n- Original Size: `{marker["original_size"]}` bytes\n'
+              cache += f'- Original SHA256: `{marker["original_sha256"]}`\n- Part Count: `1`\n'
+              cache += f'- Created At: `{marker["created_at"]}`\n- Expires At: `{marker["expires_at"]}`\n\n'
+              cache += '### Contents\n\n| Name | Version | Platform | Architecture | File/Path | SHA256 |\n|---|---|---|---|---|---|\n'
+              for line in Path('out/DATASET_MANIFEST.sha256').read_text().splitlines():
+                  sha,path=line.split(None,1); path=path.strip()
+                  if path.startswith('raw/'):
+                      cache += f'| cquant Binance USD-M Funding Patch | {version} | Any | Any | `{path}` | `{sha}` |\n'
+              cache += '\n### Restore\n\nDownload the single Artifact, verify the inner tar.gz SHA256, extract it, then run `sha256sum -c DATASET_MANIFEST.sha256`.\n'
+              cache_path.write_text(cache)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add artifact-markers/cquant-binance-um-funding-patch-20260801-20260821.json ARTIFACT_CACHE.md
+          git commit -m 'Record cquant USD-M funding patch artifact'
+          git pull --rebase origin main
+          git push origin HEAD:main
