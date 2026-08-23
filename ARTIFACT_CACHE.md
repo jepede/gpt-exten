@@ -11,6 +11,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | USDA FoodData Central SR Legacy CSV | 2018-04 | Any | Any | `31695560856` | SINGLE | `2026-11-11T11:27:10Z` |
 | CulinaryDB CSV bundle | 2018-03-15 | Any | Any | `31723890750` | SINGLE | `2026-11-11T17:04:36Z` |
 | cquant Binance Spot 15m Klines | 2025-01-01_2026-08-21-15m-v1 | Any | Any | `32575307131` | SINGLE | `2026-11-20T13:16:44Z` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `32617341667` | SINGLE | `2026-11-21T04:13:42Z` |
 
 ## Android NDK r28c
 
@@ -206,3 +207,54 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 ### Restore
 
 下载 Artifact `9476457085`，校验 Artifact ZIP SHA256 `06c0d11a...`；解压后校验 `cquant-binance-spot-15m-20250101-20260821.tar.gz` SHA256 `a433ff6b...`，再解压数据集并执行 `sha256sum -c DATASET_MANIFEST.sha256`。10 个 CSV 均应为 57,408 根 15m Kline，且本版本连续性检查为 0 gap。
+
+## cquant Binance USD-M Derivatives 2025-01-01 to 2026-08-21
+
+- Workflow: `.github/workflows/fetch-cquant-binance-um-derivatives-20250101-20260821.yml`
+- Run ID: `32617341667`
+- Source: `https://data.binance.vision/data/futures/um/...`
+- Dataset: Binance Public Data, USD-M perpetual 15m Klines + daily metrics + monthly funding rate
+- Symbols: `BTCUSDT ETHUSDT BNBUSDT SOLUSDT XRPUSDT`
+- Range: `2025-01-01` through `2026-08-21` (funding monthly through latest archived month)
+- Requested Retention: `400 days`
+- Storage Mode: `SINGLE`
+- Artifact Name: `cquant-binance-um-derivatives-20250101-20260821`
+- Artifact ID: `9487402324`
+- Artifact Size: `46865584` bytes
+- Artifact Digest: `sha256:68711a092b32066e445f45fa4cd3913a3bebacc28de7cadbaebf81e83622adc0`
+- Original File: `cquant-binance-um-derivatives-20250101-20260821.tar.gz`
+- Original Size: `46192615` bytes
+- Original SHA256: `91773a0f5804bb511d348b3ebf8323a3d8e7c27fcd3e979ed4456c8080adb87a`
+- Part Count: `1`
+- Created At: `2026-08-23T04:19:17Z`
+- Expires At: `2026-11-21T04:13:42Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/klines/BNBUSDT.csv` | `5f39c0617ecc4f8a4d90b231c67b4d931a7da4c3148c4fc821a3550da63a53c5` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/klines/BTCUSDT.csv` | `65a35cf24e1cc9d51c0cf069b7c4a1e5d5f916942b7ac0ad916cf98adde52f7c` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/klines/ETHUSDT.csv` | `9ce0a2a00d0d5030b4f58567990f06a6f481975259da5ebd47946641b4110699` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/klines/SOLUSDT.csv` | `f4b8e9bbf697efd1a3b3b9fc1ced81d4c63b0e8462618171ba23115eee901514` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/klines/XRPUSDT.csv` | `b8a5fd04a028a095b3dc855bd891db65823390cf1255c52fa30ad7e22d831faf` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/metrics/BNBUSDT.csv` | `3fd6902028f7baae49724ec872d6939aca76ac9797dbdc98edd2c7e1baf7f03c` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/metrics/BTCUSDT.csv` | `4cb4312b7ed53b371cee5f9e9211b72ce582345f21c9e50f9b09362c7f57fb9c` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/metrics/ETHUSDT.csv` | `656f423fe5939c7301fefcc034c2cd9aa974fd3255da9531e1d8796e42ebd619` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/metrics/SOLUSDT.csv` | `d8974f4dc5f678371e1b97227b9ead7c017ba0ad051bb1c95103fbe91dd86199` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/metrics/XRPUSDT.csv` | `a14d6cc7be4be66bc9fea21c79f6b85576496feee974d6ec147b2f1e8afbd093` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/funding/BNBUSDT.csv` | `de94959771503bc884dd5705dd7443273659877847308f836027dfed5435777a` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/funding/BTCUSDT.csv` | `7cb5d75e6bb5bf5d17287d18e6c11c1666fe5574b8e82fddad6c49b235084d63` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/funding/ETHUSDT.csv` | `d19765bc1123ba2af065e4c02825ea31ca1f3ea7d7839f569d2f4404c8472f30` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/funding/SOLUSDT.csv` | `75334aad4b3eec1e01286770e3fd29012197438553911fd49ee64c33bff25d45` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `raw/funding/XRPUSDT.csv` | `b8b39bd52911e7becdc3312fb7b8a7488bf8ba4182e33bb97f7b540ddc54c8fe` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9487402324` | `cquant-binance-um-derivatives-20250101-20260821` | `46192615` | `91773a0f5804bb511d348b3ebf8323a3d8e7c27fcd3e979ed4456c8080adb87a` | `46865584` | `sha256:68711a092b32066e445f45fa4cd3913a3bebacc28de7cadbaebf81e83622adc0` | `2026-08-23T04:19:17Z` | `2026-11-21T04:13:42Z` |
+
+### Restore
+
+Download the single Artifact, verify the inner tar.gz SHA256, extract it, then run `sha256sum -c DATASET_MANIFEST.sha256`.
