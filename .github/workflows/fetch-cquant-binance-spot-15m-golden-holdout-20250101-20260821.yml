@@ -1,0 +1,169 @@
+name: Fetch cquant Binance Spot 15m golden holdout dataset
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-cquant-binance-spot-15m-golden-holdout-20250101-20260821.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download verify and pack golden holdout Klines
+        shell: bash
+        run: |
+          set -euo pipefail
+          INTERVAL=15m
+          SYMBOLS=(AAVEUSDT ATOMUSDT ETCUSDT FILUSDT UNIUSDT)
+          BASE=https://data.binance.vision/data/spot
+          mkdir -p work/zips work/raw out
+          printf 'kind\tsymbol\tinterval\tperiod\turl\tsha256\tzip_bytes\trows\n' > work/SOURCE_MANIFEST.tsv
+          fetch_one() {
+            local kind="$1" symbol="$2" period="$3" url="$4"
+            local zip checksum expected actual bytes rows
+            zip="work/zips/${symbol}-${INTERVAL}-${period}.zip"
+            checksum="${zip}.CHECKSUM"
+            curl -fL --retry 5 --retry-delay 2 --connect-timeout 20 "$url" -o "$zip"
+            curl -fL --retry 5 --retry-delay 2 --connect-timeout 20 "${url}.CHECKSUM" -o "$checksum"
+            expected="$(awk '{print $1}' "$checksum" | tr 'A-F' 'a-f')"
+            actual="$(sha256sum "$zip" | awk '{print $1}')"
+            test "$actual" = "$expected"
+            unzip -p "$zip" >> "work/raw/${symbol}.csv"
+            bytes="$(stat -c '%s' "$zip")"
+            rows="$(unzip -p "$zip" | wc -l)"
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$kind" "$symbol" "$INTERVAL" "$period" "$url" "$actual" "$bytes" "$rows" >> work/SOURCE_MANIFEST.tsv
+            rm -f "$zip" "$checksum"
+          }
+          month=2025-01
+          while [[ "$month" != 2026-08 ]]; do
+            for symbol in "${SYMBOLS[@]}"; do
+              fetch_one monthly "$symbol" "$month" "$BASE/monthly/klines/$symbol/$INTERVAL/${symbol}-${INTERVAL}-${month}.zip"
+            done
+            month="$(date -u -d "${month}-01 +1 month" +%Y-%m)"
+          done
+          for day in $(seq -w 1 21); do
+            period="2026-08-${day}"
+            for symbol in "${SYMBOLS[@]}"; do
+              fetch_one daily "$symbol" "$period" "$BASE/daily/klines/$symbol/$INTERVAL/${symbol}-${INTERVAL}-${period}.zip"
+            done
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          import csv,json
+          meta={
+            'source':'Binance Public Data / data.binance.vision',
+            'market':'spot','role':'golden_external_symbol_holdout','quote':'USDT','interval':'15m',
+            'start_utc':'2025-01-01T00:00:00Z','end_utc_inclusive':'2026-08-21T23:45:00Z',
+            'symbols':[],
+            'protocol_freeze_before_download':{
+              'candidate':'regime_rotation_v1',
+              'test_start_utc':'2026-05-01T00:00:00Z','test_end_exclusive_utc':'2026-08-22T00:00:00Z',
+              'rebalance_bars':96,'top_k':3,'score_mode':'balanced',
+              'min_breadth_24h':0.2,'min_btc_ema384_distance':0.0,'min_quote_volume_z672':-1.5,
+              'initial_capital_usdt':10000.0,'fee_rate_one_way':0.001,'slippage_rate_one_way':0.0002,
+              'rule':'no parameter or strategy-logic changes after observing this dataset'
+            }
+          }
+          for p in sorted(Path('work/raw').glob('*.csv')):
+            first=last=None; n=0
+            with p.open(newline='') as f:
+              for row in csv.reader(f):
+                if not row: continue
+                ts=int(row[0])
+                if first is None: first=ts
+                if last is not None and ts <= last: raise SystemExit(f'non-increasing {p}: {last}->{ts}')
+                last=ts; n+=1
+            if n != 57408: raise SystemExit(f'unexpected row count {p}: {n}')
+            meta['symbols'].append({'symbol':p.stem,'rows':n,'first_open_time':first,'last_open_time':last})
+          Path('work/DATASET_METADATA.json').write_text(json.dumps(meta,indent=2)+'\n')
+          PY
+          (cd work && sha256sum raw/*.csv SOURCE_MANIFEST.tsv DATASET_METADATA.json > DATASET_MANIFEST.sha256)
+          cp work/SOURCE_MANIFEST.tsv work/DATASET_METADATA.json work/DATASET_MANIFEST.sha256 out/
+          tar -C work -czf out/cquant-binance-spot-15m-golden-holdout-20250101-20260821.tar.gz raw SOURCE_MANIFEST.tsv DATASET_METADATA.json DATASET_MANIFEST.sha256
+          (cd out && sha256sum cquant-binance-spot-15m-golden-holdout-20250101-20260821.tar.gz > cquant-binance-spot-15m-golden-holdout-20250101-20260821.tar.gz.sha256)
+          size="$(stat -c '%s' out/cquant-binance-spot-15m-golden-holdout-20250101-20260821.tar.gz)"
+          echo "archive-bytes=$size"
+          test "$size" -lt 500000000
+
+      - name: Upload golden holdout artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: cquant-binance-spot-15m-golden-holdout-20250101-20260821
+          path: out/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Record golden artifact metadata and cache entry
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}" > /tmp/artifact.json
+          mkdir -p artifact-markers
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          api=json.loads(Path('/tmp/artifact.json').read_text())
+          archive=Path('out/cquant-binance-spot-15m-golden-holdout-20250101-20260821.tar.gz')
+          version='2025-01-01_2026-08-21-15m-golden-holdout-v1'
+          marker={
+            'dataset_name':'cquant Binance Spot 15m Golden Holdout','version':version,
+            'platform':'Any','architecture':'Any',
+            'workflow':'.github/workflows/fetch-cquant-binance-spot-15m-golden-holdout-20250101-20260821.yml',
+            'run_id':int(os.environ['GITHUB_RUN_ID']),'artifact_id':api['id'],'artifact_name':api['name'],
+            'artifact_size_in_bytes':api['size_in_bytes'],'artifact_digest':api.get('digest'),
+            'created_at':api['created_at'],'expires_at':api['expires_at'],
+            'original_file':archive.name,'original_size':archive.stat().st_size,
+            'original_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),
+            'part_count':1,'storage_mode':'SINGLE'
+          }
+          Path('artifact-markers/cquant-binance-spot-15m-golden-holdout-20250101-20260821.json').write_text(json.dumps(marker,indent=2)+'\n')
+          cache=Path('ARTIFACT_CACHE.md').read_text()
+          if version not in cache:
+            row=f'| cquant Binance Spot 15m Golden Holdout | {version} | Any | Any | `{marker["run_id"]}` | SINGLE | `{marker["expires_at"]}` |\n'
+            pos=cache.find('\n\n## ',cache.find('## Index'))
+            cache=cache[:pos]+row+cache[pos:]
+            sums=[]
+            for line in Path('work/DATASET_MANIFEST.sha256').read_text().splitlines():
+              sha,path=line.split(None,1); sums.append((path.strip(),sha))
+            sec=['', '## cquant Binance Spot 15m Golden Holdout 2025-01-01 to 2026-08-21','',
+              f'- Workflow: `{marker["workflow"]}`',f'- Run ID: `{marker["run_id"]}`',
+              '- Source: `https://data.binance.vision/data/spot/{monthly,daily}/klines/...`',
+              '- Symbols: `AAVEUSDT ATOMUSDT ETCUSDT FILUSDT UNIUSDT`',
+              '- Role: pristine symbol holdout for the frozen Regime Rotation v1 protocol',
+              '- Storage Mode: `SINGLE`',f'- Artifact Name: `{marker["artifact_name"]}`',
+              f'- Artifact ID: `{marker["artifact_id"]}`',f'- Artifact Size: `{marker["artifact_size_in_bytes"]}` bytes',
+              f'- Artifact Digest: `{marker["artifact_digest"]}`',f'- Original File: `{marker["original_file"]}`',
+              f'- Original Size: `{marker["original_size"]}` bytes',f'- Original SHA256: `{marker["original_sha256"]}`',
+              '- Part Count: `1`',f'- Created At: `{marker["created_at"]}`',f'- Expires At: `{marker["expires_at"]}`','',
+              '### Contents','', '| Name | Version | Platform | Architecture | File/Path | SHA256 |',
+              '|---|---|---|---|---|---|']
+            for path,sha in sums:
+              if path.startswith('raw/'):
+                sec.append(f'| cquant Binance Spot 15m Golden Holdout | {version} | Any | Any | `{path}` | `{sha}` |')
+            sec += ['', '### Artifact','',
+              '| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |',
+              '|---:|---:|---|---:|---|---:|---|---|---|',
+              f'| 1/1 | `{marker["artifact_id"]}` | `{marker["artifact_name"]}` | `{marker["original_size"]}` | `{marker["original_sha256"]}` | `{marker["artifact_size_in_bytes"]}` | `{marker["artifact_digest"]}` | `{marker["created_at"]}` | `{marker["expires_at"]}` |','',
+              '### Restore','', 'Download the single Artifact, verify the inner tar.gz SHA256, extract, then run `sha256sum -c DATASET_MANIFEST.sha256`.','']
+            cache += '\n'.join(sec)
+            Path('ARTIFACT_CACHE.md').write_text(cache)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add artifact-markers/cquant-binance-spot-15m-golden-holdout-20250101-20260821.json ARTIFACT_CACHE.md
+          git commit -m 'Record cquant golden holdout artifact'
+          git pull --rebase origin main
+          git push origin HEAD:main
