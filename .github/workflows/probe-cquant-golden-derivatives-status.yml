@@ -36,3 +36,4 @@ jobs:
           git commit -m 'Record cquant Golden derivatives workflow status'
           git pull --rebase origin main
           git push origin HEAD:main
+# probe-refresh: 2
