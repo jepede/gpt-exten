@@ -1,0 +1,38 @@
+name: Probe cquant Golden derivatives workflow status
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-cquant-golden-derivatives-status.yml'
+permissions:
+  contents: write
+  actions: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Query Golden derivatives workflow runs and artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifact-markers
+          wf='fetch-cquant-binance-um-golden-derivatives-20250101-20260731.yml'
+          gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/runs?per_page=5" > /tmp/runs.json
+          python3 - <<'PY'
+          import json,subprocess
+          from pathlib import Path
+          runs=json.loads(Path('/tmp/runs.json').read_text()).get('workflow_runs',[])
+          out=[]
+          for r in runs:
+              art=json.loads(subprocess.check_output(['gh','api',f"repos/{r['repository']['full_name']}/actions/runs/{r['id']}/artifacts?per_page=100"],text=True))
+              out.append({'run_id':r['id'],'status':r['status'],'conclusion':r['conclusion'],'created_at':r['created_at'],'updated_at':r['updated_at'],'head_sha':r['head_sha'],'artifacts':[{'id':a['id'],'name':a['name'],'expired':a['expired'],'size_in_bytes':a['size_in_bytes'],'created_at':a['created_at'],'expires_at':a['expires_at'],'digest':a.get('digest')} for a in art.get('artifacts',[])]})
+          Path('artifact-markers/cquant-golden-derivatives-status.json').write_text(json.dumps(out,indent=2)+'\n')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add artifact-markers/cquant-golden-derivatives-status.json
+          git commit -m 'Record cquant Golden derivatives workflow status'
+          git pull --rebase origin main
+          git push origin HEAD:main
