@@ -12,6 +12,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | CulinaryDB CSV bundle | 2018-03-15 | Any | Any | `31723890750` | SINGLE | `2026-11-11T17:04:36Z` |
 | cquant Binance Spot 15m Klines | 2025-01-01_2026-08-21-15m-v1 | Any | Any | `32575307131` | SINGLE | `2026-11-20T13:16:44Z` |
 | cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `32617341667` | SINGLE | `2026-11-21T04:13:42Z` || cquant Binance Spot 15m Golden Holdout | 2025-01-01_2026-08-21-15m-golden-holdout-v1 | Any | Any | `32618059050` | SINGLE | `2026-11-21T04:30:49Z` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `32641331696` | SINGLE | `2026-11-21T13:06:16Z` |
 
 
 ## Android NDK r28c
@@ -298,3 +299,55 @@ Download the single Artifact, verify the inner tar.gz SHA256, extract it, then r
 ### Restore
 
 Download the single Artifact, verify the inner tar.gz SHA256, extract, then run `sha256sum -c DATASET_MANIFEST.sha256`.
+
+## cquant Binance USD-M Golden Derivatives 2025-01-01 to 2026-07-31
+
+- Workflow: `.github/workflows/fetch-cquant-binance-um-golden-derivatives-20250101-20260731.yml`
+- Run ID: `32641331696`
+- Source: `https://data.binance.vision/data/futures/um/...`
+- Dataset: Binance Public Data, USD-M perpetual 15m Klines + daily metrics + monthly funding rate
+- Symbols: `AAVEUSDT ATOMUSDT ETCUSDT FILUSDT UNIUSDT`
+- Range: `2025-01-01` through `2026-07-31`
+- Frozen use: external Golden universe for protocol `short-only-ridge40-wf-v1`
+- Requested Retention: `400 days`
+- Storage Mode: `SINGLE`
+- Artifact Name: `cquant-binance-um-golden-derivatives-20250101-20260731`
+- Artifact ID: `9493764398`
+- Artifact Size: `42554715` bytes
+- Artifact Digest: `sha256:c6de2bdbfae2d1dada59630e6614f89b0434864a993f2adb2bfeb7e19545910d`
+- Original File: `cquant-binance-um-golden-derivatives-20250101-20260731.tar.gz`
+- Original Size: `41919490` bytes
+- Original SHA256: `e1c335dd5da02b522573a24010f6f4370024460ba0ccaaadecf80520bf8b0bd3`
+- Part Count: `1`
+- Created At: `2026-08-23T13:13:37Z`
+- Expires At: `2026-11-21T13:06:16Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/klines/AAVEUSDT.csv` | `66bab9dbbfd08d560b82b219ab37ee204de87dd9769afc87b9cd0fb2484afaec` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/klines/ATOMUSDT.csv` | `31cbc826944113ef8ff22df89e839635ff67c8879df141991cab5c2e53ee00f3` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/klines/ETCUSDT.csv` | `d08ef10fdfca388c76f50ad1abcb97f12cea098900bf726cbb7574d30524fc0d` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/klines/FILUSDT.csv` | `4ee598a0c92c82a97dc72d9a91d3d5b57dc4db65061b5d9ddffcd15402e13928` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/klines/UNIUSDT.csv` | `47dde92a199d7d8274a47c3dbdbab849dcd02e6d597583bee95bd6d8021f7bf6` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/metrics/AAVEUSDT.csv` | `907df6a8a40fa48f0ed2682addeb5d9c2bef8fdd8bc2977e97da33a1d2d3de7d` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/metrics/ATOMUSDT.csv` | `44981a58d5a9b910450494ca2ed01e26201baf90e37aabf88e9194a9c03f969a` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/metrics/ETCUSDT.csv` | `9fee054438d45951e0a99f164327f210823558a5c8d20ed3fd054024e8c8421a` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/metrics/FILUSDT.csv` | `d1c5c87c8032de6c71fac162ba8a22672437d1d512489021ac942098850e31ea` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/metrics/UNIUSDT.csv` | `1ff1b16a797ac2f99ef221822a7006127bc852f1a363c3ac4b57914b205cb086` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/funding/AAVEUSDT.csv` | `0d4afb45106897686ae4de3f8e5befbd45674a16c5630ffe0da9c3ac06440f2c` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/funding/ATOMUSDT.csv` | `9985cbecfc46cdaf13a2cd458eeee4afff73e0ddb0c627eda96e4f310ab5b890` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/funding/ETCUSDT.csv` | `7c63137756c398151307cae740b355ecbc8397fabf49a324be60a69ac4ec361a` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/funding/FILUSDT.csv` | `a37365bd529686863f8315c7dab2d8258fee4d075087c8081727a35a4095092b` |
+| cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `raw/funding/UNIUSDT.csv` | `f5ac7b4c549df42c054c920e86e82303259cb642d149411a49146a1cacb3d9ae` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9493764398` | `cquant-binance-um-golden-derivatives-20250101-20260731` | `41919490` | `e1c335dd5da02b522573a24010f6f4370024460ba0ccaaadecf80520bf8b0bd3` | `42554715` | `sha256:c6de2bdbfae2d1dada59630e6614f89b0434864a993f2adb2bfeb7e19545910d` | `2026-08-23T13:13:37Z` | `2026-11-21T13:06:16Z` |
+
+### Restore
+
+Download the single Artifact, verify the inner tar.gz SHA256, extract it, then run `sha256sum -c DATASET_MANIFEST.sha256`.
