@@ -7,12 +7,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download Debian qemu-user-static
         shell: bash
         run: |
@@ -23,7 +26,9 @@ jobs:
           sha256sum out/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb | tee out/SHA256SUMS.txt
           stat -c '%n %s bytes' out/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb | tee out/SIZE.txt
           printf '%s\n' "$url" > out/SOURCE.txt
+
       - name: Upload artifact
+        id: upload
         uses: actions/upload-artifact@v4
         with:
           name: qemu-user-static-7.2-deb12u18-amd64
@@ -31,3 +36,37 @@ jobs:
           if-no-files-found: error
           retention-days: 90
           compression-level: 0
+
+      - name: Record artifact metadata
+        shell: bash
+        env:
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+        run: |
+          set -euxo pipefail
+          mkdir -p .artifact-meta
+          file='qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb'
+          sha=$(awk '{print $1}' out/SHA256SUMS.txt)
+          size=$(stat -c '%s' "out/$file")
+          cat > .artifact-meta/qemu-user-static-bookworm.json <<EOF
+          {
+            "name": "QEMU user-static",
+            "version": "1:7.2+dfsg-7+deb12u18+b3",
+            "platform": "Debian 12 / Linux",
+            "architecture": "amd64 host; includes qemu-aarch64-static",
+            "run_id": "${GITHUB_RUN_ID}",
+            "artifact_id": "${ARTIFACT_ID}",
+            "artifact_url": "${ARTIFACT_URL}",
+            "artifact_digest": "${ARTIFACT_DIGEST}",
+            "file": "${file}",
+            "size": ${size},
+            "sha256": "${sha}",
+            "source": "https://deb.debian.org/debian/pool/main/q/qemu/${file}"
+          }
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .artifact-meta/qemu-user-static-bookworm.json
+          git commit -m 'Record QEMU user-static artifact metadata' || exit 0
+          git push
