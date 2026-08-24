@@ -15,6 +15,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | cquant Binance Spot 15m Golden Holdout | 2025-01-01_2026-08-21-15m-golden-holdout-v1 | Any | Any | `32618059050` | SINGLE | `2026-11-21T04:30:49Z` |
 | cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `32641331696` | SINGLE | `2026-11-21T13:06:16Z` |
 | TShield 6.2 Live W response | 6.2-live-w-bridge-run11-v1 | Any | Any | `32483541702` | SINGLE | `2026-11-19T12:47:00Z` |
+| QEMU user-static | 1:7.2+dfsg-7+deb12u18+b3 | Debian 12 / Linux | x86_64 | `32748029497` | SINGLE | `2026-11-22T15:57:40Z` |
 
 
 ## TShield 6.2 Live W response
@@ -391,3 +392,41 @@ Download the single Artifact, verify the inner tar.gz SHA256, extract, then run 
 ### Restore
 
 Download the single Artifact, verify the inner tar.gz SHA256, extract it, then run `sha256sum -c DATASET_MANIFEST.sha256`.
+
+
+## QEMU user-static 1:7.2+dfsg-7+deb12u18+b3
+
+- Workflow: `.github/workflows/fetch-qemu-user-static-bookworm.yml`
+- Run ID: `32748029497`
+- Source: `https://deb.debian.org/debian/pool/main/q/qemu/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb`
+- Repository Visibility: `Public`
+- Requested Retention: `90 days`
+- Storage Mode: `SINGLE`
+- Artifact Name: `qemu-user-static-7.2-deb12u18-amd64`
+- Artifact ID: `9527836019`
+- File: `qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb`
+- Artifact Archive Size: `62604562` bytes
+- Artifact Archive SHA256 / Digest: `33fc072150ca5eb586aca5506b4a8c31226706f6b1f60cf68f94dc5ec6d89297`
+- Original Size: `62603724` bytes
+- Original SHA256: `c3e3ba2bd87f8c5b9a5da5ef21b5a3b82d7c63b89dd448d9ddaa4eabc5b6e402`
+- Part Count: `1`
+- Created At: `2026-08-24T15:57:46Z`
+- Expires At: `2026-11-22T15:57:40Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| QEMU user-static Debian package | 1:7.2+dfsg-7+deb12u18+b3 | Debian 12 / Linux | x86_64 | `qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb` | `c3e3ba2bd87f8c5b9a5da5ef21b5a3b82d7c63b89dd448d9ddaa4eabc5b6e402` |
+
+The package contains the statically linked user-mode emulators, including `qemu-aarch64-static`, for running AArch64 Linux/Android user-space ELF binaries on an x86_64 host.
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9527836019` | `qemu-user-static-7.2-deb12u18-amd64` | `62603724` | `c3e3ba2bd87f8c5b9a5da5ef21b5a3b82d7c63b89dd448d9ddaa4eabc5b6e402` | `62604562` | `sha256:33fc072150ca5eb586aca5506b4a8c31226706f6b1f60cf68f94dc5ec6d89297` | `2026-08-24T15:57:46Z` | `2026-11-22T15:57:40Z` |
+
+### Restore
+
+Download Artifact `9527836019`, verify the Artifact ZIP SHA256 `33fc072150ca5eb586aca5506b4a8c31226706f6b1f60cf68f94dc5ec6d89297`, extract the Debian package, verify its SHA256 `c3e3ba2bd87f8c5b9a5da5ef21b5a3b82d7c63b89dd448d9ddaa4eabc5b6e402`, then extract it with `dpkg-deb -x`. The installed binary used for AArch64 testing is `usr/bin/qemu-aarch64-static`.
