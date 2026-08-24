@@ -11,9 +11,49 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | USDA FoodData Central SR Legacy CSV | 2018-04 | Any | Any | `31695560856` | SINGLE | `2026-11-11T11:27:10Z` |
 | CulinaryDB CSV bundle | 2018-03-15 | Any | Any | `31723890750` | SINGLE | `2026-11-11T17:04:36Z` |
 | cquant Binance Spot 15m Klines | 2025-01-01_2026-08-21-15m-v1 | Any | Any | `32575307131` | SINGLE | `2026-11-20T13:16:44Z` |
-| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `32617341667` | SINGLE | `2026-11-21T04:13:42Z` || cquant Binance Spot 15m Golden Holdout | 2025-01-01_2026-08-21-15m-golden-holdout-v1 | Any | Any | `32618059050` | SINGLE | `2026-11-21T04:30:49Z` |
+| cquant Binance USD-M Derivatives | 2025-01-01_2026-08-21-15m-um-derivatives-v1 | Any | Any | `32617341667` | SINGLE | `2026-11-21T04:13:42Z` |
+| cquant Binance Spot 15m Golden Holdout | 2025-01-01_2026-08-21-15m-golden-holdout-v1 | Any | Any | `32618059050` | SINGLE | `2026-11-21T04:30:49Z` |
 | cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `32641331696` | SINGLE | `2026-11-21T13:06:16Z` |
+| TShield 6.2 Live W response | 6.2-live-w-bridge-run11-v1 | Any | Any | `32483541702` | SINGLE | `2026-11-19T12:47:00Z` |
 
+
+## TShield 6.2 Live W response
+
+- Workflow: `.github/workflows/tshield-fetch-6-2.yml` (temporary PR #1 only; do not merge)
+- Workflow Name: `TShield 6.2 Live W Bridge`
+- Run ID: `32483541702`
+- Run Number: `11`
+- Run Conclusion: `success`
+- Source: exact raw HTTP response captured by the temporary TShield 6.2 bridge workflow
+- Repository Visibility: `Public`
+- Requested Retention: `90 days`
+- Storage Mode: `SINGLE`
+- Artifact Name: `tshield-live-w-response`
+- Artifact ID: `9446959149`
+- File: `response.raw`
+- Artifact Archive Size: `757` bytes
+- Artifact Archive SHA256 / Digest: `6e3d247db11f6a0169d7577cc2643d2d5809804cde84869d3b9430b9acc06a93`
+- Original Size: `810` bytes
+- Original SHA256: `0b90973c5938d418345f1d0845ee2480b037fecc38950c38b94b21e8d9f62152`
+- Part Count: `1`
+- Created At: `2026-08-21T12:47:08Z`
+- Expires At: `2026-11-19T12:47:00Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| TShield 6.2 Live W response | 6.2-live-w-bridge-run11-v1 | Any | Any | `response.raw` | `0b90973c5938d418345f1d0845ee2480b037fecc38950c38b94b21e8d9f62152` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9446959149` | `tshield-live-w-response` | `810` | `0b90973c5938d418345f1d0845ee2480b037fecc38950c38b94b21e8d9f62152` | `757` | `sha256:6e3d247db11f6a0169d7577cc2643d2d5809804cde84869d3b9430b9acc06a93` | `2026-08-21T12:47:08Z` | `2026-11-19T12:47:00Z` |
+
+### Restore
+
+下载 Artifact `9446959149`，校验 Artifact ZIP SHA256 `6e3d247d...`；解压得到 `response.raw`，再校验其 SHA256 `0b90973c...`。该 Artifact 来自临时 PR #1；缓存复用不依赖合并该 PR。
 
 ## Android NDK r28c
 
