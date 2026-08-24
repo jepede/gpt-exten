@@ -1,0 +1,33 @@
+name: Fetch QEMU user-static Debian 12
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-qemu-user-static-bookworm.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Debian qemu-user-static
+        shell: bash
+        run: |
+          set -euxo pipefail
+          url='https://deb.debian.org/debian/pool/main/q/qemu/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb'
+          mkdir -p out
+          curl --fail --location --retry 5 --output 'out/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb' "$url"
+          sha256sum out/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb | tee out/SHA256SUMS.txt
+          stat -c '%n %s bytes' out/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb | tee out/SIZE.txt
+          printf '%s\n' "$url" > out/SOURCE.txt
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu-user-static-7.2-deb12u18-amd64
+          path: out/
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 0
