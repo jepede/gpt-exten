@@ -1,0 +1,14 @@
+{
+  "name": "QEMU user-static",
+  "version": "1:7.2+dfsg-7+deb12u18+b3",
+  "platform": "Debian 12 / Linux",
+  "architecture": "amd64 host; includes qemu-aarch64-static",
+  "run_id": "32748029497",
+  "artifact_id": "9527836019",
+  "artifact_url": "https://github.com/jepede/gpt-exten/actions/runs/32748029497/artifacts/9527836019",
+  "artifact_digest": "33fc072150ca5eb586aca5506b4a8c31226706f6b1f60cf68f94dc5ec6d89297",
+  "file": "qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb",
+  "size": 62603724,
+  "sha256": "c3e3ba2bd87f8c5b9a5da5ef21b5a3b82d7c63b89dd448d9ddaa4eabc5b6e402",
+  "source": "https://deb.debian.org/debian/pool/main/q/qemu/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb"
+}
