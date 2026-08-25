@@ -16,6 +16,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `32641331696` | SINGLE | `2026-11-21T13:06:16Z` |
 | TShield 6.2 Live W response | 6.2-live-w-bridge-run11-v1 | Any | Any | `32483541702` | SINGLE | `2026-11-19T12:47:00Z` |
 | QEMU user-static | 1:7.2+dfsg-7+deb12u18+b3 | Debian 12 / Linux | x86_64 | `32748029497` | SINGLE | `2026-11-22T15:57:40Z` |
+| nlohmann/json single header | 3.12.0 | Any | Any | `32814216489` | SINGLE | `2026-11-23T05:47:17Z` |
 
 
 ## TShield 6.2 Live W response
@@ -430,3 +431,44 @@ The package contains the statically linked user-mode emulators, including `qemu-
 ### Restore
 
 Download Artifact `9527836019`, verify the Artifact ZIP SHA256 `33fc072150ca5eb586aca5506b4a8c31226706f6b1f60cf68f94dc5ec6d89297`, extract the Debian package, verify its SHA256 `c3e3ba2bd87f8c5b9a5da5ef21b5a3b82d7c63b89dd448d9ddaa4eabc5b6e402`, then extract it with `dpkg-deb -x`. The installed binary used for AArch64 testing is `usr/bin/qemu-aarch64-static`.
+
+
+## nlohmann/json single header 3.12.0
+
+- Workflow: `.github/workflows/fetch-nlohmann-json-3.12.0.yml`
+- Workflow Name: `Fetch nlohmann json 3.12.0`
+- Run ID: `32814216489`
+- Run Number: `1`
+- Run Conclusion: `success`
+- Source: `https://raw.githubusercontent.com/nlohmann/json/v3.12.0/single_include/nlohmann/json.hpp`
+- Repository Visibility: `Public`
+- Requested Retention: `400 days`
+- Effective Retention: `90 days` (actual GitHub `expires_at` governs validity)
+- Storage Mode: `SINGLE`
+- Artifact Name: `nlohmann-json-3.12.0-header`
+- Artifact ID: `9550829984`
+- File: `json.hpp`
+- Artifact Archive Size: `141823` bytes
+- Artifact Archive SHA256 / Digest: `06e8d874db0ab47a2915e097a000945ce6ed26c41e55e328bb5882800486ee7a`
+- Original File: `json.hpp`
+- Original Size: `953436` bytes
+- Original SHA256: `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63`
+- Part Count: `1`
+- Created At: `2026-08-25T05:47:22Z`
+- Expires At: `2026-11-23T05:47:17Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| nlohmann/json single header | 3.12.0 | Any | Any | `json.hpp` | `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9550829984` | `nlohmann-json-3.12.0-header` | `953436` | `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63` | `141823` | `sha256:06e8d874db0ab47a2915e097a000945ce6ed26c41e55e328bb5882800486ee7a` | `2026-08-25T05:47:22Z` | `2026-11-23T05:47:17Z` |
+
+### Restore
+
+Download Artifact `9550829984`, verify the Artifact ZIP SHA256 `06e8d874db0ab47a2915e097a000945ce6ed26c41e55e328bb5882800486ee7a`, extract `json.hpp` and `SHA256SUMS.txt`, then verify `json.hpp` SHA256 `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63`.
