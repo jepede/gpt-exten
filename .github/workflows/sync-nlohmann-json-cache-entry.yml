@@ -14,24 +14,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Update ARTIFACT_CACHE.md
-        shell: python
+        shell: bash
         run: |
+          set -euo pipefail
+          python3 <<'PY'
           from pathlib import Path
 
           path = Path("ARTIFACT_CACHE.md")
           text = path.read_text(encoding="utf-8")
-          name = "nlohmann/json single header"
-          if f"| {name} | 3.12.0 |" in text:
+          if "| nlohmann/json single header | 3.12.0 |" in text:
               print("cache entry already exists")
               raise SystemExit(0)
 
-          index_row = "| nlohmann/json single header | 3.12.0 | Any | Any | `32814216489` | SINGLE | `2026-11-23T05:47:17Z` |\n"
+          row = "| nlohmann/json single header | 3.12.0 | Any | Any | `32814216489` | SINGLE | `2026-11-23T05:47:17Z` |\n"
           anchor = "| QEMU user-static | 1:7.2+dfsg-7+deb12u18+b3 | Debian 12 / Linux | x86_64 | `32748029497` | SINGLE | `2026-11-22T15:57:40Z` |\n"
           if anchor not in text:
               raise SystemExit("Index anchor not found; refusing unsafe edit")
-          text = text.replace(anchor, anchor + index_row, 1)
+          text = text.replace(anchor, anchor + row, 1)
 
-          record = r'''
+          record = """
 
 ## nlohmann/json single header 3.12.0
 
@@ -72,9 +73,9 @@ jobs:
 ### Restore
 
 Download Artifact `9550829984`, verify the Artifact ZIP SHA256 `06e8d874db0ab47a2915e097a000945ce6ed26c41e55e328bb5882800486ee7a`, extract `json.hpp` and `SHA256SUMS.txt`, then verify `json.hpp` SHA256 `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63`.
-'''
-          text = text.rstrip() + record + "\n"
-          path.write_text(text, encoding="utf-8")
+"""
+          path.write_text(text.rstrip() + record + "\n", encoding="utf-8")
+          PY
       - name: Commit cache index
         shell: bash
         run: |
