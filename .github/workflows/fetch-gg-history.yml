@@ -1,0 +1,52 @@
+name: Temporary GG History Fetch
+
+on:
+  push:
+    paths:
+      - .github/workflows/fetch-gg-history.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifact
+          while read -r ver url; do
+            echo "Downloading $ver"
+            curl -fL --retry 5 --retry-delay 2 -A 'Mozilla/5.0' -o "artifact/GameGuardian-${ver}.apk" "$url"
+            unzip -t "artifact/GameGuardian-${ver}.apk" >/dev/null
+            unzip -l "artifact/GameGuardian-${ver}.apk" | grep -q 'AndroidManifest.xml'
+          done <<'EOF'
+          90.0 https://uoldown.com/android/gameguardian/download/71649
+          91.0 https://uoldown.com/android/gameguardian/download/71650
+          92.0 https://uoldown.com/android/gameguardian/download/71651
+          93.0 https://uoldown.com/android/gameguardian/download/71652
+          94.0 https://uoldown.com/android/gameguardian/download/71654
+          95.0 https://uoldown.com/android/gameguardian/download/71655
+          96.0 https://uoldown.com/android/gameguardian/download/71656
+          96.1 https://uoldown.com/android/gameguardian/download/71657
+          97.0 https://uoldown.com/android/gameguardian/download/71658
+          98.0 https://uoldown.com/android/gameguardian/download/71659
+          99.0 https://uoldown.com/android/gameguardian/download/71660
+          100.0 https://uoldown.com/android/gameguardian/download/71661
+          101.0 https://uoldown.com/android/gameguardian/download
+          101.1 https://gameguardian.net/download
+          EOF
+          (cd artifact && sha256sum *.apk > SHA256SUMS.txt)
+          ls -lh artifact
+          cat artifact/SHA256SUMS.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameguardian-90-101-apks
+          path: artifact/
+          if-no-files-found: error
+          retention-days: 1
