@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - '.github/workflows/temp-fetch-lua53.yml'
+  pull_request:
+    paths:
+      - '.github/lua-fetch-trigger'
   workflow_dispatch:
 
 permissions:
