@@ -1,0 +1,41 @@
+name: Temporary GG Deobf Toolchain
+
+on:
+  push:
+    paths:
+      - .github/workflows/fetch-gg-deobf-toolchain.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download reverse toolchain
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifact
+
+          gh release download 1.5.6 -R skylot/jadx -p 'jadx-*.zip' -D artifact
+          gh release download v3.0.3 -R iBotPeaches/Apktool -p 'apktool_*.jar' -D artifact
+          gh release download 3.0.7 -R google/smali -D artifact || true
+          gh release download v1.3.0 -R patrickfav/uber-apk-signer -p '*.jar' -D artifact
+
+          echo '=== files ==='
+          ls -lah artifact
+          (cd artifact && sha256sum * > SHA256SUMS.txt)
+          cat artifact/SHA256SUMS.txt
+
+      - name: Upload temporary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gg-deobf-toolchain
+          path: artifact/
+          retention-days: 1
+          if-no-files-found: error
+          compression-level: 0
