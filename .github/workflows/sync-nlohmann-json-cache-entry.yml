@@ -1,91 +1,31 @@
 name: Sync nlohmann json cache entry
-
 on:
   push:
     paths:
-      - .github/workflows/sync-nlohmann-json-cache-entry.yml
-
+      - '.github/workflows/sync-nlohmann-json-cache-entry.yml'
 permissions:
   contents: write
-
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Update ARTIFACT_CACHE.md
+      - name: Insert verified artifact record and commit
         shell: bash
         run: |
           set -euo pipefail
-          python3 <<'PY'
-          from pathlib import Path
-
-          path = Path("ARTIFACT_CACHE.md")
-          text = path.read_text(encoding="utf-8")
-          if "| nlohmann/json single header | 3.12.0 |" in text:
-              print("cache entry already exists")
-              raise SystemExit(0)
-
-          row = "| nlohmann/json single header | 3.12.0 | Any | Any | `32814216489` | SINGLE | `2026-11-23T05:47:17Z` |\n"
-          anchor = "| QEMU user-static | 1:7.2+dfsg-7+deb12u18+b3 | Debian 12 / Linux | x86_64 | `32748029497` | SINGLE | `2026-11-22T15:57:40Z` |\n"
-          if anchor not in text:
-              raise SystemExit("Index anchor not found; refusing unsafe edit")
-          text = text.replace(anchor, anchor + row, 1)
-
-          record = """
-
-## nlohmann/json single header 3.12.0
-
-- Workflow: `.github/workflows/fetch-nlohmann-json-3.12.0.yml`
-- Workflow Name: `Fetch nlohmann json 3.12.0`
-- Run ID: `32814216489`
-- Run Number: `1`
-- Run Conclusion: `success`
-- Source: `https://raw.githubusercontent.com/nlohmann/json/v3.12.0/single_include/nlohmann/json.hpp`
-- Repository Visibility: `Public`
-- Requested Retention: `400 days`
-- Effective Retention: `90 days` (actual GitHub `expires_at` governs validity)
-- Storage Mode: `SINGLE`
-- Artifact Name: `nlohmann-json-3.12.0-header`
-- Artifact ID: `9550829984`
-- File: `json.hpp`
-- Artifact Archive Size: `141823` bytes
-- Artifact Archive SHA256 / Digest: `06e8d874db0ab47a2915e097a000945ce6ed26c41e55e328bb5882800486ee7a`
-- Original File: `json.hpp`
-- Original Size: `953436` bytes
-- Original SHA256: `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63`
-- Part Count: `1`
-- Created At: `2026-08-25T05:47:22Z`
-- Expires At: `2026-11-23T05:47:17Z`
-
-### Contents
-
-| Name | Version | Platform | Architecture | File/Path | SHA256 |
-|---|---|---|---|---|---|
-| nlohmann/json single header | 3.12.0 | Any | Any | `json.hpp` | `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63` |
-
-### Artifact
-
-| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
-|---:|---:|---|---:|---|---:|---|---|---|
-| 1/1 | `9550829984` | `nlohmann-json-3.12.0-header` | `953436` | `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63` | `141823` | `sha256:06e8d874db0ab47a2915e097a000945ce6ed26c41e55e328bb5882800486ee7a` | `2026-08-25T05:47:22Z` | `2026-11-23T05:47:17Z` |
-
-### Restore
-
-Download Artifact `9550829984`, verify the Artifact ZIP SHA256 `06e8d874db0ab47a2915e097a000945ce6ed26c41e55e328bb5882800486ee7a`, extract `json.hpp` and `SHA256SUMS.txt`, then verify `json.hpp` SHA256 `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63`.
-"""
-          path.write_text(text.rstrip() + record + "\n", encoding="utf-8")
-          PY
-      - name: Commit cache index
-        shell: bash
-        run: |
-          set -euo pipefail
-          if git diff --quiet -- ARTIFACT_CACHE.md; then
-            echo "No cache update required"
+          if grep -Fq '| nlohmann/json single header | 3.12.0 |' ARTIFACT_CACHE.md; then
+            echo 'Cache entry already present'
             exit 0
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          anchor='| QEMU user-static | 1:7.2+dfsg-7+deb12u18+b3 | Debian 12 / Linux | x86_64 | `32748029497` | SINGLE | `2026-11-22T15:57:40Z` |'
+          row='| nlohmann/json single header | 3.12.0 | Any | Any | `32814216489` | SINGLE | `2026-11-23T05:47:17Z` |'
+          grep -Fq "$anchor" ARTIFACT_CACHE.md
+          python3 -c 'from pathlib import Path; p=Path("ARTIFACT_CACHE.md"); s=p.read_text(); a="| QEMU user-static | 1:7.2+dfsg-7+deb12u18+b3 | Debian 12 / Linux | x86_64 | `32748029497` | SINGLE | `2026-11-22T15:57:40Z` |\n"; r="| nlohmann/json single header | 3.12.0 | Any | Any | `32814216489` | SINGLE | `2026-11-23T05:47:17Z` |\n"; p.write_text(s.replace(a,a+r,1))'
+          echo 'CgojIyBubG9obWFubi9qc29uIHNpbmdsZSBoZWFkZXIgMy4xMi4wCgotIFdvcmtmbG93OiBgLmdpdGh1Yi93b3JrZmxvd3MvZmV0Y2gtbmxvaG1hbm4tanNvbi0zLjEyLjAueW1sYAotIFdvcmtmbG93IE5hbWU6IGBGZXRjaCBubG9obWFubiBqc29uIDMuMTIuMGAKLSBSdW4gSUQ6IGAzMjgxNDIxNjQ4OWAKLSBSdW4gTnVtYmVyOiBgMWAKLSBSdW4gQ29uY2x1c2lvbjogYHN1Y2Nlc3NgCi0gU291cmNlOiBgaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL25sb2htYW5uL2pzb24vdjMuMTIuMC9zaW5nbGVfaW5jbHVkZS9ubG9obWFubi9qc29uLmhwcGAKLSBSZXBvc2l0b3J5IFZpc2liaWxpdHk6IGBQdWJsaWNgCi0gUmVxdWVzdGVkIFJldGVudGlvbjogYDQwMCBkYXlzYAotIEVmZmVjdGl2ZSBSZXRlbnRpb246IGA5MCBkYXlzYCAoYWN0dWFsIEdpdEh1YiBgZXhwaXJlc19hdGAgZ292ZXJucyB2YWxpZGl0eSkKLSBTdG9yYWdlIE1vZGU6IGBTSU5HTEVgCi0gQXJ0aWZhY3QgTmFtZTogYG5sb2htYW5uLWpzb24tMy4xMi4wLWhlYWRlcmAKLSBBcnRpZmFjdCBJRDogYDk1NTA4Mjk5ODRgCi0gRmlsZTogYGpzb24uaHBwYAotIEFydGlmYWN0IEFyY2hpdmUgU2l6ZTogYDE0MTgyM2AgYnl0ZXMKLSBBcnRpZmFjdCBBcmNoaXZlIFNIQTI1NiAvIERpZ2VzdDogYDA2ZThkODc0ZGIwYWI0N2EyOTE1ZTA5N2EwMDA5NDVjZTZlZDI2YzQxZTU1ZTMyOGJiNTg4MjgwMDQ4NmVlN2FgCi0gT3JpZ2luYWwgRmlsZTogYGpzb24uaHBwYAotIE9yaWdpbmFsIFNpemU6IGA5NTM0MzZgIGJ5dGVzCi0gT3JpZ2luYWwgU0hBMjU2OiBgYWFmMTI3YzA0Y2IzMWM0MDZlNWIwNGE2M2YxYWU4OTM2OWZjY2RlNmQ4ZmE3Y2RkYTFlZDRmMzJkZmM1ZGU2M2AKLSBQYXJ0IENvdW50OiBgMWAKLSBDcmVhdGVkIEF0OiBgMjAyNi0wOC0yNVQwNTo0NzoyMlpgCi0gRXhwaXJlcyBBdDogYDIwMjYtMTEtMjNUMDU6NDc6MTdaYAoKIyMjIENvbnRlbnRzCgp8IE5hbWUgfCBWZXJzaW9uIHwgUGxhdGZvcm0gfCBBcmNoaXRlY3R1cmUgfCBGaWxlL1BhdGggfCBTSEEyNTYgfAp8LS0tfC0tLXwtLS18LS0tfC0tLXwtLS18CnwgbmxvaG1hbm4vanNvbiBzaW5nbGUgaGVhZGVyIHwgMy4xMi4wIHwgQW55IHwgQW55IHwgYGpzb24uaHBwYCB8IGBhYWYxMjdjMDRjYjMxYzQwNmU1YjA0YTYzZjFhZTg5MzY5ZmNjZGU2ZDhmYTdjZGRhMWVkNGYzMmRmYzVkZTYzYCB8CgojIyMgQXJ0aWZhY3QKCnwgUGFydCB8IEFydGlmYWN0IElEIHwgQXJ0aWZhY3QgTmFtZSB8IE9yaWdpbmFsIFNpemUgfCBPcmlnaW5hbCBTSEEyNTYgfCBBcnRpZmFjdCBTaXplIHwgQXJ0aWZhY3QgRGlnZXN0IHwgQ3JlYXRlZCBBdCB8IEV4cGlyZXMgQXQgfAp8LS0tOnwtLS06fC0tLXwtLS06fC0tLXwtLS06fC0tLXwtLS18LS0tfAp8IDEvMSB8IGA5NTUwODI5OTg0YCB8IGBubG9obWFubi1qc29uLTMuMTIuMC1oZWFkZXJgIHwgYDk1MzQzNmAgfCBgYWFmMTI3YzA0Y2IzMWM0MDZlNWIwNGE2M2YxYWU4OTM2OWZjY2RlNmQ4ZmE3Y2RkYTFlZDRmMzJkZmM1ZGU2M2AgfCBgMTQxODIzYCB8IGBzaGEyNTY6MDZlOGQ4NzRkYjBhYjQ3YTI5MTVlMDk3YTAwMDk0NWNlNmVkMjZjNDFlNTVlMzI4YmI1ODgyODAwNDg2ZWU3YWAgfCBgMjAyNi0wOC0yNVQwNTo0NzoyMlpgIHwgYDIwMjYtMTEtMjNUMDU6NDc6MTdaYCB8CgojIyMgUmVzdG9yZQoKRG93bmxvYWQgQXJ0aWZhY3QgYDk1NTA4Mjk5ODRgLCB2ZXJpZnkgdGhlIEFydGlmYWN0IFpJUCBTSEEyNTYgYDA2ZThkODc0ZGIwYWI0N2EyOTE1ZTA5N2EwMDA5NDVjZTZlZDI2YzQxZTU1ZTMyOGJiNTg4MjgwMDQ4NmVlN2FgLCBleHRyYWN0IGBqc29uLmhwcGAgYW5kIGBTSEEyNTZTVU1TLnR4dGAsIHRoZW4gdmVyaWZ5IGBqc29uLmhwcGAgU0hBMjU2IGBhYWYxMjdjMDRjYjMxYzQwNmU1YjA0YTYzZjFhZTg5MzY5ZmNjZGU2ZDhmYTdjZGRhMWVkNGYzMmRmYzVkZTYzYC4K' | base64 -d >> ARTIFACT_CACHE.md
+          grep -Fq '| nlohmann/json single header | 3.12.0 | Any | Any | `json.hpp` | `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63` |' ARTIFACT_CACHE.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add ARTIFACT_CACHE.md
-          git commit -m "Cache nlohmann json 3.12.0 artifact"
+          git commit -m 'Cache nlohmann json 3.12.0 artifact'
           git push
