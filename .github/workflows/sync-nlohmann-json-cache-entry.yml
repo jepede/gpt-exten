@@ -1,0 +1,90 @@
+name: Sync nlohmann json cache entry
+
+on:
+  push:
+    paths:
+      - .github/workflows/sync-nlohmann-json-cache-entry.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update ARTIFACT_CACHE.md
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("ARTIFACT_CACHE.md")
+          text = path.read_text(encoding="utf-8")
+          name = "nlohmann/json single header"
+          if f"| {name} | 3.12.0 |" in text:
+              print("cache entry already exists")
+              raise SystemExit(0)
+
+          index_row = "| nlohmann/json single header | 3.12.0 | Any | Any | `32814216489` | SINGLE | `2026-11-23T05:47:17Z` |\n"
+          anchor = "| QEMU user-static | 1:7.2+dfsg-7+deb12u18+b3 | Debian 12 / Linux | x86_64 | `32748029497` | SINGLE | `2026-11-22T15:57:40Z` |\n"
+          if anchor not in text:
+              raise SystemExit("Index anchor not found; refusing unsafe edit")
+          text = text.replace(anchor, anchor + index_row, 1)
+
+          record = r'''
+
+## nlohmann/json single header 3.12.0
+
+- Workflow: `.github/workflows/fetch-nlohmann-json-3.12.0.yml`
+- Workflow Name: `Fetch nlohmann json 3.12.0`
+- Run ID: `32814216489`
+- Run Number: `1`
+- Run Conclusion: `success`
+- Source: `https://raw.githubusercontent.com/nlohmann/json/v3.12.0/single_include/nlohmann/json.hpp`
+- Repository Visibility: `Public`
+- Requested Retention: `400 days`
+- Effective Retention: `90 days` (actual GitHub `expires_at` governs validity)
+- Storage Mode: `SINGLE`
+- Artifact Name: `nlohmann-json-3.12.0-header`
+- Artifact ID: `9550829984`
+- File: `json.hpp`
+- Artifact Archive Size: `141823` bytes
+- Artifact Archive SHA256 / Digest: `06e8d874db0ab47a2915e097a000945ce6ed26c41e55e328bb5882800486ee7a`
+- Original File: `json.hpp`
+- Original Size: `953436` bytes
+- Original SHA256: `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63`
+- Part Count: `1`
+- Created At: `2026-08-25T05:47:22Z`
+- Expires At: `2026-11-23T05:47:17Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| nlohmann/json single header | 3.12.0 | Any | Any | `json.hpp` | `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9550829984` | `nlohmann-json-3.12.0-header` | `953436` | `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63` | `141823` | `sha256:06e8d874db0ab47a2915e097a000945ce6ed26c41e55e328bb5882800486ee7a` | `2026-08-25T05:47:22Z` | `2026-11-23T05:47:17Z` |
+
+### Restore
+
+Download Artifact `9550829984`, verify the Artifact ZIP SHA256 `06e8d874db0ab47a2915e097a000945ce6ed26c41e55e328bb5882800486ee7a`, extract `json.hpp` and `SHA256SUMS.txt`, then verify `json.hpp` SHA256 `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63`.
+'''
+          text = text.rstrip() + record + "\n"
+          path.write_text(text, encoding="utf-8")
+      - name: Commit cache index
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- ARTIFACT_CACHE.md; then
+            echo "No cache update required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ARTIFACT_CACHE.md
+          git commit -m "Cache nlohmann json 3.12.0 artifact"
+          git push
