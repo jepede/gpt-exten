@@ -10,71 +10,138 @@ permissions:
   contents: read
 
 jobs:
-  probe:
+  fetch:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Probe official version endpoints
+      - name: Download official historical APKs
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p artifact
+          mkdir -p artifact work
           ua='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36'
           base='https://gameguardian.net/forum/files/file/2-gameguardian/'
-          curl -fLsS -A "$ua" -c artifact/cookies.txt -D artifact/base.headers -o artifact/base.html "$base"
-          csrf=$(grep -oE 'csrfKey=[0-9a-f]+' artifact/base.html | head -1 | cut -d= -f2)
-          echo "csrf=$csrf"
+          curl -fLsS --retry 5 --retry-delay 2 -A "$ua" -c work/cookies.txt -o work/base.html "$base"
+          csrf=$(grep -oE 'csrfKey=[0-9a-f]+' work/base.html | head -1 | cut -d= -f2)
+          test -n "$csrf"
+          echo "Session initialized."
 
-          curl -fLsS -A "$ua" -b artifact/cookies.txt -c artifact/cookies.txt \
-            -e "$base" -H 'X-Requested-With: XMLHttpRequest' \
-            -D artifact/download-dialog.headers -o artifact/download-dialog.html \
-            "${base}?do=download"
+          AAPT=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -type f -name aapt 2>/dev/null | sort -V | tail -1 || true)
+          echo "AAPT=${AAPT:-unavailable}"
 
-          for pair in '101.0 6370' '100.0 6030' '90.0 5108'; do
-            set -- $pair; ver=$1; id=$2
-            curl -fLsS -A "$ua" -b artifact/cookies.txt -e "$base" \
-              -D "artifact/changelog-${ver}.headers" -o "artifact/changelog-${ver}.html" \
-              "${base}?changelog=${id}"
-            for kind in id hash; do
-              val="$id"
-              case "$ver" in
-                101.0) hash='74e37e9a80c754208a9fd717362b8c62';;
-                100.0) hash='cd3cddd07f925e39c9d551adf6e54a7b';;
-                90.0) hash='c09bd36ca8c5084d4ccea84fea55388f';;
-              esac
-              [ "$kind" = hash ] && val="$hash"
-              url="${base}?do=download&version=${val}&csrfKey=${csrf}"
-              curl -LsS -A "$ua" -b artifact/cookies.txt -e "${base}?changelog=${id}" \
-                -D "artifact/try-${ver}-${kind}.headers" -o "artifact/try-${ver}-${kind}.body" "$url" || true
-            done
-          done
+          valid_apk() {
+            local f="$1"
+            unzip -t "$f" >/dev/null 2>&1 || return 1
+            unzip -Z1 "$f" | grep -Fx 'AndroidManifest.xml' >/dev/null || return 1
+            return 0
+          }
 
-          python3 - <<'PY'
-          from pathlib import Path
-          import html,re,zipfile
-          root=Path('artifact')
-          for p in sorted(root.glob('*.html'))+sorted(root.glob('*.body')):
-              b=p.read_bytes()
-              print(f'\n=== {p.name} {len(b)} bytes magic={b[:12]!r} ===')
-              try:
-                  s=html.unescape(b.decode('utf-8','ignore')).replace('\\/','/')
-              except Exception:
-                  s=''
-              vals=[]
-              for pat in [r'https?://[^\s"\'<>]+', r'href=["\']([^"\']+)', r'action=["\']([^"\']+)']:
-                  for m in re.finditer(pat,s,re.I):
-                      v=m.group(1) if m.lastindex else m.group(0)
-                      if any(x in v.lower() for x in ('do=download','version=','confirm=','&r=','?r=','.apk')) and v not in vals:
-                          vals.append(v)
-              for v in vals[:80]: print(v[:2000])
-              for pat in [r'(?i)versionTitle[^<]*>\s*([^<]+)', r'(?i)data-changelogTitle=["\']([^"\']+)', r'(?i)(?:error|sorry|permission|not available)[^<]{0,200}']:
-                  mm=re.findall(pat,s)
-                  if mm: print('MATCH',pat,mm[:20])
+          extract_links() {
+            local f="$1"
+            python3 - "$f" <<'PY'
+          import html,re,sys,urllib.parse
+          s=html.unescape(open(sys.argv[1],encoding='utf-8',errors='ignore').read()).replace('\\/','/')
+          base='https://gameguardian.net/forum/files/file/2-gameguardian/'
+          out=[]
+          for m in re.finditer(r'href=["\']([^"\']+)',s,re.I):
+              u=urllib.parse.urljoin(base,m.group(1))
+              lo=u.lower()
+              if 'do=download' in lo and ('&r=' in lo or '?r=' in lo or 'confirm=1' in lo) and u not in out:
+                  out.append(u)
+          for u in out: print(u)
           PY
+          }
 
-      - name: Upload probe
+          fetch_version() {
+            local ver="$1" vid="$2"
+            local out="artifact/GameGuardian-${ver}.apk"
+            local first
+            if [ "$vid" = current ]; then
+              first="${base}?do=download&confirm=1&csrfKey=${csrf}"
+            else
+              first="${base}?do=download&confirm=1&version=${vid}&csrfKey=${csrf}"
+            fi
+            echo "=== Fetch ${ver} (version record ${vid}) ==="
+            curl -fLsS --retry 5 --retry-delay 2 -A "$ua" -b work/cookies.txt -c work/cookies.txt \
+              -e "$base" -D "work/${ver}.headers" -o "work/${ver}.first" "$first"
+            if valid_apk "work/${ver}.first"; then
+              mv "work/${ver}.first" "$out"
+            else
+              echo "First response is not APK; checking official file-selection links."
+              mapfile -t links < <(extract_links "work/${ver}.first")
+              got=0
+              n=0
+              for link in "${links[@]}"; do
+                n=$((n+1))
+                cand="work/${ver}.candidate-${n}"
+                echo "candidate[$n]=$link"
+                curl -fLsS --retry 4 --retry-delay 2 -A "$ua" -b work/cookies.txt -c work/cookies.txt \
+                  -e "$first" -o "$cand" "$link" || continue
+                if valid_apk "$cand"; then
+                  mv "$cand" "$out"
+                  got=1
+                  break
+                fi
+              done
+              if [ "$got" -ne 1 ]; then
+                echo "ERROR: could not resolve APK for ${ver}"
+                file "work/${ver}.first" || true
+                wc -c "work/${ver}.first" || true
+                python3 - "work/${ver}.first" <<'PY'
+          import html,re,sys
+          s=html.unescape(open(sys.argv[1],errors='ignore').read())
+          t=re.sub(r'<[^>]+>',' ',s)
+          t=re.sub(r'\s+',' ',t)
+          print(t[:3000])
+          PY
+                return 1
+              fi
+            fi
+
+            sha=$(sha256sum "$out" | awk '{print $1}')
+            size=$(stat -c %s "$out")
+            pkg=''; actual=''
+            if [ -n "$AAPT" ]; then
+              badging=$("$AAPT" dump badging "$out" 2>/dev/null | head -1 || true)
+              pkg=$(printf '%s\n' "$badging" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")
+              actual=$(printf '%s\n' "$badging" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p")
+            fi
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$ver" "$vid" "$(basename "$out")" "$size" "$sha" "$pkg" "$actual" >> artifact/MANIFEST.tsv
+            echo "OK ${ver}: size=${size} sha256=${sha} package=${pkg:-?} versionName=${actual:-?}"
+          }
+
+          printf 'RequestedVersion\tOfficialVersionRecord\tFile\tSize\tSHA256\tPackage\tDetectedVersionName\n' > artifact/MANIFEST.tsv
+          while read -r ver vid; do
+            fetch_version "$ver" "$vid"
+          done <<'EOF'
+          90.0 5108
+          91.0 5120
+          92.0 5217
+          93.0 5229
+          94.0 5247
+          95.0 5315
+          96.0 5340
+          96.1 5447
+          97.0 5480
+          98.0 5486
+          99.0 5831
+          100.0 6030
+          101.0 6370
+          101.1 current
+          EOF
+
+          (cd artifact && sha256sum GameGuardian-*.apk | sort -V > SHA256SUMS.txt)
+          echo '=== MANIFEST ==='
+          cat artifact/MANIFEST.tsv
+          echo '=== SHA256SUMS ==='
+          cat artifact/SHA256SUMS.txt
+          du -sh artifact
+
+      - name: Upload temporary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gg-official-version-probe
+          name: gameguardian-official-90-101-apks
           path: artifact/
           retention-days: 1
           if-no-files-found: error
+          compression-level: 0
