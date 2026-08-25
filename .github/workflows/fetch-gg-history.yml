@@ -10,106 +10,51 @@ permissions:
   contents: read
 
 jobs:
-  fetch:
+  inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
-      - name: Fetch historical packages
+      - name: Inspect second-stage redirects
         shell: bash
         run: |
-          set -u
-          mkdir -p artifact pages
-          : > artifact/SOURCES.tsv
-          : > artifact/MISSING.txt
-
-          valid_apk() {
-            local f="$1"
-            unzip -t "$f" >/dev/null 2>&1 || return 1
-            unzip -Z1 "$f" 2>/dev/null | grep -Fx 'AndroidManifest.xml' >/dev/null || return 1
-            return 0
-          }
-
-          fetch_uoldown() {
-            local ver="$1" page="$2" html="pages/${ver}.html" apk="artifact/GameGuardian-${ver}.apk"
-            echo "=== ${ver} ==="
-            if ! curl -fL --retry 5 --retry-delay 2 -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36' -o "$html" "$page"; then
-              echo "$ver page-fetch-failed" >> artifact/MISSING.txt
-              return
-            fi
-            local direct
-            direct=$(python3 - "$html" <<'PY'
-          import html,re,sys
-          s=html.unescape(open(sys.argv[1],encoding='utf-8',errors='ignore').read()).replace('\\/','/')
-          m=re.search(r'id=["\']download-button["\'][^>]*\bdata-url=["\']([^"\']+)',s,re.I)
-          if not m:
-              m=re.search(r'\bdata-url=["\']([^"\']+/dwn/[^"\']+)',s,re.I)
+          set -euo pipefail
+          mkdir -p artifact
+          ua='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36'
+          p='https://uoldown.com/android/gameguardian/download/71649'
+          curl -fL --retry 4 -A "$ua" -o artifact/uoldown-stage1.html "$p"
+          d=$(python3 - <<'PY'
+          import html,re
+          s=html.unescape(open('artifact/uoldown-stage1.html',errors='ignore').read()).replace('\\/','/')
+          m=re.search(r'id=["\']download-button["\'][^>]*data-url=["\']([^"\']+)',s,re.I)
           print(m.group(1) if m else '')
           PY
           )
-            echo "resolved: $direct"
-            if [ -z "$direct" ]; then
-              echo "$ver no-direct-url" >> artifact/MISSING.txt
-              return
-            fi
-            if ! curl -fL --retry 5 --retry-delay 2 -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36' -e "$page" -o "$apk" "$direct"; then
-              rm -f "$apk"
-              echo "$ver file-fetch-failed" >> artifact/MISSING.txt
-              return
-            fi
-            if ! valid_apk "$apk"; then
-              file "$apk" || true
-              wc -c "$apk" || true
-              rm -f "$apk"
-              echo "$ver invalid-apk" >> artifact/MISSING.txt
-              return
-            fi
-            printf '%s\t%s\n' "$ver" "$direct" >> artifact/SOURCES.tsv
-            sha256sum "$apk"
-          }
+          echo "stage1 data-url=$d"
+          curl -fL --retry 4 -A "$ua" -e "$p" -D artifact/uoldown-stage2-headers.txt -o artifact/uoldown-stage2.html "$d"
+          curl -fL --retry 4 -A "$ua" -D artifact/official-headers.txt -o artifact/official.html https://gameguardian.net/download
 
-          while read -r ver page; do
-            fetch_uoldown "$ver" "$page"
-          done <<'EOF'
-          90.0 https://uoldown.com/android/gameguardian/download/71649
-          91.0 https://uoldown.com/android/gameguardian/download/71650
-          92.0 https://uoldown.com/android/gameguardian/download/71651
-          93.0 https://uoldown.com/android/gameguardian/download/71652
-          94.0 https://uoldown.com/android/gameguardian/download/71653
-          95.0 https://uoldown.com/android/gameguardian/download/71655
-          96.0 https://uoldown.com/android/gameguardian/download/71656
-          96.1 https://uoldown.com/android/gameguardian/download/71657
-          97.0 https://uoldown.com/android/gameguardian/download/71658
-          98.0 https://uoldown.com/android/gameguardian/download/71659
-          99.0 https://uoldown.com/android/gameguardian/download/71660
-          100.0 https://uoldown.com/android/gameguardian/download/71661
-          101.0 https://uoldown.com/android/gameguardian/download
-          EOF
+          python3 - <<'PY'
+          import html,re
+          for fn in ['artifact/uoldown-stage2.html','artifact/official.html']:
+              s=html.unescape(open(fn,errors='ignore').read()).replace('\\/','/')
+              print('\n===',fn,'bytes',len(s),'===')
+              for m in re.finditer(r'<[^>]+>',s):
+                  tag=m.group(0)
+                  lo=tag.lower()
+                  if any(k in lo for k in ('download','data-url','data-href','onclick','location','refresh','.apk','action=')):
+                      print(tag[:4000])
+              print('--- URLs ---')
+              vals=[]
+              for m in re.finditer(r'https?://[^\s"\'<>]+',s,re.I):
+                  u=m.group(0)
+                  if any(k in u.lower() for k in ('apk','download','/dwn/','file','gameguardian')):
+                      vals.append(u)
+              for u in dict.fromkeys(vals): print(u)
+          PY
 
-          echo '=== 101.1 official ==='
-          latest='artifact/GameGuardian-101.1.apk'
-          curl -fL --retry 5 --retry-delay 2 -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36' -o "$latest" https://gameguardian.net/download || true
-          if valid_apk "$latest"; then
-            printf '%s\t%s\n' '101.1' 'https://gameguardian.net/download' >> artifact/SOURCES.tsv
-          else
-            file "$latest" 2>/dev/null || true
-            wc -c "$latest" 2>/dev/null || true
-            rm -f "$latest"
-            echo '101.1 official-direct-invalid' >> artifact/MISSING.txt
-          fi
-
-          (cd artifact && sha256sum GameGuardian-*.apk 2>/dev/null | sort -V > SHA256SUMS.txt) || true
-          echo '=== files ==='
-          ls -lh artifact
-          echo '=== SHA256 ==='
-          cat artifact/SHA256SUMS.txt
-          echo '=== missing ==='
-          cat artifact/MISSING.txt
-
-      - name: Upload temporary artifact
-        if: always()
+      - name: Upload inspection artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gameguardian-90-101-apks
+          name: gg-second-stage-inspection
           path: artifact/
           if-no-files-found: error
           retention-days: 1
