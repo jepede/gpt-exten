@@ -10,43 +10,49 @@ permissions:
   contents: read
 
 jobs:
-  fetch:
+  inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Download files
+      - name: Inspect historical download page
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p artifact
-          while read -r ver url; do
-            echo "Downloading $ver"
-            curl -fL --retry 5 --retry-delay 2 -A 'Mozilla/5.0' -o "artifact/GameGuardian-${ver}.apk" "$url"
-            unzip -t "artifact/GameGuardian-${ver}.apk" >/dev/null
-            unzip -l "artifact/GameGuardian-${ver}.apk" | grep -q 'AndroidManifest.xml'
-          done <<'EOF'
-          90.0 https://uoldown.com/android/gameguardian/download/71649
-          91.0 https://uoldown.com/android/gameguardian/download/71650
-          92.0 https://uoldown.com/android/gameguardian/download/71651
-          93.0 https://uoldown.com/android/gameguardian/download/71652
-          94.0 https://uoldown.com/android/gameguardian/download/71654
-          95.0 https://uoldown.com/android/gameguardian/download/71655
-          96.0 https://uoldown.com/android/gameguardian/download/71656
-          96.1 https://uoldown.com/android/gameguardian/download/71657
-          97.0 https://uoldown.com/android/gameguardian/download/71658
-          98.0 https://uoldown.com/android/gameguardian/download/71659
-          99.0 https://uoldown.com/android/gameguardian/download/71660
-          100.0 https://uoldown.com/android/gameguardian/download/71661
-          101.0 https://uoldown.com/android/gameguardian/download
-          101.1 https://gameguardian.net/download
-          EOF
-          (cd artifact && sha256sum *.apk > SHA256SUMS.txt)
-          ls -lh artifact
-          cat artifact/SHA256SUMS.txt
+          curl -fL --retry 5 --retry-delay 2 -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36' \
+            -D artifact/headers.txt \
+            -o artifact/page90.html \
+            https://uoldown.com/android/gameguardian/download/71649
+          file artifact/page90.html
+          wc -c artifact/page90.html
+          echo '=== headers ==='
+          cat artifact/headers.txt
+          echo '=== candidate links ==='
+          python3 - <<'PY'
+          import html, re
+          s = open('artifact/page90.html', encoding='utf-8', errors='ignore').read()
+          s = html.unescape(s).replace('\\/', '/')
+          pats = [
+              r'https?://[^\s"\'<>]+',
+              r'(?:href|src|action|data-url|data-href)\s*=\s*["\']([^"\']+)',
+          ]
+          vals=[]
+          for p in pats:
+              for m in re.finditer(p, s, re.I):
+                  v = m.group(1) if m.lastindex else m.group(0)
+                  if any(x in v.lower() for x in ('apk','download','gameguardian','file','cdn')):
+                      vals.append(v)
+          for v in dict.fromkeys(vals):
+              print(v)
+          print('=== lines containing apk/download ===')
+          for line in s.splitlines():
+              if re.search(r'apk|download', line, re.I):
+                  print(line[:2000])
+          PY
 
-      - name: Upload artifact
+      - name: Upload inspection artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gameguardian-90-101-apks
+          name: gg-history-inspection
           path: artifact/
           if-no-files-found: error
           retention-days: 1
