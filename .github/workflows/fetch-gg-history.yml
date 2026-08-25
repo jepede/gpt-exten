@@ -10,51 +10,71 @@ permissions:
   contents: read
 
 jobs:
-  inspect:
+  probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Inspect second-stage redirects
+      - name: Probe official version endpoints
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p artifact
           ua='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36'
-          p='https://uoldown.com/android/gameguardian/download/71649'
-          curl -fL --retry 4 -A "$ua" -o artifact/uoldown-stage1.html "$p"
-          d=$(python3 - <<'PY'
-          import html,re
-          s=html.unescape(open('artifact/uoldown-stage1.html',errors='ignore').read()).replace('\\/','/')
-          m=re.search(r'id=["\']download-button["\'][^>]*data-url=["\']([^"\']+)',s,re.I)
-          print(m.group(1) if m else '')
-          PY
-          )
-          echo "stage1 data-url=$d"
-          curl -fL --retry 4 -A "$ua" -e "$p" -D artifact/uoldown-stage2-headers.txt -o artifact/uoldown-stage2.html "$d"
-          curl -fL --retry 4 -A "$ua" -D artifact/official-headers.txt -o artifact/official.html https://gameguardian.net/download
+          base='https://gameguardian.net/forum/files/file/2-gameguardian/'
+          curl -fLsS -A "$ua" -c artifact/cookies.txt -D artifact/base.headers -o artifact/base.html "$base"
+          csrf=$(grep -oE 'csrfKey=[0-9a-f]+' artifact/base.html | head -1 | cut -d= -f2)
+          echo "csrf=$csrf"
+
+          curl -fLsS -A "$ua" -b artifact/cookies.txt -c artifact/cookies.txt \
+            -e "$base" -H 'X-Requested-With: XMLHttpRequest' \
+            -D artifact/download-dialog.headers -o artifact/download-dialog.html \
+            "${base}?do=download"
+
+          for pair in '101.0 6370' '100.0 6030' '90.0 5108'; do
+            set -- $pair; ver=$1; id=$2
+            curl -fLsS -A "$ua" -b artifact/cookies.txt -e "$base" \
+              -D "artifact/changelog-${ver}.headers" -o "artifact/changelog-${ver}.html" \
+              "${base}?changelog=${id}"
+            for kind in id hash; do
+              val="$id"
+              case "$ver" in
+                101.0) hash='74e37e9a80c754208a9fd717362b8c62';;
+                100.0) hash='cd3cddd07f925e39c9d551adf6e54a7b';;
+                90.0) hash='c09bd36ca8c5084d4ccea84fea55388f';;
+              esac
+              [ "$kind" = hash ] && val="$hash"
+              url="${base}?do=download&version=${val}&csrfKey=${csrf}"
+              curl -LsS -A "$ua" -b artifact/cookies.txt -e "${base}?changelog=${id}" \
+                -D "artifact/try-${ver}-${kind}.headers" -o "artifact/try-${ver}-${kind}.body" "$url" || true
+            done
+          done
 
           python3 - <<'PY'
-          import html,re
-          for fn in ['artifact/uoldown-stage2.html','artifact/official.html']:
-              s=html.unescape(open(fn,errors='ignore').read()).replace('\\/','/')
-              print('\n===',fn,'bytes',len(s),'===')
-              for m in re.finditer(r'<[^>]+>',s):
-                  tag=m.group(0)
-                  lo=tag.lower()
-                  if any(k in lo for k in ('download','data-url','data-href','onclick','location','refresh','.apk','action=')):
-                      print(tag[:4000])
-              print('--- URLs ---')
+          from pathlib import Path
+          import html,re,zipfile
+          root=Path('artifact')
+          for p in sorted(root.glob('*.html'))+sorted(root.glob('*.body')):
+              b=p.read_bytes()
+              print(f'\n=== {p.name} {len(b)} bytes magic={b[:12]!r} ===')
+              try:
+                  s=html.unescape(b.decode('utf-8','ignore')).replace('\\/','/')
+              except Exception:
+                  s=''
               vals=[]
-              for m in re.finditer(r'https?://[^\s"\'<>]+',s,re.I):
-                  u=m.group(0)
-                  if any(k in u.lower() for k in ('apk','download','/dwn/','file','gameguardian')):
-                      vals.append(u)
-              for u in dict.fromkeys(vals): print(u)
+              for pat in [r'https?://[^\s"\'<>]+', r'href=["\']([^"\']+)', r'action=["\']([^"\']+)']:
+                  for m in re.finditer(pat,s,re.I):
+                      v=m.group(1) if m.lastindex else m.group(0)
+                      if any(x in v.lower() for x in ('do=download','version=','confirm=','&r=','?r=','.apk')) and v not in vals:
+                          vals.append(v)
+              for v in vals[:80]: print(v[:2000])
+              for pat in [r'(?i)versionTitle[^<]*>\s*([^<]+)', r'(?i)data-changelogTitle=["\']([^"\']+)', r'(?i)(?:error|sorry|permission|not available)[^<]{0,200}']:
+                  mm=re.findall(pat,s)
+                  if mm: print('MATCH',pat,mm[:20])
           PY
 
-      - name: Upload inspection artifact
+      - name: Upload probe
         uses: actions/upload-artifact@v4
         with:
-          name: gg-second-stage-inspection
+          name: gg-official-version-probe
           path: artifact/
-          if-no-files-found: error
           retention-days: 1
+          if-no-files-found: error
