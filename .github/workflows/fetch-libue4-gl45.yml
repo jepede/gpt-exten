@@ -1,0 +1,33 @@
+name: fetch-libue4-gl45
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/fetch-libue4-gl45.yml
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download libUE4 GL 4.5
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.5.so'
+          curl --fail --location --retry 5 --retry-all-errors --output libUE4-GL-4.5.so "$url"
+          echo 'b5e68be0e06e52a81713c4241169ec493772bdcbca9b54b0845e89d08d2f8fdc  libUE4-GL-4.5.so' | sha256sum -c -
+          ls -lh libUE4-GL-4.5.so
+          file libUE4-GL-4.5.so
+      - name: Upload libUE4
+        uses: actions/upload-artifact@v4
+        with:
+          name: libUE4-GL-4.5
+          path: libUE4-GL-4.5.so
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
