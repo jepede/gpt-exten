@@ -1,0 +1,36 @@
+name: Temporary Lua 5.3.6 Source Fetch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-fetch-lua-5.3.6.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Lua 5.3.6 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p staging
+          curl --fail --location --retry 3 \
+            https://www.lua.org/ftp/lua-5.3.6.tar.gz \
+            -o staging/lua-5.3.6.tar.gz
+          (cd staging && sha256sum lua-5.3.6.tar.gz > SHA256SUMS.txt)
+          cat staging/SHA256SUMS.txt
+          stat -c '%n %s bytes' staging/lua-5.3.6.tar.gz
+
+      - name: Upload source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: temp-lua-5.3.6-source
+          path: |
+            staging/lua-5.3.6.tar.gz
+            staging/SHA256SUMS.txt
+          retention-days: 1
+          if-no-files-found: error
