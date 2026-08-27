@@ -18,6 +18,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | QEMU user-static | 1:7.2+dfsg-7+deb12u18+b3 | Debian 12 / Linux | x86_64 | `32748029497` | SINGLE | `2026-11-22T15:57:40Z` |
 | nlohmann/json single header | 3.12.0 | Any | Any | `32814216489` | SINGLE | `2026-11-23T05:47:17Z` |
 
+| libUE4 GL | 4.5-v1.0.1 | Android | AArch64 | `33073762454` | SINGLE | `2026-11-25T12:50:04Z` |
 
 ## TShield 6.2 Live W response
 
@@ -472,3 +473,43 @@ Download Artifact `9527836019`, verify the Artifact ZIP SHA256 `33fc072150ca5eb5
 ### Restore
 
 Download Artifact `9550829984`, verify the Artifact ZIP SHA256 `06e8d874db0ab47a2915e097a000945ce6ed26c41e55e328bb5882800486ee7a`, extract `json.hpp` and `SHA256SUMS.txt`, then verify `json.hpp` SHA256 `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63`.
+
+## libUE4 GL 4.5 v1.0.1
+
+- Workflow: `.github/workflows/tmp-fetch-libue4-gl45-20260827.yml` (temporary branch only; do not merge)
+- Workflow Name: `Temporary libUE4 GL 4.5 Fetch`
+- Run ID: `33073762454`
+- Run Number: `1`
+- Run Conclusion: `success`
+- Source: `https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.5.so`
+- Release: `v1.0.1`
+- Release Asset ID: `473330078`
+- Repository Visibility: `Public`
+- Requested Retention: `90 days`
+- Storage Mode: `SINGLE`
+- Artifact Name: `libue4-gl-4.5-v1.0.1`
+- Artifact ID: `9646923730`
+- File: `libUE4-GL-4.5.so`
+- Original Size: `247976280` bytes
+- Original SHA256: `b5e68be0e06e52a81713c4241169ec493772bdcbca9b54b0845e89d08d2f8fdc`
+- Artifact Archive Size: `247976629` bytes
+- Artifact Digest: `sha256:42afa71f4ff1b1e20a161999c5ddde447352893109edb36fc9b7daea9e94b749`
+- Created At: `2026-08-27T12:50:13Z`
+- Expires At: `2026-11-25T12:50:04Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| libUE4 GL | 4.5-v1.0.1 | Android | AArch64 | `libUE4-GL-4.5.so` | `b5e68be0e06e52a81713c4241169ec493772bdcbca9b54b0845e89d08d2f8fdc` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9646923730` | `libue4-gl-4.5-v1.0.1` | `247976280` | `b5e68be0e06e52a81713c4241169ec493772bdcbca9b54b0845e89d08d2f8fdc` | `247976629` | `sha256:42afa71f4ff1b1e20a161999c5ddde447352893109edb36fc9b7daea9e94b749` | `2026-08-27T12:50:13Z` | `2026-11-25T12:50:04Z` |
+
+### Restore
+
+下载 Artifact `9646923730`，校验 Artifact ZIP SHA256 `42afa71f4ff1b1e20a161999c5ddde447352893109edb36fc9b7daea9e94b749`；解压得到 `libUE4-GL-4.5.so`，再校验 SHA256 `b5e68be0e06e52a81713c4241169ec493772bdcbca9b54b0845e89d08d2f8fdc`。
+
