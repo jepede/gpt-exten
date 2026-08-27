@@ -1,0 +1,116 @@
+name: Build VaultPony Android ARM64
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-vaultpony-android-arm64.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_REPO: https://github.com/norsehorse-dev/VaultPonyCore.git
+      SOURCE_COMMIT: fb4c460b84577543d4e90b9ede51dcdbd0b674e7
+      API_LEVEL: '24'
+      NDK_RUN_ID: '31684150811'
+      NDK_ZIP_SHA256: dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached Android NDK r28c
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/ndkparts/00 /tmp/ndkparts/01
+          gh run download "$NDK_RUN_ID" -R "$GITHUB_REPOSITORY" -n ndk-r28c-part-00 -D /tmp/ndkparts/00
+          gh run download "$NDK_RUN_ID" -R "$GITHUB_REPOSITORY" -n ndk-r28c-part-01 -D /tmp/ndkparts/01
+          PART0="$(find /tmp/ndkparts/00 -type f -name 'ndk-r28c.part.00' -print -quit)"
+          PART1="$(find /tmp/ndkparts/01 -type f -name 'ndk-r28c.part.01' -print -quit)"
+          test -n "$PART0" && test -n "$PART1"
+          cat "$PART0" "$PART1" > /tmp/android-ndk-r28c-linux.zip
+          echo "$NDK_ZIP_SHA256  /tmp/android-ndk-r28c-linux.zip" | sha256sum -c -
+          unzip -q /tmp/android-ndk-r28c-linux.zip -d /tmp
+          test -x /tmp/android-ndk-r28c/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang
+          echo "ANDROID_NDK_HOME=/tmp/android-ndk-r28c" >> "$GITHUB_ENV"
+
+      - name: Fetch pinned VaultPonyCore
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git clone "$SOURCE_REPO" VaultPonyCore
+          cd VaultPonyCore
+          git checkout --detach "$SOURCE_COMMIT"
+          test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
+
+      - name: Install pinned Rust target
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rustup toolchain install 1.95.0 --profile minimal --target aarch64-linux-android
+          rustc +1.95.0 -Vv
+          cargo +1.95.0 -V
+
+      - name: Build Android ARM64 executable
+        working-directory: VaultPonyCore
+        shell: bash
+        run: |
+          set -euxo pipefail
+          TOOLCHAIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          LINKER="$TOOLCHAIN/aarch64-linux-android${API_LEVEL}-clang"
+          export CC_aarch64_linux_android="$LINKER"
+          export CXX_aarch64_linux_android="$TOOLCHAIN/aarch64-linux-android${API_LEVEL}-clang++"
+          export AR_aarch64_linux_android="$TOOLCHAIN/llvm-ar"
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$LINKER"
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_AR="$TOOLCHAIN/llvm-ar"
+
+          cargo +1.95.0 build --locked --release -p vaultpony-cli --target aarch64-linux-android
+
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp target/aarch64-linux-android/release/vaultpony "$GITHUB_WORKSPACE/out/vaultpony-android-arm64"
+          chmod 0755 "$GITHUB_WORKSPACE/out/vaultpony-android-arm64"
+          "$TOOLCHAIN/llvm-strip" --strip-unneeded "$GITHUB_WORKSPACE/out/vaultpony-android-arm64"
+
+          file "$GITHUB_WORKSPACE/out/vaultpony-android-arm64" | tee "$GITHUB_WORKSPACE/out/FILE.txt"
+          "$TOOLCHAIN/llvm-readelf" -h "$GITHUB_WORKSPACE/out/vaultpony-android-arm64" | tee "$GITHUB_WORKSPACE/out/ELF_HEADER.txt"
+          "$TOOLCHAIN/llvm-readelf" -l "$GITHUB_WORKSPACE/out/vaultpony-android-arm64" | tee "$GITHUB_WORKSPACE/out/PROGRAM_HEADERS.txt"
+          "$TOOLCHAIN/llvm-readelf" -d "$GITHUB_WORKSPACE/out/vaultpony-android-arm64" | tee "$GITHUB_WORKSPACE/out/DYNAMIC.txt"
+
+          grep -q 'ARM aarch64' "$GITHUB_WORKSPACE/out/FILE.txt"
+          grep -q '/system/bin/linker64' "$GITHUB_WORKSPACE/out/PROGRAM_HEADERS.txt"
+
+          {
+            echo 'Artifact: vaultpony-android-arm64'
+            echo 'Purpose: headless userspace CLI for VeraCrypt-compatible file containers'
+            echo 'Target: aarch64-linux-android'
+            echo "Android API level: $API_LEVEL"
+            echo 'Android NDK: r28c'
+            echo "Android NDK ZIP SHA256: $NDK_ZIP_SHA256"
+            echo 'Rust: 1.95.0'
+            echo "Source: $SOURCE_REPO"
+            echo "Source commit: $SOURCE_COMMIT"
+            echo 'CLI crate: core/vaultpony-cli'
+            echo 'CLI declared license: GPL-3.0-only'
+            echo 'Core workspace declared license: Apache-2.0'
+            echo
+            cat "$GITHUB_WORKSPACE/out/FILE.txt"
+          } > "$GITHUB_WORKSPACE/out/BUILDINFO.txt"
+
+          cd "$GITHUB_WORKSPACE/out"
+          sha256sum vaultpony-android-arm64 > SHA256SUMS.txt
+          ls -lh
+
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vaultpony-android-arm64
+          path: out/
+          if-no-files-found: error
+          retention-days: 90
