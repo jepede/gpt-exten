@@ -1,0 +1,29 @@
+name: temp-fetch-libue4-gl44-analysis
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/temp-fetch-libue4-gl44-analysis.yml
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch GL 4.4 comparison sample
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 5 --retry-all-errors \
+            -o libUE4-GL-4.4.so \
+            'https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.4.so'
+          echo 'beebccb3c4dfe0d31b57b19fdcb83acd6b10f2d89794f08e8f5a8eafe7cef619  libUE4-GL-4.4.so' | sha256sum -c -
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libUE4-GL-4.4-analysis
+          path: libUE4-GL-4.4.so
+          compression-level: 0
+          retention-days: 1
