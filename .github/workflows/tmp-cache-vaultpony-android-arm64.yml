@@ -1,0 +1,96 @@
+name: Temporary Cache VaultPony Android ARM64
+
+on:
+  push:
+    paths:
+      - '.github/workflows/tmp-cache-vaultpony-android-arm64.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update ARTIFACT_CACHE.md
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('ARTIFACT_CACHE.md')
+          text = p.read_text(encoding='utf-8')
+          row = '| VaultPony VeraCrypt-compatible CLI | 0.1.0+fb4c460 | Android (API 24+) | AArch64 | `33089426736` | SINGLE | `2026-11-25T15:43:58Z` |'
+          heading = '## VaultPony VeraCrypt-compatible CLI 0.1.0+fb4c460'
+
+          if row not in text:
+              lines = text.splitlines()
+              start = lines.index('## Index')
+              end = next(i for i in range(start + 1, len(lines)) if lines[i].startswith('## '))
+              table_rows = [i for i in range(start + 1, end) if lines[i].startswith('|')]
+              insert_at = max(table_rows) + 1
+              lines.insert(insert_at, row)
+              text = '\n'.join(lines).rstrip() + '\n'
+
+          if heading not in text:
+              section = r'''
+
+## VaultPony VeraCrypt-compatible CLI 0.1.0+fb4c460
+
+- Workflow: `.github/workflows/build-vaultpony-android-arm64.yml`
+- Workflow Name: `Build VaultPony Android ARM64`
+- Run ID: `33089426736`
+- Run Conclusion: `success`
+- Source: `https://github.com/norsehorse-dev/VaultPonyCore.git`
+- Source Commit: `fb4c460b84577543d4e90b9ede51dcdbd0b674e7`
+- Build Target: `aarch64-linux-android`
+- Minimum Android API: `24`
+- Android NDK: `r28c` (`28.2.13676358`)
+- Rust: `1.95.0`
+- Storage Mode: `SINGLE`
+- Artifact Name: `vaultpony-android-arm64`
+- Artifact ID: `9653685980`
+- File: `vaultpony-android-arm64`
+- Original Size: `2022752` bytes
+- Original SHA256: `4d72916de3be08e1485488f7b1ef246ee022488f64568e26be17fc1311f9834d`
+- Artifact Archive Size: `1039037` bytes
+- Artifact Archive SHA256 / Digest: `724b40575a8ba2a470aacd95cb77195d2a4f0ccd2c04017d2ba93bf33c896f0b`
+- Created At: `2026-08-27T15:45:07Z`
+- Expires At: `2026-11-25T15:43:58Z`
+- Runtime ELF: `ELF64`, `AArch64`, `PIE`, interpreter `/system/bin/linker64`
+- Runtime Shared Libraries: `libdl.so`, `libc.so`
+- CLI License Declaration: `GPL-3.0-only`
+- Core Workspace License Declaration: `Apache-2.0`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| VaultPony VeraCrypt-compatible CLI | 0.1.0+fb4c460 | Android (API 24+) | AArch64 | `vaultpony-android-arm64` | `4d72916de3be08e1485488f7b1ef246ee022488f64568e26be17fc1311f9834d` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9653685980` | `vaultpony-android-arm64` | `2022752` | `4d72916de3be08e1485488f7b1ef246ee022488f64568e26be17fc1311f9834d` | `1039037` | `sha256:724b40575a8ba2a470aacd95cb77195d2a4f0ccd2c04017d2ba93bf33c896f0b` | `2026-08-27T15:45:07Z` | `2026-11-25T15:43:58Z` |
+
+### Restore
+
+下载 Artifact `9653685980`，校验 Artifact ZIP SHA256 `724b40575a8ba2a470aacd95cb77195d2a4f0ccd2c04017d2ba93bf33c896f0b`；解压得到 `vaultpony-android-arm64`，再校验其 SHA256 `4d72916de3be08e1485488f7b1ef246ee022488f64568e26be17fc1311f9834d`。该文件是 Android/Bionic 原生 AArch64 PIE，可直接推送到 Android 设备执行。
+'''
+              text = text.rstrip() + section + '\n'
+
+          p.write_text(text, encoding='utf-8')
+          PY
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ARTIFACT_CACHE.md
+          git diff --cached --check
+          git commit -m 'cache: record VaultPony Android arm64 CLI artifact'
+          git push origin HEAD:main
