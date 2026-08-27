@@ -1,0 +1,29 @@
+name: temp-fetch-libue4-bg45-analysis
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/temp-fetch-libue4-bg45-analysis.yml
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch BG 4.5 comparison sample
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 5 --retry-all-errors \
+            -o libUE4-BG-4.5.so \
+            'https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-BG-4.5.so'
+          echo '04d811ab3417296e3ec89adf2f22a432883463c0745fe5cb8d4931f6d6f415a6  libUE4-BG-4.5.so' | sha256sum -c -
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libUE4-BG-4.5-analysis
+          path: libUE4-BG-4.5.so
+          compression-level: 0
+          retention-days: 1
