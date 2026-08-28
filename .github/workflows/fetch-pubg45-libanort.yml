@@ -1,0 +1,86 @@
+name: fetch-pubg45-libanort
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/fetch-pubg45-libanort.yml
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Download PUBG Mobile 4.5 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://d.apkpure.com/b/APK/com.tencent.ig?version=latest'
+          curl --fail --location --retry 5 --retry-all-errors \
+            -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36' \
+            --output pubg.pkg "$url"
+          ls -lh pubg.pkg | tee download-info.txt
+          file pubg.pkg | tee -a download-info.txt
+          sha256sum pubg.pkg | tee -a download-info.txt
+
+      - name: Recursively locate native libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work extracted
+          cp pubg.pkg work/root.zip
+          python3 - <<'PY'
+          import os, zipfile, shutil, hashlib
+          queue=['work/root.zip']
+          seen=set()
+          wanted={'libanort.so','libanogs.so','libtprt.so','libtersafe.so','libUE4.so'}
+          report=[]
+          while queue:
+              p=queue.pop(0)
+              rp=os.path.realpath(p)
+              if rp in seen: continue
+              seen.add(rp)
+              if not zipfile.is_zipfile(p):
+                  report.append(f'NOTZIP {p}')
+                  continue
+              report.append(f'ZIP {p} {os.path.getsize(p)}')
+              with zipfile.ZipFile(p) as z:
+                  for i, n in enumerate(z.namelist()):
+                      base=os.path.basename(n)
+                      low=n.lower()
+                      if base in wanted and ('arm64' in low or 'arm64-v8a' in low or base != 'libUE4.so'):
+                          out=os.path.join('extracted', base)
+                          with z.open(n) as src, open(out,'wb') as dst:
+                              shutil.copyfileobj(src,dst)
+                          h=hashlib.sha256(open(out,'rb').read()).hexdigest()
+                          report.append(f'FOUND {n} -> {out} size={os.path.getsize(out)} sha256={h}')
+                      if low.endswith(('.apk','.apks','.xapk','.apkm','.zip')):
+                          safe=f'work/nested_{len(seen)}_{i}_{base or "archive"}'
+                          try:
+                              with z.open(n) as src, open(safe,'wb') as dst:
+                                  shutil.copyfileobj(src,dst)
+                              if zipfile.is_zipfile(safe): queue.append(safe)
+                              else: os.unlink(safe)
+                          except Exception as e:
+                              report.append(f'EXTRACTERR {n}: {e}')
+          open('extract-report.txt','w').write('\n'.join(report)+'\n')
+          PY
+          cat extract-report.txt
+          test -f extracted/libanort.so
+          file extracted/* | tee extracted/file-info.txt
+
+      - name: Upload runtime libraries
+        uses: actions/upload-artifact@v4
+        with:
+          name: pubg45-arm64-runtime-libs
+          path: |
+            extracted/
+            download-info.txt
+            extract-report.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
