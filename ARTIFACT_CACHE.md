@@ -16,6 +16,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | cquant Binance USD-M Golden Derivatives | 2025-01-01_2026-07-31-15m-um-golden-derivatives-v1 | Any | Any | `32641331696` | SINGLE | `2026-11-21T13:06:16Z` |
 | TShield 6.2 Live W response | 6.2-live-w-bridge-run11-v1 | Any | Any | `32483541702` | SINGLE | `2026-11-19T12:47:00Z` |
 | QEMU user-static | 1:7.2+dfsg-7+deb12u18+b3 | Debian 12 / Linux | x86_64 | `32748029497` | SINGLE | `2026-11-22T15:57:40Z` |
+| Debian 12 elfutils runtime | 0.188-2.1 | Debian 12 / Linux | x86_64 | `33241532212` | SINGLE | `2026-11-27T07:44:22Z` |
 | nlohmann/json single header | 3.12.0 | Any | Any | `32814216489` | SINGLE | `2026-11-23T05:47:17Z` |
 
 | libUE4 GL | 4.5-v1.0.1 | Android | AArch64 | `33073762454` | SINGLE | `2026-11-25T12:50:04Z` |
@@ -556,3 +557,39 @@ Download Artifact `9550829984`, verify the Artifact ZIP SHA256 `06e8d874db0ab47a
 ### Restore
 
 下载 Artifact `9653685980`，校验 Artifact ZIP SHA256 `724b40575a8ba2a470aacd95cb77195d2a4f0ccd2c04017d2ba93bf33c896f0b`；解压得到 `vaultpony-android-arm64`，再校验其 SHA256 `4d72916de3be08e1485488f7b1ef246ee022488f64568e26be17fc1311f9834d`。该文件是 Android/Bionic 原生 AArch64 PIE，可直接推送到 Android 设备执行。
+
+
+## Debian 12 elfutils runtime 0.188-2.1
+
+- Workflow: `.github/workflows/tmp-fetch-debian12-elfutils-0.188.yml` (temporary branch only; do not merge)
+- Workflow Name: `Temporary fetch Debian 12 elfutils runtime`
+- Run ID: `33241532212`
+- Run Conclusion: `success`
+- Source: `https://deb.debian.org/debian/pool/main/e/elfutils/`
+- Repository Visibility: `Public`
+- Requested Retention: `90 days`
+- Storage Mode: `SINGLE`
+- Artifact Name: `debian12-elfutils-runtime-0.188-amd64`
+- Artifact ID: `9711497447`
+- Artifact Archive Size: `409543` bytes
+- Artifact Archive SHA256 / Digest: `12ca8957b89c7f684c21a1373279d267b7f9d8d17843e1dce086573c7da1d51e`
+- Part Count: `1`
+- Created At: `2026-08-29T07:44:30Z`
+- Expires At: `2026-11-27T07:44:22Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | Size | SHA256 |
+|---|---|---|---|---|---:|---|
+| Debian libdw1 | 0.188-2.1 | Debian 12 / Linux | x86_64 | `libdw1_0.188-2.1_amd64.deb` | `234760` | `ffd7b1bad982ad1afd9c2b75ab2edd18e229508df731a8f4d8443f093a91442f` |
+| Debian libelf1 | 0.188-2.1 | Debian 12 / Linux | x86_64 | `libelf1_0.188-2.1_amd64.deb` | `173796` | `619add379c606b3ac6c1a175853b918e6939598a83d8ebadf3bdfd50d10b3c8c` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `9711497447` | `debian12-elfutils-runtime-0.188-amd64` | `408556` (two DEBs combined) | see Contents | `409543` | `sha256:12ca8957b89c7f684c21a1373279d267b7f9d8d17843e1dce086573c7da1d51e` | `2026-08-29T07:44:30Z` | `2026-11-27T07:44:22Z` |
+
+### Restore
+
+下载 Artifact `9711497447`，校验 Artifact ZIP SHA256 `12ca8957b89c7f684c21a1373279d267b7f9d8d17843e1dce086573c7da1d51e`；解压后分别校验两个 DEB 的 SHA256，再用 `dpkg-deb -x` 解包到隔离的 GDB 根目录。该 Artifact 用于补齐 Debian 12 GDB 13.1 所需 `libdw.so.1` 与匹配的 `libelf.so.1`，不应覆盖宿主发行版库。
