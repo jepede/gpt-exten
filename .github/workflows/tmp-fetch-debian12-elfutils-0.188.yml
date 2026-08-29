@@ -1,0 +1,79 @@
+name: Temporary fetch Debian 12 elfutils runtime
+
+on:
+  push:
+    branches:
+      - 'tmp/fetch-debian12-elfutils-0.188-20260829'
+    paths:
+      - '.github/workflows/tmp-fetch-debian12-elfutils-0.188.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Debian 12 elfutils runtime
+        shell: bash
+        run: |
+          set -euxo pipefail
+          base='https://deb.debian.org/debian/pool/main/e/elfutils'
+          mkdir -p out
+          for file in libdw1_0.188-2.1_amd64.deb libelf1_0.188-2.1_amd64.deb; do
+            curl --fail --location --retry 5 --output "out/$file" "$base/$file"
+          done
+          sha256sum out/*.deb | tee out/SHA256SUMS.txt
+          stat -c '%n %s bytes' out/*.deb | tee out/SIZE.txt
+          printf '%s\n' "$base" > out/SOURCE.txt
+
+      - name: Upload artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: debian12-elfutils-runtime-0.188-amd64
+          path: out/
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 0
+
+      - name: Record artifact metadata
+        shell: bash
+        env:
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+        run: |
+          set -euxo pipefail
+          mkdir -p .artifact-meta
+          dw_file='libdw1_0.188-2.1_amd64.deb'
+          elf_file='libelf1_0.188-2.1_amd64.deb'
+          dw_sha=$(sha256sum "out/$dw_file" | awk '{print $1}')
+          elf_sha=$(sha256sum "out/$elf_file" | awk '{print $1}')
+          dw_size=$(stat -c '%s' "out/$dw_file")
+          elf_size=$(stat -c '%s' "out/$elf_file")
+          printf '%s\n' \
+            '{' \
+            '  "name": "Debian 12 elfutils runtime",' \
+            '  "version": "0.188-2.1",' \
+            '  "platform": "Debian 12 / Linux",' \
+            '  "architecture": "amd64",' \
+            "  \"run_id\": \"${GITHUB_RUN_ID}\"," \
+            "  \"artifact_id\": \"${ARTIFACT_ID}\"," \
+            "  \"artifact_digest\": \"${ARTIFACT_DIGEST}\"," \
+            "  \"libdw1_file\": \"${dw_file}\"," \
+            "  \"libdw1_size\": ${dw_size}," \
+            "  \"libdw1_sha256\": \"${dw_sha}\"," \
+            "  \"libelf1_file\": \"${elf_file}\"," \
+            "  \"libelf1_size\": ${elf_size}," \
+            "  \"libelf1_sha256\": \"${elf_sha}\"" \
+            '}' > .artifact-meta/debian12-elfutils-runtime.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .artifact-meta/debian12-elfutils-runtime.json
+          git commit -m 'Record Debian 12 elfutils artifact metadata' || exit 0
+          git push
