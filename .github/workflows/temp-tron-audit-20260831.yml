@@ -1,0 +1,48 @@
+name: Temporary TRON Transaction Audit
+on:
+  push:
+    branches: [temp-tron-audit-20260831]
+    paths: [.github/workflows/temp-tron-audit-20260831.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query TronGrid and TRONSCAN
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tron_audit
+          ADDR='TQGTsbqawRHhv35UMxjHo14mieUGWXyQzk'
+          USDT='TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
+          MIN='1768176000000'
+          MAX='1768435200000'
+          curl -fsS --retry 3 --get \
+            "https://api.trongrid.io/v1/accounts/$ADDR/transactions/trc20" \
+            --data-urlencode 'limit=200' --data-urlencode 'only_confirmed=true' \
+            --data-urlencode 'only_to=true' --data-urlencode 'order_by=block_timestamp,asc' \
+            --data-urlencode "min_timestamp=$MIN" --data-urlencode "max_timestamp=$MAX" \
+            --data-urlencode "contract_address=$USDT" > tron_audit/trongrid.json
+          curl -fsS --retry 3 --get \
+            'https://apilist.tronscanapi.com/api/token_trc20/transfers' \
+            --data-urlencode 'limit=200' --data-urlencode 'start=0' --data-urlencode 'sort=-timestamp' \
+            --data-urlencode 'count=true' --data-urlencode "relatedAddress=$ADDR" \
+            --data-urlencode "start_timestamp=$MIN" --data-urlencode "end_timestamp=$MAX" \
+            > tron_audit/tronscan.json || true
+          echo '=== TRONGRID 10000/PREFIX MATCHES ==='
+          jq -c '.data[]? | select(.value=="10000000000" or ((.transaction_id|startswith("7a4b0")) and (.transaction_id|endswith("664e9")))) | {transaction_id,block_timestamp,from,to,value,token_info}' tron_audit/trongrid.json | tee tron_audit/matches.jsonl
+          echo '=== TRONSCAN 10000/PREFIX MATCHES ==='
+          jq -c '.token_transfers[]? | select((.quant|tostring)=="10000000000" or (((.transaction_id//"")|startswith("7a4b0")) and ((.transaction_id//"")|endswith("664e9")))) | {transaction_id,block_ts,from_address,to_address,quant,tokenInfo}' tron_audit/tronscan.json | tee -a tron_audit/matches.jsonl || true
+          echo '=== COUNTS ==='
+          jq '{success,rows:(.data|length),meta}' tron_audit/trongrid.json
+          jq '{total,rows:(.token_transfers|length)}' tron_audit/tronscan.json || true
+          echo '=== SHA256 ==='
+          sha256sum tron_audit/*.json tron_audit/*.jsonl | tee tron_audit/SHA256SUMS.txt
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: tron-10000-usdt-audit-20260113
+          path: tron_audit/
+          retention-days: 30
