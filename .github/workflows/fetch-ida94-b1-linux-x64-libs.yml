@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - '.github/workflows/fetch-ida94-b1-linux-x64-libs.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/fetch-ida94-b1-linux-x64-libs.yml'
   workflow_dispatch:
 
 permissions:
