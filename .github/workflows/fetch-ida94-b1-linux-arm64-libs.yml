@@ -1,0 +1,101 @@
+name: Temporary IDA 9.4 Linux ARM64 library extraction
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/fetch-ida94-b1-linux-arm64-libs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Download and verify ARM64 installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://github.com/Yigods/ida94_b1/releases/download/v9.4-installers/ida-pro_94_armlinux.run'
+          EXPECTED='d5f4cbe410d9dd3bf69e8c630ef3a8b26ef7d39de1bb9effdfabb992e8fe7c8e'
+          INSTALLER="$RUNNER_TEMP/ida-pro_94_armlinux.run"
+          curl -fL --retry 4 --retry-delay 3 "$URL" -o "$INSTALLER"
+          ACTUAL="$(sha256sum "$INSTALLER" | awk '{print $1}')"
+          echo "installer_sha256=$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+          chmod +x "$INSTALLER"
+          file "$INSTALLER" | tee "$RUNNER_TEMP/installer-file.txt"
+          readelf -h "$INSTALLER" > "$RUNNER_TEMP/installer-elf-header.txt" 2>&1 || true
+
+      - name: Prepare ARM64 execution support
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static binfmt-support libc6:arm64 libstdc++6:arm64
+          update-binfmts --display qemu-aarch64 || true
+          qemu-aarch64-static --version | head -n 1
+
+      - name: Install into isolated prefix and extract libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          INSTALLER="$RUNNER_TEMP/ida-pro_94_armlinux.run"
+          PREFIX="$RUNNER_TEMP/ida94-arm64"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$PREFIX" "$OUT"
+
+          set +e
+          "$INSTALLER" --mode unattended --prefix "$PREFIX" >"$RUNNER_TEMP/installer.log" 2>&1
+          RC=$?
+          set -e
+
+          if [ "$RC" -ne 0 ]; then
+            echo "Direct/binfmt execution failed with $RC; retrying explicitly through qemu-aarch64-static"
+            rm -rf "$PREFIX"
+            mkdir -p "$PREFIX"
+            set +e
+            qemu-aarch64-static "$INSTALLER" --mode unattended --prefix "$PREFIX" >"$RUNNER_TEMP/installer-qemu.log" 2>&1
+            RC2=$?
+            set -e
+            if [ "$RC2" -ne 0 ]; then
+              echo "qemu execution failed with $RC2"
+              cat "$RUNNER_TEMP/installer.log" || true
+              cat "$RUNNER_TEMP/installer-qemu.log" || true
+              exit "$RC2"
+            fi
+          fi
+
+          echo 'Installed libida files:'
+          find "$PREFIX" -type f \( -name 'libida.so' -o -name 'libida32.so' \) -print
+          LIB64="$(find "$PREFIX" -type f -name 'libida.so' | head -n1)"
+          LIB32="$(find "$PREFIX" -type f -name 'libida32.so' | head -n1)"
+          test -n "$LIB64" && test -f "$LIB64"
+          test -n "$LIB32" && test -f "$LIB32"
+
+          cp "$LIB64" "$OUT/libida.so"
+          cp "$LIB32" "$OUT/libida32.so"
+          sha256sum "$OUT/libida.so" "$OUT/libida32.so" | tee "$OUT/SHA256SUMS.txt"
+          file "$OUT/libida.so" "$OUT/libida32.so" | tee "$OUT/FILE_INFO.txt"
+          stat -c '%n %s bytes' "$OUT/libida.so" "$OUT/libida32.so" | tee "$OUT/SIZES.txt"
+          readelf -n "$OUT/libida.so" > "$OUT/libida.NOTES.txt" || true
+          readelf -n "$OUT/libida32.so" > "$OUT/libida32.NOTES.txt" || true
+          {
+            echo 'Source repository: Yigods/ida94_b1'
+            echo 'Release tag: v9.4-installers'
+            echo 'Source asset: ida-pro_94_armlinux.run'
+            echo 'Source installer SHA256: d5f4cbe410d9dd3bf69e8c630ef3a8b26ef7d39de1bb9effdfabb992e8fe7c8e'
+            echo 'Extraction platform: ubuntu-24.04 x86_64 runner + qemu-aarch64-static/binfmt'
+          } > "$OUT/SOURCE_INFO.txt"
+
+      - name: Upload extracted ARM64 libraries
+        uses: actions/upload-artifact@v4
+        with:
+          name: ida94-b1-linux-arm64-release-libs
+          path: ${{ runner.temp }}/out/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
