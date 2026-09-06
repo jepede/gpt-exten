@@ -1,0 +1,38 @@
+name: Temporary radare2 release fetch
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/tmp-fetch-radare2-release-1.0.0.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Download and verify radare2.zip
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          URL='https://github.com/jepede/gpt-exten/releases/download/1.0.0/radare2.zip'
+          EXPECTED='25fcfd7fcd6a381ae63d56a72d50c45d713353cd52b92751f1ad9e6f63cb0320'
+          curl -fL --retry 4 --retry-delay 2 "$URL" -o "$OUT/radare2.zip"
+          ACTUAL="$(sha256sum "$OUT/radare2.zip" | awk '{print $1}')"
+          echo "sha256=$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+          unzip -l "$OUT/radare2.zip" > "$OUT/ZIP_LIST.txt"
+          stat -c '%n %s bytes' "$OUT/radare2.zip" > "$OUT/SIZE.txt"
+      - name: Upload radare2 package
+        uses: actions/upload-artifact@v4
+        with:
+          name: radare2-release-1.0.0
+          path: ${{ runner.temp }}/out/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
