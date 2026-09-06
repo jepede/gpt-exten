@@ -1,0 +1,47 @@
+name: Temporary IDA 9.4 patched Linux x64 library fetch
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/fetch-ida94-b1-patched-linux-x64-libs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Download and verify patched libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+
+          curl -fL --retry 4 --retry-delay 2 \
+            'https://raw.githubusercontent.com/Yigods/ida94_b1/main/kg_patch/x64linux/libida.so' \
+            -o "$OUT/libida.so"
+          curl -fL --retry 4 --retry-delay 2 \
+            'https://raw.githubusercontent.com/Yigods/ida94_b1/main/kg_patch/x64linux/libida32.so' \
+            -o "$OUT/libida32.so"
+
+          test "$(sha256sum "$OUT/libida.so" | awk '{print $1}')" = \
+            'd22b54b01d51822387d4f75bb2e057fe2222ed7cdde66649f7c5e50e2132fd0a'
+          test "$(sha256sum "$OUT/libida32.so" | awk '{print $1}')" = \
+            'b16d74a217d9b6546adb0548cf948e7f39310874e72ca5e3180ac9ac22f46355'
+
+          sha256sum "$OUT/libida.so" "$OUT/libida32.so" | tee "$OUT/SHA256SUMS.txt"
+          file "$OUT/libida.so" "$OUT/libida32.so" | tee "$OUT/FILE_INFO.txt"
+          stat -c '%n %s bytes' "$OUT/libida.so" "$OUT/libida32.so" | tee "$OUT/SIZES.txt"
+
+      - name: Upload patched libraries
+        uses: actions/upload-artifact@v4
+        with:
+          name: ida94-b1-patched-linux-x64-libs
+          path: ${{ runner.temp }}/out/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
