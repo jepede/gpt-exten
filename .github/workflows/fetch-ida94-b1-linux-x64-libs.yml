@@ -1,0 +1,79 @@
+name: Temporary IDA 9.4 Linux x64 library extraction
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-ida94-b1-linux-x64-libs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Download specified GitHub Release installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://github.com/Yigods/ida94_b1/releases/download/v9.4-installers/ida-pro_94_x64linux.run'
+          EXPECTED='ec59282dba8e72eca2a750b5514f3d6722022d8b29bfc0cebd29a6403d2db19a'
+          curl -fL --retry 4 --retry-delay 3 "$URL" -o "$RUNNER_TEMP/ida-pro_94_x64linux.run"
+          ACTUAL="$(sha256sum "$RUNNER_TEMP/ida-pro_94_x64linux.run" | awk '{print $1}')"
+          echo "installer_sha256=$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+          chmod +x "$RUNNER_TEMP/ida-pro_94_x64linux.run"
+
+      - name: Install into isolated temporary prefix and extract libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          INSTALLER="$RUNNER_TEMP/ida-pro_94_x64linux.run"
+          PREFIX="$RUNNER_TEMP/ida94"
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$PREFIX" "$OUT"
+
+          set +e
+          "$INSTALLER" --mode unattended --prefix "$PREFIX" >"$RUNNER_TEMP/installer.log" 2>&1
+          RC=$?
+          set -e
+          if [ "$RC" -ne 0 ]; then
+            echo "Installer exited with $RC"
+            cat "$RUNNER_TEMP/installer.log" || true
+            "$INSTALLER" --help || true
+            exit "$RC"
+          fi
+
+          echo 'Installed files containing libida:'
+          find "$PREFIX" -type f \( -name 'libida.so' -o -name 'libida32.so' \) -print
+
+          LIB64="$(find "$PREFIX" -type f -name 'libida.so' | head -n1)"
+          LIB32="$(find "$PREFIX" -type f -name 'libida32.so' | head -n1)"
+          test -n "$LIB64" && test -f "$LIB64"
+          test -n "$LIB32" && test -f "$LIB32"
+
+          cp "$LIB64" "$OUT/libida.so"
+          cp "$LIB32" "$OUT/libida32.so"
+          sha256sum "$OUT/libida.so" "$OUT/libida32.so" | tee "$OUT/SHA256SUMS.txt"
+          file "$OUT/libida.so" "$OUT/libida32.so" | tee "$OUT/FILE_INFO.txt"
+          stat -c '%n %s bytes' "$OUT/libida.so" "$OUT/libida32.so" | tee "$OUT/SIZES.txt"
+
+          {
+            echo 'Source repository: Yigods/ida94_b1'
+            echo 'Release tag: v9.4-installers'
+            echo 'Source asset: ida-pro_94_x64linux.run'
+            echo 'Source URL: https://github.com/Yigods/ida94_b1/releases/download/v9.4-installers/ida-pro_94_x64linux.run'
+            echo 'Expected/source installer SHA256: ec59282dba8e72eca2a750b5514f3d6722022d8b29bfc0cebd29a6403d2db19a'
+            echo 'Extraction method: installer --mode unattended --prefix <temporary directory>'
+          } > "$OUT/SOURCE_INFO.txt"
+
+      - name: Upload extracted libraries
+        uses: actions/upload-artifact@v4
+        with:
+          name: ida94-b1-linux-x64-release-libs
+          path: ${{ runner.temp }}/out/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
