@@ -29,46 +29,31 @@ jobs:
           file "$INSTALLER" | tee "$RUNNER_TEMP/installer-file.txt"
           readelf -h "$INSTALLER" > "$RUNNER_TEMP/installer-elf-header.txt" 2>&1 || true
 
-      - name: Prepare ARM64 execution support
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo apt-get install -y qemu-user-static binfmt-support libc6:arm64 libstdc++6:arm64
-          update-binfmts --display qemu-aarch64 || true
-          qemu-aarch64-static --version | head -n 1
+      - name: Enable ARM64 emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
-      - name: Install into isolated prefix and extract libraries
+      - name: Verify ARM64 container
         shell: bash
         run: |
           set -euo pipefail
-          INSTALLER="$RUNNER_TEMP/ida-pro_94_armlinux.run"
+          docker run --rm --platform linux/arm64 ubuntu:24.04 sh -c 'uname -m; /lib/ld-linux-aarch64.so.1 --help >/dev/null'
+
+      - name: Install in ARM64 container and extract libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ida94-arm64" "$RUNNER_TEMP/out"
+          chmod 0777 "$RUNNER_TEMP/ida94-arm64" "$RUNNER_TEMP/out"
+
+          docker run --rm --platform linux/arm64 \
+            -v "$RUNNER_TEMP:/work" \
+            ubuntu:24.04 \
+            sh -c 'set -eu; chmod +x /work/ida-pro_94_armlinux.run; /work/ida-pro_94_armlinux.run --mode unattended --prefix /work/ida94-arm64'
+
           PREFIX="$RUNNER_TEMP/ida94-arm64"
           OUT="$RUNNER_TEMP/out"
-          mkdir -p "$PREFIX" "$OUT"
-
-          set +e
-          "$INSTALLER" --mode unattended --prefix "$PREFIX" >"$RUNNER_TEMP/installer.log" 2>&1
-          RC=$?
-          set -e
-
-          if [ "$RC" -ne 0 ]; then
-            echo "Direct/binfmt execution failed with $RC; retrying explicitly through qemu-aarch64-static"
-            rm -rf "$PREFIX"
-            mkdir -p "$PREFIX"
-            set +e
-            qemu-aarch64-static "$INSTALLER" --mode unattended --prefix "$PREFIX" >"$RUNNER_TEMP/installer-qemu.log" 2>&1
-            RC2=$?
-            set -e
-            if [ "$RC2" -ne 0 ]; then
-              echo "qemu execution failed with $RC2"
-              cat "$RUNNER_TEMP/installer.log" || true
-              cat "$RUNNER_TEMP/installer-qemu.log" || true
-              exit "$RC2"
-            fi
-          fi
-
           echo 'Installed libida files:'
           find "$PREFIX" -type f \( -name 'libida.so' -o -name 'libida32.so' \) -print
           LIB64="$(find "$PREFIX" -type f -name 'libida.so' | head -n1)"
@@ -88,7 +73,7 @@ jobs:
             echo 'Release tag: v9.4-installers'
             echo 'Source asset: ida-pro_94_armlinux.run'
             echo 'Source installer SHA256: d5f4cbe410d9dd3bf69e8c630ef3a8b26ef7d39de1bb9effdfabb992e8fe7c8e'
-            echo 'Extraction platform: ubuntu-24.04 x86_64 runner + qemu-aarch64-static/binfmt'
+            echo 'Extraction platform: ubuntu-24.04 x86_64 runner + docker/setup-qemu-action + ubuntu:24.04 arm64 container'
           } > "$OUT/SOURCE_INFO.txt"
 
       - name: Upload extracted ARM64 libraries
