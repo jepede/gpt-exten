@@ -1,0 +1,110 @@
+name: IDA94 ARM64 Scan
+
+on:
+  push:
+    branches:
+      - tmp/ida94-arm64-scan
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    steps:
+      - name: Download ARM64 installer
+        shell: bash
+        run: |
+          set -euxo pipefail
+          curl -L --fail --retry 3 \
+            -o ida-pro_94_armlinux.run \
+            https://github.com/Yigods/ida94_b1/releases/download/v9.4-installers/ida-pro_94_armlinux.run
+          echo 'd5f4cbe410d9dd3bf69e8c630ef3a8b26ef7d39de1bb9effdfabb992e8fe7c8e  ida-pro_94_armlinux.run' | sha256sum -c -
+          file ida-pro_94_armlinux.run
+          uname -a
+
+      - name: Install into temporary prefix
+        shell: bash
+        run: |
+          set -euxo pipefail
+          chmod +x ida-pro_94_armlinux.run
+          mkdir -p "$GITHUB_WORKSPACE/ida94"
+          ./ida-pro_94_armlinux.run \
+            --mode unattended \
+            --unattendedmodeui none \
+            --prefix "$GITHUB_WORKSPACE/ida94"
+          find "$GITHUB_WORKSPACE/ida94" -maxdepth 3 -type f \( -name 'libida.so' -o -name 'libida32.so' \) -print
+
+      - name: Scan ARM64 IDA core libraries
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, struct
+
+          root = Path('ida94')
+          orig = bytes.fromhex(
+              '29f4481f796f9f66f2ff13cc4ab5b54f60845db603ba2c0bac8a9bc4b6cbdefc'
+              '5c62bfc2f5ee850ac45ea97ad347e8b56dba5085af8c8aad9cc2ec626ca78a06'
+              '8006d658f68651da31a0a77c65a70ed73a40d53b08edd403c095aa0bcffa52f3'
+              '13ebcacaaa2ce5024a4e2b9aa70fc6092f38ae094d71e43f7690b5ddd3e9e4f7'
+          )
+          patch = bytes.fromhex(
+              'a107b71c8a08ba5350934f7cf6e81be3a24dc2e35f7200d80cbd70b37ed6811d'
+              'd2146d3cb7e20ad19b2544c0ef14c5c66ffbbdf226ec3f3d544c04385303ca4a'
+              '7179299340022f5d50948bcf8a60307e2c196329e51a5296dc419e40fef3ef7c'
+              '6f015a09ebd979e79615338985643e666c14897f9f597e11f44341f496d56861'
+          )
+
+          def hits(data, needle):
+              out=[]; pos=0
+              while True:
+                  p=data.find(needle,pos)
+                  if p<0: return out
+                  out.append(p); pos=p+1
+
+          targets = []
+          for name in ('libida.so','libida32.so'):
+              found = list(root.rglob(name))
+              if len(found) != 1:
+                  raise SystemExit(f'{name}: expected exactly one file, got {found}')
+              targets.append(found[0])
+
+          lines=[]
+          for p in targets:
+              data=p.read_bytes()
+              if data[:4] != b'\x7fELF' or len(data)<20:
+                  raise SystemExit(f'{p}: not ELF')
+              klass=data[4]
+              endian=data[5]
+              etype=struct.unpack_from('<H',data,16)[0]
+              machine=struct.unpack_from('<H',data,18)[0]
+              oh=hits(data,orig)
+              ph=hits(data,patch)
+              lines += [
+                  f'FILE={p}',
+                  f'SIZE={len(data)}',
+                  f'SHA256={hashlib.sha256(data).hexdigest()}',
+                  f'ELF_CLASS={klass}',
+                  f'ELF_DATA={endian}',
+                  f'E_TYPE=0x{etype:04x}',
+                  f'E_MACHINE=0x{machine:04x}',
+                  'ORIG_KEY_HITS=' + ','.join(f'0x{x:x}' for x in oh),
+                  'PATCH_KEY_HITS=' + ','.join(f'0x{x:x}' for x in ph),
+                  f'ORIG_COUNT={len(oh)}',
+                  f'PATCH_COUNT={len(ph)}',
+                  '',
+              ]
+          text='\n'.join(lines)
+          print(text)
+          Path('arm64-scan.txt').write_text(text)
+          PY
+
+      - name: Upload scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ida94-arm64-scan-report
+          path: arm64-scan.txt
+          retention-days: 7
