@@ -1,0 +1,183 @@
+name: Temp wallet chain probe 20260909
+
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-wallet-chain-probe-20260909.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Probe candidate address
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, urllib.request, urllib.error, time
+
+          ADDRESS = '0x0dabb29b65421ae9f3e520e21bc2bfbd36469578'
+          ADDR_HEX = ADDRESS[2:].lower()
+          PADDED = '0x' + '0'*24 + ADDR_HEX
+          TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+
+          def http_json(url, payload=None, timeout=15):
+              headers = {'User-Agent': 'wallet-chain-probe/1.0', 'Accept': 'application/json'}
+              data = None
+              if payload is not None:
+                  data = json.dumps(payload).encode()
+                  headers['Content-Type'] = 'application/json'
+              req = urllib.request.Request(url, data=data, headers=headers)
+              try:
+                  with urllib.request.urlopen(req, timeout=timeout) as r:
+                      raw = r.read().decode('utf-8', 'replace')
+                      return {'ok': True, 'status': r.status, 'data': json.loads(raw)}
+              except Exception as e:
+                  return {'ok': False, 'error': repr(e)}
+
+          def rpc(url, method, params):
+              res = http_json(url, {'jsonrpc':'2.0','id':1,'method':method,'params':params})
+              if not res.get('ok'):
+                  return res
+              obj = res['data']
+              if 'error' in obj:
+                  return {'ok':False,'error':obj['error']}
+              return {'ok':True,'result':obj.get('result')}
+
+          def hexint(v):
+              try: return int(v, 16)
+              except: return None
+
+          def erc20_balance(rpc_url, contract):
+              data = '0x70a08231' + '0'*24 + ADDR_HEX
+              r = rpc(rpc_url, 'eth_call', [{'to':contract, 'data':data}, 'latest'])
+              if r.get('ok'):
+                  r['int'] = hexint(r.get('result') or '0x0')
+              return r
+
+          def chain_state(name, url):
+              b = rpc(url, 'eth_getBalance', [ADDRESS, 'latest'])
+              n = rpc(url, 'eth_getTransactionCount', [ADDRESS, 'latest'])
+              c = rpc(url, 'eth_getCode', [ADDRESS, 'latest'])
+              out = {
+                  'balance_wei': hexint(b.get('result')) if b.get('ok') else None,
+                  'nonce': hexint(n.get('result')) if n.get('ok') else None,
+                  'code_nonempty': bool(c.get('ok') and c.get('result') not in (None,'0x','0x0')),
+                  'errors': [x.get('error') for x in (b,n,c) if not x.get('ok')]
+              }
+              return out
+
+          def scan_token_logs(rpc_url, contract, lookback=50000, chunk=5000):
+              latest_r = rpc(rpc_url, 'eth_blockNumber', [])
+              if not latest_r.get('ok'):
+                  return {'ok':False,'error':latest_r.get('error')}
+              latest = hexint(latest_r['result'])
+              start = max(0, latest-lookback)
+              found = []
+              for a in range(start, latest+1, chunk):
+                  b = min(latest, a+chunk-1)
+                  for direction, topics in (
+                      ('in', [TRANSFER_TOPIC, None, PADDED]),
+                      ('out', [TRANSFER_TOPIC, PADDED]),
+                  ):
+                      q = {'fromBlock':hex(a), 'toBlock':hex(b), 'address':contract, 'topics':topics}
+                      rr = rpc(rpc_url, 'eth_getLogs', [q])
+                      if not rr.get('ok'):
+                          # Continue because some public RPCs impose smaller ranges / limits.
+                          continue
+                      for log in rr.get('result') or []:
+                          found.append({
+                              'direction':direction,
+                              'block':hexint(log.get('blockNumber','0x0')),
+                              'tx':log.get('transactionHash'),
+                              'data_int':hexint(log.get('data','0x0')),
+                          })
+              found.sort(key=lambda x:(x.get('block') or 0), reverse=True)
+              return {'ok':True,'latest_block':latest,'from_block':start,'events':found[:30]}
+
+          result = {'address': ADDRESS, 'rpc': {}, 'blockscout': {}, 'tokens': {}}
+
+          rpc_chains = {
+              'BNB Smart Chain': 'https://bsc-dataseed.binance.org',
+              'Ethereum': 'https://cloudflare-eth.com',
+              'Base': 'https://mainnet.base.org',
+              'Arbitrum One': 'https://arb1.arbitrum.io/rpc',
+              'Polygon PoS': 'https://polygon-rpc.com',
+              'Optimism': 'https://mainnet.optimism.io',
+              'Avalanche C-Chain': 'https://api.avax.network/ext/bc/C/rpc',
+              'Linea': 'https://rpc.linea.build',
+              'Scroll': 'https://rpc.scroll.io',
+              'X Layer': 'https://rpc.xlayer.tech',
+              'XDC': 'https://rpc.xinfin.network',
+          }
+          for name, url in rpc_chains.items():
+              print('RPC', name, flush=True)
+              result['rpc'][name] = chain_state(name, url)
+
+          blockscout_bases = {
+              'Ethereum':'https://eth.blockscout.com',
+              'Base':'https://base.blockscout.com',
+              'Arbitrum One':'https://arbitrum.blockscout.com',
+              'Polygon PoS':'https://polygon.blockscout.com',
+              'Optimism':'https://optimism.blockscout.com',
+              'Scroll':'https://scroll.blockscout.com',
+              'XDC':'https://xdcscan.io',
+          }
+          for name, base in blockscout_bases.items():
+              print('BLOCKSCOUT', name, flush=True)
+              info = http_json(base + '/api/v2/addresses/' + ADDRESS)
+              tb = http_json(base + '/api/v2/addresses/' + ADDRESS + '/token-balances')
+              tt = http_json(base + '/api/v2/addresses/' + ADDRESS + '/token-transfers')
+              summary = {'address_info_ok': info.get('ok'), 'token_balances_ok': tb.get('ok'), 'token_transfers_ok': tt.get('ok')}
+              if info.get('ok'):
+                  d=info.get('data') or {}
+                  summary['coin_balance'] = d.get('coin_balance')
+                  summary['tx_count'] = d.get('tx_count')
+              if tb.get('ok'):
+                  balances = tb.get('data') or []
+                  compact=[]
+                  if isinstance(balances,list):
+                      for x in balances[:30]:
+                          tok=x.get('token') or {}
+                          compact.append({'symbol':tok.get('symbol'),'name':tok.get('name'),'address':tok.get('address_hash'),'value':x.get('value'),'decimals':tok.get('decimals')})
+                  summary['token_balances'] = compact
+              if tt.get('ok'):
+                  d=tt.get('data') or {}
+                  items=d.get('items',[]) if isinstance(d,dict) else []
+                  compact=[]
+                  for x in items[:30]:
+                      tok=x.get('token') or {}
+                      total=x.get('total') or {}
+                      compact.append({'timestamp':x.get('timestamp'),'tx':x.get('transaction_hash'),'from':(x.get('from') or {}).get('hash'),'to':(x.get('to') or {}).get('hash'),'symbol':tok.get('symbol'),'token':tok.get('address_hash'),'value':total.get('value'),'decimals':total.get('decimals')})
+                  summary['token_transfers'] = compact
+              else:
+                  summary['token_transfers_error'] = tt.get('error')
+              result['blockscout'][name] = summary
+
+          tokens = {
+              'BSC_USDT': ('https://bsc-dataseed.binance.org','0x55d398326f99059fF775485246999027B3197955',18),
+              'XLayer_USDT_old': ('https://rpc.xlayer.tech','0x1E4a5963aBFD975d8c9021ce480b42188849D41d',6),
+              'XLayer_USDT0': ('https://rpc.xlayer.tech','0x779Ded0c9e1022225f8E0630b35a9b54bE713736',6),
+              'Ethereum_USDT': ('https://cloudflare-eth.com','0xdAC17F958D2ee523a2206206994597C13D831ec7',6),
+              'Arbitrum_USDT': ('https://arb1.arbitrum.io/rpc','0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',6),
+              'Polygon_USDT': ('https://polygon-rpc.com','0xc2132D05D31c914a87C6611C10748AaCbAacbB58',6),
+              'Optimism_USDT': ('https://mainnet.optimism.io','0x94b008aA00579c1307B0EF2c499aD98a8ce58e58',6),
+          }
+          for name,(url,contract,decimals) in tokens.items():
+              bal=erc20_balance(url,contract)
+              result['tokens'][name]={'contract':contract,'decimals':decimals,'raw_balance':bal.get('int') if bal.get('ok') else None,'error':bal.get('error') if not bal.get('ok') else None}
+
+          # Recent stablecoin event scans on the two highest-priority Chinese transfer candidates.
+          print('LOGSCAN BSC USDT', flush=True)
+          result['tokens']['BSC_USDT']['recent_logs'] = scan_token_logs('https://bsc-dataseed.binance.org', tokens['BSC_USDT'][1], 50000, 5000)
+          print('LOGSCAN XLayer old USDT', flush=True)
+          result['tokens']['XLayer_USDT_old']['recent_logs'] = scan_token_logs('https://rpc.xlayer.tech', tokens['XLayer_USDT_old'][1], 50000, 5000)
+          print('LOGSCAN XLayer USDT0', flush=True)
+          result['tokens']['XLayer_USDT0']['recent_logs'] = scan_token_logs('https://rpc.xlayer.tech', tokens['XLayer_USDT0'][1], 50000, 5000)
+
+          print('WALLET_PROBE_JSON=' + json.dumps(result, ensure_ascii=False, separators=(',',':')), flush=True)
+          PY
