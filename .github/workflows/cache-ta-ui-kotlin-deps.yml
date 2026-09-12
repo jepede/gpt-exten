@@ -1,0 +1,91 @@
+name: Cache TrustAttestor UI Kotlin Compile Dependencies
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/cache-ta-ui-kotlin-deps.yml'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  warm-kotlin-cache:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reuse cached Gradle and dependency cache
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/base/gradle" "$RUNNER_TEMP/base/deps" "$RUNNER_TEMP/gradle-home"
+          gh run download 34697680626 --repo "$GITHUB_REPOSITORY" --name gradle-8.10.2-bin --dir "$RUNNER_TEMP/base/gradle"
+          gh run download 34697680626 --repo "$GITHUB_REPOSITORY" --name gradle-modules2-ta-ui-linux-x86_64 --dir "$RUNNER_TEMP/base/deps"
+          test "$(sha256sum "$RUNNER_TEMP/base/gradle/gradle-8.10.2-bin.zip" | awk '{print $1}')" = '31c55713e40233a8303827ceb42ca48a47267a0ad4bab9177123121e71524c26'
+          test "$(sha256sum "$RUNNER_TEMP/base/deps/gradle-modules2-ta-ui-linux-x86_64.tar.zst" | awk '{print $1}')" = 'a1c95b74489951f93bc93a3e8a6f83f3eae0aba2fe1afbc434c9729de49263d7'
+          unzip -q "$RUNNER_TEMP/base/gradle/gradle-8.10.2-bin.zip" -d "$RUNNER_TEMP"
+          tar -C "$RUNNER_TEMP/gradle-home" -I zstd -xf "$RUNNER_TEMP/base/deps/gradle-modules2-ta-ui-linux-x86_64.tar.zst"
+
+      - name: Trigger real Kotlin 2.0.21 compilation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/kotlin-warm"
+          mkdir -p "$ROOT/src/main/kotlin"
+          cat > "$ROOT/settings.gradle" <<'EOF'
+          rootProject.name = 'kotlin-warm'
+          EOF
+          cat > "$ROOT/build.gradle" <<'EOF'
+          buildscript {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+              dependencies {
+                  classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'
+              }
+          }
+          apply plugin: 'org.jetbrains.kotlin.jvm'
+          repositories {
+              google()
+              mavenCentral()
+          }
+          kotlin {
+              jvmToolchain(17)
+          }
+          EOF
+          cat > "$ROOT/src/main/kotlin/Sample.kt" <<'EOF'
+          package cachewarm
+          data class Sample(val value: String)
+          fun main() = println(Sample("TrustAttestor"))
+          EOF
+          export GRADLE_USER_HOME="$RUNNER_TEMP/gradle-home"
+          export JAVA_HOME="${JAVA_HOME_17_X64:-$JAVA_HOME}"
+          "$RUNNER_TEMP/gradle-8.10.2/bin/gradle" -p "$ROOT" --no-daemon compileKotlin
+          find "$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-build-tools-impl/2.0.21" -type f -maxdepth 3 -print
+
+      - name: Package updated dependency cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/gradle-modules2-ta-ui-kotlincompile-linux-x86_64.tar.zst"
+          tar -C "$RUNNER_TEMP/gradle-home" -I 'zstd -19 -T0' -cf "$OUT" caches/modules-2
+          sha256sum "$OUT" | tee "$OUT.sha256"
+          stat -c '%n %s bytes' "$OUT"
+          test "$(stat -c '%s' "$OUT")" -lt 500000000
+
+      - name: Upload updated dependency cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-modules2-ta-ui-kotlincompile-linux-x86_64
+          path: |
+            ${{ runner.temp }}/gradle-modules2-ta-ui-kotlincompile-linux-x86_64.tar.zst
+            ${{ runner.temp }}/gradle-modules2-ta-ui-kotlincompile-linux-x86_64.tar.zst.sha256
+          retention-days: 400
+          compression-level: 0
