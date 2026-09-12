@@ -25,6 +25,7 @@ jobs:
           cache = Path("ARTIFACT_CACHE.md")
           base_record = Path(".github/cache-records/ta-ui-toolchain-run34697680626.md")
           supplement = Path(".github/cache-records/ta-ui-toolchain-supplement-20260912.md")
+          release_record = Path(".github/cache-records/ta-ui-toolchain-releasecomplete-run34698530131.md")
           text = cache.read_text(encoding="utf-8")
           sep = "|---|---|---|---|---:|---|---|\n"
 
@@ -44,18 +45,22 @@ jobs:
                   "| TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-deps-v1 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |",
               ])
 
-          supplemental_rows = []
+          rows = []
           if "34698130020" not in text:
-              supplemental_rows.append("| Android SDK Build-Tools | 34.0.0 | Linux | x86_64 | `34698130020` | SINGLE | `2026-12-11T14:02:53Z` |")
+              rows.append("| Android SDK Build-Tools | 34.0.0 | Linux | x86_64 | `34698130020` | SINGLE | `2026-12-11T14:02:53Z` |")
           if "34698303924" not in text:
-              supplemental_rows.append("| TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-kotlincompile-v2 | Linux | x86_64 | `34698303924` | SINGLE | `2026-12-11T14:06:23Z` |")
-          if supplemental_rows:
-              insert_rows(supplemental_rows)
+              rows.append("| TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-kotlincompile-v2 | Linux | x86_64 | `34698303924` | SINGLE | `2026-12-11T14:06:23Z` |")
+          if "34698530131" not in text:
+              rows.append("| TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-releasecomplete-v3 | Linux | x86_64 | `34698530131` | SINGLE | `2026-12-11T14:10:58Z` |")
+          if rows:
+              insert_rows(rows)
 
           if "## Android SDK compile bundle API 35 / Build Tools 35.0.0" not in text:
               text = text.rstrip() + "\n\n" + base_record.read_text(encoding="utf-8").strip() + "\n"
           if "## Android Build Tools 34.0.0" not in text:
               text = text.rstrip() + "\n\n" + supplement.read_text(encoding="utf-8").strip() + "\n"
+          if "## TrustAttestor UI release-complete Gradle dependency cache v3" not in text:
+              text = text.rstrip() + "\n\n" + release_record.read_text(encoding="utf-8").strip() + "\n"
 
           cache.write_text(text, encoding="utf-8")
           PY
@@ -71,5 +76,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add ARTIFACT_CACHE.md
-          git commit -m 'Cache supplemental TrustAttestor UI Android dependencies'
+          git commit -m 'Cache release-complete TrustAttestor UI Android dependencies'
           git push
