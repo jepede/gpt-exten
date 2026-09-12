@@ -1,0 +1,70 @@
+name: Cache Android Build Tools 34.0.0
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/cache-android-build-tools-34.yml'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  cache-build-tools:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reuse cached Android SDK toolchain
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/sdk-artifact" "$RUNNER_TEMP/sdk"
+          gh run download 34697680626 \
+            --repo "$GITHUB_REPOSITORY" \
+            --name android-sdk-api35-bt35.0.0-linux-x86_64 \
+            --dir "$RUNNER_TEMP/sdk-artifact"
+          cd "$RUNNER_TEMP/sdk-artifact"
+          EXPECTED='d1625f8dde5ce737b376ee56e89089846056605aa3a0eb59ddf3b87c3ee24fcc'
+          ACTUAL="$(sha256sum android-sdk-api35-bt35.0.0-linux-x86_64.tar.zst | awk '{print $1}')"
+          test "$EXPECTED" = "$ACTUAL"
+          tar -C "$RUNNER_TEMP/sdk" -I zstd -xf android-sdk-api35-bt35.0.0-linux-x86_64.tar.zst
+
+      - name: Download only Build Tools 34.0.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ANDROID_SDK_ROOT="$RUNNER_TEMP/sdk"
+          export ANDROID_HOME="$ANDROID_SDK_ROOT"
+          export JAVA_HOME="${JAVA_HOME_17_X64:-$JAVA_HOME}"
+          export PATH="$JAVA_HOME/bin:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+          sdkmanager 'build-tools;34.0.0'
+          grep -E 'Pkg\.(Revision|Path)' "$ANDROID_SDK_ROOT/build-tools/34.0.0/source.properties"
+
+      - name: Package Build Tools 34.0.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="$RUNNER_TEMP/sdk"
+          OUT="$RUNNER_TEMP/android-build-tools-34.0.0-linux-x86_64.tar.zst"
+          TREE_HASH="$(cd "$SDK/build-tools/34.0.0" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | awk '{print $1}')"
+          printf '%s\n' "$TREE_HASH" > "$RUNNER_TEMP/android-build-tools-34.0.0-tree.sha256"
+          tar -C "$SDK" -I 'zstd -19 -T0' -cf "$OUT" build-tools/34.0.0
+          sha256sum "$OUT" | tee "$OUT.sha256"
+          stat -c '%n %s bytes' "$OUT"
+          test "$(stat -c '%s' "$OUT")" -lt 500000000
+
+      - name: Upload Build Tools 34.0.0 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-tools-34.0.0-linux-x86_64
+          path: |
+            ${{ runner.temp }}/android-build-tools-34.0.0-linux-x86_64.tar.zst
+            ${{ runner.temp }}/android-build-tools-34.0.0-linux-x86_64.tar.zst.sha256
+            ${{ runner.temp }}/android-build-tools-34.0.0-tree.sha256
+          retention-days: 400
+          compression-level: 0
