@@ -21,25 +21,42 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+
           cache = Path("ARTIFACT_CACHE.md")
-          record = Path(".github/cache-records/ta-ui-toolchain-run34697680626.md")
+          base_record = Path(".github/cache-records/ta-ui-toolchain-run34697680626.md")
+          supplement = Path(".github/cache-records/ta-ui-toolchain-supplement-20260912.md")
           text = cache.read_text(encoding="utf-8")
-          rows = [
-              "| Android SDK compile bundle | api35-bt35.0.0-clt12.0-pt37.0.1-v1 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |",
-              "| Temurin JDK | 17.0.20.1+1 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |",
-              "| Gradle | 8.10.2 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |",
-              "| TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-deps-v1 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |",
-          ]
-          if "34697680626" not in text:
-              sep = "|---|---|---|---|---:|---|---|\n"
+          sep = "|---|---|---|---|---:|---|---|\n"
+
+          def insert_rows(rows):
+              global text
               pos = text.find(sep)
               if pos < 0:
                   raise SystemExit("Index table separator not found")
               pos += len(sep)
               text = text[:pos] + "\n".join(rows) + "\n" + text[pos:]
-          heading = "## Android SDK compile bundle API 35 / Build Tools 35.0.0"
-          if heading not in text:
-              text = text.rstrip() + "\n\n" + record.read_text(encoding="utf-8").strip() + "\n"
+
+          if "34697680626" not in text:
+              insert_rows([
+                  "| Android SDK compile bundle | api35-bt35.0.0-clt12.0-pt37.0.1-v1 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |",
+                  "| Temurin JDK | 17.0.20.1+1 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |",
+                  "| Gradle | 8.10.2 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |",
+                  "| TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-deps-v1 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |",
+              ])
+
+          supplemental_rows = []
+          if "34698130020" not in text:
+              supplemental_rows.append("| Android SDK Build-Tools | 34.0.0 | Linux | x86_64 | `34698130020` | SINGLE | `2026-12-11T14:02:53Z` |")
+          if "34698303924" not in text:
+              supplemental_rows.append("| TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-kotlincompile-v2 | Linux | x86_64 | `34698303924` | SINGLE | `2026-12-11T14:06:23Z` |")
+          if supplemental_rows:
+              insert_rows(supplemental_rows)
+
+          if "## Android SDK compile bundle API 35 / Build Tools 35.0.0" not in text:
+              text = text.rstrip() + "\n\n" + base_record.read_text(encoding="utf-8").strip() + "\n"
+          if "## Android Build Tools 34.0.0" not in text:
+              text = text.rstrip() + "\n\n" + supplement.read_text(encoding="utf-8").strip() + "\n"
+
           cache.write_text(text, encoding="utf-8")
           PY
 
@@ -48,11 +65,11 @@ jobs:
         run: |
           set -euo pipefail
           if git diff --quiet -- ARTIFACT_CACHE.md; then
-            echo 'ARTIFACT_CACHE.md already contains this run.'
+            echo 'ARTIFACT_CACHE.md already up to date.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add ARTIFACT_CACHE.md
-          git commit -m 'Cache TrustAttestor UI Android build toolchain'
+          git commit -m 'Cache supplemental TrustAttestor UI Android dependencies'
           git push
