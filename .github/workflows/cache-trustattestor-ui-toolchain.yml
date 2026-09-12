@@ -1,0 +1,233 @@
+name: Cache TrustAttestor UI Android Toolchain
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/cache-trustattestor-ui-toolchain.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  cache-toolchain:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      SDK_PLATFORM: android-35
+      BUILD_TOOLS: 35.0.0
+      GRADLE_VERSION: 8.10.2
+      TOOLCHAIN_TAG: ta-ui-api35-bt35.0.0-gradle8.10.2-jdk17-v1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install exact Android SDK packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager \
+            'platform-tools' \
+            'platforms;android-35' \
+            'build-tools;35.0.0' \
+            'cmdline-tools;latest'
+          sdkmanager --list_installed
+
+      - name: Package Android SDK subset
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/android-sdk-api35-bt35.0.0-linux-x86_64.tar.zst"
+          tar -C "$ANDROID_SDK_ROOT" -I 'zstd -19 -T0' -cf "$OUT" \
+            build-tools/35.0.0 \
+            platforms/android-35 \
+            platform-tools \
+            cmdline-tools/latest \
+            licenses
+          sha256sum "$OUT" | tee "$OUT.sha256"
+          stat -c '%n %s bytes' "$OUT"
+          test "$(stat -c '%s' "$OUT")" -lt 500000000
+
+      - name: Package Temurin JDK 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/temurin-jdk17-linux-x86_64.tar.zst"
+          tar -C "$JAVA_HOME" -I 'zstd -19 -T0' -cf "$OUT" .
+          sha256sum "$OUT" | tee "$OUT.sha256"
+          java -version
+          stat -c '%n %s bytes' "$OUT"
+          test "$(stat -c '%s' "$OUT")" -lt 500000000
+
+      - name: Download and verify Gradle 8.10.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fL --retry 5 --retry-delay 2 \
+            -o gradle-8.10.2-bin.zip \
+            https://services.gradle.org/distributions/gradle-8.10.2-bin.zip
+          curl -fL --retry 5 --retry-delay 2 \
+            -o gradle-8.10.2-bin.zip.sha256.remote \
+            https://services.gradle.org/distributions/gradle-8.10.2-bin.zip.sha256
+          EXPECTED="$(tr -d '[:space:]' < gradle-8.10.2-bin.zip.sha256.remote)"
+          ACTUAL="$(sha256sum gradle-8.10.2-bin.zip | awk '{print $1}')"
+          test "$EXPECTED" = "$ACTUAL"
+          printf '%s  %s\n' "$ACTUAL" gradle-8.10.2-bin.zip > gradle-8.10.2-bin.zip.sha256
+          unzip -q gradle-8.10.2-bin.zip -d gradle-dist
+          "$RUNNER_TEMP/gradle-dist/gradle-8.10.2/bin/gradle" --version
+          stat -c '%n %s bytes' gradle-8.10.2-bin.zip
+          test "$(stat -c '%s' gradle-8.10.2-bin.zip)" -lt 500000000
+
+      - name: Warm exact Gradle/Maven dependency cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/ta-cache-project"
+          mkdir -p "$ROOT/app/src/main" "$ROOT/gradle-home"
+          cat > "$ROOT/settings.gradle.kts" <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "TrustAttestor-UI-cache"
+          include(":app")
+          EOF
+          cat > "$ROOT/build.gradle.kts" <<'EOF'
+          plugins {
+              id("com.android.application") version "8.7.2" apply false
+              id("org.jetbrains.kotlin.android") version "2.0.21" apply false
+          }
+          EOF
+          cat > "$ROOT/app/build.gradle.kts" <<'EOF'
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
+          android {
+              namespace = "com.example.tacache"
+              compileSdk = 35
+              defaultConfig {
+                  applicationId = "com.example.tacache"
+                  minSdk = 27
+                  targetSdk = 35
+                  versionCode = 1
+                  versionName = "1.0"
+              }
+              buildFeatures { viewBinding = true; buildConfig = true }
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions { jvmTarget = "17" }
+          }
+          dependencies {
+              implementation("androidx.core:core-ktx:1.15.0")
+              implementation("androidx.appcompat:appcompat:1.7.0")
+              implementation("com.google.android.material:material:1.12.0")
+              implementation("androidx.activity:activity-ktx:1.10.1")
+              implementation("androidx.fragment:fragment-ktx:1.8.6")
+              implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+              implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+              implementation("androidx.recyclerview:recyclerview:1.4.0")
+              implementation("androidx.viewpager2:viewpager2:1.1.0")
+          }
+          EOF
+          cat > "$ROOT/app/src/main/AndroidManifest.xml" <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application android:theme="@style/AppTheme" />
+          </manifest>
+          EOF
+          mkdir -p "$ROOT/app/src/main/res/values"
+          cat > "$ROOT/app/src/main/res/values/styles.xml" <<'EOF'
+          <resources>
+              <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+          </resources>
+          EOF
+          "$RUNNER_TEMP/gradle-dist/gradle-8.10.2/bin/gradle" \
+            -p "$ROOT" \
+            -g "$ROOT/gradle-home" \
+            --no-daemon \
+            :app:assembleDebug
+          du -sh "$ROOT/gradle-home/caches/modules-2"
+          OUT="$RUNNER_TEMP/gradle-modules2-ta-ui-linux-x86_64.tar.zst"
+          tar -C "$ROOT/gradle-home" -I 'zstd -19 -T0' -cf "$OUT" caches/modules-2
+          sha256sum "$OUT" | tee "$OUT.sha256"
+          stat -c '%n %s bytes' "$OUT"
+          test "$(stat -c '%s' "$OUT")" -lt 500000000
+
+      - name: Write toolchain manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "Toolchain Tag: $TOOLCHAIN_TAG"
+            echo "Android Platform: $SDK_PLATFORM"
+            echo "Android Build Tools: $BUILD_TOOLS"
+            echo "Gradle: $GRADLE_VERSION"
+            echo "JDK: $(java -version 2>&1 | head -1)"
+            echo "sdkmanager: $(sdkmanager --version 2>/dev/null | head -1 || true)"
+            echo
+            sha256sum \
+              "$RUNNER_TEMP/android-sdk-api35-bt35.0.0-linux-x86_64.tar.zst" \
+              "$RUNNER_TEMP/temurin-jdk17-linux-x86_64.tar.zst" \
+              "$RUNNER_TEMP/gradle-8.10.2-bin.zip" \
+              "$RUNNER_TEMP/gradle-modules2-ta-ui-linux-x86_64.tar.zst"
+          } | tee "$RUNNER_TEMP/TOOLCHAIN-MANIFEST.txt"
+
+      - name: Upload Android SDK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-sdk-api35-bt35.0.0-linux-x86_64
+          path: |
+            ${{ runner.temp }}/android-sdk-api35-bt35.0.0-linux-x86_64.tar.zst
+            ${{ runner.temp }}/android-sdk-api35-bt35.0.0-linux-x86_64.tar.zst.sha256
+            ${{ runner.temp }}/TOOLCHAIN-MANIFEST.txt
+          retention-days: 400
+          compression-level: 0
+
+      - name: Upload JDK 17 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: temurin-jdk17-linux-x86_64
+          path: |
+            ${{ runner.temp }}/temurin-jdk17-linux-x86_64.tar.zst
+            ${{ runner.temp }}/temurin-jdk17-linux-x86_64.tar.zst.sha256
+          retention-days: 400
+          compression-level: 0
+
+      - name: Upload Gradle distribution artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-8.10.2-bin
+          path: |
+            ${{ runner.temp }}/gradle-8.10.2-bin.zip
+            ${{ runner.temp }}/gradle-8.10.2-bin.zip.sha256
+          retention-days: 400
+          compression-level: 0
+
+      - name: Upload Gradle dependency cache artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-modules2-ta-ui-linux-x86_64
+          path: |
+            ${{ runner.temp }}/gradle-modules2-ta-ui-linux-x86_64.tar.zst
+            ${{ runner.temp }}/gradle-modules2-ta-ui-linux-x86_64.tar.zst.sha256
+          retention-days: 400
+          compression-level: 0
