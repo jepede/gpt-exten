@@ -40,9 +40,9 @@ jobs:
           sdkmanager \
             'platform-tools' \
             'platforms;android-35' \
-            'build-tools;35.0.0' \
-            'cmdline-tools;latest'
+            'build-tools;35.0.0'
           sdkmanager --list_installed
+          cat "$ANDROID_SDK_ROOT/cmdline-tools/latest/source.properties" || true
 
       - name: Package Android SDK subset
         shell: bash
@@ -96,6 +96,11 @@ jobs:
           set -euo pipefail
           ROOT="$RUNNER_TEMP/ta-cache-project"
           mkdir -p "$ROOT/app/src/main" "$ROOT/gradle-home"
+          cat > "$ROOT/gradle.properties" <<'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=false
+          org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8
+          EOF
           cat > "$ROOT/settings.gradle.kts" <<'EOF'
           pluginManagement {
               repositories {
@@ -188,6 +193,8 @@ jobs:
             echo "Gradle: $GRADLE_VERSION"
             echo "JDK: $(java -version 2>&1 | head -1)"
             echo "sdkmanager: $(sdkmanager --version 2>/dev/null | head -1 || true)"
+            echo "Command-line tools package:"
+            cat "$ANDROID_SDK_ROOT/cmdline-tools/latest/source.properties" || true
             echo
             sha256sum \
               "$RUNNER_TEMP/android-sdk-api35-bt35.0.0-linux-x86_64.tar.zst" \
