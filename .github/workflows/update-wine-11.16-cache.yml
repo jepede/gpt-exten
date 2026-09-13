@@ -1,0 +1,51 @@
+name: Record Wine 11.16 cache
+
+on:
+  push:
+    branches:
+      - tmp/update-wine-11.16-cache-20260913
+
+permissions:
+  contents: write
+
+jobs:
+  update-cache:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Update ARTIFACT_CACHE.md
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('ARTIFACT_CACHE.md')
+          s = p.read_text()
+          row = '| Wine portable | 11.16 | Linux | x86_64 | `34743014984` | SINGLE | `2026-12-12T06:32:52Z` |'
+          if row not in s:
+              idx = s.index('## Index')
+              nxt = s.index('\n## ', idx + len('## Index'))
+              block = s[idx:nxt]
+              block = block.rstrip() + '\n' + row + '\n\n'
+              s = s[:idx] + block + s[nxt+1:]
+          section = '''\n## Wine portable 11.16 amd64\n\n- Workflow: `.github/workflows/fetch-wine-11.16-amd64.yml` (temporary branch `tmp/fetch-wine-11.16-amd64-20260913`)\n- Workflow Name: `Fetch Wine 11.16 amd64`\n- Run ID: `34743014984`\n- Run Number: `1`\n- Run Conclusion: `success`\n- Source: `https://github.com/Kron4ek/Wine-Builds/releases/download/11.16/wine-11.16-amd64.tar.xz`\n- Repository Visibility: `Public`\n- Requested Retention: `400 days`\n- Effective Retention: `90 days` (GitHub public-repository cap)\n- Storage Mode: `SINGLE`\n- Artifact Name: `wine-11.16-amd64-linux-x86_64`\n- Artifact ID: `10313207613`\n- File: `wine-11.16-amd64.tar.xz`\n- Artifact Archive Size: `103741066` bytes\n- Artifact Archive SHA256 / Digest: `7a6a123f3e5d0d286bd8687fa53c2fa6f06f33f500adff7d249a9cf47c096b65`\n- Original File: `wine-11.16-amd64.tar.xz`\n- Original Size: `103740540` bytes\n- Original SHA256: `bb4d0eba24fb4ca8636b06f3d7786aa7fc50cb853f9255a0a376adf1f50bca53`\n- Part Count: `1`\n- Created At: `2026-09-13T06:32:58Z`\n- Expires At: `2026-12-12T06:32:52Z`\n\n### Contents\n\n| Name | Version | Platform | Architecture | File/Path | SHA256 |\n|---|---|---|---|---|---|\n| Wine portable | 11.16 | Linux | x86_64 | `wine-11.16-amd64.tar.xz` | `bb4d0eba24fb4ca8636b06f3d7786aa7fc50cb853f9255a0a376adf1f50bca53` |\n\n### Artifact\n\n| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |\n|---:|---:|---|---:|---|---:|---|---|---|\n| 1/1 | `10313207613` | `wine-11.16-amd64-linux-x86_64` | `103740540` | `bb4d0eba24fb4ca8636b06f3d7786aa7fc50cb853f9255a0a376adf1f50bca53` | `103741066` | `sha256:7a6a123f3e5d0d286bd8687fa53c2fa6f06f33f500adff7d249a9cf47c096b65` | `2026-09-13T06:32:58Z` | `2026-12-12T06:32:52Z` |\n\n### Restore\n\n下载 Artifact `10313207613`，校验 Artifact ZIP SHA256 `7a6a123f3e5d0d286bd8687fa53c2fa6f06f33f500adff7d249a9cf47c096b65`；解压得到 `wine-11.16-amd64.tar.xz` 后校验 SHA256 `bb4d0eba24fb4ca8636b06f3d7786aa7fc50cb853f9255a0a376adf1f50bca53`。\n'''
+          if '## Wine portable 11.16 amd64' not in s:
+              s = s.rstrip() + '\n' + section
+          p.write_text(s)
+          PY
+
+      - name: Commit cache record to main
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ARTIFACT_CACHE.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'cache: add Wine 11.16 amd64 artifact'
+          git push origin HEAD:main
