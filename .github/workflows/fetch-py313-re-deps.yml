@@ -1,0 +1,47 @@
+name: Fetch Python 3.13 RE wheels
+
+on:
+  push:
+    branches:
+      - tmp/fetch-py313-re-deps-20260913
+
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Download binary wheels
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir wheels
+          python -m pip download --only-binary=:all: --no-deps -d wheels unicorn capstone
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, zipfile, re
+          rows=[]
+          for p in sorted(Path('wheels').glob('*.whl')):
+              h=hashlib.sha256(p.read_bytes()).hexdigest()
+              n=p.name
+              parts=n[:-4].split('-')
+              name,ver=parts[0],parts[1]
+              rows.append((name,ver,n,p.stat().st_size,h))
+          with open('WHEEL_MANIFEST.tsv','w') as f:
+              f.write('Name\tVersion\tFile\tSize\tSHA256\n')
+              for r in rows: f.write('\t'.join(map(str,r))+'\n')
+          PY
+          cat WHEEL_MANIFEST.tsv
+          du -sb wheels | tee TOTAL_SIZE.txt
+      - name: Upload wheels artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: py313-re-wheels-linux-x86_64
+          path: |
+            wheels/*.whl
+            WHEEL_MANIFEST.tsv
+            TOTAL_SIZE.txt
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 400
