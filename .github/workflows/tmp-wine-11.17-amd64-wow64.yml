@@ -1,0 +1,33 @@
+name: Temporary Wine 11.17 Bundle
+
+on:
+  pull_request:
+    paths:
+      - '.github/tmp-wine-11-17-trigger'
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download and verify Wine
+        shell: bash
+        run: |
+          set -euxo pipefail
+          curl -L --fail --retry 3 \
+            -o wine-11.17-amd64-wow64.tar.xz \
+            https://github.com/Kron4ek/Wine-Builds/releases/download/11.17/wine-11.17-amd64-wow64.tar.xz
+          echo '3211db09086bc6fbd769c0286f27790b32d6fc6fb0bc610dad6b59796f07d462  wine-11.17-amd64-wow64.tar.xz' | sha256sum -c -
+          sha256sum wine-11.17-amd64-wow64.tar.xz > SHA256SUMS.txt
+          stat -c '%n %s bytes' wine-11.17-amd64-wow64.tar.xz
+          cat SHA256SUMS.txt
+
+      - name: Upload temporary Wine bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: wine-11.17-amd64-wow64
+          path: |
+            wine-11.17-amd64-wow64.tar.xz
+            SHA256SUMS.txt
+          retention-days: 1
+          compression-level: 0
