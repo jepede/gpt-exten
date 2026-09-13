@@ -1,0 +1,32 @@
+name: Fetch unlicense 0.4.0 x64
+
+on:
+  push:
+    branches:
+      - tmp/fetch-unlicense-0.4.0-20260913
+
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download unlicense release
+        shell: bash
+        run: |
+          set -euxo pipefail
+          url='https://github.com/ergrelet/unlicense/releases/download/0.4.0/unlicense-py3.11-x64.zip'
+          curl -fL --retry 5 --retry-delay 2 -o unlicense-py3.11-x64.zip "$url"
+          test "$(stat -c %s unlicense-py3.11-x64.zip)" -lt 536870912
+          sha256sum unlicense-py3.11-x64.zip | tee SHA256SUMS.txt
+          stat -c '%n %s bytes' unlicense-py3.11-x64.zip | tee FILESIZE.txt
+
+      - name: Upload unlicense artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unlicense-0.4.0-windows-x86_64
+          path: |
+            unlicense-py3.11-x64.zip
+            SHA256SUMS.txt
+            FILESIZE.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
