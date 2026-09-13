@@ -28,6 +28,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | libUE4 GL | 4.5-v1.0.1 | Android | AArch64 | `33073762454` | SINGLE | `2026-11-25T12:50:04Z` |
 | VaultPony VeraCrypt-compatible CLI | 0.1.0+fb4c460 | Android (API 24+) | AArch64 | `33089426736` | SINGLE | `2026-11-25T15:43:58Z` |
+| Wine portable | 11.16 | Linux | x86_64 | `34743014984` | SINGLE | `2026-12-12T06:32:52Z` |
 
 ## TShield 6.2 Live W response
 
@@ -803,3 +804,43 @@ This supersedes the v2 dependency cache for full offline Debug/Release builds. I
 ### Restore
 
 Download Artifact `10299263954`, verify the Artifact ZIP SHA256 `ab02f8ec568e6aa8985eb1d7afe770642a26ba2ed20d76d342fa51fea2c89434`, extract the `.tar.zst`, verify original SHA256 `b561966039c37b7bc2368a5895a1752523c150d3dd2c673c2162f8fb83fcd3b4`, then restore `caches/modules-2` beneath `GRADLE_USER_HOME`.
+
+## Wine portable 11.16 amd64
+
+- Workflow: `.github/workflows/fetch-wine-11.16-amd64.yml` (temporary branch `tmp/fetch-wine-11.16-amd64-20260913`)
+- Workflow Name: `Fetch Wine 11.16 amd64`
+- Run ID: `34743014984`
+- Run Number: `1`
+- Run Conclusion: `success`
+- Source: `https://github.com/Kron4ek/Wine-Builds/releases/download/11.16/wine-11.16-amd64.tar.xz`
+- Repository Visibility: `Public`
+- Requested Retention: `400 days`
+- Effective Retention: `90 days` (GitHub public-repository cap)
+- Storage Mode: `SINGLE`
+- Artifact Name: `wine-11.16-amd64-linux-x86_64`
+- Artifact ID: `10313207613`
+- File: `wine-11.16-amd64.tar.xz`
+- Artifact Archive Size: `103741066` bytes
+- Artifact Archive SHA256 / Digest: `7a6a123f3e5d0d286bd8687fa53c2fa6f06f33f500adff7d249a9cf47c096b65`
+- Original File: `wine-11.16-amd64.tar.xz`
+- Original Size: `103740540` bytes
+- Original SHA256: `bb4d0eba24fb4ca8636b06f3d7786aa7fc50cb853f9255a0a376adf1f50bca53`
+- Part Count: `1`
+- Created At: `2026-09-13T06:32:58Z`
+- Expires At: `2026-12-12T06:32:52Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Wine portable | 11.16 | Linux | x86_64 | `wine-11.16-amd64.tar.xz` | `bb4d0eba24fb4ca8636b06f3d7786aa7fc50cb853f9255a0a376adf1f50bca53` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `10313207613` | `wine-11.16-amd64-linux-x86_64` | `103740540` | `bb4d0eba24fb4ca8636b06f3d7786aa7fc50cb853f9255a0a376adf1f50bca53` | `103741066` | `sha256:7a6a123f3e5d0d286bd8687fa53c2fa6f06f33f500adff7d249a9cf47c096b65` | `2026-09-13T06:32:58Z` | `2026-12-12T06:32:52Z` |
+
+### Restore
+
+下载 Artifact `10313207613`，校验 Artifact ZIP SHA256 `7a6a123f3e5d0d286bd8687fa53c2fa6f06f33f500adff7d249a9cf47c096b65`；解压得到 `wine-11.16-amd64.tar.xz` 后校验 SHA256 `bb4d0eba24fb4ca8636b06f3d7786aa7fc50cb853f9255a0a376adf1f50bca53`。
