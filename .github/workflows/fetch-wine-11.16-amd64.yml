@@ -1,0 +1,33 @@
+name: Fetch Wine 11.16 amd64
+
+on:
+  push:
+    branches:
+      - tmp/fetch-wine-11.16-amd64-20260913
+
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download Wine portable build
+        shell: bash
+        run: |
+          set -euxo pipefail
+          url='https://github.com/Kron4ek/Wine-Builds/releases/download/11.16/wine-11.16-amd64.tar.xz'
+          curl -fL --retry 5 --retry-delay 2 -o wine-11.16-amd64.tar.xz "$url"
+          test "$(stat -c %s wine-11.16-amd64.tar.xz)" -lt 536870912
+          echo 'bb4d0eba24fb4ca8636b06f3d7786aa7fc50cb853f9255a0a376adf1f50bca53  wine-11.16-amd64.tar.xz' | sha256sum -c -
+          stat -c '%n %s bytes' wine-11.16-amd64.tar.xz | tee FILESIZE.txt
+          sha256sum wine-11.16-amd64.tar.xz | tee SHA256SUMS.txt
+
+      - name: Upload Wine artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wine-11.16-amd64-linux-x86_64
+          path: |
+            wine-11.16-amd64.tar.xz
+            SHA256SUMS.txt
+            FILESIZE.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
