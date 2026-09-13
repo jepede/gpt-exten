@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - '.github/workflows/tmp-themida-emulator-bundle.yml'
+  pull_request:
+    paths:
+      - '.github/tmp-themida-trigger'
   workflow_dispatch:
 
 jobs:
