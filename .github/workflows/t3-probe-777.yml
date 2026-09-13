@@ -1,0 +1,46 @@
+name: tshield-t3-probe-777
+on:
+  push:
+    branches: [probe-t3-777-20260913]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe exact T3 endpoint
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request, urllib.error, base64, json, ssl
+          urls = [
+            'http://w.t3yanzheng.com/02613D15E5C137E3?safe_code=&t=&s=',
+            'https://w.t3yanzheng.com/02613D15E5C137E3?safe_code=&t=&s=',
+          ]
+          headers = {
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': '*/*',
+            'Accept-Language': 'zh-CN',
+            'Connection': 'close',
+          }
+          for u in urls:
+            print('===URL===', u)
+            try:
+              req = urllib.request.Request(u, headers=headers, method='GET')
+              with urllib.request.urlopen(req, timeout=20, context=ssl.create_default_context()) as r:
+                b = r.read()
+                print('STATUS', r.status)
+                print('FINAL_URL', r.geturl())
+                print('HEADERS_JSON', json.dumps(dict(r.headers.items()), ensure_ascii=False, sort_keys=True))
+                print('BODY_LEN', len(b))
+                print('BODY_BASE64', base64.b64encode(b).decode())
+                print('BODY_REPR', repr(b[:8192]))
+            except urllib.error.HTTPError as e:
+              b = e.read()
+              print('HTTP_ERROR', e.code)
+              print('HEADERS_JSON', json.dumps(dict(e.headers.items()), ensure_ascii=False, sort_keys=True))
+              print('BODY_LEN', len(b))
+              print('BODY_BASE64', base64.b64encode(b).decode())
+              print('BODY_REPR', repr(b[:8192]))
+            except Exception as e:
+              print('ERROR', type(e).__name__, repr(e))
+          PY
