@@ -1,0 +1,28 @@
+name: Temp Fetch ScyllaHide v1.4
+
+on:
+  push:
+    paths:
+      - '.github/workflows/tmp-fetch-scyllahide-v1.4.yml'
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch official ScyllaHide v1.4
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 -o ScyllaHide_2023-03-24_13-03.zip \
+            https://github.com/x64dbg/ScyllaHide/releases/download/v1.4/ScyllaHide_2023-03-24_13-03.zip
+          sha256sum ScyllaHide_2023-03-24_13-03.zip | tee SHA256.txt
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scyllahide-v1.4-temp
+          path: |
+            ScyllaHide_2023-03-24_13-03.zip
+            SHA256.txt
+          retention-days: 1
+          if-no-files-found: error
