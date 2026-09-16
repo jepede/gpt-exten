@@ -1,0 +1,22 @@
+name: Fetch vgmstream r2117
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fetch-vgmstream-r2117.yml'
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download vgmstream Linux release
+        run: |
+          set -eux
+          curl -L --fail -o vgmstream-linux.zip https://github.com/vgmstream/vgmstream/releases/download/r2117/vgmstream-linux.zip
+          echo '2f98c77f756079f63fbd119939067f1ed461d77e70993bc4cc372736d859c84a  vgmstream-linux.zip' | sha256sum -c -
+          unzip -l vgmstream-linux.zip
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vgmstream-r2117-linux-x64
+          path: vgmstream-linux.zip
+          retention-days: 90
