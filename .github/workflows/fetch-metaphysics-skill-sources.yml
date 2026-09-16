@@ -68,6 +68,7 @@ jobs:
           path: bundle/core/
           retention-days: 1
           compression-level: 6
+          include-hidden-files: true
 
       - name: Upload engine sources
         uses: actions/upload-artifact@v4
@@ -76,3 +77,4 @@ jobs:
           path: bundle/engines/
           retention-days: 1
           compression-level: 6
+          include-hidden-files: true
