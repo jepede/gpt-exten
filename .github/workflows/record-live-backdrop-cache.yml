@@ -1,0 +1,70 @@
+name: Record Live Backdrop Artifact Cache
+on:
+  push:
+    branches: [integration/live-backdrop-20260917]
+    paths: [.github/workflows/record-live-backdrop-cache.yml]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/live-backdrop-20260917
+      - name: Append verified artifact metadata, integration branch only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/jepede/gpt-exten/actions/artifacts/10487047687 > "$RUNNER_TEMP/live-artifact.json"
+          python3 - <<'PY'
+          import json,os,pathlib
+          a=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'live-artifact.json').read_text())
+          assert a['id']==10487047687 and not a['expired']
+          assert a['workflow_run']['id']==35198560808
+          assert a['digest']=='sha256:bcf8a0262cb03d7e1d8a64a108674363711880b9752e8535f69686e1cabf7e2a'
+          path=pathlib.Path('ARTIFACT_CACHE.md')
+          text=path.read_text()
+          heading='## Surface Live Backdrop Module 0.1'
+          if heading in text:raise SystemExit('Artifact is already recorded')
+          sha=a['digest'].removeprefix('sha256:')
+          record=f'''\n\n{heading}
+
+          - Name: Surface Live Backdrop Module
+          - Version: 0.1
+          - Platform: Android API 34..36 helper / NDK API 28 consumer
+          - Architecture: arm64-v8a
+          - Workflow: `.github/workflows/build-live-backdrop.yml`
+          - Run ID: `35198560808`
+          - Commit: `c2470d20f5ceea966de98ecae095b0dea1cdf0ce`
+          - Artifact Name: `{a['name']}`
+          - Artifact ID: `{a['id']}`
+          - File: `Surface_LiveBackdrop_Module_v0.1.zip`
+          - Size: `{a['size_in_bytes']}` bytes
+          - SHA256: `{sha}`
+          - Created At: `{a['created_at']}`
+          - Expires At: `{a['expires_at']}`
+          - Storage Mode: `SINGLE`
+          - Original File: `Surface_LiveBackdrop_Module_v0.1.zip` (the Actions ZIP is itself the delivered module archive)
+          - Original Size: `{a['size_in_bytes']}` bytes
+          - Original SHA256: `{sha}`
+          - Part Count: `1`
+          - Scope: new module only, no user project or fonts uploaded; record retained on integration branch, not merged into main.
+          - Validation: native ARM64 JNI/client compile+link, Java+DEX, JNI descriptors, native protocol and six installer fixture tests passed. Full host build and Android device tests were NOT run.
+
+          | Name | Version | Platform | Architecture | File/Path | SHA256 |
+          |---|---|---|---|---|---|
+          | Surface Live Backdrop Module | 0.1 | Android | arm64-v8a | `Surface_LiveBackdrop_Module_v0.1.zip` | `{sha}` |
+
+          Restore: reuse Artifact `{a['id']}` while valid, verify the ZIP SHA256 above before extraction. Per-file hashes are included in `SHA256SUMS.txt` and `BUILD_MANIFEST.json`. No duplicate rebuild/download of external dependencies is needed.
+          '''
+          record='\n'.join(line[10:] if line.startswith('          ') else line for line in record.splitlines())+'\n'
+          path.write_text(text+record)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add ARTIFACT_CACHE.md
+          git commit -m 'Cache live-backdrop module artifact 10487047687 on integration branch'
+          git push origin HEAD:integration/live-backdrop-20260917
