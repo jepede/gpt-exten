@@ -1,0 +1,76 @@
+name: Build Live Backdrop Module
+on:
+  push:
+    branches: [integration/live-backdrop-20260917]
+    paths:
+      - live_backdrop/**
+      - .github/workflows/build-live-backdrop.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore existing NDK r28c artifacts
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: jepede/gpt-exten
+          run-id: 31684150811
+          pattern: ndk-r28c-part-*
+          merge-multiple: true
+          path: ndk-cache
+      - name: Verify and unpack cached NDK
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,os,shutil
+          roots=Path('ndk-cache')
+          out=Path(os.environ['RUNNER_TEMP'])/'ndk.zip'
+          expected=['6e87d3bb98c2bfcdb9a703affd174b85ef00fff69b9aa0056372f79046308fa1','bf9baef30047e4a7e1040034619728cce0b291d76e4d67b44a0d5d0554c0197c']
+          with out.open('wb') as dst:
+              for i in range(2):
+                  matches=list(roots.rglob(f'ndk-r28c.part.{i:02d}'))
+                  assert len(matches)==1,matches
+                  assert hashlib.file_digest(matches[0].open('rb'),'sha256').hexdigest()==expected[i]
+                  with matches[0].open('rb') as src:shutil.copyfileobj(src,dst)
+          assert hashlib.file_digest(out.open('rb'),'sha256').hexdigest()=='dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f'
+          PY
+          unzip -q "$RUNNER_TEMP/ndk.zip" -d "$RUNNER_TEMP/ndk"
+          echo "ANDROID_NDK_HOME=$RUNNER_TEMP/ndk/android-ndk-r28c" >> "$GITHUB_ENV"
+      - name: Native, Java, DEX and installer validation
+        shell: bash
+        run: bash live_backdrop/build.sh
+      - name: Package source and compiled helper, no user project
+        shell: bash
+        run: |
+          mkdir -p delivery
+          cp -a live_backdrop/{native,adapter,helper,tests,runtime,validation,install.py,README.md,build.sh} delivery/
+          find delivery -type d -name __pycache__ -prune -exec rm -rf '{}' +
+          python3 - <<'PY'
+          import pathlib,hashlib,json,os
+          root=pathlib.Path('delivery')
+          hashes={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(root.rglob('*')) if p.is_file()}
+          (root/'SHA256SUMS.txt').write_text(''.join(f'{v}  {k}\n' for k,v in hashes.items()))
+          meta={'name':'Surface Live Backdrop Module','version':'0.1','platform':'Android','architecture':'arm64-v8a','run_id':os.environ['GITHUB_RUN_ID'],'commit':os.environ['GITHUB_SHA'],'storage':'SINGLE','file_sha256':hashes}
+          (root/'BUILD_MANIFEST.json').write_text(json.dumps(meta,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: surface-live-backdrop-module-v0.1-arm64
+          path: delivery/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-backdrop-failure-logs
+          path: live_backdrop/validation/
+          if-no-files-found: ignore
+          retention-days: 7
