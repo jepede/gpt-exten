@@ -1,0 +1,63 @@
+name: Ytbl liquid glass verification dependencies
+on:
+  push:
+    paths: ['.github/workflows/ytbl-deps-20260917.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned sources and official headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bundle/headers/{GLES3,KHR,EGL}
+          for v in 1.91.9b 1.92.5; do
+            curl --fail --location --retry 3 "https://codeload.github.com/ocornut/imgui/tar.gz/refs/tags/v${v}" -o "imgui-${v}.tgz"
+            tar xzf "imgui-${v}.tgz" -C bundle
+            rm "imgui-${v}.tgz"
+          done
+          for f in gl3.h gl3platform.h; do
+            curl -fsSL --retry 3 "https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry/main/api/GLES3/${f}" -o "bundle/headers/GLES3/${f}"
+          done
+          curl -fsSL --retry 3 https://raw.githubusercontent.com/KhronosGroup/EGL-Registry/main/api/KHR/khrplatform.h -o bundle/headers/KHR/khrplatform.h
+          for f in egl.h eglplatform.h eglext.h; do
+            curl -fsSL --retry 3 "https://raw.githubusercontent.com/KhronosGroup/EGL-Registry/main/api/EGL/${f}" -o "bundle/headers/EGL/${f}"
+          done
+          find bundle -type f -print0 | sort -z | xargs -0 sha256sum > CONTENT_SHA256SUMS.txt
+          tar czf ytbl-build-deps-v1.tar.gz bundle CONTENT_SHA256SUMS.txt
+          sha256sum ytbl-build-deps-v1.tar.gz > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        id: artifact
+        with:
+          name: ytbl-build-deps-v1
+          path: |
+            ytbl-build-deps-v1.tar.gz
+            SHA256SUMS.txt
+          retention-days: 90
+      - name: Record verified artifact metadata in cache index
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.artifact.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.artifact.outputs.artifact-digest }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}" > artifact.json
+          python3 - <<'PY'
+          import json,os,pathlib,hashlib
+          p=pathlib.Path('ytbl-build-deps-v1.tar.gz'); a=json.load(open('artifact.json'))
+          sha=hashlib.sha256(p.read_bytes()).hexdigest()
+          record=f'''\n\n## Ytbl build dependencies v1\n\n- Name: Ytbl build dependencies\n- Version: imgui1.91.9b+1.92.5-khronos-20260917-v1\n- Platform: Any\n- Architecture: Any\n- Workflow: `.github/workflows/ytbl-deps-20260917.yml`\n- Run ID: `{os.environ['GITHUB_RUN_ID']}`\n- Artifact Name: `{a['name']}`\n- Artifact ID: `{a['id']}`\n- File: `{p.name}`\n- Size: `{a['size_in_bytes']}` bytes (artifact ZIP)\n- SHA256: `{os.environ.get('ARTIFACT_DIGEST','')}` (artifact digest)\n- Created At: `{a['created_at']}`\n- Expires At: `{a['expires_at']}`\n- Storage Mode: `SINGLE`\n- Original File: `{p.name}`\n- Original Size: `{p.stat().st_size}` bytes\n- Original SHA256: `{sha}`\n- Part Count: `1`\n\n| Name | Version | Platform | Architecture | File/Path | SHA256 |\n|---|---|---|---|---|---|\n| Ytbl build dependencies | imgui1.91.9b+1.92.5-khronos-20260917-v1 | Any | Any | `{p.name}` | `{sha}` |\n\nContains official ImGui sources with their MIT license and official Khronos API headers. Individual file hashes are in CONTENT_SHA256SUMS.txt.\n'''
+          pathlib.Path('/tmp/ytbl-cache-record.md').write_text(record)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git pull --ff-only
+          cat /tmp/ytbl-cache-record.md >> ARTIFACT_CACHE.md
+          git add ARTIFACT_CACHE.md
+          git commit -m 'cache: index Ytbl verification dependencies with artifact hashes'
+          git push
