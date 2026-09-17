@@ -872,3 +872,34 @@ Download Artifact `10299263954`, verify the Artifact ZIP SHA256 `ab02f8ec568e6aa
 | Ytbl build dependencies | imgui1.91.9b+1.92.5-khronos-20260917-v1 | Any | Any | `ytbl-build-deps-v1.tar.gz` | `abe81599d03de3f37a1215bba236b824d7c733477a1ac68f5530be195d85e66e` |
 
 Contains official ImGui sources with their MIT license and official Khronos API headers. Individual file hashes are in CONTENT_SHA256SUMS.txt.
+
+
+## Surface Live Backdrop Module 0.1
+
+- Name: Surface Live Backdrop Module
+- Version: 0.1
+- Platform: Android API 34..36 helper / NDK API 28 consumer
+- Architecture: arm64-v8a
+- Workflow: `.github/workflows/build-live-backdrop.yml`
+- Run ID: `35198560808`
+- Commit: `c2470d20f5ceea966de98ecae095b0dea1cdf0ce`
+- Artifact Name: `surface-live-backdrop-module-v0.1-arm64`
+- Artifact ID: `10487047687`
+- File: `Surface_LiveBackdrop_Module_v0.1.zip`
+- Size: `38606` bytes
+- SHA256: `bcf8a0262cb03d7e1d8a64a108674363711880b9752e8535f69686e1cabf7e2a`
+- Created At: `2026-09-17T08:14:55Z`
+- Expires At: `2026-10-17T08:14:54Z`
+- Storage Mode: `SINGLE`
+- Original File: `Surface_LiveBackdrop_Module_v0.1.zip` (the Actions ZIP is itself the delivered module archive)
+- Original Size: `38606` bytes
+- Original SHA256: `bcf8a0262cb03d7e1d8a64a108674363711880b9752e8535f69686e1cabf7e2a`
+- Part Count: `1`
+- Scope: new module only, no user project or fonts uploaded; record retained on integration branch, not merged into main.
+- Validation: native ARM64 JNI/client compile+link, Java+DEX, JNI descriptors, native protocol and six installer fixture tests passed. Full host build and Android device tests were NOT run.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Surface Live Backdrop Module | 0.1 | Android | arm64-v8a | `Surface_LiveBackdrop_Module_v0.1.zip` | `bcf8a0262cb03d7e1d8a64a108674363711880b9752e8535f69686e1cabf7e2a` |
+
+Restore: reuse Artifact `10487047687` while valid, verify the ZIP SHA256 above before extraction. Per-file hashes are included in `SHA256SUMS.txt` and `BUILD_MANIFEST.json`. No duplicate rebuild/download of external dependencies is needed.
