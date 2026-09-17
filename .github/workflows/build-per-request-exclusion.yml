@@ -1,0 +1,67 @@
+name: Build Per Request Exclusion
+on:
+  push:
+    branches: [integration/per-request-exclusion-20260917]
+    paths:
+      - per_request_exclusion/**
+      - .github/workflows/build-per-request-exclusion.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore valid cached NDK parts
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: 31684150811
+          artifact-ids: 9174697344,9174699121
+          path: ${{ runner.temp }}/ndk-parts
+      - name: Verify and restore NDK r28c
+        env:
+          PARTS: ${{ runner.temp }}/ndk-parts
+          DEST: ${{ runner.temp }}/ndk
+        run: |
+          python3 - <<'PY'
+          import os,pathlib,hashlib,shutil
+          root=pathlib.Path(os.environ['PARTS']);dest=pathlib.Path(os.environ['DEST']);dest.mkdir()
+          hashes=['6e87d3bb98c2bfcdb9a703affd174b85ef00fff69b9aa0056372f79046308fa1','bf9baef30047e4a7e1040034619728cce0b291d76e4d67b44a0d5d0554c0197c']
+          with (dest/'ndk.zip').open('wb') as out:
+              for i,digest in enumerate(hashes):
+                  paths=list(root.rglob('ndk-r28c.part.%02d'%i));assert len(paths)==1
+                  with paths[0].open('rb') as f:assert hashlib.file_digest(f,'sha256').hexdigest()==digest
+                  with paths[0].open('rb') as f:shutil.copyfileobj(f,out)
+          with (dest/'ndk.zip').open('rb') as f:assert hashlib.file_digest(f,'sha256').hexdigest()=='dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f'
+          PY
+          unzip -q "$DEST/ndk.zip" -d "$DEST"
+      - name: Compile native/Dex and run tests
+        env:
+          NDK_ROOT: ${{ runner.temp }}/ndk/android-ndk-r28c
+          EGL_PLATFORM: surfaceless
+          LIBGL_ALWAYS_SOFTWARE: 1
+        run: bash per_request_exclusion/ci_build.sh
+      - name: Prepare upgrade bundle
+        run: |
+          find per_request_exclusion -type d -name __pycache__ -prune -exec rm -rf {} +
+          mkdir -p delivery
+          cp -a per_request_exclusion/. delivery/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Surface_PerRequest_Exclusion_v2
+          path: delivery/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Upload diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PerRequestExclusion_build_logs
+          path: per_request_exclusion/validation/
+          retention-days: 30
+          if-no-files-found: ignore
