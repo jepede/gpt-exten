@@ -26,3 +26,22 @@ replace(root/'payload/jni/real_backdrop/NativeBackdrop.cpp',
         'if(std::strncmp(*p,"CLASSPATH=",10)!=0)envStrings.emplace_back(*p);',
         'if(std::strncmp(*p,"CLASSPATH=",10)!=0 && std::strncmp(*p,"LD_PRELOAD=",11)!=0 &&\n'
         '        std::strncmp(*p,"LD_LIBRARY_PATH=",16)!=0)envStrings.emplace_back(*p);')
+# Inserting a dependency before the host's IMGUI_DEFINE_MATH_OPERATORS can
+# change ImGui inline declarations. Insert after the existing Ytbl include.
+replace(root/'install.py',
+        '        text=\'#include "SurfaceBackdropUi.h"\\n\'+text',
+        '''        host_include = '#include "ytbl.h"'
+        if host_include in text:
+            text=one(text,host_include,host_include+'\\n#include "SurfaceBackdropUi.h"','Ytbl include order')
+        else:
+            text=('#ifndef IMGUI_DEFINE_MATH_OPERATORS\\n#define IMGUI_DEFINE_MATH_OPERATORS\\n#endif\\n'
+                  '#include "SurfaceBackdropUi.h"\\n')+text''')
+# An app_process helper must not stay alive on Binder/runtime threads after
+# its parent closes the sole local connection.
+replace(root/'payload/capture/Main.java',
+        '            System.err.println("[YtblCapture] stopped: "+cause(error));\n        }\n    }\n}',
+        '            System.err.println("[YtblCapture] stopped: "+cause(error));\n        }\n'
+        '        System.exit(0); // End only this child; never a persistent capture service.\n    }\n}')
+replace(root/'payload/jni/real_backdrop/SurfaceBackdropUi.h',
+        'ImGui::Button("停止并重新连接")',
+        'ImGui::Button("停止采集（重新勾选以重连）")')
