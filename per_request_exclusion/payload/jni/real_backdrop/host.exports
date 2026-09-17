@@ -1,0 +1,10 @@
+YTBL_HOST_2 {
+  global:
+    Java_com_ytbl_capture_HostMain_nativeRun;
+    Java_com_ytbl_capture_Main_nativeInit;
+    Java_com_ytbl_capture_Main_nativeNext;
+    Java_com_ytbl_capture_Main_nativeError;
+    Java_com_ytbl_capture_Main_nativeFrame;
+    Java_com_ytbl_capture_Main_nativeClose;
+  local: *;
+};
