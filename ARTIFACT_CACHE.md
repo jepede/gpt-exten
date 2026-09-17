@@ -844,3 +844,31 @@ Download Artifact `10299263954`, verify the Artifact ZIP SHA256 `ab02f8ec568e6aa
 ### Restore
 
 下载 Artifact `10313207613`，校验 Artifact ZIP SHA256 `7a6a123f3e5d0d286bd8687fa53c2fa6f06f33f500adff7d249a9cf47c096b65`；解压得到 `wine-11.16-amd64.tar.xz` 后校验 SHA256 `bb4d0eba24fb4ca8636b06f3d7786aa7fc50cb853f9255a0a376adf1f50bca53`。
+
+
+## Ytbl build dependencies v1
+
+- Name: Ytbl build dependencies
+- Version: imgui1.91.9b+1.92.5-khronos-20260917-v1
+- Platform: Any
+- Architecture: Any
+- Workflow: `.github/workflows/ytbl-deps-20260917.yml`
+- Run ID: `35180975425`
+- Artifact Name: `ytbl-build-deps-v1`
+- Artifact ID: `10480406146`
+- File: `ytbl-build-deps-v1.tar.gz`
+- Size: `3966031` bytes (artifact ZIP)
+- SHA256: `6443e75fcf2cf6f0a92309933be4df28d018815548d305cebcc7423c9268d5ad` (artifact digest)
+- Created At: `2026-09-17T04:11:37Z`
+- Expires At: `2026-12-16T04:11:29Z`
+- Storage Mode: `SINGLE`
+- Original File: `ytbl-build-deps-v1.tar.gz`
+- Original Size: `3969507` bytes
+- Original SHA256: `abe81599d03de3f37a1215bba236b824d7c733477a1ac68f5530be195d85e66e`
+- Part Count: `1`
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Ytbl build dependencies | imgui1.91.9b+1.92.5-khronos-20260917-v1 | Any | Any | `ytbl-build-deps-v1.tar.gz` | `abe81599d03de3f37a1215bba236b824d7c733477a1ac68f5530be195d85e66e` |
+
+Contains official ImGui sources with their MIT license and official Khronos API headers. Individual file hashes are in CONTENT_SHA256SUMS.txt.
