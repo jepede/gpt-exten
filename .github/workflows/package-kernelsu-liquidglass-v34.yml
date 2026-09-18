@@ -1,0 +1,44 @@
+name: Package KernelSU LiquidGlass PortKit v34
+on:
+  push:
+    branches: [deliver/kernelsu-liquidglass-portkit-v34]
+    paths:
+      - kernelsu_liquidglass_v34/**
+      - .github/workflows/package-kernelsu-liquidglass-v34.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate patcher
+        run: |
+          set -eux
+          python3 -m py_compile kernelsu_liquidglass_v34/apply.py
+          mkdir -p delivery/KernelSU_LiquidGlass_PortKit_v34
+          cp kernelsu_liquidglass_v34/apply.py delivery/KernelSU_LiquidGlass_PortKit_v34/
+          cp kernelsu_liquidglass_v34/README.md delivery/KernelSU_LiquidGlass_PortKit_v34/
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          root=Path('delivery/KernelSU_LiquidGlass_PortKit_v34')
+          report={
+            "python_syntax":"passed",
+            "target":"Surface_RealBackdrop_v3_3_iOS26Style_Source.zip",
+            "kernel_su_source_copied":False,
+            "full_ndk_build":"not_run",
+            "android_runtime":"not_run"
+          }
+          (root/'VALIDATION.json').write_text(json.dumps(report,indent=2)+'\n')
+          files=[p for p in sorted(root.iterdir()) if p.is_file() and p.name!='SHA256SUMS.txt']
+          (root/'SHA256SUMS.txt').write_text(''.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.name+'\n' for p in files))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KernelSU_LiquidGlass_PortKit_v34
+          path: delivery/KernelSU_LiquidGlass_PortKit_v34/
+          retention-days: 30
+          if-no-files-found: error
