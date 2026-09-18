@@ -1,0 +1,45 @@
+name: Package KernelSU Liquid Port Kit
+on:
+  push:
+    branches: [integration/kernelsu-liquid-port-v34-20260918]
+    paths:
+      - kernelsu_liquid_port/**
+      - .github/workflows/package-kernelsu-liquid-port.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate patcher
+        run: |
+          python3 -m py_compile kernelsu_liquid_port/apply.py
+          mkdir -p out
+          cp kernelsu_liquid_port/apply.py out/
+          cp kernelsu_liquid_port/README.md out/
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          out=pathlib.Path('out')
+          report={
+            'python_syntax':'passed',
+            'target':'Surface_RealBackdrop_v3_3_iOS26Style_Source.zip',
+            'full_user_project_patch':'not_run_in_ci',
+            'ndk_build':'not_run',
+            'android_runtime':'not_run'
+          }
+          (out/'VALIDATION.json').write_text(json.dumps(report,indent=2)+'\n')
+          sums=[]
+          for p in sorted(out.iterdir()):
+              if p.is_file() and p.name!='SHA256SUMS.txt':
+                  sums.append(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.name+'\n')
+          (out/'SHA256SUMS.txt').write_text(''.join(sums))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KernelSU_LiquidGlass_PortKit_v34
+          path: out/
+          retention-days: 30
+          if-no-files-found: error
