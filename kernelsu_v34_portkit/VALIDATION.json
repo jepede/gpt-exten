@@ -1,0 +1,6 @@
+{
+  "artifact": "KernelSU_LiquidGlass_PortKit_v34",
+  "target": "Surface_RealBackdrop_v3_3_iOS26Style_Source.zip",
+  "full_ndk_build": "not part of this patch package",
+  "android_runtime": "not tested by patch package"
+}
