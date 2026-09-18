@@ -1,0 +1,40 @@
+name: Package KernelSU v3.4 Port Kit
+on:
+  push:
+    branches: [delivery/kernelsu-v34-portkit-20260918]
+    paths:
+      - kernelsu_v34_portkit/**
+      - .github/workflows/package-kernelsu-v34-portkit.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate patcher
+        run: |
+          python3 -m py_compile kernelsu_v34_portkit/apply.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('kernelsu_v34_portkit/apply.py')
+          s=p.read_text()
+          for needle in ['Material::KernelSU','forceCurrentFramebuffer','78.0f/56.0f','SetChromaticAberration','InnerShadow']:
+              assert needle in s, needle
+          print('PASS: patcher syntax and required transforms')
+          PY
+      - name: Build delivery directory
+        run: |
+          mkdir -p delivery
+          cp kernelsu_v34_portkit/apply.py delivery/
+          cp kernelsu_v34_portkit/README.md delivery/
+          cp kernelsu_v34_portkit/VALIDATION.json delivery/
+          sha256sum delivery/* > delivery/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KernelSU_LiquidGlass_PortKit_v34
+          path: delivery/
+          retention-days: 30
+          if-no-files-found: error
