@@ -1,0 +1,92 @@
+name: Temporary fetch metaphysics skills 2026-09-18
+on:
+  push:
+    paths:
+      - ".github/workflows/tmp-fetch-metaphysics-skills-20260918.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/sources out
+          fetch_repo() {
+            repo="$1"; sha="$2"; name="$3"
+            echo "==> $repo @ $sha"
+            git clone --quiet --filter=blob:none "https://github.com/$repo.git" "work/sources/$name"
+            git -C "work/sources/$name" checkout --quiet "$sha"
+            rm -rf "work/sources/$name/.git"
+            printf '%s\t%s\t%s\n' "$name" "$repo" "$sha" >> work/SOURCES.tsv
+          }
+
+          fetch_repo "KeWang0622/bazi-skill" "f0cf61acef0035174ac5f9a545236968ba7dad27" "bazi-skill-kewang"
+          fetch_repo "TheCrazyAnt/bazi-ziwei" "955ca0b028381212495b666284d2fd0ecb39a922" "bazi-ziwei-crazyant"
+          fetch_repo "mingze21/bazi-ziwei-skill" "8fd7dfa45f50f21b8e5a5047bfe48cdeda16ab66" "bazi-ziwei-skill-mingze"
+          fetch_repo "minutes1125-star/ZIWEIDOUSHU" "3ce39cf965a6533f7a5928a34b4bb837e3d2307c" "ziweidoushu-minutes"
+          fetch_repo "hxd0818/qimen-dunjia" "a6791212b44f49c613b9092dfd4b83fc678c6288" "qimen-dunjia-hxd"
+          fetch_repo "arc119226/qimen_dunjia" "7d941031d685d818d9fd234edf891dba5bd6a323" "qimen-dunjia-arc"
+          fetch_repo "atopx/qimen" "8eb06d007d4a5fcc5352d9054f81469e5f023f45" "qimen-atopx"
+
+          cp work/SOURCES.tsv work/sources/SOURCES.tsv
+          find work/sources -type f -print0 | sort -z | xargs -0 sha256sum > work/sources/FILE_SHA256SUMS.txt
+          tar -C work -czf out/metaphysics-upstream-sources-20260918.tar.gz sources
+          sha256sum out/metaphysics-upstream-sources-20260918.tar.gz > out/ORIGINAL_SHA256SUMS.txt
+          stat -c '%n %s bytes' out/metaphysics-upstream-sources-20260918.tar.gz | tee out/SIZE.txt
+
+          size="$(stat -c %s out/metaphysics-upstream-sources-20260918.tar.gz)"
+          max=$((450*1024*1024))
+          if [ "$size" -le "$max" ]; then
+            mv out/metaphysics-upstream-sources-20260918.tar.gz out/metaphysics-sources.part.00
+          else
+            split -b 450M -d -a 2 out/metaphysics-upstream-sources-20260918.tar.gz out/metaphysics-sources.part.
+            rm out/metaphysics-upstream-sources-20260918.tar.gz
+          fi
+          for f in out/metaphysics-sources.part.*; do sha256sum "$f"; done > out/PART_SHA256SUMS.txt
+          ls -lh out
+
+      - name: Upload part 00
+        if: ${{ hashFiles('out/metaphysics-sources.part.00') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: tmp-metaphysics-sources-20260918-part-00
+          path: |
+            out/metaphysics-sources.part.00
+            out/ORIGINAL_SHA256SUMS.txt
+            out/PART_SHA256SUMS.txt
+            out/SIZE.txt
+          compression-level: 0
+          retention-days: 1
+
+      - name: Upload part 01
+        if: ${{ hashFiles('out/metaphysics-sources.part.01') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: tmp-metaphysics-sources-20260918-part-01
+          path: out/metaphysics-sources.part.01
+          compression-level: 0
+          retention-days: 1
+
+      - name: Upload part 02
+        if: ${{ hashFiles('out/metaphysics-sources.part.02') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: tmp-metaphysics-sources-20260918-part-02
+          path: out/metaphysics-sources.part.02
+          compression-level: 0
+          retention-days: 1
+
+      - name: Upload part 03
+        if: ${{ hashFiles('out/metaphysics-sources.part.03') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: tmp-metaphysics-sources-20260918-part-03
+          path: out/metaphysics-sources.part.03
+          compression-level: 0
+          retention-days: 1
