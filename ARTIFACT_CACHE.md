@@ -872,3 +872,21 @@ Download Artifact `10299263954`, verify the Artifact ZIP SHA256 `ab02f8ec568e6aa
 | Ytbl build dependencies | imgui1.91.9b+1.92.5-khronos-20260917-v1 | Any | Any | `ytbl-build-deps-v1.tar.gz` | `abe81599d03de3f37a1215bba236b824d7c733477a1ac68f5530be195d85e66e` |
 
 Contains official ImGui sources with their MIT license and official Khronos API headers. Individual file hashes are in CONTENT_SHA256SUMS.txt.
+## Fortune AI skills bundle 2026-09-19
+
+- Workflow: `.github/workflows/fetch-fortune-skills-20260919.yml` (temporary fetch branch; artifact retained, workflow branch not intended as permanent source)
+- Run ID: `35427966584`
+- Run Number: `1`
+- Run Conclusion: `success`
+- Source repositories: `xuemian168/bazi-skill`, `mingze21/bazi-ziwei-skill`, `weizeW/mingli-skills`, `ShousenZHANG/chinese-fortune`, `ai-freer/fortune-skill`
+- Storage Mode: `SINGLE`
+- Artifact Name: `fortune-skills-20260919-v1`
+- Artifact ID: `10579343266`
+- Artifact ZIP Size: `9749419` bytes
+- Artifact Digest: `sha256:2c389cfacf7675ff50cf3f2f424898f1bf7d75f7df4a2ac1af48c9b35ace0c97`
+- Created At: `2026-09-19T06:56:35Z`
+- Expires At: `2026-12-18T06:56:23Z`
+
+### Restore
+
+Download Artifact `10579343266`, verify the ZIP digest above, then extract the five upstream repositories. The delivered integrated package is `fortune-skills-integrated-20260919-v1.tar.gz` and is a derived local integration artifact, not the upstream source archive.
