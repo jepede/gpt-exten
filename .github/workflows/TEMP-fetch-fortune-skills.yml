@@ -1,0 +1,26 @@
+name: TEMP fetch fortune skills
+on:
+  push:
+    paths: [".github/workflows/TEMP-fetch-fortune-skills.yml"]
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Fetch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bundle
+          for repo in xuemian168/bazi-skill mingze21/bazi-ziwei-skill weizeW/mingli-skills ShousenZHANG/chinese-fortune ai-freer/fortune-skill; do
+            name="${repo##*/}"
+            curl -fL --retry 3 --retry-delay 2 "https://github.com/${repo}/archive/refs/heads/main.tar.gz" -o "bundle/${name}.tar.gz"
+          done
+          sha256sum bundle/* > bundle/SHA256SUMS.txt
+          date -u +%FT%TZ > bundle/FETCHED_AT.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fortune-skills-20260919-v1
+          path: bundle
+          retention-days: 90
