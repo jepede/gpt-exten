@@ -1,0 +1,39 @@
+name: fetch-fortune-skills-20260919
+on:
+  push:
+    branches: ["skills/fortune-mingli-20260919"]
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Fetch skill repositories
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bundle
+          repos=(
+            "xuemian168/bazi-skill"
+            "mingze21/bazi-ziwei-skill"
+            "weizeW/mingli-skills"
+            "ShousenZHANG/chinese-fortune"
+            "ai-freer/fortune-skill"
+          )
+          for repo in "${repos[@]}"; do
+            name="${repo##*/}"
+            curl -fL --retry 3 --retry-delay 2 "https://github.com/${repo}/archive/refs/heads/main.tar.gz" -o "bundle/${name}.tar.gz"
+            printf '%s  %s\n' "$(sha256sum "bundle/${name}.tar.gz" | cut -d' ' -f1)" "bundle/${name}.tar.gz"
+          done
+          printf '%s\n' "Fetched at: $(date -u +%FT%TZ)" > bundle/FETCH_METADATA.txt
+      - name: Package manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum bundle/* > bundle/SHA256SUMS.txt
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: fortune-skills-20260919-v1
+          path: bundle
+          retention-days: 90
