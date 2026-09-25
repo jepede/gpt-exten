@@ -1,0 +1,28 @@
+{
+  "version": "8.39.0",
+  "release": "v1.0.2",
+  "run_id": 36107770491,
+  "artifacts": {
+    "libil2cpp": {
+      "id": 10851682015,
+      "name": "il2cpp-839-libil2cpp",
+      "digest": "8845afcfde072751505391a5d7e585e28e29aac5b85d453b0c0429a73b30714d",
+      "file": "libil2cpp-8.39.0.so",
+      "sha256": "1f7edf75d86baced189b7e66cbf66daeeabb9d35b976947127f684dd519357df"
+    },
+    "global_metadata": {
+      "id": 10851562138,
+      "name": "il2cpp-839-global-metadata",
+      "digest": "7a419cf87d49bc0de5599472ddbf0c7eab298fcf036ecf7cace23ad64b709138",
+      "file": "global-metadata-8.39.0.dat",
+      "sha256": "0ab6a9bbdc02da90fc3a4f60f47770b785da5985da79cb368ec16678a3eb8932"
+    },
+    "libunity": {
+      "id": 10851821805,
+      "name": "il2cpp-839-libunity",
+      "digest": "97ee2bfffb60419a5656ee3297949d4909bb1ea381935d246ee7d1c00ef70f80",
+      "file": "libunity-8.39.0.so",
+      "sha256": "25c511a3f769b875de870a6baaf789fa894f90079fc48446e0bfc3ce488c6e8a"
+    }
+  }
+}
