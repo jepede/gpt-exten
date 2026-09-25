@@ -1,0 +1,127 @@
+name: temp-fetch-il2cpp-839-analysis
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/temp-fetch-il2cpp-839-analysis.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch IL2CPP 8.39.0 analysis set
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p il2cpp839
+          curl --fail --location --retry 5 --retry-all-errors \
+            -o il2cpp839/libil2cpp-8.39.0.so \
+            'https://github.com/jepede/gpt-exten/releases/download/v1.0.2/libil2cpp-8.39.0.so'
+          curl --fail --location --retry 5 --retry-all-errors \
+            -o il2cpp839/global-metadata-8.39.0.dat \
+            'https://github.com/jepede/gpt-exten/releases/download/v1.0.2/global-metadata-8.39.0.dat'
+          curl --fail --location --retry 5 --retry-all-errors \
+            -o il2cpp839/libunity-8.39.0.so \
+            'https://github.com/jepede/gpt-exten/releases/download/v1.0.2/libunity-8.39.0.so'
+
+          echo '1f7edf75d86baced189b7e66cbf66daeeabb9d35b976947127f684dd519357df  il2cpp839/libil2cpp-8.39.0.so' | sha256sum -c -
+          echo '0ab6a9bbdc02da90fc3a4f60f47770b785da5985da79cb368ec16678a3eb8932  il2cpp839/global-metadata-8.39.0.dat' | sha256sum -c -
+          echo '25c511a3f769b875de870a6baaf789fa894f90079fc48446e0bfc3ce488c6e8a  il2cpp839/libunity-8.39.0.so' | sha256sum -c -
+
+          file il2cpp839/libil2cpp-8.39.0.so il2cpp839/global-metadata-8.39.0.dat il2cpp839/libunity-8.39.0.so
+          sha256sum il2cpp839/* | tee il2cpp839/SHA256SUMS.txt
+          ls -lh il2cpp839
+
+      - name: Upload libil2cpp
+        id: upload_il2cpp
+        uses: actions/upload-artifact@v4
+        with:
+          name: il2cpp-839-libil2cpp
+          path: |
+            il2cpp839/libil2cpp-8.39.0.so
+            il2cpp839/SHA256SUMS.txt
+          compression-level: 0
+          retention-days: 1
+
+      - name: Upload metadata
+        id: upload_metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: il2cpp-839-global-metadata
+          path: |
+            il2cpp839/global-metadata-8.39.0.dat
+            il2cpp839/SHA256SUMS.txt
+          compression-level: 0
+          retention-days: 1
+
+      - name: Upload libunity
+        id: upload_unity
+        uses: actions/upload-artifact@v4
+        with:
+          name: il2cpp-839-libunity
+          path: |
+            il2cpp839/libunity-8.39.0.so
+            il2cpp839/SHA256SUMS.txt
+          compression-level: 0
+          retention-days: 1
+
+      - name: Record artifact marker
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          IL2CPP_ARTIFACT_ID: ${{ steps.upload_il2cpp.outputs.artifact-id }}
+          IL2CPP_ARTIFACT_DIGEST: ${{ steps.upload_il2cpp.outputs.artifact-digest }}
+          META_ARTIFACT_ID: ${{ steps.upload_metadata.outputs.artifact-id }}
+          META_ARTIFACT_DIGEST: ${{ steps.upload_metadata.outputs.artifact-digest }}
+          UNITY_ARTIFACT_ID: ${{ steps.upload_unity.outputs.artifact-id }}
+          UNITY_ARTIFACT_DIGEST: ${{ steps.upload_unity.outputs.artifact-digest }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifact-markers
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          data = {
+              "version": "8.39.0",
+              "release": "v1.0.2",
+              "run_id": int(os.environ["RUN_ID"]),
+              "artifacts": {
+                  "libil2cpp": {
+                      "id": int(os.environ["IL2CPP_ARTIFACT_ID"]),
+                      "name": "il2cpp-839-libil2cpp",
+                      "digest": os.environ.get("IL2CPP_ARTIFACT_DIGEST", ""),
+                      "file": "libil2cpp-8.39.0.so",
+                      "sha256": "1f7edf75d86baced189b7e66cbf66daeeabb9d35b976947127f684dd519357df"
+                  },
+                  "global_metadata": {
+                      "id": int(os.environ["META_ARTIFACT_ID"]),
+                      "name": "il2cpp-839-global-metadata",
+                      "digest": os.environ.get("META_ARTIFACT_DIGEST", ""),
+                      "file": "global-metadata-8.39.0.dat",
+                      "sha256": "0ab6a9bbdc02da90fc3a4f60f47770b785da5985da79cb368ec16678a3eb8932"
+                  },
+                  "libunity": {
+                      "id": int(os.environ["UNITY_ARTIFACT_ID"]),
+                      "name": "il2cpp-839-libunity",
+                      "digest": os.environ.get("UNITY_ARTIFACT_DIGEST", ""),
+                      "file": "libunity-8.39.0.so",
+                      "sha256": "25c511a3f769b875de870a6baaf789fa894f90079fc48446e0bfc3ce488c6e8a"
+                  }
+              }
+          }
+          Path("artifact-markers/il2cpp-8.39.0.json").write_text(json.dumps(data, indent=2) + "\n")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add artifact-markers/il2cpp-8.39.0.json
+          git commit -m "cache il2cpp 8.39.0 artifact ids"
+          git push
