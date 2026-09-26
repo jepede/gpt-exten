@@ -1,0 +1,51 @@
+name: temp-net-probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - tools/gha_net_probe.py
+      - .github/workflows/temp-net-probe.yml
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: 'newline or comma separated URLs to probe'
+        required: false
+        default: ''
+      method:
+        description: 'GET or HEAD'
+        required: false
+        default: 'GET'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run network probe
+        env:
+          PROBE_URLS: ${{ inputs.urls }}
+          PROBE_METHOD: ${{ inputs.method || 'GET' }}
+        run: |
+          set -euo pipefail
+          python3 tools/gha_net_probe.py --out net_probe_results.json
+          python3 - <<'PY'
+          import json
+          data=json.load(open('net_probe_results.json', encoding='utf-8'))
+          print('\nSUMMARY')
+          for r in data['results']:
+              print(f"{r['method']} {r['url']} -> ok={r['ok']} status={r['status']} elapsed_ms={r['elapsed_ms']} dns={r['dns'].get('addresses', [])[:4]}")
+          PY
+
+      - name: Upload probe results
+        uses: actions/upload-artifact@v4
+        with:
+          name: net-probe-results
+          path: net_probe_results.json
+          retention-days: 1
