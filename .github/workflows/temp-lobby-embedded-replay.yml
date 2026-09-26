@@ -1,0 +1,47 @@
+name: temp-lobby-embedded-replay
+
+on:
+  workflow_dispatch:
+    inputs:
+      seqs:
+        description: 'Comma-separated seq list to replay'
+        required: false
+        default: '1,2,3,4,5,6,7,8,9,10'
+      save_full:
+        description: 'Save raw response frames artifact'
+        required: false
+        default: 'false'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/lobby_embedded_replay_runner.py'
+      - '.github/workflows/temp-lobby-embedded-replay.yml'
+
+permissions:
+  contents: read
+
+env:
+  LOBBY_HOST: '82.156.181.229'
+  LOBBY_PORT: '9005'
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run embedded lobby replay
+        shell: bash
+        env:
+          LOBBY_REPLAY_SEQS: ${{ github.event.inputs.seqs || '1,2,3,4,5,6,7,8,9,10' }}
+          SAVE_FULL: ${{ github.event.inputs.save_full || 'false' }}
+        run: |
+          set -euo pipefail
+          python3 tools/lobby_embedded_replay_runner.py --out replay_out
+          cat replay_out/summary.txt
+      - name: Upload replay results
+        uses: actions/upload-artifact@v4
+        with:
+          name: lobby-embedded-replay-results
+          path: replay_out/
+          retention-days: 1
