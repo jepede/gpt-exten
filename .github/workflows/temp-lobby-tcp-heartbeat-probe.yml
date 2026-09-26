@@ -1,0 +1,49 @@
+name: temp-lobby-tcp-heartbeat-probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - tools/lobby_tcp_heartbeat_probe.py
+      - .github/workflows/temp-lobby-tcp-heartbeat-probe.yml
+  workflow_dispatch:
+    inputs:
+      host:
+        description: Lobby host
+        required: false
+        default: 82.156.181.229
+      port:
+        description: Lobby port
+        required: false
+        default: '9005'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run lobby TCP heartbeat probe
+        shell: bash
+        env:
+          HOST: ${{ github.event.inputs.host || '82.156.181.229' }}
+          PORT: ${{ github.event.inputs.port || '9005' }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          python3 tools/lobby_tcp_heartbeat_probe.py \
+            --host "$HOST" \
+            --port "$PORT" \
+            --timeout 6 \
+            --read-window 3 \
+            --out-dir out
+          ls -l out
+      - name: Upload lobby heartbeat probe results
+        uses: actions/upload-artifact@v4
+        with:
+          name: lobby-tcp-heartbeat-probe-results
+          path: out/
+          retention-days: 1
