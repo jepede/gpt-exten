@@ -29,6 +29,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | libUE4 GL | 4.5-v1.0.1 | Android | AArch64 | `33073762454` | SINGLE | `2026-11-25T12:50:04Z` |
 | VaultPony VeraCrypt-compatible CLI | 0.1.0+fb4c460 | Android (API 24+) | AArch64 | `33089426736` | SINGLE | `2026-11-25T15:43:58Z` |
 | Wine portable | 11.16 | Linux | x86_64 | `34743014984` | SINGLE | `2026-12-12T06:32:52Z` |
+| 逃跑吧！少年 4399 channel APK | 8.41.0 | Android | Multi-ABI APK | `36448082222` | SPLIT × 3 | `2026-12-27T16:02:11Z` |
 
 ## TShield 6.2 Live W response
 
@@ -890,3 +891,60 @@ Contains official ImGui sources with their MIT license and official Khronos API 
 ### Restore
 
 Download Artifact `10579343266`, verify the ZIP digest above, then extract the five upstream repositories. The delivered integrated package is `fortune-skills-integrated-20260919-v1.tar.gz` and is a derived local integration artifact, not the upstream source archive.
+
+
+## 逃跑吧！少年 4399 channel APK 8.41.0
+
+- Name: 逃跑吧！少年 4399 channel APK
+- Version: 8.41.0
+- Package: `com.bairimeng.dmmdzz.m4399`
+- Version Code: `84100000`
+- Game ID: `120610`
+- Platform: Android
+- Architecture: Multi-ABI APK
+- Workflow: `.github/workflows/fetch-tpbsn-4399-latest.yml`
+- Run ID: `36448082222`
+- Run Conclusion: `success`
+- Source Metadata API: `https://cdn.yxhapi.com/android/box/game/v6.3/apk.html?id=120610`
+- Source Transport: official 4399 GameBox Zstandard APK transport, resolved dynamically from metadata API
+- Required Download UA: `4399GameCenter/9.6.0.47 (Android 16)`
+- Storage Mode: `SPLIT`
+- Original File: `tpbsn-4399-latest.apk`
+- Original Size: `1883026337` bytes
+- Original MD5: `ff7d47d04ab5a95351fc433b19752447`
+- Original SHA256: `258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6`
+- Part Count: `3`
+- Split Size: `700 MiB` for parts 00/01
+- Recombined SHA256: `258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6`
+- Created At: `2026-09-28T16:03:39Z` (metadata artifact; APK parts completed by 16:04:01Z)
+- Expires At: `2026-12-27T16:02:11Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| 逃跑吧！少年 4399 channel APK | 8.41.0 | Android | Multi-ABI APK | `tpbsn-4399-latest.apk` (recombine parts 00+01+02) | `258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6` |
+
+### Artifacts
+
+| Part | Artifact ID | Artifact Name | Raw Size | Artifact Size | Artifact Digest | Expires At |
+|---:|---:|---|---:|---:|---|---|
+| metadata | `10982240821` | `tpbsn-4399-latest-metadata` | small metadata set | `3041` | `sha256:971ee74b09ccf67053324626cf69432a4549d71d2b4c6da8556284fe0024ee6b` | `2026-12-27T16:02:11Z` |
+| 1/3 | `10981791088` | `tpbsn-4399-latest-apk-part-00` | `734003200` | `734003372` | `sha256:d91ef4cf86675259ae079e85dac564c07d57aa2c11738df1f332c53b216c0707` | `2026-12-27T16:02:11Z` |
+| 2/3 | `10981791119` | `tpbsn-4399-latest-apk-part-01` | `734003200` | `734003372` | `sha256:f4a947742574e49143ee91860b12150eee1167a6ba90344a2db30d988b2590c8` | `2026-12-27T16:02:11Z` |
+| 3/3 | `10982205832` | `tpbsn-4399-latest-apk-part-02` | `415019937` | `415020109` | `sha256:197e2441fb16306c4769e55304e71b24a5cb85e4ab46532a825c3bb69dd0406b` | `2026-12-27T16:02:11Z` |
+
+### Restore
+
+下载并解压三个 APK part Artifact，得到 `tpbsn-4399-latest.apk.part.00`、`.01`、`.02`，然后：
+
+```bash
+cat tpbsn-4399-latest.apk.part.00 \
+    tpbsn-4399-latest.apk.part.01 \
+    tpbsn-4399-latest.apk.part.02 > tpbsn-4399-8.41.0.apk
+
+echo '258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6  tpbsn-4399-8.41.0.apk' | sha256sum -c -
+echo 'ff7d47d04ab5a95351fc433b19752447  tpbsn-4399-8.41.0.apk' | md5sum -c -
+```
+
+AAPT verification from the successful fetch run: package `com.bairimeng.dmmdzz.m4399`, versionName `8.41.0`, versionCode `84100000`, minSdk `24`, targetSdk `31`.
