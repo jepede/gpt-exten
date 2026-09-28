@@ -76,3 +76,5 @@ jobs:
           name: kfb-90055-decoded
           path: /tmp/out/*
           if-no-files-found: error
+
+# retrigger after all KFB chunks are present
