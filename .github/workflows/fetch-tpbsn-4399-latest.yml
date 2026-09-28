@@ -16,37 +16,57 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Resolve latest 4399 metadata
-        id: meta
         shell: bash
         run: |
           set -euo pipefail
           API='https://cdn.yxhapi.com/android/box/game/v6.3/apk.html?id=120610'
-          curl -L --compressed --retry 3 --connect-timeout 15 --max-time 60             -A 'Mozilla/5.0 (Linux; Android 16; Mobile)'             -e 'https://a.4399.cn/' -sS "$API" -o api.json
+          curl -L --compressed --retry 3 --connect-timeout 15 --max-time 60             -A '4399GameCenter/9.6.0.47 (Android 16)'             -e 'https://a.4399.cn/' -sS "$API" -o api.json
           python3 - <<'PY'
           import json
           j=json.load(open('api.json','r',encoding='utf-8'))
           assert j.get('code') == 100, j
           r=j['result']
           assert r.get('packag') == 'com.bairimeng.dmmdzz.m4399', r.get('packag')
-          keys=['id','packag','versioncode','size','size_byte','md5_file','downurl','xapk','sdk_version','sdk_version_name']
+          vals={
+            'ID':r['id'],'PACKAG':r['packag'],'VERSIONCODE':r['versioncode'],
+            'SIZE':r['size'],'SIZE_BYTE':r['size_byte'],'MD5_FILE':r['md5_file'],
+            'DOWNURL':r['downurl'],'ZSTD_URL':r.get('zstd',{}).get('url',''),
+            'ZSTD_SIZE':r.get('zstd',{}).get('size',''),'ZSTD_MD5':r.get('zstd',{}).get('md5',''),
+            'XAPK':r.get('xapk',0),'SDK_VERSION':r.get('sdk_version',''),
+            'SDK_VERSION_NAME':r.get('sdk_version_name','')
+          }
           with open('resolved.env','w',encoding='utf-8') as f:
-              for k in keys:
-                  f.write(f"{k.upper()}={r.get(k,'')}\n")
-          print(json.dumps({k:r.get(k) for k in keys if k != 'downurl'},ensure_ascii=False,indent=2))
+              for k,v in vals.items(): f.write(f'{k}={v}\n')
+          print(json.dumps({k:v for k,v in vals.items() if not k.endswith('_URL') and k!='DOWNURL'},ensure_ascii=False,indent=2))
           PY
           cat resolved.env >> "$GITHUB_ENV"
-          {
-            echo "game_id=$(grep '^ID=' resolved.env | cut -d= -f2-)"
-            echo "versioncode=$(grep '^VERSIONCODE=' resolved.env | cut -d= -f2-)"
-          } >> "$GITHUB_OUTPUT"
 
       - name: Download official APK
         shell: bash
         run: |
           set -euo pipefail
-          echo "Downloading game id=$ID package=$PACKAG versioncode=$VERSIONCODE size=$SIZE_BYTE"
-          curl -L --fail --retry 5 --retry-all-errors --connect-timeout 20             --speed-time 60 --speed-limit 1024             -A 'Mozilla/5.0 (Linux; Android 16; Mobile)'             "$DOWNURL" -o tpbsn-4399-latest.apk
+          UA='4399GameCenter/9.6.0.47 (Android 16)'
+          ok=0
+          if [ -n "${ZSTD_URL:-}" ]; then
+            echo "Trying 4399 Zstandard transport: $ZSTD_SIZE bytes"
+            if curl -L --fail --retry 4 --retry-all-errors --connect-timeout 20                 --speed-time 60 --speed-limit 1024 -A "$UA" -e 'https://a.4399.cn/'                 "$ZSTD_URL" -o game.apk.zst; then
+              if [ -n "${ZSTD_SIZE:-}" ]; then test "$(stat -c%s game.apk.zst)" = "$ZSTD_SIZE"; fi
+              if [ -n "${ZSTD_MD5:-}" ]; then echo "$ZSTD_MD5  game.apk.zst" | md5sum -c -; fi
+              if command -v zstd >/dev/null 2>&1; then
+                zstd -d -f game.apk.zst -o tpbsn-4399-latest.apk && ok=1 || true
+              else
+                sudo apt-get update -qq && sudo apt-get install -y -qq zstd
+                zstd -d -f game.apk.zst -o tpbsn-4399-latest.apk && ok=1 || true
+              fi
+            fi
+          fi
+          if [ "$ok" -ne 1 ]; then
+            echo "Zstd path unavailable; falling back to original 4399 APK transport"
+            rm -f tpbsn-4399-latest.apk
+            curl -L --fail --retry 5 --retry-all-errors --connect-timeout 20               --speed-time 60 --speed-limit 1024 -A "$UA" -e 'https://a.4399.cn/'               "$DOWNURL" -o tpbsn-4399-latest.apk
+          fi
           actual_size=$(stat -c%s tpbsn-4399-latest.apk)
+          echo "APK bytes=$actual_size expected=$SIZE_BYTE"
           test "$actual_size" = "$SIZE_BYTE"
           echo "$MD5_FILE  tpbsn-4399-latest.apk" | md5sum -c -
           sha256sum tpbsn-4399-latest.apk | tee SHA256SUMS.txt
@@ -63,7 +83,7 @@ jobs:
             sudo apt-get install -y -qq aapt
             AAPT="$(command -v aapt)"
           fi
-          "$AAPT" dump badging tpbsn-4399-latest.apk | head -n 30 | tee badging.txt
+          "$AAPT" dump badging tpbsn-4399-latest.apk | head -n 40 | tee badging.txt
           pkg=$("$AAPT" dump badging tpbsn-4399-latest.apk | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n1)
           ver=$("$AAPT" dump badging tpbsn-4399-latest.apk | sed -n "s/^package: .* versionName='\([^']*\)'.*/\1/p" | head -n1)
           vcode=$("$AAPT" dump badging tpbsn-4399-latest.apk | sed -n "s/^package: .* versionCode='\([^']*\)'.*/\1/p" | head -n1)
@@ -85,8 +105,8 @@ jobs:
           mkdir -p parts
           split -b 700M -d -a 2 tpbsn-4399-latest.apk parts/tpbsn-4399-latest.apk.part.
           ls -lh parts/
-          cat parts/tpbsn-4399-latest.apk.part.* | sha256sum
-          cp api.json resolved.env badging.txt verified.txt SHA256SUMS.txt MD5SUMS.txt parts/
+          test "$(find parts -maxdepth 1 -name 'tpbsn-4399-latest.apk.part.*' | wc -l)" -eq 3
+          cat parts/tpbsn-4399-latest.apk.part.* | sha256sum | tee recombined-SHA256.txt
 
       - name: Upload metadata
         uses: actions/upload-artifact@v4
@@ -99,6 +119,7 @@ jobs:
             verified.txt
             SHA256SUMS.txt
             MD5SUMS.txt
+            recombined-SHA256.txt
           retention-days: 90
           compression-level: 6
 
