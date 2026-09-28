@@ -1,0 +1,65 @@
+name: Probe TPBSN 4399
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/probe-tpbsn-4399.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Probe official 4399 pages
+        shell: bash
+        run: |
+          set -euxo pipefail
+          UA='Mozilla/5.0 (Linux; Android 16; Mobile) AppleWebKit/537.36 Chrome/140.0 Mobile Safari/537.36'
+          mkdir -p probe
+          curl -L --retry 3 --connect-timeout 15 -A "$UA" -D probe/page.headers -o probe/page.html 'https://a.4399.cn/mobile/120610.html'
+          curl -L --retry 3 --connect-timeout 15 -A "$UA" -D probe/box.headers -o probe/box.html 'https://app.4399.cn/'
+          echo '=== page status/size ==='
+          wc -c probe/page.html probe/box.html
+          echo '=== page matches ==='
+          grep -Eio '.{0,180}(com\.bairimeng\.dmmdzz\.m4399|\.apk|download|downurl|down_url|package|gameid|120610).{0,220}' probe/page.html | head -n 300 || true
+          echo '=== all absolute URLs containing apk/download/api/game ==='
+          python3 - <<'PY'
+          import re, html
+          from pathlib import Path
+          for fn in ['probe/page.html','probe/box.html']:
+              s=html.unescape(Path(fn).read_text('utf-8','ignore'))
+              urls=sorted(set(re.findall(r'https?://[^"\'<>\\\s]+',s)))
+              print('\n#',fn)
+              for u in urls:
+                  if re.search(r'apk|download|down|api|game|4399',u,re.I):
+                      print(u[:1000])
+          PY
+          echo '=== script src ==='
+          python3 - <<'PY'
+          import re, urllib.parse
+          from pathlib import Path
+          s=Path('probe/page.html').read_text('utf-8','ignore')
+          for src in re.findall(r'<script[^>]+src=["\']([^"\']+)',s,re.I):
+              print(urllib.parse.urljoin('https://a.4399.cn/mobile/120610.html',src))
+          PY
+          python3 - <<'PY' > probe/scripts.txt
+          import re, urllib.parse
+          from pathlib import Path
+          s=Path('probe/page.html').read_text('utf-8','ignore')
+          for src in re.findall(r'<script[^>]+src=["\']([^"\']+)',s,re.I):
+              print(urllib.parse.urljoin('https://a.4399.cn/mobile/120610.html',src))
+          PY
+          n=0
+          while IFS= read -r u; do
+            n=$((n+1)); [ $n -gt 30 ] && break
+            curl -L --retry 2 --connect-timeout 10 -A "$UA" -sS "$u" -o "probe/js-$n.js" || true
+          done < probe/scripts.txt
+          echo '=== JS matches ==='
+          grep -RniE '120610|com\.bairimeng\.dmmdzz|\.apk|down(load|url|_url)?|gameId|api/' probe/js-*.js 2>/dev/null | head -n 500 || true
+          echo '=== likely API URLs in JS ==='
+          grep -rhoE 'https?://[^" '\''<>]+' probe/js-*.js 2>/dev/null | grep -Ei '4399|api|down|game|apk' | sort -u | head -n 500 || true
