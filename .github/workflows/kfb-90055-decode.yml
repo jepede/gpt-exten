@@ -1,0 +1,78 @@
+name: KFB 90055 decode
+
+on:
+  push:
+    branches: [chatgpt-kfb-90055]
+    paths:
+      - '.github/workflows/kfb-90055-decode.yml'
+  workflow_dispatch:
+
+jobs:
+  decode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild KFB input
+        run: |
+          cat tmp/kfb90055/chunk{0..5}.b64 > /tmp/90055.b64
+          base64 -d /tmp/90055.b64 > /tmp/90055_decrypted.kfb
+          echo "size=$(stat -c%s /tmp/90055_decrypted.kfb)"
+          sha256sum /tmp/90055_decrypted.kfb
+          test "$(stat -c%s /tmp/90055_decrypted.kfb)" = "19155"
+          test "$(sha256sum /tmp/90055_decrypted.kfb | cut -d' ' -f1)" = "c3fd48cd5c403bd776fdb9a3cd852dc0b989d568ad5dae11afc411c45b27fa46"
+
+      - name: Download verified KH ActorData decoder
+        run: |
+          mkdir -p /tmp/kfbtool /tmp/out
+          base='https://raw.githubusercontent.com/DianSuWitss/kfb-assetbundle-decrypt/main/kfb/05_tools'
+          curl -fL "$base/kfb_static_decrypt.js" -o /tmp/kfbtool/kfb_static_decrypt.js
+          curl -fL "$base/kfb_schema_decoder.js" -o /tmp/kfbtool/kfb_schema_decoder.js
+          curl -fL "$base/kfb_readable_adapter.js" -o /tmp/kfbtool/kfb_readable_adapter.js
+          curl -fL "$base/kfb_schema.json" -o /tmp/kfbtool/kfb_schema.json
+          curl -fL "$base/kfb_dump_layout.json" -o /tmp/kfbtool/kfb_dump_layout.json
+
+      - name: Decode KFB to editable JSON and XML
+        run: |
+          node /tmp/kfbtool/kfb_static_decrypt.js decode             /tmp/90055_decrypted.kfb /tmp/out/90055             --schema /tmp/kfbtool/kfb_schema.json             --dump-layout /tmp/kfbtool/kfb_dump_layout.json             | tee /tmp/out/90055_decode_report.json
+
+      - name: JSON round-trip
+        run: |
+          node /tmp/kfbtool/kfb_static_decrypt.js encode             /tmp/out/90055.json /tmp/out/90055_from_json.kfb             --schema /tmp/kfbtool/kfb_schema.json             --dump-layout /tmp/kfbtool/kfb_dump_layout.json             | tee /tmp/out/90055_json_roundtrip.json
+
+      - name: XML round-trip
+        run: |
+          node /tmp/kfbtool/kfb_static_decrypt.js encode             /tmp/out/90055.xml /tmp/out/90055_from_xml.kfb             --schema /tmp/kfbtool/kfb_schema.json             --dump-layout /tmp/kfbtool/kfb_dump_layout.json             | tee /tmp/out/90055_xml_roundtrip.json
+
+      - name: Summarize outputs
+        run: |
+          cp /tmp/90055_decrypted.kfb /tmp/out/90055_original.kfb
+          sha256sum /tmp/out/*.kfb | tee /tmp/out/SHA256SUMS.txt
+          python3 - <<'PY'
+          import json, pathlib
+          out=pathlib.Path('/tmp/out')
+          d=json.loads((out/'90055_decode_report.json').read_text())
+          j=json.loads((out/'90055_json_roundtrip.json').read_text())
+          x=json.loads((out/'90055_xml_roundtrip.json').read_text())
+          summary={
+            'decodedBytes': d.get('decryptedBytes'),
+            'inputSha256': d.get('sha256'),
+            'coverage': d.get('coverage'),
+            'jsonFormat': d.get('jsonFormat'),
+            'xmlFormat': d.get('xmlFormat'),
+            'jsonRoundTrip': j.get('semanticRoundTrip'),
+            'xmlRoundTrip': x.get('semanticRoundTrip'),
+            'jsonEncodedBytes': j.get('encodedBytes'),
+            'xmlEncodedBytes': x.get('encodedBytes'),
+          }
+          (out/'SUMMARY.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n')
+          print(json.dumps(summary,ensure_ascii=False,indent=2))
+          assert summary['coverage']['unknownFields'] == 0
+          assert summary['jsonRoundTrip'] is True
+          assert summary['xmlRoundTrip'] is True
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kfb-90055-decoded
+          path: /tmp/out/*
+          if-no-files-found: error
