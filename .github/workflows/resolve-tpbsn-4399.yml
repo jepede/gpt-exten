@@ -1,0 +1,40 @@
+name: Resolve TPBSN 4399 APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/resolve-tpbsn-4399.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Query 4399 official APIs
+        shell: bash
+        run: |
+          set -u
+          UA='Mozilla/5.0 (Linux; Android 16; PLQ110) AppleWebKit/537.36 Mobile Safari/537.36'
+          urls=(
+            'https://cdn.yxhapi.com/app/android/v5.1.2/gameDetail-index-package-com.bairimeng.dmmdzz.m4399.html'
+            'https://cdn.yxhapi.com/app/android/v5.1.2/gameDetail-index-package-com.bairimeng.dmmdzz.m4399'
+            'https://cdn.yxhapi.com/android/box/game/v6.3/apk.html?id=120610'
+            'https://cdn.yxhapi.com/android/box/game/v6.3/apk.html?game_id=120610'
+            'https://mapi.yxhapi.com/android/box/game/v6.3/apk.html?id=120610'
+          )
+          i=0
+          for u in "${urls[@]}"; do
+            i=$((i+1))
+            echo "=== CANDIDATE $i ==="
+            echo "$u"
+            curl -L --compressed -A "$UA" -e 'https://a.4399.cn/' -sS               --connect-timeout 10 --max-time 25               -D "h$i.txt" -o "b$i.txt" -w 'HTTP=%{http_code} TYPE=%{content_type} SIZE=%{size_download} FINAL=%{url_effective}\n' "$u" || true
+            head -n 30 "h$i.txt" || true
+            echo '--- BODY ---'
+            head -c 12000 "b$i.txt" | strings -a | head -n 200 || true
+            echo
+          done
