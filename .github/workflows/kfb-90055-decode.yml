@@ -89,6 +89,18 @@ jobs:
                 'skip_default':False,'skip_default_implicit':True,'wire_type_hint':'Variant',
                 'display_type':'Boolean','editable_name':'recursiveFindObjectFrame'
               })
+          ct=by.get('KH.ChangeTargetArg')
+          if ct is not None:
+              for tag,name in [(50,'checkBorder'),(51,'recursiveFindObjectFrame')]:
+                  if not any(x['tag']==tag and x.get('declared_by')=='KH.ChangeTargetArg' for x in ct['fields']):
+                      ct['fields'].append({
+                        'tag':tag,'serialize_level':0,'name':name,'declared_by':'KH.ChangeTargetArg',
+                        'field_type':'System.Boolean','type_code':'Boolean','type_code_value':3,'enum_underlying_type_code':'Empty',
+                        'is_value_type':True,'is_enum':False,'is_array':False,'is_kfb_serializable':False,
+                        'has_custom_serializer':False,'is_list':False,'is_dictionary':False,'polymorphic':False,
+                        'skip_default':False,'skip_default_implicit':True,'wire_type_hint':'Variant',
+                        'display_type':'Boolean','editable_name':name
+                      })
           json.dump(s,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
           print('patched KH.AnimationBoxData tags:',[(x['tag'],x['name']) for x in t['fields']])
           PY
