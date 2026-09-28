@@ -1,0 +1,36 @@
+name: Probe 4399 GameBox APIs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/probe-4399-gamebox-api.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Download official GameBox and extract endpoints
+        shell: bash
+        run: |
+          set -euxo pipefail
+          URL='https://dp.yxhimg.com/dp/9.6/4399Game_9.6.0.47..19bf.apk?comment=%7B%22apkChannel%22:%22a4399%22%7D&from=6ab7d6446e1d9'
+          curl -L --retry 2 --max-time 120 -A 'Mozilla/5.0 (Linux; Android 16)' "$URL" -o gamebox.apk
+          echo '=== file ==='
+          ls -lh gamebox.apk
+          sha256sum gamebox.apk
+          unzip -q gamebox.apk -d apk
+          echo '=== package / manifest quick strings ==='
+          strings gamebox.apk | grep -E 'com\.m4399\.gamecenter|9\.6\.0\.47' | head -n 20 || true
+          echo '=== URL strings from DEX/resources ==='
+          (grep -aohE 'https?://[A-Za-z0-9._~:/?#\[\]@!$&()*+,;=%-]+' apk/classes*.dex apk/resources.arsc 2>/dev/null || true)             | sed 's/[[:cntrl:]]//g' | sort -u > urls.txt
+          grep -Ei '4399|yxh|api|game|down|apk' urls.txt | head -n 1200
+          echo '=== interesting raw strings ==='
+          for f in apk/classes*.dex; do
+            strings "$f" | grep -Ei 'download(url)?|down_url|apk_url|apkurl|game(detail|info|id)|package(name)?|app(detail|info)|yxhimg|a\.4399\.cn|m\.4399\.cn|api\.' | head -n 500 || true
+          done
