@@ -25,12 +25,16 @@ jobs:
           ls -lh gamebox.apk
           sha256sum gamebox.apk
           unzip -q gamebox.apk -d apk
-          echo '=== package / manifest quick strings ==='
-          strings gamebox.apk | grep -E 'com\.m4399\.gamecenter|9\.6\.0\.47' | head -n 20 || true
-          echo '=== URL strings from DEX/resources ==='
-          (grep -aohE 'https?://[A-Za-z0-9._~:/?#\[\]@!$&()*+,;=%-]+' apk/classes*.dex apk/resources.arsc 2>/dev/null || true)             | sed 's/[[:cntrl:]]//g' | sort -u > urls.txt
-          grep -Ei '4399|yxh|api|game|down|apk' urls.txt | head -n 1200
-          echo '=== interesting raw strings ==='
+          echo '=== collect strings ==='
+          : > allstrings.txt
           for f in apk/classes*.dex; do
-            strings "$f" | grep -Ei 'download(url)?|down_url|apk_url|apkurl|game(detail|info|id)|package(name)?|app(detail|info)|yxhimg|a\.4399\.cn|m\.4399\.cn|api\.' | head -n 500 || true
+            strings -a -n 4 "$f" >> allstrings.txt || true
           done
+          strings -a -n 4 apk/resources.arsc >> allstrings.txt || true
+          sort -u allstrings.txt -o allstrings.txt
+          echo '=== URL-ish strings ==='
+          grep -Eo 'https?://[^[:space:]<>"'\'' ]+' allstrings.txt | sort -u | grep -Ei '4399|yxh|api|game|down|apk|app' | head -n 2000 || true
+          echo '=== host/path keywords ==='
+          grep -Ei '(^|[^A-Za-z0-9])(api\.|\.4399\.cn|\.yxhimg\.com|\.img4399\.com|download|down_url|downurl|apkurl|apk_url|gameinfo|gamedetail|game_detail|packageName|package_name|pkgname|appid|gameid)([^A-Za-z0-9]|$)' allstrings.txt | head -n 4000 || true
+          echo '=== game/package direct hits ==='
+          grep -Ei 'com\.bairimeng\.dmmdzz|逃跑吧|120610' allstrings.txt | head -n 200 || true
