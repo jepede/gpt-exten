@@ -1,0 +1,127 @@
+name: Fetch TPBSN 4399 Latest APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fetch-tpbsn-4399-latest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Resolve latest 4399 metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          API='https://cdn.yxhapi.com/android/box/game/v6.3/apk.html?id=120610'
+          curl -L --compressed --retry 3 --connect-timeout 15 --max-time 60             -A 'Mozilla/5.0 (Linux; Android 16; Mobile)'             -e 'https://a.4399.cn/' -sS "$API" -o api.json
+          python3 - <<'PY'
+          import json
+          j=json.load(open('api.json','r',encoding='utf-8'))
+          assert j.get('code') == 100, j
+          r=j['result']
+          assert r.get('packag') == 'com.bairimeng.dmmdzz.m4399', r.get('packag')
+          keys=['id','packag','versioncode','size','size_byte','md5_file','downurl','xapk','sdk_version','sdk_version_name']
+          with open('resolved.env','w',encoding='utf-8') as f:
+              for k in keys:
+                  f.write(f"{k.upper()}={r.get(k,'')}\n")
+          print(json.dumps({k:r.get(k) for k in keys if k != 'downurl'},ensure_ascii=False,indent=2))
+          PY
+          cat resolved.env >> "$GITHUB_ENV"
+          {
+            echo "game_id=$(grep '^ID=' resolved.env | cut -d= -f2-)"
+            echo "versioncode=$(grep '^VERSIONCODE=' resolved.env | cut -d= -f2-)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download official APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Downloading game id=$ID package=$PACKAG versioncode=$VERSIONCODE size=$SIZE_BYTE"
+          curl -L --fail --retry 5 --retry-all-errors --connect-timeout 20             --speed-time 60 --speed-limit 1024             -A 'Mozilla/5.0 (Linux; Android 16; Mobile)'             "$DOWNURL" -o tpbsn-4399-latest.apk
+          actual_size=$(stat -c%s tpbsn-4399-latest.apk)
+          test "$actual_size" = "$SIZE_BYTE"
+          echo "$MD5_FILE  tpbsn-4399-latest.apk" | md5sum -c -
+          sha256sum tpbsn-4399-latest.apk | tee SHA256SUMS.txt
+          md5sum tpbsn-4399-latest.apk | tee MD5SUMS.txt
+          ls -lh tpbsn-4399-latest.apk
+
+      - name: Verify package and version
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt -perm -111 2>/dev/null | sort -V | tail -n1)"
+          if [ -z "$AAPT" ]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq aapt
+            AAPT="$(command -v aapt)"
+          fi
+          "$AAPT" dump badging tpbsn-4399-latest.apk | head -n 30 | tee badging.txt
+          pkg=$("$AAPT" dump badging tpbsn-4399-latest.apk | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n1)
+          ver=$("$AAPT" dump badging tpbsn-4399-latest.apk | sed -n "s/^package: .* versionName='\([^']*\)'.*/\1/p" | head -n1)
+          vcode=$("$AAPT" dump badging tpbsn-4399-latest.apk | sed -n "s/^package: .* versionCode='\([^']*\)'.*/\1/p" | head -n1)
+          test "$pkg" = 'com.bairimeng.dmmdzz.m4399'
+          test "$vcode" = "$VERSIONCODE"
+          {
+            echo "package=$pkg"
+            echo "versionName=$ver"
+            echo "versionCode=$vcode"
+            echo "sizeBytes=$(stat -c%s tpbsn-4399-latest.apk)"
+            echo "md5=$(cut -d' ' -f1 MD5SUMS.txt)"
+            echo "sha256=$(cut -d' ' -f1 SHA256SUMS.txt)"
+          } | tee verified.txt
+
+      - name: Split APK for artifact transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p parts
+          split -b 700M -d -a 2 tpbsn-4399-latest.apk parts/tpbsn-4399-latest.apk.part.
+          ls -lh parts/
+          cat parts/tpbsn-4399-latest.apk.part.* | sha256sum
+          cp api.json resolved.env badging.txt verified.txt SHA256SUMS.txt MD5SUMS.txt parts/
+
+      - name: Upload metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpbsn-4399-latest-metadata
+          path: |
+            api.json
+            resolved.env
+            badging.txt
+            verified.txt
+            SHA256SUMS.txt
+            MD5SUMS.txt
+          retention-days: 90
+          compression-level: 6
+
+      - name: Upload APK part 00
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpbsn-4399-latest-apk-part-00
+          path: parts/tpbsn-4399-latest.apk.part.00
+          retention-days: 90
+          compression-level: 0
+
+      - name: Upload APK part 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpbsn-4399-latest-apk-part-01
+          path: parts/tpbsn-4399-latest.apk.part.01
+          retention-days: 90
+          compression-level: 0
+
+      - name: Upload APK part 02
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpbsn-4399-latest-apk-part-02
+          path: parts/tpbsn-4399-latest.apk.part.02
+          retention-days: 90
+          compression-level: 0
