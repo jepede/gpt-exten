@@ -1,0 +1,46 @@
+name: Probe TPBSN 4399 Transport
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/probe-tpbsn-transport.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Probe methods and headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          API='https://cdn.yxhapi.com/android/box/game/v6.3/apk.html?id=120610'
+          curl -L --compressed -A 'Mozilla/5.0 (Linux; Android 16; Mobile)' -e 'https://a.4399.cn/' -sS "$API" -o api.json
+          python3 - <<'PY' > urls.txt
+          import json
+          r=json.load(open('api.json'))['result']
+          for k,u in [('downurl',r['downurl']),('tor',r['tor']),('zstd',r['zstd']['url']),('zstd_tor',r['zstd']['tor'])]:
+              print(k+'\t'+u)
+          PY
+          while IFS=$'\t' read -r kind url; do
+            echo "===== $kind ====="
+            for mode in GET RANGE HEAD POST; do
+              : >/tmp/body; : >/tmp/head
+              echo "--- $mode ---"
+              common=(-sS --max-time 15 -A '4399GameCenter/9.6.0.47 (Linux; Android 16)' -e 'https://a.4399.cn/' -D /tmp/head -o /tmp/body -w 'CODE=%{http_code} SIZE=%{size_download} REDIR=%{redirect_url} TYPE=%{content_type}\n')
+              case "$mode" in
+                GET) curl "${common[@]}" "$url" || true ;;
+                RANGE) curl "${common[@]}" -H 'Range: bytes=0-1023' -H 'Accept: */*' "$url" || true ;;
+                HEAD) curl "${common[@]}" -I "$url" || true ;;
+                POST) curl "${common[@]}" -X POST -d '' "$url" || true ;;
+              esac
+              grep -iE '^(HTTP/|location:|allow:|server:|content-type:|content-length:|set-cookie:|x-|via:)' /tmp/head | head -n 40 || true
+              echo BODY:
+              head -c 1000 /tmp/body | strings -a | head -n 30 || true
+            done
+          done < urls.txt
