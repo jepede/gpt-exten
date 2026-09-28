@@ -102,11 +102,8 @@ jobs:
                         'display_type':'Boolean','editable_name':name
                       })
           # Current KFBTypeIdDef from user's dump.cs: old public schema is shifted here.
-          if by.get('KH.SearchElementArg') is not None:
-              by['KH.SearchElementArg']['type_id']=551
           if by.get('KH.SomeFightToggleArg') is not None:
               sf=by['KH.SomeFightToggleArg']
-              sf['type_id']=585
               if not any(x['tag']==59 and x.get('declared_by')=='KH.SomeFightToggleArg' for x in sf['fields']):
                   sf['fields'].append({
                     'tag':59,'serialize_level':0,'name':'canShowFriendBeHurtDmgNum','declared_by':'KH.SomeFightToggleArg',
@@ -118,7 +115,6 @@ jobs:
                   })
           sw=by.get('KH.SearchElementWithSSTypeArg')
           if sw is not None:
-              sw['type_id']=128
               additions=[
                 (3,'enableKFLCondition','System.Boolean','Boolean',3,'Variant',True,False),
                 (4,'kflCondition','KFL.KFLBoolParameterInfo','Object',1,'Object',False,True),
