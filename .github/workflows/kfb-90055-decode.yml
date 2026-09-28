@@ -116,6 +116,23 @@ jobs:
                     'skip_default':False,'skip_default_implicit':True,'wire_type_hint':'Variant',
                     'display_type':'Boolean','editable_name':'canShowFriendBeHurtDmgNum'
                   })
+          sw=by.get('KH.SearchElementWithSSTypeArg')
+          if sw is not None:
+              sw['type_id']=128
+              additions=[
+                (3,'enableKFLCondition','System.Boolean','Boolean',3,'Variant',True,False),
+                (4,'kflCondition','KFL.KFLBoolParameterInfo','Object',1,'Object',False,True),
+              ]
+              for tag,name,ft,tc,tcv,wire,isvt,iskfb in additions:
+                  if not any(x['tag']==tag and x.get('declared_by')=='KH.SearchElementWithSSTypeArg' for x in sw['fields']):
+                      sw['fields'].append({
+                        'tag':tag,'serialize_level':0,'name':name,'declared_by':'KH.SearchElementWithSSTypeArg',
+                        'field_type':ft,'type_code':tc,'type_code_value':tcv,'enum_underlying_type_code':'Empty',
+                        'is_value_type':isvt,'is_enum':False,'is_array':False,'is_kfb_serializable':iskfb,
+                        'has_custom_serializer':False,'is_list':False,'is_dictionary':False,
+                        'polymorphic':iskfb,'skip_default':False,'skip_default_implicit':True,
+                        'wire_type_hint':wire,'display_type':name,'editable_name':name
+                      })
           json.dump(s,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
           print('patched KH.AnimationBoxData tags:',[(x['tag'],x['name']) for x in t['fields']])
           PY
