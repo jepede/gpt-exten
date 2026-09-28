@@ -129,6 +129,26 @@ jobs:
                         'polymorphic':iskfb,'skip_default':False,'skip_default_implicit':True,
                         'wire_type_hint':wire,'display_type':name,'editable_name':name
                       })
+          # Public schema stores inherited fields flattened in every derived type.
+          # Propagate newly-added current-version base fields into those flattened views.
+          def ancestors(type_record):
+              seen=set()
+              cur=type_record.get('base_type')
+              while cur and cur in by and cur not in seen:
+                  seen.add(cur)
+                  yield by[cur]
+                  cur=by[cur].get('base_type')
+          for typ in s['types']:
+              existing={(x.get('declared_by'),x.get('tag'),x.get('name')) for x in typ.get('fields',[])}
+              for anc in ancestors(typ):
+                  anc_name=anc.get('full_name')
+                  for field in anc.get('fields',[]):
+                      if field.get('declared_by') != anc_name:
+                          continue
+                      key=(field.get('declared_by'),field.get('tag'),field.get('name'))
+                      if key not in existing:
+                          typ['fields'].append(dict(field))
+                          existing.add(key)
           json.dump(s,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
           print('patched KH.AnimationBoxData tags:',[(x['tag'],x['name']) for x in t['fields']])
           PY
