@@ -13,28 +13,39 @@ permissions:
 jobs:
   resolve:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 8
     steps:
-      - name: Query 4399 official APIs
+      - name: Probe 4399 download transport
         shell: bash
         run: |
-          set -u
-          UA='Mozilla/5.0 (Linux; Android 16; PLQ110) AppleWebKit/537.36 Mobile Safari/537.36'
-          urls=(
-            'https://cdn.yxhapi.com/app/android/v5.1.2/gameDetail-index-package-com.bairimeng.dmmdzz.m4399.html'
-            'https://cdn.yxhapi.com/app/android/v5.1.2/gameDetail-index-package-com.bairimeng.dmmdzz.m4399'
-            'https://cdn.yxhapi.com/android/box/game/v6.3/apk.html?id=120610'
-            'https://cdn.yxhapi.com/android/box/game/v6.3/apk.html?game_id=120610'
-            'https://mapi.yxhapi.com/android/box/game/v6.3/apk.html?id=120610'
-          )
-          i=0
-          for u in "${urls[@]}"; do
-            i=$((i+1))
-            echo "=== CANDIDATE $i ==="
-            echo "$u"
-            curl -L --compressed -A "$UA" -e 'https://a.4399.cn/' -sS               --connect-timeout 10 --max-time 25               -D "h$i.txt" -o "b$i.txt" -w 'HTTP=%{http_code} TYPE=%{content_type} SIZE=%{size_download} FINAL=%{url_effective}\n' "$u" || true
-            head -n 30 "h$i.txt" || true
-            echo '--- BODY ---'
-            head -c 12000 "b$i.txt" | strings -a | head -n 200 || true
-            echo
-          done
+          set -euo pipefail
+          API='https://cdn.yxhapi.com/android/box/game/v6.3/apk.html?id=120610'
+          curl -L --compressed -A 'Mozilla/5.0 (Linux; Android 16; Mobile)' -e 'https://a.4399.cn/' -sS "$API" -o api.json
+          python3 - <<'PY' > urls.txt
+          import json
+          r=json.load(open('api.json'))['result']
+          print('downurl\t'+r['downurl'])
+          print('tor\t'+r['tor'])
+          print('zstd\t'+r['zstd']['url'])
+          print('zstd_tor\t'+r['zstd']['tor'])
+          PY
+          while IFS=$'\t' read -r kind url; do
+            echo "===== $kind ====="
+            echo "$url"
+            for mode in GET RANGE HEAD POST; do
+              echo "--- $mode ---"
+              case "$mode" in
+                GET)
+                  curl -sS --max-time 20 -o /tmp/body -D /tmp/head -w 'CODE=%{http_code} SIZE=%{size_download} REDIR=%{redirect_url} TYPE=%{content_type}\n'                     -A '4399GameCenter/9.6.0.47 (Android 16)' -e 'https://a.4399.cn/' "$url" || true ;;
+                RANGE)
+                  curl -sS --max-time 20 -o /tmp/body -D /tmp/head -w 'CODE=%{http_code} SIZE=%{size_download} REDIR=%{redirect_url} TYPE=%{content_type}\n'                     -H 'Range: bytes=0-1023' -H 'Accept: */*' -H 'Connection: keep-alive'                     -A '4399GameCenter/9.6.0.47 (Android 16)' -e 'https://a.4399.cn/' "$url" || true ;;
+                HEAD)
+                  curl -sS --max-time 20 -I -D /tmp/head -o /tmp/body -w 'CODE=%{http_code} SIZE=%{size_download} REDIR=%{redirect_url} TYPE=%{content_type}\n'                     -A '4399GameCenter/9.6.0.47 (Android 16)' "$url" || true ;;
+                POST)
+                  curl -sS --max-time 20 -X POST -d '' -o /tmp/body -D /tmp/head -w 'CODE=%{http_code} SIZE=%{size_download} REDIR=%{redirect_url} TYPE=%{content_type}\n'                     -A '4399GameCenter/9.6.0.47 (Android 16)' -e 'https://a.4399.cn/' "$url" || true ;;
+              esac
+              grep -iE '^(HTTP/|location:|allow:|server:|content-type:|content-length:|set-cookie:|x-|via:)' /tmp/head | head -n 30 || true
+              echo BODY:
+              head -c 600 /tmp/body | strings -a | head -n 20 || true
+            done
+          done < urls.txt
