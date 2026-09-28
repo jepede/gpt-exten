@@ -31,6 +31,58 @@ jobs:
           curl -fL "$base/kfb_schema.json" -o /tmp/kfbtool/kfb_schema.json
           curl -fL "$base/kfb_dump_layout.json" -o /tmp/kfbtool/kfb_dump_layout.json
 
+      - name: Patch current-version AnimationBoxData schema
+        run: |
+          python3 - <<'PY'
+          import json
+          p='/tmp/kfbtool/kfb_schema.json'
+          s=json.load(open(p,'r',encoding='utf-8'))
+          by={t.get('full_name') or t.get('name'):t for t in s['types']}
+          t=by['KH.AnimationBoxData']
+          def f(tag,name,ft,**kw):
+              x={
+                'tag':tag,'serialize_level':0,'name':name,'declared_by':'KH.AnimationBoxData',
+                'field_type':ft,'type_code':'Object' if kw.get('is_list') else ('Int32' if ft=='System.Int32' else 'Object'),
+                'type_code_value':1 if kw.get('is_list') else (9 if ft=='System.Int32' else 1),
+                'enum_underlying_type_code':'Empty','is_value_type':ft=='System.Int32','is_enum':False,
+                'is_array':False,'is_kfb_serializable':False,'has_custom_serializer':False,
+                'is_list':kw.get('is_list',False),'is_dictionary':False,'polymorphic':False,
+                'skip_default':False,'skip_default_implicit':True,
+                'wire_type_hint':'List' if kw.get('is_list') else 'Variant',
+                'display_type':kw.get('display_type',name),'editable_name':name,
+              }
+              if kw.get('is_list'): x['element_type']=kw['element_type']
+              return x
+          if not any(x['tag']==11 for x in t['fields']):
+              t['fields'].append(f(11,'boxMask','System.Int32',display_type='Int32'))
+          if not any(x['tag']==12 for x in t['fields']):
+              t['fields'].append(f(12,'AttackBoxList','System.Collections.Generic.List\`1[[AnimationBoxData.AttackBox]]',
+                                   is_list=True,element_type='AnimationBoxData.AttackBox',display_type='List<AnimationBoxData.AttackBox>'))
+          if 'AnimationBoxData.AttackBox' not in by:
+              s['types'].append({
+                'full_name':'AnimationBoxData.AttackBox','is_array':False,'is_enum':False,
+                'is_value_type':False,'base_type':'System.Object','type_id':None,
+                'polymorphic':False,'has_custom_serializer':False,
+                'fields':[
+                  {'tag':1,'serialize_level':0,'name':'pos','declared_by':'AnimationBoxData.AttackBox',
+                   'field_type':'KH.FVector3','type_code':'Object','type_code_value':1,'enum_underlying_type_code':'Empty',
+                   'is_value_type':True,'is_enum':False,'is_array':False,'is_kfb_serializable':False,
+                   'has_custom_serializer':True,'is_list':False,'is_dictionary':False,'polymorphic':False,
+                   'skip_default':False,'skip_default_implicit':True,'wire_type_hint':'Object',
+                   'display_type':'FVector3','editable_name':'pos'},
+                  {'tag':2,'serialize_level':0,'name':'size','declared_by':'AnimationBoxData.AttackBox',
+                   'field_type':'KH.FVector3','type_code':'Object','type_code_value':1,'enum_underlying_type_code':'Empty',
+                   'is_value_type':True,'is_enum':False,'is_array':False,'is_kfb_serializable':False,
+                   'has_custom_serializer':True,'is_list':False,'is_dictionary':False,'polymorphic':False,
+                   'skip_default':False,'skip_default_implicit':True,'wire_type_hint':'Object',
+                   'display_type':'FVector3','editable_name':'size'}
+                ],
+                'default_json':'{"pos":"0,0,0","size":"0,0,0"}'
+              })
+          json.dump(s,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+          print('patched KH.AnimationBoxData tags:',[(x['tag'],x['name']) for x in t['fields']])
+          PY
+
       - name: Decode KFB to editable JSON and XML
         run: |
           node /tmp/kfbtool/kfb_static_decrypt.js decode             /tmp/90055_decrypted.kfb /tmp/out/90055             --schema /tmp/kfbtool/kfb_schema.json             --dump-layout /tmp/kfbtool/kfb_dump_layout.json             | tee /tmp/out/90055_decode_report.json
