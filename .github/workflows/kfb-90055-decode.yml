@@ -101,6 +101,21 @@ jobs:
                         'skip_default':False,'skip_default_implicit':True,'wire_type_hint':'Variant',
                         'display_type':'Boolean','editable_name':name
                       })
+          # Current KFBTypeIdDef from user's dump.cs: old public schema is shifted here.
+          if by.get('KH.SearchElementArg') is not None:
+              by['KH.SearchElementArg']['type_id']=551
+          if by.get('KH.SomeFightToggleArg') is not None:
+              sf=by['KH.SomeFightToggleArg']
+              sf['type_id']=585
+              if not any(x['tag']==59 and x.get('declared_by')=='KH.SomeFightToggleArg' for x in sf['fields']):
+                  sf['fields'].append({
+                    'tag':59,'serialize_level':0,'name':'canShowFriendBeHurtDmgNum','declared_by':'KH.SomeFightToggleArg',
+                    'field_type':'System.Boolean','type_code':'Boolean','type_code_value':3,'enum_underlying_type_code':'Empty',
+                    'is_value_type':True,'is_enum':False,'is_array':False,'is_kfb_serializable':False,
+                    'has_custom_serializer':False,'is_list':False,'is_dictionary':False,'polymorphic':False,
+                    'skip_default':False,'skip_default_implicit':True,'wire_type_hint':'Variant',
+                    'display_type':'Boolean','editable_name':'canShowFriendBeHurtDmgNum'
+                  })
           json.dump(s,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
           print('patched KH.AnimationBoxData tags:',[(x['tag'],x['name']) for x in t['fields']])
           PY
