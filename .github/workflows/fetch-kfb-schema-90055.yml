@@ -1,11 +1,10 @@
 name: Fetch KFB Schema 90055
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches:
+      - main
 jobs:
   fetch:
-    if: github.event_name == 'push' && github.event.head_commit.message == 'temp: fetch KFB schema for 90055'
     runs-on: ubuntu-latest
     steps:
       - name: Fetch schema tools
@@ -19,7 +18,8 @@ jobs:
           curl -fL --retry 3 "$base/kfb_dump_layout.json" -o kfb_dump_layout.json
           sha256sum kfb_schema.json kfb_schema_decoder.js kfb_readable_adapter.js kfb_dump_layout.json > SHA256SUMS.txt
           wc -c kfb_schema.json kfb_schema_decoder.js kfb_readable_adapter.js kfb_dump_layout.json
-      - uses: actions/upload-artifact@v4
+      - name: Upload
+        uses: actions/upload-artifact@v4
         with:
           name: kfb-schema-tools-90055
           path: |
