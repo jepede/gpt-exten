@@ -1,0 +1,61 @@
+name: Analyze 4399 GameBox Downloader
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/analyze-4399-downloader.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Fetch official GameBox
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://dp.yxhimg.com/dp/9.6/4399Game_9.6.0.47..19bf.apk?comment=%7B%22apkChannel%22:%22a4399%22%7D&from=6ab7d6446e1d9'
+          curl -L --retry 3 --connect-timeout 15 -A 'Mozilla/5.0 (Linux; Android 16)' "$URL" -o gamebox.apk
+          sha256sum gamebox.apk
+
+      - name: Download JADX and decompile
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -L -sS 'https://api.github.com/repos/skylot/jadx/releases/latest' -o jadx-release.json
+          python3 - <<'PY' > jadx_url.txt
+          import json,re
+          j=json.load(open('jadx-release.json'))
+          for a in j.get('assets',[]):
+              n=a.get('name','')
+              if re.fullmatch(r'jadx-[0-9.]+\.zip',n):
+                  print(a['browser_download_url']); break
+          PY
+          test -s jadx_url.txt
+          curl -L --retry 3 "$(cat jadx_url.txt)" -o jadx.zip
+          unzip -q jadx.zip -d jadx
+          chmod +x jadx/bin/jadx
+          jadx/bin/jadx --no-res --threads-count 4 -d src gamebox.apk >/tmp/jadx.out 2>/tmp/jadx.err || true
+          echo '=== JADX ERR TAIL ==='
+          tail -n 80 /tmp/jadx.err || true
+
+      - name: Search downloader implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== yxhapk / yxhapi refs ==='
+          grep -RniE 'yxhapk|yxhapi|downurl_|downurl|zstd_enable|torrent-file|apk\.html\?id|DownloadProxyAuthHandler' src/sources | head -n 1200 || true
+          echo '=== request header/method refs near downloader ==='
+          grep -RniE 'Range|User-Agent|Referer|addHeader|header\(|method\(|POST|GET|requestProperty|Authorization|Proxy-Authorization|DownloadProxyAuth'             src/sources/com/m4399 src/sources/com/download 2>/dev/null | head -n 2000 || true
+          echo '=== BaseDownloadModel files ==='
+          find src/sources -type f | grep -E 'BaseDownloadModel|DownloadProxyAuthHandler|DownloadModel|HttpDownload.*Runnable' | head -n 200 || true
+          echo '=== snippets ==='
+          for f in $(find src/sources -type f | grep -E 'DownloadProxyAuthHandler|BaseDownloadModel|HttpDownload.*Runnable' | head -n 25); do
+            echo "##### $f"
+            grep -n -C 8 -E 'downurl|url|Range|header|User-Agent|Referer|method|POST|GET|Authorization|Proxy' "$f" | head -n 300 || true
+          done
