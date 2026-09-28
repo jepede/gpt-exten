@@ -120,6 +120,17 @@ jobs:
           print('patched KH.AnimationBoxData tags:',[(x['tag'],x['name']) for x in t['fields']])
           PY
 
+      - name: Instrument polymorphic type IDs
+        run: |
+          python3 - <<'PY'
+          p='/tmp/kfbtool/kfb_schema_decoder.js'
+          s=open(p,'r',encoding='utf-8').read()
+          old='prefixTypeId = Number(typeIdBig);\n      const actual = schema.typesById.get(prefixTypeId);'
+          new="prefixTypeId = Number(typeIdBig);\n      if (objectPath.includes('scriptDatas[0]')) console.error('[TYPEID]', objectPath, 'offset', start, 'id', prefixTypeId);\n      const actual = schema.typesById.get(prefixTypeId);"
+          assert old in s
+          open(p,'w',encoding='utf-8').write(s.replace(old,new))
+          PY
+
       - name: Decode KFB to editable JSON and XML
         run: |
           node /tmp/kfbtool/kfb_static_decrypt.js decode             /tmp/90055_decrypted.kfb /tmp/out/90055             --schema /tmp/kfbtool/kfb_schema.json             --dump-layout /tmp/kfbtool/kfb_dump_layout.json             | tee /tmp/out/90055_decode_report.json
