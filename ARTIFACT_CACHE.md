@@ -30,6 +30,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | VaultPony VeraCrypt-compatible CLI | 0.1.0+fb4c460 | Android (API 24+) | AArch64 | `33089426736` | SINGLE | `2026-11-25T15:43:58Z` |
 | Wine portable | 11.16 | Linux | x86_64 | `34743014984` | SINGLE | `2026-12-12T06:32:52Z` |
 | 逃跑吧！少年 4399 channel APK | 8.41.0 | Android | Multi-ABI APK | `36448082222` | SPLIT × 3 | `2026-12-27T16:02:11Z` |
+| ARM64 system lab | debian13-v1-qemu10.0.13-linux6.12.111 | Linux / Debian 13 | x86_64 host + AArch64 guest | `36566866696` | SINGLE | `2026-12-28T12:15:02Z` |
 
 ## TShield 6.2 Live W response
 
@@ -948,3 +949,29 @@ echo 'ff7d47d04ab5a95351fc433b19752447  tpbsn-4399-8.41.0.apk' | md5sum -c -
 ```
 
 AAPT verification from the successful fetch run: package `com.bairimeng.dmmdzz.m4399`, versionName `8.41.0`, versionCode `84100000`, minSdk `24`, targetSdk `31`.
+
+
+## ARM64 system lab Debian 13 v1
+
+- Name: `ARM64 system lab`
+- Version: `debian13-v1-qemu10.0.13-linux6.12.111`
+- Platform: `Linux / Debian 13`
+- Architecture: `x86_64 host + AArch64 guest`
+- Workflow: `.github/workflows/fetch-arm64-system-lab-debian13.yml`
+- Run ID: `36566866696`
+- Artifact ID: `11032351529`
+- Artifact Name: `arm64-system-lab-debian13-v1`
+- File: `arm64-system-lab-debian13-v1.zip`
+- Size: `122163597 bytes`
+- SHA256: `64fdcf5d1843bedfe0012cb19667f4b2865f81b835033d6f296a01e3dce7599a`
+- Created At: `2026-09-29T12:15:26Z`
+- Expires At: `2026-12-28T12:15:02Z`
+- Storage: `SINGLE`
+- Original File: `arm64-system-lab-debian13-v1.tar`
+- Original Size: `122163200 bytes`
+- Original SHA256: `1819458934fb118d7b11bf9564aa8fb4c6882a932d6fada0dc76ac58dcf44ca1`
+- Part Count: `1`
+
+Public Debian packages only: QEMU system 10.0.13, Linux 6.12.111+deb13-arm64, ARM64 BusyBox, GDB server, strace, runtime libraries, and package hashes. Contains no user sample, Android rootfs, memory dump, or private research files.
+
+Restore: download artifact 11032351529; verify ZIP, inner TAR, and meta/SHA256SUMS.txt hashes before use.
