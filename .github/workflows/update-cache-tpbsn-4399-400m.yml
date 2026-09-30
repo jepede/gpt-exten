@@ -1,0 +1,85 @@
+name: Update cache for TPBSN 4399 400M artifacts
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/update-cache-tpbsn-4399-400m.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update ARTIFACT_CACHE.md
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('ARTIFACT_CACHE.md')
+          text = p.read_text()
+          old = '| 逃跑吧！少年 4399 channel APK | 8.41.0 | Android | Multi-ABI APK | `36448082222` | SPLIT × 3 | `2026-12-27T16:02:11Z` |'
+          new = '| 逃跑吧！少年 4399 channel APK | 8.41.0 | Android | Multi-ABI APK | `36716019163` | SPLIT × 5 | `2026-12-29T12:38:04Z` |'
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
+              marker = '| ARM64 system lab | debian13-v1-qemu10.0.13-linux6.12.111 | Linux / Debian 13 | x86_64 host + AArch64 guest | `36566866696` | SINGLE | `2026-12-28T12:15:02Z` |'
+              text = text.replace(marker, new + '\n' + marker, 1)
+          section = r'''
+
+## 逃跑吧！少年 4399 channel APK 8.41.0 - 400MiB rechunk
+
+- Workflow: `.github/workflows/rechunk-tpbsn-4399-apk-400m.yml`
+- Workflow Name: `Rechunk TPBSN 4399 APK 400M`
+- Run ID: `36716019163`
+- Source Cache Run ID: `36448082222`
+- Source Cache Storage: previous `SPLIT × 3` artifacts were valid on GitHub but `part-00/01` artifact archives exceeded the 512MB connector download ceiling, so this rechunk cache is the container-restorable record.
+- Repository Visibility: `Public`
+- Requested Retention: `400 days`
+- Storage Mode: `SPLIT`
+- Original File: `tpbsn-4399-8.41.0.apk`
+- Original Size: `1883026337` bytes
+- Original MD5: `ff7d47d04ab5a95351fc433b19752447`
+- Original SHA256: `258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6`
+- Part Count: `5`
+- Split Size: `400MiB`
+- Created At: `2026-09-30T12:38:45Z`
+- Expires At: `2026-12-29T12:38:04Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| 逃跑吧！少年 4399 channel APK | 8.41.0 | Android | Multi-ABI APK | `tpbsn-4399-8.41.0.apk` | `258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6` |
+
+### Artifacts
+
+| Part | Artifact ID | Artifact Name | Raw Size | Raw SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|
+| metadata | `11096017872` | `tpbsn-4399-8.41.0-rechunk-metadata` | small metadata set | n/a | `2712` | `sha256:352209b0e8fdf6d0e346f6ddae8a56d563c1ccead8456d840f1fe1fa7941c68b` | `2026-09-30T12:38:45Z` | `2026-12-29T12:38:04Z` |
+| 1/5 | `11096586223` | `tpbsn-4399-8.41.0-apk-400m-part-00` | `419430400` | `82512e9997881652ce652ee9f0ea6505111c611c9b7d01120aead4299edc4dbd` | `419430572` | `sha256:de590ee2d1304e054541b63e292f005b3d246f4b4bdccd194c4f427ab914f6fc` | `2026-09-30T12:38:48Z` | `2026-12-29T12:38:04Z` |
+| 2/5 | `11096481096` | `tpbsn-4399-8.41.0-apk-400m-part-01` | `419430400` | `233a257114372ea9716a65c6871e05947695fcf08845f6ac10f0c3751402e7b8` | `419430572` | `sha256:2a4269fa9440e6472956ad35f805023df8fd3bf1218792bb24a1ddfd6900f926` | `2026-09-30T12:38:50Z` | `2026-12-29T12:38:04Z` |
+| 3/5 | `11096206959` | `tpbsn-4399-8.41.0-apk-400m-part-02` | `419430400` | `5121514a4018c0e7de8f3d5bc87e002a9b0a04a4292b7074d3357865861faf09` | `419430572` | `sha256:2bf1c63532e15e9aad3cc2cd0d2a407841ed10cfb4ae496986eb30af766260b0` | `2026-09-30T12:38:53Z` | `2026-12-29T12:38:04Z` |
+| 4/5 | `11095434842` | `tpbsn-4399-8.41.0-apk-400m-part-03` | `419430400` | `6eab1859974f759e0578243894a7056d66cedb5542ec4fae140e17258c908ddf` | `419430572` | `sha256:a2a72d4665777d623556f5bc97f0e0e9574b3a80149903cd8db28f6edaafba1a` | `2026-09-30T12:38:56Z` | `2026-12-29T12:38:04Z` |
+| 5/5 | `11096875511` | `tpbsn-4399-8.41.0-apk-400m-part-04` | `205304737` | `c25154e13cb978b4936027fe99d8c5ab0343e2e0b1ed5be446ceb33b94c7dab6` | `205304909` | `sha256:eebc471a1fedc7a63d9f6c6fdfe43208a6037db9e136f5d1a24c19a358a638bd` | `2026-09-30T12:38:57Z` | `2026-12-29T12:38:04Z` |
+
+### Restore
+
+下载 metadata Artifact `11096017872` 与 5 个 part Artifact `11096586223`, `11096481096`, `11096206959`, `11095434842`, `11096875511`；分别解压得到 `tpbsn-4399-8.41.0.apk.part-00` 到 `part-04`，按序拼接为 `tpbsn-4399-8.41.0.apk`，最后校验完整文件 SHA256 `258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6`。
+'''
+          if '## 逃跑吧！少年 4399 channel APK 8.41.0 - 400MiB rechunk' not in text:
+              text = text.rstrip() + section + '\n'
+          p.write_text(text)
+          PY
+      - name: Commit cache update
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git diff -- ARTIFACT_CACHE.md
+          git add ARTIFACT_CACHE.md
+          git commit -m 'Cache TPBSN 4399 APK 400M artifacts' || exit 0
+          git push
