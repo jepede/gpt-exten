@@ -1,0 +1,151 @@
+name: Rechunk TPBSN 4399 APK 400M
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/rechunk-tpbsn-4399-apk-400m.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  rechunk:
+    name: Rechunk cached 4399 APK into sub-512MB artifacts
+    runs-on: ubuntu-latest
+    env:
+      OLD_RUN_ID: '36448082222'
+      OLD_PART_00: 'tpbsn-4399-latest-apk-part-00'
+      OLD_PART_01: 'tpbsn-4399-latest-apk-part-01'
+      OLD_PART_02: 'tpbsn-4399-latest-apk-part-02'
+      APK_FILE: 'tpbsn-4399-8.41.0.apk'
+      APK_SHA256: '258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6'
+      APK_MD5: 'ff7d47d04ab5a95351fc433b19752447'
+      CHUNK_SIZE: '400M'
+    steps:
+      - name: Download cached oversized artifacts from prior run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p work/old/00 work/old/01 work/old/02 out metadata
+          gh run download "$OLD_RUN_ID" -R "$GITHUB_REPOSITORY" -n "$OLD_PART_00" -D work/old/00
+          gh run download "$OLD_RUN_ID" -R "$GITHUB_REPOSITORY" -n "$OLD_PART_01" -D work/old/01
+          gh run download "$OLD_RUN_ID" -R "$GITHUB_REPOSITORY" -n "$OLD_PART_02" -D work/old/02
+          find work/old -type f -maxdepth 3 -printf '%p %s bytes\n' | sort
+
+      - name: Restore original APK and verify hashes
+        run: |
+          set -euo pipefail
+          cat \
+            work/old/00/tpbsn-4399-latest.apk.part.00 \
+            work/old/01/tpbsn-4399-latest.apk.part.01 \
+            work/old/02/tpbsn-4399-latest.apk.part.02 \
+            > "out/$APK_FILE"
+          printf '%s  %s\n' "$APK_SHA256" "out/$APK_FILE" | sha256sum -c -
+          printf '%s  %s\n' "$APK_MD5" "out/$APK_FILE" | md5sum -c -
+          stat -c 'original_size=%s' "out/$APK_FILE" | tee metadata/original_size.txt
+          sha256sum "out/$APK_FILE" | tee metadata/original.sha256
+          md5sum "out/$APK_FILE" | tee metadata/original.md5
+
+      - name: Split APK into sub-512MB raw parts
+        run: |
+          set -euo pipefail
+          split -b "$CHUNK_SIZE" -d -a 2 "out/$APK_FILE" "out/$APK_FILE.part-"
+          ls -lh out
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib
+          apk = pathlib.Path('out/tpbsn-4399-8.41.0.apk')
+          parts = sorted(pathlib.Path('out').glob('tpbsn-4399-8.41.0.apk.part-*'))
+          rows = []
+          for idx, p in enumerate(parts):
+              h = hashlib.sha256()
+              with p.open('rb') as f:
+                  for chunk in iter(lambda: f.read(1024 * 1024), b''):
+                      h.update(chunk)
+              rows.append({
+                  'part': idx,
+                  'file': p.name,
+                  'size': p.stat().st_size,
+                  'sha256': h.hexdigest(),
+              })
+          full_h = hashlib.sha256()
+          with apk.open('rb') as f:
+              for chunk in iter(lambda: f.read(1024 * 1024), b''):
+                  full_h.update(chunk)
+          manifest = {
+              'name': '逃跑吧！少年 4399 channel APK',
+              'version': '8.41.0',
+              'platform': 'Android',
+              'architecture': 'Multi-ABI APK',
+              'storage_mode': 'SPLIT',
+              'chunk_size': '400M',
+              'original_file': apk.name,
+              'original_size': apk.stat().st_size,
+              'original_sha256': full_h.hexdigest(),
+              'part_count': len(parts),
+              'parts': rows,
+          }
+          pathlib.Path('metadata/rechunk-manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+          with pathlib.Path('metadata/rechunk-sha256sums.txt').open('w') as out:
+              out.write(f"{manifest['original_sha256']}  {apk.name}\n")
+              for row in rows:
+                  out.write(f"{row['sha256']}  {row['file']}\n")
+          PY
+          cat metadata/rechunk-manifest.json
+          cat metadata/rechunk-sha256sums.txt
+
+      - name: Upload metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpbsn-4399-8.41.0-rechunk-metadata
+          path: metadata/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload part 00
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpbsn-4399-8.41.0-apk-400m-part-00
+          path: out/tpbsn-4399-8.41.0.apk.part-00
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload part 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpbsn-4399-8.41.0-apk-400m-part-01
+          path: out/tpbsn-4399-8.41.0.apk.part-01
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload part 02
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpbsn-4399-8.41.0-apk-400m-part-02
+          path: out/tpbsn-4399-8.41.0.apk.part-02
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload part 03
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpbsn-4399-8.41.0-apk-400m-part-03
+          path: out/tpbsn-4399-8.41.0.apk.part-03
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload part 04
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpbsn-4399-8.41.0-apk-400m-part-04
+          path: out/tpbsn-4399-8.41.0.apk.part-04
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
