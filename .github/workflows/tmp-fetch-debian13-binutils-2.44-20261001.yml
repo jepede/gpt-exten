@@ -1,0 +1,57 @@
+name: Temporary fetch Debian 13 binutils 2.44 repair
+
+on:
+  push:
+    paths:
+      - '.github/workflows/tmp-fetch-debian13-binutils-2.44-20261001.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Download Debian 13 packages
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p out .tmp
+          cd out
+          curl -fL --retry 5 --retry-delay 2 \
+            -o libbinutils_2.44-3_amd64.deb \
+            'https://deb.debian.org/debian/pool/main/b/binutils/libbinutils_2.44-3_amd64.deb'
+          curl -fL --retry 5 --retry-delay 2 \
+            -o binutils-common_2.44-3_amd64.deb \
+            'https://deb.debian.org/debian/pool/main/b/binutils/binutils-common_2.44-3_amd64.deb'
+          test "$(dpkg-deb -f libbinutils_2.44-3_amd64.deb Version)" = "2.44-3"
+          test "$(dpkg-deb -f libbinutils_2.44-3_amd64.deb Architecture)" = "amd64"
+          test "$(dpkg-deb -f binutils-common_2.44-3_amd64.deb Version)" = "2.44-3"
+          test "$(dpkg-deb -f binutils-common_2.44-3_amd64.deb Architecture)" = "amd64"
+          sha256sum *.deb > SHA256SUMS.txt
+          ls -lh
+          cat SHA256SUMS.txt
+
+      - name: Upload repair artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: debian13-binutils-2.44-repair-amd64
+          path: out/
+          retention-days: 90
+
+      - name: Record run id on temporary branch
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p .tmp
+          printf '%s\n' "${{ github.run_id }}" > .tmp/debian13-binutils-2.44-run.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .tmp/debian13-binutils-2.44-run.txt
+          git commit -m 'Record Debian 13 binutils repair artifact run'
+          git push origin HEAD:"${{ github.ref_name }}"
