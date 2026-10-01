@@ -28,65 +28,32 @@ jobs:
           set -euo pipefail
           UA='Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36'
           curl -L --fail --retry 3 --connect-timeout 15 --max-time 90 -A "$UA"             "https://sj.qq.com/appdetail/$PACKAGE_NAME" -o sj-detail.html
+          curl -L --fail --retry 3 --connect-timeout 15 --max-time 90 -A "$UA"             "https://a.app.qq.com/o/simple.jsp?pkgname=$PACKAGE_NAME" -o simple.html
 
           SOURCE_URL="$(python3 - <<'PY'
-          import re, html, pathlib
-          s=pathlib.Path('sj-detail.html').read_text('utf-8','ignore')
+          import re,html,pathlib
           urls=[]
-          for m in re.finditer(r'https?://[^"\'<>\\ ]+?\.apk(?:\?[^"\'<>\\ ]*)?', s, re.I):
-              u=html.unescape(m.group(0)).replace('\\u0026','&').replace('\\/','/')
-              if 'com.tencent.kihan_' in u.lower() and u not in urls:
-                  urls.append(u)
+          for fn in ('sj-detail.html','simple.html'):
+              s=pathlib.Path(fn).read_text('utf-8','ignore')
+              for m in re.finditer(r"https?://[^\"'<>\\ ]+?\.apk(?:\?[^\"'<>\\ ]*)?",s,re.I):
+                  u=html.unescape(m.group(0)).replace('\\u0026','&').replace('\\/','/')
+                  if 'com.tencent.kihan_' in u.lower() and u not in urls:
+                      urls.append(u)
           if not urls:
-              raise SystemExit('no com.tencent.KiHan APK URL found')
-          preferred=[u for u in urls if ('1079079009' in u or '1.79.79.9' in u)]
+              raise SystemExit('no target APK URL')
+          preferred=[u for u in urls if '1.79.79.9.apk' in u.lower()]
           print((preferred or urls)[0])
           PY
           )"
-          echo "Resolved: $SOURCE_URL"
+          echo "Resolved alternate Tencent CDN URL: $SOURCE_URL"
 
-          TOTAL="$(python3 - <<'PY'
-          import json,re,html,pathlib,sys
-          s=pathlib.Path('sj-detail.html').read_text('utf-8','ignore')
-          m=re.search(r'(?s)<script[^>]+id=["\\']__NEXT_DATA__["\\'][^>]*>(.*?)</script>',s)
-          if not m:
-              raise SystemExit('no __NEXT_DATA__')
-          j=json.loads(html.unescape(m.group(1)))
-          hits=[]
-          def walk(x):
-              if isinstance(x,dict):
-                  blob=json.dumps(x,ensure_ascii=False).lower()
-                  if 'com.tencent.kihan' in blob and ('.apk' in blob or '1.79.79.9' in blob):
-                      hits.append(x)
-                  for v in x.values(): walk(v)
-              elif isinstance(x,list):
-                  for v in x: walk(v)
-          walk(j)
-          vals=[]
-          for d in hits:
-              print(json.dumps(d,ensure_ascii=False)[:4000], file=sys.stderr)
-              stack=[d]
-              while stack:
-                  x=stack.pop()
-                  if isinstance(x,dict):
-                      for k,v in x.items():
-                          lk=str(k).lower()
-                          if 'size' in lk:
-                              try:
-                                  n=int(str(v))
-                                  if 500_000_000 < n < 5_000_000_000:
-                                      vals.append(n)
-                              except: pass
-                          if isinstance(v,(dict,list)): stack.append(v)
-                  elif isinstance(x,list):
-                      stack.extend(x)
-          if not vals:
-              raise SystemExit('no exact APK byte size in target metadata')
-          print(max(vals))
-          PY
-          )"
+          rm -f headers.txt probe.bin
+          curl -L --fail --retry 2 --connect-timeout 20 --max-time 90             -A "$UA" -H 'Range: bytes=0-0' -D headers.txt "$SOURCE_URL" -o probe.bin
+          cat headers.txt
+          test "$(stat -c%s probe.bin)" -eq 1
+          TOTAL="$(awk 'BEGIN{IGNORECASE=1} /^content-range:[[:space:]]*bytes/ {gsub("\r",""); split($3,a,"/"); v=a[2]} END{print v}' headers.txt)"
           if ! [[ "$TOTAL" =~ ^[0-9]+$ ]] || [ "$TOTAL" -lt 500000000 ]; then
-            echo "Page metadata did not provide a valid full APK size: $TOTAL" >&2
+            echo "Alternate CDN did not provide a valid ranged total: $TOTAL" >&2
             exit 41
           fi
           echo "Total bytes: $TOTAL"
