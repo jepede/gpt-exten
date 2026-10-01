@@ -45,13 +45,48 @@ jobs:
           )"
           echo "Resolved: $SOURCE_URL"
 
-          rm -f headers.txt probe.bin
-          curl -L --fail --retry 3 --connect-timeout 20 --max-time 90             -A "$UA" -H 'Range: bytes=0-0' -D headers.txt "$SOURCE_URL" -o probe.bin
-          cat headers.txt
-          test "$(stat -c%s probe.bin)" -eq 1
-          TOTAL="$(awk 'BEGIN{IGNORECASE=1} /^content-range:[[:space:]]*bytes/ {gsub("\r",""); split($3,a,"/"); v=a[2]} END{print v}' headers.txt)"
+          TOTAL="$(python3 - <<'PY'
+          import json,re,html,pathlib,sys
+          s=pathlib.Path('sj-detail.html').read_text('utf-8','ignore')
+          m=re.search(r'(?s)<script[^>]+id=["\\']__NEXT_DATA__["\\'][^>]*>(.*?)</script>',s)
+          if not m:
+              raise SystemExit('no __NEXT_DATA__')
+          j=json.loads(html.unescape(m.group(1)))
+          hits=[]
+          def walk(x):
+              if isinstance(x,dict):
+                  blob=json.dumps(x,ensure_ascii=False).lower()
+                  if 'com.tencent.kihan' in blob and ('.apk' in blob or '1.79.79.9' in blob):
+                      hits.append(x)
+                  for v in x.values(): walk(v)
+              elif isinstance(x,list):
+                  for v in x: walk(v)
+          walk(j)
+          vals=[]
+          for d in hits:
+              print(json.dumps(d,ensure_ascii=False)[:4000], file=sys.stderr)
+              stack=[d]
+              while stack:
+                  x=stack.pop()
+                  if isinstance(x,dict):
+                      for k,v in x.items():
+                          lk=str(k).lower()
+                          if 'size' in lk:
+                              try:
+                                  n=int(str(v))
+                                  if 500_000_000 < n < 5_000_000_000:
+                                      vals.append(n)
+                              except: pass
+                          if isinstance(v,(dict,list)): stack.append(v)
+                  elif isinstance(x,list):
+                      stack.extend(x)
+          if not vals:
+              raise SystemExit('no exact APK byte size in target metadata')
+          print(max(vals))
+          PY
+          )"
           if ! [[ "$TOTAL" =~ ^[0-9]+$ ]] || [ "$TOTAL" -lt 500000000 ]; then
-            echo "Range probe did not provide a valid full APK size: $TOTAL" >&2
+            echo "Page metadata did not provide a valid full APK size: $TOTAL" >&2
             exit 41
           fi
           echo "Total bytes: $TOTAL"
