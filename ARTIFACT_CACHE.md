@@ -25,6 +25,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | TShield 6.2 Live W response | 6.2-live-w-bridge-run11-v1 | Any | Any | `32483541702` | SINGLE | `2026-11-19T12:47:00Z` |
 | QEMU user-static | 1:7.2+dfsg-7+deb12u18+b3 | Debian 12 / Linux | x86_64 | `32748029497` | SINGLE | `2026-11-22T15:57:40Z` |
 | Debian 12 elfutils runtime | 0.188-2.1 | Debian 12 / Linux | x86_64 | `33241532212` | SINGLE | `2026-11-27T07:44:22Z` |
+| Debian 13 binutils host repair | 2.44-3 | Debian 13 / Linux | x86_64 | `36876468018` | SINGLE | `2026-12-30T14:27:26Z` |
 | nlohmann/json single header | 3.12.0 | Any | Any | `32814216489` | SINGLE | `2026-11-23T05:47:17Z` |
 
 | libUE4 GL | 4.5-v1.0.1 | Android | AArch64 | `33073762454` | SINGLE | `2026-11-25T12:50:04Z` |
@@ -1110,3 +1111,33 @@ Restore: download artifact 11032351529; verify ZIP, inner TAR, and meta/SHA256SU
 ### Restore
 
 Download Artifact `11168472545`, verify the Artifact ZIP SHA256 `a627196da624e8aa7f1764d6ddb99c796e28f0b59ed5fae20fe492bc2212e90f`, extract `radare2_6.2.2_amd64.deb`, then verify its SHA256 `09234e4139bf8dfcbb7fc1fdb2519859ad516e63c19d3c27d92aaecdf463b1ad` before installing.
+
+
+## Debian 13 binutils host repair 2.44-3
+
+- Workflow: `.github/workflows/tmp-fetch-debian13-binutils-2.44-20261001.yml` on temporary branch `tmp/repair-debian13-binutils-20261001`
+- Workflow Name: `Temporary fetch Debian 13 binutils 2.44 repair`
+- Run ID: `36876468018`
+- Run Conclusion: `success`
+- Source: Debian trixie official package pool at `https://deb.debian.org/debian/pool/main/b/binutils/`
+- Repository Visibility: `Public`
+- Requested Retention: `90 days`
+- Storage Mode: `SINGLE`
+- Artifact Name: `debian13-binutils-2.44-repair-amd64`
+- Artifact ID: `11169466690`
+- Artifact Archive Size: `3044472` bytes
+- Artifact Archive SHA256 / Digest: `8596cfe7c823d64bc2df16b8bd8720bad8110b5e03b31f948952d8600526aa33`
+- Part Count: `1`
+- Created At: `2026-10-01T14:27:34Z`
+- Expires At: `2026-12-30T14:27:26Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | Size | SHA256 |
+|---|---|---|---|---|---:|---|
+| Debian binutils-common | 2.44-3 | Debian 13 / Linux | x86_64 | `binutils-common_2.44-3_amd64.deb` | `2508768` | `002da5d23f8757dee97a2c0a40e0e1d4d85a43da094488ee2ee7068d4d3691f9` |
+| Debian libbinutils | 2.44-3 | Debian 13 / Linux | x86_64 | `libbinutils_2.44-3_amd64.deb` | `534440` | `4f4664c8a8f0ad0c8631c39fab02e3d8d86ccc6f4436a1d59f059dbcb0492679` |
+
+### Restore
+
+Download Artifact `11169466690`, verify ZIP SHA256 `8596cfe7c823d64bc2df16b8bd8720bad8110b5e03b31f948952d8600526aa33`, extract the two Debian packages, verify the per-file SHA256 values above, then install both with `dpkg -i`. This cache is for restoring Debian 13 host binutils 2.44 shared libraries after testing the isolated Debian 12 GDB bundle; it must not be mixed into the isolated GDB root.
