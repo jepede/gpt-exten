@@ -1,0 +1,96 @@
+name: CTF 4399 login fast scan 20261001
+
+on:
+  push:
+    paths:
+      - '.github/workflows/ctf-4399-login-fast-20261001.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  fast-scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      SRC_RUN_ID: '36716019163'
+      APK_FILE: tpbsn-4399-8.41.0.apk
+      APK_SHA256: 258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Restore APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/parts report dex
+          for idx in 00 01 02 03 04; do
+            art="tpbsn-4399-8.41.0-apk-400m-part-${idx}"
+            mkdir -p "work/parts/${idx}"
+            gh run download "$SRC_RUN_ID" -R "$GITHUB_REPOSITORY" -n "$art" -D "work/parts/${idx}"
+          done
+          cat work/parts/00/${APK_FILE}.part-00 work/parts/01/${APK_FILE}.part-01 work/parts/02/${APK_FILE}.part-02 work/parts/03/${APK_FILE}.part-03 work/parts/04/${APK_FILE}.part-04 > "$APK_FILE"
+          printf '%s  %s\n' "$APK_SHA256" "$APK_FILE" | sha256sum -c - | tee report/sha256_check.txt
+          unzip -l "$APK_FILE" > report/apk_zip_list.txt
+
+      - name: Fast DEX and native scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import zipfile, pathlib, re, json
+          apk='tpbsn-4399-8.41.0.apk'
+          z=zipfile.ZipFile(apk)
+          dexes=[n for n in z.namelist() if re.fullmatch(r'classes(\d*)\.dex', pathlib.PurePosixPath(n).name)]
+          libs=[n for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')]
+          for n in dexes: pathlib.Path('dex', n).write_bytes(z.read(n))
+          byabi={}
+          for p in libs:
+            ps=p.split('/'); byabi.setdefault(ps[1] if len(ps)>2 else 'unknown', []).append(ps[-1])
+          pathlib.Path('report/inventory.json').write_text(json.dumps({'dexes':dexes,'native_so_count':len(libs),'native_so_by_abi':byabi},ensure_ascii=False,indent=2)+'\n')
+          PY
+          : > report/dex_4399_hits.txt
+          : > report/dex_login_hits.txt
+          : > report/dex_url_hits.txt
+          for d in dex/classes*.dex; do
+            echo "===== $d =====" >> report/dex_4399_hits.txt
+            strings -n 3 "$d" | grep -Eai 'm4399|4399|GameCenter|gamecenter|passport|quick|channel|Channel|uc\.gamesdk|brm|bairi|BaiRi|login|Login|token|Token|uid|Uid|session|Session|antiaddict|realname|sdk|SDK' | sort -u >> report/dex_4399_hits.txt || true
+            echo "===== $d =====" >> report/dex_login_hits.txt
+            strings -n 3 "$d" | grep -Eai 'login|Login|logout|Logout|auth|Auth|verify|Verify|token|Token|session|Session|uid|Uid|sign|Sign|sdk|SDK|channel|Channel|pay|Pay|anti|realname' | sort -u >> report/dex_login_hits.txt || true
+            echo "===== $d =====" >> report/dex_url_hits.txt
+            strings -n 5 "$d" | grep -Eai 'https?://|/login|/auth|/sdk|/passport|/user|token|channel|m4399|4399' | sort -u >> report/dex_url_hits.txt || true
+          done
+          python3 - <<'PY'
+          import zipfile, pathlib, re
+          pat=re.compile(rb'm4399|4399|gamecenter|passport|login|Login|sdk|SDK|channel|Channel|token|Token|uid|Uid|session|Session|sign|Sign|app.?id|app.?key|server|Server|http|https|bairi|BRM',re.I)
+          out=pathlib.Path('report/native_hits.txt').open('wb')
+          with zipfile.ZipFile('tpbsn-4399-8.41.0.apk') as z:
+            for n in z.namelist():
+              if not (n.startswith('lib/') and n.endswith('.so')): continue
+              data=z.read(n); cur=bytearray(); hits=[]; seen=set()
+              for b in data:
+                if 32<=b<=126: cur.append(b)
+                else:
+                  if len(cur)>=4 and pat.search(cur):
+                    bs=bytes(cur)
+                    if bs not in seen: seen.add(bs); hits.append(bs)
+                  cur.clear()
+              if hits:
+                out.write((f'===== {n} =====\n').encode())
+                for h in hits[:80]: out.write(h[:260]+b'\n')
+          out.close()
+          PY
+          cat > report/fast_report.md <<'EOF'
+          # Fast 4399 login scan
+          EOF
+          {
+            echo '## SHA256'; cat report/sha256_check.txt
+            echo; echo '## Inventory'; cat report/inventory.json
+            echo; echo '## DEX 4399 hits'; sed -n '1,900p' report/dex_4399_hits.txt
+            echo; echo '## DEX URL hits'; sed -n '1,500p' report/dex_url_hits.txt
+            echo; echo '## Native hits'; sed -n '1,500p' report/native_hits.txt
+          } >> report/fast_report.md
+          echo '===== BEGIN_FAST_4399_REPORT ====='
+          sed -n '1,2200p' report/fast_report.md
+          echo '===== END_FAST_4399_REPORT ====='
