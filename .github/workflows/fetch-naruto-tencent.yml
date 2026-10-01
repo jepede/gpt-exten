@@ -91,7 +91,15 @@ jobs:
           set -euo pipefail
           UA='Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36'
           echo "Downloading from $SOURCE_URL"
-          curl -L --fail --retry 5 --retry-all-errors --connect-timeout 20             --speed-time 120 --speed-limit 1024 -A "$UA" "$SOURCE_URL" -o naruto-latest.apk
+          if ! command -v aria2c >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq aria2
+          fi
+          aria2c --allow-overwrite=true --auto-file-renaming=false \
+            --max-connection-per-server=16 --split=16 --min-split-size=8M \
+            --file-allocation=none --connect-timeout=20 --timeout=120 \
+            --max-tries=10 --retry-wait=2 --user-agent="$UA" \
+            --dir=. --out=naruto-latest.apk "$SOURCE_URL"
           test "$(stat -c%s naruto-latest.apk)" -gt 500000000
           file naruto-latest.apk | tee meta/file.txt
           unzip -tqq naruto-latest.apk
