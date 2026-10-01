@@ -45,11 +45,13 @@ jobs:
           )"
           echo "Resolved: $SOURCE_URL"
 
-          curl -L --fail --retry 3 --connect-timeout 20 --max-time 90             -A "$UA" -sS -I "$SOURCE_URL" -o headers.txt
+          rm -f headers.txt probe.bin
+          curl -L --fail --retry 3 --connect-timeout 20 --max-time 90             -A "$UA" -H 'Range: bytes=0-0' -D headers.txt "$SOURCE_URL" -o probe.bin
           cat headers.txt
-          TOTAL="$(awk 'BEGIN{IGNORECASE=1} /^content-length:[[:space:]]*/ {gsub("\r","",$2); v=$2} END{print v}' headers.txt)"
+          test "$(stat -c%s probe.bin)" -eq 1
+          TOTAL="$(awk 'BEGIN{IGNORECASE=1} /^content-range:[[:space:]]*bytes/ {gsub("\r",""); split($3,a,"/"); v=a[2]} END{print v}' headers.txt)"
           if ! [[ "$TOTAL" =~ ^[0-9]+$ ]] || [ "$TOTAL" -lt 500000000 ]; then
-            echo "HEAD did not provide a valid full APK size: $TOTAL" >&2
+            echo "Range probe did not provide a valid full APK size: $TOTAL" >&2
             exit 41
           fi
           echo "Total bytes: $TOTAL"
