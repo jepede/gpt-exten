@@ -1,0 +1,258 @@
+name: CTF 4399 login analysis 20261001
+
+on:
+  push:
+    paths:
+      - '.github/workflows/ctf-4399-login-analysis-20261001.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  analyze:
+    name: Restore APK and analyze 4399 login chain
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      SRC_RUN_ID: '36716019163'
+      APK_FILE: tpbsn-4399-8.41.0.apk
+      APK_SHA256: 258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6
+      ART00: tpbsn-4399-8.41.0-apk-400m-part-00
+      ART01: tpbsn-4399-8.41.0-apk-400m-part-01
+      ART02: tpbsn-4399-8.41.0-apk-400m-part-02
+      ART03: tpbsn-4399-8.41.0-apk-400m-part-03
+      ART04: tpbsn-4399-8.41.0-apk-400m-part-04
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Restore cached 4399 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/parts report
+          for idx in 00 01 02 03 04; do
+            name_var="ART${idx}"
+            name="${!name_var}"
+            mkdir -p "work/parts/${idx}"
+            gh run download "$SRC_RUN_ID" -R "$GITHUB_REPOSITORY" -n "$name" -D "work/parts/${idx}"
+          done
+          find work/parts -type f -maxdepth 3 -printf '%p %s bytes\n' | sort | tee report/restored_files.txt
+          cat \
+            work/parts/00/${APK_FILE}.part-00 \
+            work/parts/01/${APK_FILE}.part-01 \
+            work/parts/02/${APK_FILE}.part-02 \
+            work/parts/03/${APK_FILE}.part-03 \
+            work/parts/04/${APK_FILE}.part-04 \
+            > "$APK_FILE"
+          printf '%s  %s\n' "$APK_SHA256" "$APK_FILE" | sha256sum -c - | tee report/sha256_check.txt
+          stat -c 'apk_size=%s' "$APK_FILE" | tee report/apk_size.txt
+          unzip -l "$APK_FILE" > report/apk_zip_list.txt
+
+      - name: Install analysis tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y >/dev/null
+          sudo apt-get install -y unzip zip p7zip-full binutils libxml2-utils >/dev/null
+          curl -L --retry 3 --fail -o jadx.zip https://github.com/skylot/jadx/releases/download/v1.5.5/jadx-1.5.5.zip
+          unzip -q jadx.zip -d jadx_tool
+          chmod +x jadx_tool/bin/jadx
+          jadx_tool/bin/jadx --version | tee report/jadx_version.txt
+
+      - name: Decode manifest and run targeted static search
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p unpack dex strings_out jadx_res jadx_src report/snippets
+          python3 - <<'PY'
+          import zipfile, pathlib, re, json
+          apk = pathlib.Path('tpbsn-4399-8.41.0.apk')
+          z = zipfile.ZipFile(apk)
+          names = z.namelist()
+          dexes = [n for n in names if re.fullmatch(r'classes(\d*)\.dex', pathlib.PurePosixPath(n).name)]
+          libs = [n for n in names if n.startswith('lib/') and n.endswith('.so')]
+          assets = [n for n in names if n.startswith('assets/')]
+          rows = {
+            'apk': str(apk),
+            'dex_count': len(dexes),
+            'dexes': dexes,
+            'native_so_count': len(libs),
+            'native_so_by_abi': {},
+            'asset_count': len(assets),
+          }
+          for p in libs:
+            parts = p.split('/')
+            abi = parts[1] if len(parts) > 2 else 'unknown'
+            rows['native_so_by_abi'].setdefault(abi, []).append(parts[-1])
+          pathlib.Path('report/apk_inventory.json').write_text(json.dumps(rows, ensure_ascii=False, indent=2) + '\n')
+          for n in dexes:
+            pathlib.Path('dex', n).write_bytes(z.read(n))
+          # Pull obviously relevant small text-ish assets for search.
+          rel_assets = []
+          asset_pat = re.compile(r'(4399|login|sdk|channel|passport|token|server|config|url|BRM|bairi|m4399)', re.I)
+          for n in assets:
+            base = pathlib.PurePosixPath(n).name
+            if asset_pat.search(n) or base.endswith(('.json','.xml','.txt','.ini','.properties','.cfg','.lua','.js')):
+              try:
+                data = z.read(n)
+                if len(data) <= 2_000_000:
+                  out = pathlib.Path('strings_out/assets') / n
+                  out.parent.mkdir(parents=True, exist_ok=True)
+                  out.write_bytes(data)
+                  rel_assets.append(n)
+              except Exception:
+                pass
+          pathlib.Path('report/relevant_assets.txt').write_text('\n'.join(rel_assets) + '\n')
+          PY
+          echo '--- APK inventory ---'
+          cat report/apk_inventory.json
+          echo '--- relevant assets ---'
+          sed -n '1,200p' report/relevant_assets.txt || true
+
+          # Decode AndroidManifest/resources separately; keep source decompile independent.
+          timeout 12m jadx_tool/bin/jadx --no-src -d jadx_res "$APK_FILE" >/tmp/jadx_res.log 2>&1 || true
+          cp /tmp/jadx_res.log report/jadx_resources.log || true
+          find jadx_res -maxdepth 4 -type f | sort > report/jadx_resources_files.txt || true
+          if [ -f jadx_res/resources/AndroidManifest.xml ]; then
+            cp jadx_res/resources/AndroidManifest.xml report/AndroidManifest.xml
+          else
+            find jadx_res -name AndroidManifest.xml -print -quit | xargs -r -I{} cp {} report/AndroidManifest.xml
+          fi
+
+          echo '--- Manifest hits ---' | tee report/manifest_hits.txt
+          if [ -f report/AndroidManifest.xml ]; then
+            grep -Ein 'package=|m4399|4399|game|sdk|login|activity|service|provider|receiver|meta-data|app[_-]?id|app[_-]?key|channel' report/AndroidManifest.xml | tee -a report/manifest_hits.txt || true
+          fi
+
+          # DEX/class strings: this survives even if full JADX times out.
+          : > report/dex_string_hits.txt
+          for d in dex/classes*.dex; do
+            echo "===== $d =====" >> report/dex_string_hits.txt
+            strings -n 3 "$d" | grep -Eai 'm4399|4399|gamecenter|passport|login|Login|sdk|SDK|channel|Channel|token|Token|uid|Uid|session|Session|sign|Sign|app.?id|app.?key|BaiRi|BRM|bairimeng|server|Server|quick|uc|pay|realname|antiaddict' | sort -u >> report/dex_string_hits.txt || true
+          done
+
+          # Native string hits without extracting every .so to disk.
+          python3 - <<'PY'
+          import zipfile, pathlib, subprocess, tempfile, os, re
+          apk = 'tpbsn-4399-8.41.0.apk'
+          pat = re.compile(rb'm4399|4399|gamecenter|passport|login|Login|sdk|SDK|channel|Channel|token|Token|uid|Uid|session|Session|sign|Sign|app.?id|app.?key|server|Server|http|https|bairi|BRM', re.I)
+          out = pathlib.Path('report/native_string_hits.txt').open('wb')
+          with zipfile.ZipFile(apk) as z:
+            for n in z.namelist():
+              if not (n.startswith('lib/') and n.endswith('.so')):
+                continue
+              data = z.read(n)
+              # lightweight ASCII/UTF-8-ish strings
+              hits = []
+              cur = bytearray()
+              for b in data:
+                if 32 <= b <= 126:
+                  cur.append(b)
+                else:
+                  if len(cur) >= 4 and pat.search(cur):
+                    hits.append(bytes(cur))
+                  cur.clear()
+              if len(cur) >= 4 and pat.search(cur):
+                hits.append(bytes(cur))
+              uniq = []
+              seen = set()
+              for h in hits:
+                if h not in seen:
+                  seen.add(h); uniq.append(h)
+                if len(uniq) >= 200:
+                  break
+              if uniq:
+                out.write((f'===== {n} =====\n').encode())
+                for h in uniq:
+                  out.write(h[:300] + b'\n')
+          out.close()
+          PY
+
+          # Full Java decompile; timeout leaves prior evidence intact.
+          timeout 28m jadx_tool/bin/jadx --no-res --show-bad-code --deobf --threads-count 4 -d jadx_src "$APK_FILE" >/tmp/jadx_src.log 2>&1 || true
+          cp /tmp/jadx_src.log report/jadx_source.log || true
+          find jadx_src -type f -name '*.java' | sort > report/java_files.txt || true
+          grep -Eai 'm4399|4399|gamecenter|passport|login|Login|sdk|SDK|channel|Channel|token|Token|uid|Uid|session|Session|sign|Sign|app.?id|app.?key|BaiRi|BRM|bairimeng|realname|antiaddict' report/java_files.txt > report/relevant_java_files.txt || true
+
+          python3 - <<'PY'
+          import pathlib, re, json
+          root = pathlib.Path('jadx_src')
+          patterns = re.compile(r'(m4399|4399|gamecenter|passport|login|Login|sdk|SDK|channel|Channel|token|Token|uid|Uid|session|Session|sign|Sign|app.?id|app.?key|BaiRi|BRM|bairimeng|realname|antiaddict)', re.I)
+          report_dir = pathlib.Path('report/snippets')
+          report_dir.mkdir(parents=True, exist_ok=True)
+          index = []
+          java_files = list(root.rglob('*.java')) if root.exists() else []
+          for fp in java_files:
+            try:
+              txt = fp.read_text(errors='ignore')
+            except Exception:
+              continue
+            if not patterns.search(str(fp)) and not patterns.search(txt):
+              continue
+            lines = txt.splitlines()
+            matches = [i for i,l in enumerate(lines) if patterns.search(l)]
+            if not matches:
+              continue
+            rel = fp.as_posix()
+            safe = re.sub(r'[^A-Za-z0-9_.-]+','_',rel)[-180:]
+            out = report_dir / (safe + '.txt')
+            with out.open('w', encoding='utf-8', errors='ignore') as w:
+              w.write(f'FILE: {rel}\n')
+              w.write(f'MATCHES: {len(matches)}\n')
+              # cap per file
+              for mi in matches[:18]:
+                lo=max(0, mi-4); hi=min(len(lines), mi+5)
+                w.write(f'--- lines {lo+1}-{hi} ---\n')
+                for j in range(lo,hi):
+                  w.write(f'{j+1:05d}: {lines[j]}\n')
+            index.append({'file': rel, 'matches': len(matches), 'snippet': out.as_posix()})
+          index.sort(key=lambda x: (-x['matches'], x['file']))
+          pathlib.Path('report/source_match_index.json').write_text(json.dumps(index[:300], ensure_ascii=False, indent=2)+'\n')
+          # Produce a compact markdown report.
+          md = []
+          md.append('# 逃跑吧少年 4399 渠道服登录链路静态分析\n')
+          md.append('## APK\n')
+          md.append('* file: `tpbsn-4399-8.41.0.apk`\n')
+          md.append('* sha256: `258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6`\n')
+          md.append('* size: `1883026337` bytes\n')
+          inv = pathlib.Path('report/apk_inventory.json').read_text(errors='ignore') if pathlib.Path('report/apk_inventory.json').exists() else '{}'
+          md.append('\n## Inventory\n```json\n' + inv[:12000] + '\n```\n')
+          def add_file(title, path, limit=22000):
+            p = pathlib.Path(path)
+            md.append(f'\n## {title}\n')
+            if p.exists():
+              s=p.read_text(errors='ignore')[:limit]
+              md.append('```\n'+s+'\n```\n')
+            else:
+              md.append('not found\n')
+          add_file('Manifest hits', 'report/manifest_hits.txt', 20000)
+          add_file('Relevant Java files', 'report/relevant_java_files.txt', 16000)
+          add_file('Source match index', 'report/source_match_index.json', 26000)
+          add_file('DEX string hits', 'report/dex_string_hits.txt', 36000)
+          add_file('Native string hits', 'report/native_string_hits.txt', 28000)
+          # Include top snippets.
+          md.append('\n## Top source snippets\n')
+          for item in index[:30]:
+            p = pathlib.Path(item['snippet'])
+            if p.exists():
+              md.append('\n```java\n' + p.read_text(errors='ignore')[:7000] + '\n```\n')
+          pathlib.Path('report/ctf_4399_login_report.md').write_text(''.join(md), encoding='utf-8')
+          PY
+
+      - name: Print compact report
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '===== BEGIN_CTF_4399_LOGIN_REPORT ====='
+          sed -n '1,1600p' report/ctf_4399_login_report.md
+          echo '===== END_CTF_4399_LOGIN_REPORT ====='
+
+      - name: Upload analysis report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctf-4399-login-analysis-report
+          path: report/
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 7
