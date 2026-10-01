@@ -1,0 +1,32 @@
+name: Fetch radare2 6.2.2 amd64
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-radare2-6.2.2-amd64.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and verify official radare2 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          url='https://github.com/radareorg/radare2/releases/download/6.2.2/radare2_6.2.2_amd64.deb'
+          curl -fL --retry 5 --retry-delay 2 "$url" -o out/radare2_6.2.2_amd64.deb
+          echo '09234e4139bf8dfcbb7fc1fdb2519859ad516e63c19d3c27d92aaecdf463b1ad  out/radare2_6.2.2_amd64.deb' | sha256sum -c -
+          sha256sum out/radare2_6.2.2_amd64.deb | tee out/SHA256SUMS.txt
+          stat -c '%n %s bytes' out/radare2_6.2.2_amd64.deb
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: radare2-6.2.2-linux-x86_64
+          path: out/
+          retention-days: 90
+          if-no-files-found: error
