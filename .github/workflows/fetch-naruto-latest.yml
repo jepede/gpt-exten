@@ -1,0 +1,197 @@
+name: Fetch Naruto Mobile Latest APK
+
+on:
+  push:
+    branches:
+      - 'tmp/fetch-naruto-20261001'
+    paths:
+      - '.github/workflows/fetch-naruto-latest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PACKAGE_NAME: com.tencent.KiHan
+      EXPECTED_VERSION: 1.79.79.9
+      XIAOMI_APP_ID: "165428"
+    steps:
+      - name: Resolve official download source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p meta
+          UA='Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36'
+          curl -L --fail --retry 3 --connect-timeout 15 -A "$UA"             "https://app.mi.com/details?id=$PACKAGE_NAME" -o meta/xiaomi-details.html
+          curl -L --fail --retry 3 --connect-timeout 15 -A "$UA"             "https://hyrz.qq.com/zlkdatasys/mct/d/play.shtml?device=android" -o meta/tencent-play.html || true
+          curl -L --fail --retry 3 --connect-timeout 15 -A "$UA"             "https://sj.qq.com/appdetail/$PACKAGE_NAME" -o meta/tencent-appdetail.html || true
+
+          python3 - <<'PY'
+          import re, pathlib, html
+          for fn in ("meta/xiaomi-details.html","meta/tencent-play.html","meta/tencent-appdetail.html"):
+              p=pathlib.Path(fn)
+              if not p.exists():
+                  continue
+              s=p.read_text("utf-8","ignore")
+              print(f"--- {fn} bytes={len(s)} ---")
+              for pat in [
+                  r'1\.79\.79\.9',
+                  r'https?://[^"\'<> ]+\.apk(?:\?[^"\'<> ]*)?',
+                  r'https?://[^"\'<> ]*(?:download|apk)[^"\'<> ]*'
+              ]:
+                  vals=[]
+                  for m in re.finditer(pat,s,re.I):
+                      v=html.unescape(m.group(0)).replace('\\u0026','&')
+                      if v not in vals: vals.append(v)
+                  for v in vals[:20]: print(v)
+          PY
+
+          candidates=(
+            "https://app.mi.com/download/$XIAOMI_APP_ID?id=$PACKAGE_NAME&ref=search"
+            "https://app.mi.com/download/$XIAOMI_APP_ID?id=$PACKAGE_NAME"
+            "https://app.mi.com/download/$XIAOMI_APP_ID"
+          )
+          : > meta/probes.txt
+          chosen=''
+          for u in "${candidates[@]}"; do
+            echo "PROBE $u" | tee -a meta/probes.txt
+            rm -f meta/probe.bin meta/probe.headers
+            if curl -L --fail --retry 2 --connect-timeout 15 --max-time 90               -A "$UA" -r 0-65535 -D meta/probe.headers "$u" -o meta/probe.bin; then
+              {
+                echo "effective_url=$(awk 'BEGIN{IGNORECASE=1}/^location:/{gsub("\r","");print $2}' meta/probe.headers | tail -n1)"
+                echo "probe_size=$(stat -c%s meta/probe.bin)"
+                file meta/probe.bin
+                head -c 8 meta/probe.bin | od -An -tx1
+              } | tee -a meta/probes.txt
+              if python3 - <<'PY'
+          from pathlib import Path
+          b=Path('meta/probe.bin').read_bytes()[:4]
+          raise SystemExit(0 if b.startswith(b'PK\x03\x04') else 1)
+          PY
+              then
+                chosen="$u"
+                break
+              fi
+            fi
+          done
+          if [ -z "$chosen" ]; then
+            echo "No official direct APK endpoint resolved" | tee -a meta/probes.txt
+            exit 31
+          fi
+          echo "SOURCE_URL=$chosen" | tee meta/source.env
+          echo "SOURCE_URL=$chosen" >> "$GITHUB_ENV"
+
+      - name: Download APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          UA='Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36'
+          curl -L --fail --retry 5 --retry-all-errors --connect-timeout 20             --speed-time 120 --speed-limit 1024 -A "$UA" "$SOURCE_URL" -o naruto-latest.apk
+          test "$(stat -c%s naruto-latest.apk)" -gt 500000000
+          file naruto-latest.apk | tee meta/file.txt
+          unzip -tqq naruto-latest.apk
+          sha256sum naruto-latest.apk | tee meta/SHA256SUMS.txt
+          md5sum naruto-latest.apk | tee meta/MD5SUMS.txt
+          stat -c 'sizeBytes=%s' naruto-latest.apk | tee meta/size.txt
+
+      - name: Verify package and version
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt -perm -111 2>/dev/null | sort -V | tail -n1)"
+          if [ -z "$AAPT" ]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq aapt
+            AAPT="$(command -v aapt)"
+          fi
+          "$AAPT" dump badging naruto-latest.apk | tee meta/badging.txt
+          pkg=$("$AAPT" dump badging naruto-latest.apk | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n1)
+          ver=$("$AAPT" dump badging naruto-latest.apk | sed -n "s/^package: .* versionName='\([^']*\)'.*/\1/p" | head -n1)
+          vcode=$("$AAPT" dump badging naruto-latest.apk | sed -n "s/^package: .* versionCode='\([^']*\)'.*/\1/p" | head -n1)
+          test "$pkg" = "$PACKAGE_NAME"
+          test "$ver" = "$EXPECTED_VERSION"
+          {
+            echo "package=$pkg"
+            echo "versionName=$ver"
+            echo "versionCode=$vcode"
+            echo "sizeBytes=$(stat -c%s naruto-latest.apk)"
+            echo "sha256=$(cut -d' ' -f1 meta/SHA256SUMS.txt)"
+            echo "md5=$(cut -d' ' -f1 meta/MD5SUMS.txt)"
+          } | tee meta/verified.txt
+
+      - name: Split APK into connector-safe chunks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p parts
+          split -b 400M -d -a 2 naruto-latest.apk parts/naruto-1.79.79.9.apk.part.
+          sha256sum parts/* | tee meta/PART_SHA256SUMS.txt
+          cat parts/naruto-1.79.79.9.apk.part.* | sha256sum | tee meta/recombined-SHA256.txt
+          test "$(cut -d' ' -f1 meta/recombined-SHA256.txt)" = "$(cut -d' ' -f1 meta/SHA256SUMS.txt)"
+          find parts -type f -maxdepth 1 -printf '%f %s bytes\n' | sort | tee meta/parts.txt
+
+      - name: Upload metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-metadata
+          path: meta/
+          retention-days: 90
+          compression-level: 6
+
+      - name: Upload APK part 00
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-part-00
+          path: parts/naruto-1.79.79.9.apk.part.00
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: ignore
+
+      - name: Upload APK part 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-part-01
+          path: parts/naruto-1.79.79.9.apk.part.01
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: ignore
+
+      - name: Upload APK part 02
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-part-02
+          path: parts/naruto-1.79.79.9.apk.part.02
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: ignore
+
+      - name: Upload APK part 03
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-part-03
+          path: parts/naruto-1.79.79.9.apk.part.03
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: ignore
+
+      - name: Upload APK part 04
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-part-04
+          path: parts/naruto-1.79.79.9.apk.part.04
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: ignore
+
+      - name: Upload APK part 05
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-part-05
+          path: parts/naruto-1.79.79.9.apk.part.05
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: ignore
