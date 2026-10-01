@@ -1,0 +1,149 @@
+name: Rechunk Verified Naruto APK 200MiB
+
+on:
+  push:
+    branches:
+      - 'tmp/fetch-naruto-20261001'
+    paths:
+      - '.github/workflows/rechunk-naruto-200m.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  verify-and-rechunk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Download canonical 400MiB chunks from source run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: naruto-1.79.79.9-apk-400m-part-*
+          path: source-parts
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 36815808636
+
+      - name: Recombine and verify original APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p meta reparts
+          find source-parts -maxdepth 1 -type f -name 'naruto-1.79.79.9.apk.part.*' ! -name '*.sha256' -printf '%f %s bytes\n' | sort | tee meta/source-parts.txt
+          find source-parts -maxdepth 1 -type f -name 'naruto-1.79.79.9.apk.part.*' ! -name '*.sha256' -print0 | sort -z | xargs -0 sha256sum | tee meta/source-part-sha256.txt
+          cat $(find source-parts -maxdepth 1 -type f -name 'naruto-1.79.79.9.apk.part.*' ! -name '*.sha256' | sort) > naruto-1.79.79.9.apk
+          test "$(stat -c%s naruto-1.79.79.9.apk)" = "1735650312"
+          unzip -tqq naruto-1.79.79.9.apk
+          sha256sum naruto-1.79.79.9.apk | tee meta/SHA256SUMS.txt
+          md5sum naruto-1.79.79.9.apk | tee meta/MD5SUMS.txt
+          stat -c 'sizeBytes=%s' naruto-1.79.79.9.apk | tee meta/size.txt
+
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt -perm -111 2>/dev/null | sort -V | tail -n1)"
+          if [ -z "$AAPT" ]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq aapt
+            AAPT="$(command -v aapt)"
+          fi
+          "$AAPT" dump badging naruto-1.79.79.9.apk | tee meta/badging.txt
+          pkg=$("$AAPT" dump badging naruto-1.79.79.9.apk | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n1)
+          ver=$("$AAPT" dump badging naruto-1.79.79.9.apk | sed -n "s/^package: .* versionName='\([^']*\)'.*/\1/p" | head -n1)
+          vcode=$("$AAPT" dump badging naruto-1.79.79.9.apk | sed -n "s/^package: .* versionCode='\([^']*\)'.*/\1/p" | head -n1)
+          test "$pkg" = "com.tencent.KiHan"
+          test "$ver" = "1.79.79.9"
+          test "$vcode" = "1079079009"
+          {
+            echo "package=$pkg"
+            echo "versionName=$ver"
+            echo "versionCode=$vcode"
+            echo "sizeBytes=$(stat -c%s naruto-1.79.79.9.apk)"
+            echo "sha256=$(cut -d' ' -f1 meta/SHA256SUMS.txt)"
+            echo "md5=$(cut -d' ' -f1 meta/MD5SUMS.txt)"
+            "$AAPT" dump badging naruto-1.79.79.9.apk | grep '^native-code:' || true
+          } | tee meta/verified.txt
+          printf '%s\n' 'http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/1CE28CDBBE7AE3EA5CDC9A083DFB9857.apk?fsname=com.tencent.KiHan_1.79.79.9.apk' > meta/source-url.txt
+
+      - name: Split verified APK to 200MiB transport chunks
+        shell: bash
+        run: |
+          set -euo pipefail
+          split -b 200M -d -a 2 naruto-1.79.79.9.apk reparts/naruto-1.79.79.9.apk.part.
+          test "$(find reparts -maxdepth 1 -type f -name 'naruto-1.79.79.9.apk.part.*' | wc -l)" -eq 9
+          sha256sum reparts/* | tee meta/PART_SHA256SUMS.txt
+          find reparts -maxdepth 1 -type f -printf '%f %s bytes\n' | sort | tee meta/parts.txt
+          cat reparts/naruto-1.79.79.9.apk.part.* | sha256sum | tee meta/recombined-SHA256.txt
+          test "$(cut -d' ' -f1 meta/recombined-SHA256.txt)" = "$(cut -d' ' -f1 meta/SHA256SUMS.txt)"
+
+      - name: Upload verification metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-verified-metadata
+          path: meta/
+          retention-days: 90
+          compression-level: 6
+
+      - name: Upload part 00
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-200m-part-00
+          path: reparts/naruto-1.79.79.9.apk.part.00
+          retention-days: 90
+          compression-level: 0
+      - name: Upload part 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-200m-part-01
+          path: reparts/naruto-1.79.79.9.apk.part.01
+          retention-days: 90
+          compression-level: 0
+      - name: Upload part 02
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-200m-part-02
+          path: reparts/naruto-1.79.79.9.apk.part.02
+          retention-days: 90
+          compression-level: 0
+      - name: Upload part 03
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-200m-part-03
+          path: reparts/naruto-1.79.79.9.apk.part.03
+          retention-days: 90
+          compression-level: 0
+      - name: Upload part 04
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-200m-part-04
+          path: reparts/naruto-1.79.79.9.apk.part.04
+          retention-days: 90
+          compression-level: 0
+      - name: Upload part 05
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-200m-part-05
+          path: reparts/naruto-1.79.79.9.apk.part.05
+          retention-days: 90
+          compression-level: 0
+      - name: Upload part 06
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-200m-part-06
+          path: reparts/naruto-1.79.79.9.apk.part.06
+          retention-days: 90
+          compression-level: 0
+      - name: Upload part 07
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-200m-part-07
+          path: reparts/naruto-1.79.79.9.apk.part.07
+          retention-days: 90
+          compression-level: 0
+      - name: Upload part 08
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-200m-part-08
+          path: reparts/naruto-1.79.79.9.apk.part.08
+          retention-days: 90
+          compression-level: 0
