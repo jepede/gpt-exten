@@ -74,9 +74,12 @@ jobs:
           pathlib.Path('meta/candidates.txt').write_text('\n'.join(out)+'\n','utf-8')
           if not out:
               raise SystemExit(42)
-          # Prefer Tencent CDN hosts.
-          preferred=[u for u in out if any(hh in u.lower() for hh in ('dd.qq.com','myapp.com','qq.com'))]
-          chosen=(preferred or out)[0]
+          # Only accept the target game package; never select the App Store installer.
+          target=[u for u in out if 'com.tencent.kihan_' in u.lower()]
+          if not target:
+              raise SystemExit('No com.tencent.KiHan APK candidate found')
+          preferred=[u for u in target if ('1079079009' in u or '1.79.79.9' in u)]
+          chosen=(preferred or target)[0]
           pathlib.Path('meta/source.env').write_text('SOURCE_URL='+chosen+'\n','utf-8')
           print('chosen=',chosen)
           PY
