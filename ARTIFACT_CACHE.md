@@ -6,6 +6,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| radare2 | 6.2.2 | Linux / Debian | x86_64 | `36873712969` | SINGLE | `2026-12-30T14:06:12Z` |
 | TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-releasecomplete-v3 | Linux | x86_64 | `34698530131` | SINGLE | `2026-12-11T14:10:58Z` |
 | Android SDK Build-Tools | 34.0.0 | Linux | x86_64 | `34698130020` | SINGLE | `2026-12-11T14:02:53Z` |
 | TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-kotlincompile-v2 | Linux | x86_64 | `34698303924` | SINGLE | `2026-12-11T14:06:23Z` |
@@ -1068,3 +1069,44 @@ Restore: download artifact 11032351529; verify ZIP, inner TAR, and meta/SHA256SU
 ### Restore
 
 下载 metadata Artifact `11141359547` 与 9 个 APK part Artifact `11141309461`, `11142255606`, `11141194843`, `11141184990`, `11142245673`, `11142240675`, `11142250687`, `11142305362`, `11142430023`。解压 part Artifact 后按 `part-00` 到 `part-08` 顺序拼接为 `naruto-1.79.79.9.apk`，最终校验 SHA256 `5582bd1394f1438537829cb65bb486688ca2addc305c7a9717a7cf20b7eaa1b9` 与 MD5 `1ce28cdbbe7ae3ea5cdc9a083dfb9857`。AAPT 已验证 package `com.tencent.KiHan`、versionName `1.79.79.9`、versionCode `1079079009`，native-code 为 `arm64-v8a` 与 `armeabi-v7a`。
+
+
+## radare2 6.2.2 Linux x86_64
+
+- Name: `radare2`
+- Version: `6.2.2`
+- Platform: `Linux / Debian`
+- Architecture: `x86_64`
+- Workflow: `.github/workflows/fetch-radare2-6.2.2-amd64.yml`
+- Run ID: `36873712969`
+- Run Number: `1`
+- Run Conclusion: `success`
+- Source: official radareorg/radare2 GitHub release asset
+- Source File: `radare2_6.2.2_amd64.deb`
+- Storage Mode: `SINGLE`
+- Artifact Name: `radare2-6.2.2-linux-x86_64`
+- Artifact ID: `11168472545`
+- Artifact ZIP Size: `8582514` bytes
+- Artifact ZIP SHA256 / Digest: `a627196da624e8aa7f1764d6ddb99c796e28f0b59ed5fae20fe492bc2212e90f`
+- Original File: `radare2_6.2.2_amd64.deb`
+- Original Size: `8579612` bytes
+- Original SHA256: `09234e4139bf8dfcbb7fc1fdb2519859ad516e63c19d3c27d92aaecdf463b1ad`
+- Part Count: `1`
+- Created At: `2026-10-01T14:06:19Z`
+- Expires At: `2026-12-30T14:06:12Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| radare2 | 6.2.2 | Linux / Debian | x86_64 | `radare2_6.2.2_amd64.deb` | `09234e4139bf8dfcbb7fc1fdb2519859ad516e63c19d3c27d92aaecdf463b1ad` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `11168472545` | `radare2-6.2.2-linux-x86_64` | `8579612` | `09234e4139bf8dfcbb7fc1fdb2519859ad516e63c19d3c27d92aaecdf463b1ad` | `8582514` | `sha256:a627196da624e8aa7f1764d6ddb99c796e28f0b59ed5fae20fe492bc2212e90f` | `2026-10-01T14:06:19Z` | `2026-12-30T14:06:12Z` |
+
+### Restore
+
+Download Artifact `11168472545`, verify the Artifact ZIP SHA256 `a627196da624e8aa7f1764d6ddb99c796e28f0b59ed5fae20fe492bc2212e90f`, extract `radare2_6.2.2_amd64.deb`, then verify its SHA256 `09234e4139bf8dfcbb7fc1fdb2519859ad516e63c19d3c27d92aaecdf463b1ad` before installing.
