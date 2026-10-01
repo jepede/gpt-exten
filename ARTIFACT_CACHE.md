@@ -1014,3 +1014,57 @@ Restore: download artifact 11032351529; verify ZIP, inner TAR, and meta/SHA256SU
 ### Restore
 
 下载 metadata Artifact `11096017872` 与 5 个 part Artifact `11096586223`, `11096481096`, `11096206959`, `11095434842`, `11096875511`；分别解压得到 `tpbsn-4399-8.41.0.apk.part-00` 到 `part-04`，按序拼接为 `tpbsn-4399-8.41.0.apk`，最后校验完整文件 SHA256 `258ac3675fc71fbc0b90d0d59d93658d844610e46964017a97dbfae3ec16a1a6`。
+
+
+## 火影忍者 Tencent official APK 1.79.79.9 - verified 200MiB split
+
+- Name: 火影忍者 Tencent official APK
+- Version: 1.79.79.9
+- Package: `com.tencent.KiHan`
+- Version Code: `1079079009`
+- Platform: Android
+- Architecture: Multi-ABI APK (`arm64-v8a`, `armeabi-v7a`)
+- Workflow: `.github/workflows/rechunk-naruto-200m.yml` (temporary branch `tmp/fetch-naruto-20261001`)
+- Workflow Name: `Rechunk Verified Naruto APK 200MiB`
+- Run ID: `36817118721`
+- Source Fetch Run ID: `36815808636`
+- Run Conclusion: `success`
+- Source: Tencent 应用宝 official distribution for `com.tencent.KiHan`
+- Source URL: `http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/1CE28CDBBE7AE3EA5CDC9A083DFB9857.apk?fsname=com.tencent.KiHan_1.79.79.9.apk`
+- Storage Mode: `SPLIT`
+- Original File: `naruto-1.79.79.9.apk`
+- Original Size: `1735650312` bytes
+- Original MD5: `1ce28cdbbe7ae3ea5cdc9a083dfb9857`
+- Original SHA256: `5582bd1394f1438537829cb65bb486688ca2addc305c7a9717a7cf20b7eaa1b9`
+- Recombined SHA256: `5582bd1394f1438537829cb65bb486688ca2addc305c7a9717a7cf20b7eaa1b9`
+- Part Count: `9`
+- Split Size: `200 MiB` for parts 00-07
+- Created At: `2026-10-01T04:53:03Z` (metadata artifact; part artifacts completed by `2026-10-01T04:53:31Z`)
+- Expires At: `2026-12-30T04:52:19Z`
+- Requested Retention: `90 days` (repository is public; existing cache records establish an effective 90-day cap)
+- Effective Retention: `90 days` (actual GitHub `expires_at`)
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| 火影忍者 Tencent official APK | 1.79.79.9 | Android | arm64-v8a + armeabi-v7a | `naruto-1.79.79.9.apk` (recombine parts 00-08) | `5582bd1394f1438537829cb65bb486688ca2addc305c7a9717a7cf20b7eaa1b9` |
+
+### Artifacts
+
+| Part | Artifact ID | Artifact Name | Raw Size | Raw SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| metadata | `11141359547` | `naruto-1.79.79.9-verified-metadata` | small metadata set | n/a | `4506` | `sha256:7cb9adaa65eb47808fd62013520d5e16c7e0add76e1e8e02a7ea3f9a0d1a95b7` | `2026-10-01T04:53:03Z` | `2026-12-30T04:52:19Z` |
+| 1/9 | `11141309461` | `naruto-1.79.79.9-apk-200m-part-00` | `209715200` | `7402956f782b944df43412e04ec71fac49814889e3fb65a9e09a227b710e0b59` | `209715370` | `sha256:75578e684a4b272f3caef7c0b3c6968c309886f4bb4d6953769a913460b4f8db` | `2026-10-01T04:53:06Z` | `2026-12-30T04:52:19Z` |
+| 2/9 | `11142255606` | `naruto-1.79.79.9-apk-200m-part-01` | `209715200` | `64c2848decf3b6ba34332afbb183e2d94010d02d8e277dfda7688c259bb137e7` | `209715370` | `sha256:b96edbec2b96ab4f171f5c0d5bab63a58cefca7ededce959469dce3059e99a0c` | `2026-10-01T04:53:09Z` | `2026-12-30T04:52:19Z` |
+| 3/9 | `11141194843` | `naruto-1.79.79.9-apk-200m-part-02` | `209715200` | `37dc4782e2b849e5be00dd1d7d3bf444fc29592dfc8ffb6dc3bf3ec875bb2cd8` | `209715370` | `sha256:b2aab5dc4a597de3563b4e71f79b230dc7b7e4df4a0e6c1d084ab944dda4faf0` | `2026-10-01T04:53:13Z` | `2026-12-30T04:52:19Z` |
+| 4/9 | `11141184990` | `naruto-1.79.79.9-apk-200m-part-03` | `209715200` | `bdc87d7b20bebcbe882d3d70ce13ee24b75e2df27bb4a9380b9a2186a1e5221c` | `209715370` | `sha256:d608d4a270eec97be7a755d2fb25b8ec8605ac3e7520988f9c721dde4952f2a3` | `2026-10-01T04:53:16Z` | `2026-12-30T04:52:19Z` |
+| 5/9 | `11142245673` | `naruto-1.79.79.9-apk-200m-part-04` | `209715200` | `74bbd33c47b748b98d7d403d9c010cf5a85fb1a6a8a6bdbaaec05a267efb321f` | `209715370` | `sha256:52c00baa944d2fc7f86c435c83e335e9b684a49382726f906aba4854152c69df` | `2026-10-01T04:53:19Z` | `2026-12-30T04:52:19Z` |
+| 6/9 | `11142240675` | `naruto-1.79.79.9-apk-200m-part-05` | `209715200` | `9721dc39f50c3db2189b8971c37e309d442ad9ce699836ee287e5a09ef6b79eb` | `209715370` | `sha256:efedb270ad04a8358f1241c1d3fc87cb487acdadd1149a8fa45e3ea05f4f4ea5` | `2026-10-01T04:53:23Z` | `2026-12-30T04:52:19Z` |
+| 7/9 | `11142250687` | `naruto-1.79.79.9-apk-200m-part-06` | `209715200` | `354ad70526613bda0e60395c6fb50533e91a719f9a0d31537368ad346e34a280` | `209715370` | `sha256:aacbf58beb6cf19e86c11a2005288c5f13167349ce463a773162d65056bf12bd` | `2026-10-01T04:53:26Z` | `2026-12-30T04:52:19Z` |
+| 8/9 | `11142305362` | `naruto-1.79.79.9-apk-200m-part-07` | `209715200` | `3a38a4533b382a3aceee7f323e713811055f088c6a5bd2d2261b6bd4fb78e238` | `209715370` | `sha256:8c3ad5a3411dab2e7b4d1c59e94b0874b61180b2794b6feac58f7e52cbd3e017` | `2026-10-01T04:53:29Z` | `2026-12-30T04:52:19Z` |
+| 9/9 | `11142430023` | `naruto-1.79.79.9-apk-200m-part-08` | `57928712` | `2ef071f55491d919c8072ef68373b28c10b8116745ac66891c5981e6ca3b1b60` | `57928882` | `sha256:e673ac258915ba5289d219c27abb676fde73e206bbee74e273c42816b7c6675b` | `2026-10-01T04:53:31Z` | `2026-12-30T04:52:19Z` |
+
+### Restore
+
+下载 metadata Artifact `11141359547` 与 9 个 APK part Artifact `11141309461`, `11142255606`, `11141194843`, `11141184990`, `11142245673`, `11142240675`, `11142250687`, `11142305362`, `11142430023`。解压 part Artifact 后按 `part-00` 到 `part-08` 顺序拼接为 `naruto-1.79.79.9.apk`，最终校验 SHA256 `5582bd1394f1438537829cb65bb486688ca2addc305c7a9717a7cf20b7eaa1b9` 与 MD5 `1ce28cdbbe7ae3ea5cdc9a083dfb9857`。AAPT 已验证 package `com.tencent.KiHan`、versionName `1.79.79.9`、versionCode `1079079009`，native-code 为 `arm64-v8a` 与 `armeabi-v7a`。
