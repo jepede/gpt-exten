@@ -1,0 +1,174 @@
+name: Fetch Naruto Mobile Parallel Chunks
+
+on:
+  push:
+    branches:
+      - 'tmp/fetch-naruto-20261001'
+    paths:
+      - '.github/workflows/fetch-naruto-parallel.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      source_url: ${{ steps.meta.outputs.source_url }}
+      total_bytes: ${{ steps.meta.outputs.total_bytes }}
+      matrix: ${{ steps.meta.outputs.matrix }}
+    steps:
+      - id: meta
+        name: Resolve official Tencent APK and build chunk matrix
+        shell: bash
+        env:
+          PACKAGE_NAME: com.tencent.KiHan
+        run: |
+          set -euo pipefail
+          UA='Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36'
+          curl -L --fail --retry 3 --connect-timeout 15 --max-time 90 -A "$UA"             "https://sj.qq.com/appdetail/$PACKAGE_NAME" -o sj-detail.html
+
+          SOURCE_URL="$(python3 - <<'PY'
+          import re, html, pathlib
+          s=pathlib.Path('sj-detail.html').read_text('utf-8','ignore')
+          urls=[]
+          for m in re.finditer(r'https?://[^"\'<>\\ ]+?\.apk(?:\?[^"\'<>\\ ]*)?', s, re.I):
+              u=html.unescape(m.group(0)).replace('\\u0026','&').replace('\\/','/')
+              if 'com.tencent.kihan_' in u.lower() and u not in urls:
+                  urls.append(u)
+          if not urls:
+              raise SystemExit('no com.tencent.KiHan APK URL found')
+          preferred=[u for u in urls if ('1079079009' in u or '1.79.79.9' in u)]
+          print((preferred or urls)[0])
+          PY
+          )"
+          echo "Resolved: $SOURCE_URL"
+
+          curl -L --fail --retry 3 --connect-timeout 20 --max-time 90             -A "$UA" -sS -I "$SOURCE_URL" -o headers.txt
+          cat headers.txt
+          TOTAL="$(awk 'BEGIN{IGNORECASE=1} /^content-length:[[:space:]]*/ {gsub("\r","",$2); v=$2} END{print v}' headers.txt)"
+          if ! [[ "$TOTAL" =~ ^[0-9]+$ ]] || [ "$TOTAL" -lt 500000000 ]; then
+            echo "HEAD did not provide a valid full APK size: $TOTAL" >&2
+            exit 41
+          fi
+          echo "Total bytes: $TOTAL"
+
+          python3 - "$TOTAL" <<'PY' > matrix.json
+          import sys,json
+          total=int(sys.argv[1])
+          step=400*1024*1024
+          inc=[]
+          i=0
+          start=0
+          while start < total:
+              end=min(start+step,total)-1
+              inc.append({
+                  "index":f"{i:02d}",
+                  "start":start,
+                  "end":end,
+                  "expected":end-start+1,
+              })
+              start=end+1
+              i+=1
+          print(json.dumps({"include":inc},separators=(',',':')))
+          PY
+          cat matrix.json
+          echo "source_url=$SOURCE_URL" >> "$GITHUB_OUTPUT"
+          echo "total_bytes=$TOTAL" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(cat matrix.json)" >> "$GITHUB_OUTPUT"
+
+  chunks:
+    needs: resolve
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix: ${{ fromJson(needs.resolve.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download byte range ${{ matrix.index }}
+        shell: bash
+        env:
+          SOURCE_URL: ${{ needs.resolve.outputs.source_url }}
+          START: ${{ matrix.start }}
+          END: ${{ matrix.end }}
+          EXPECTED: ${{ matrix.expected }}
+          INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          UA='Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36'
+          mkdir -p out
+          FILE="out/naruto-1.79.79.9.apk.part.$INDEX"
+          curl -L --fail --retry 6 --retry-all-errors --connect-timeout 20             --speed-time 120 --speed-limit 1024 -A "$UA"             -H "Range: bytes=$START-$END" "$SOURCE_URL" -o "$FILE"
+          ACTUAL="$(stat -c%s "$FILE")"
+          echo "range=$START-$END expected=$EXPECTED actual=$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+          sha256sum "$FILE" | tee "$FILE.sha256"
+
+      - name: Upload chunk ${{ matrix.index }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-apk-400m-part-${{ matrix.index }}
+          path: out/
+          retention-days: 90
+          compression-level: 0
+
+  verify:
+    needs: [resolve, chunks]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all chunk artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: naruto-1.79.79.9-apk-400m-part-*
+          path: parts
+          merge-multiple: true
+
+      - name: Recombine and verify APK
+        shell: bash
+        env:
+          EXPECTED_TOTAL: ${{ needs.resolve.outputs.total_bytes }}
+          SOURCE_URL: ${{ needs.resolve.outputs.source_url }}
+        run: |
+          set -euo pipefail
+          mkdir -p meta
+          sha256sum -c parts/*.sha256
+          cat $(find parts -maxdepth 1 -type f -name 'naruto-1.79.79.9.apk.part.*' ! -name '*.sha256' | sort) > naruto-1.79.79.9.apk
+          test "$(stat -c%s naruto-1.79.79.9.apk)" = "$EXPECTED_TOTAL"
+          sha256sum naruto-1.79.79.9.apk | tee meta/SHA256SUMS.txt
+          md5sum naruto-1.79.79.9.apk | tee meta/MD5SUMS.txt
+          find parts -maxdepth 1 -type f -name '*.apk.part.*' ! -name '*.sha256' -print0 | sort -z | xargs -0 sha256sum | tee meta/PART_SHA256SUMS.txt
+          find parts -maxdepth 1 -type f -name '*.apk.part.*' ! -name '*.sha256' -printf '%f %s bytes\n' | sort | tee meta/parts.txt
+          printf '%s\n' "$SOURCE_URL" > meta/source-url.txt
+          printf 'sizeBytes=%s\n' "$(stat -c%s naruto-1.79.79.9.apk)" > meta/size.txt
+          unzip -tqq naruto-1.79.79.9.apk
+
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt -perm -111 2>/dev/null | sort -V | tail -n1)"
+          if [ -z "$AAPT" ]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq aapt
+            AAPT="$(command -v aapt)"
+          fi
+          "$AAPT" dump badging naruto-1.79.79.9.apk | tee meta/badging.txt
+          pkg=$("$AAPT" dump badging naruto-1.79.79.9.apk | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n1)
+          ver=$("$AAPT" dump badging naruto-1.79.79.9.apk | sed -n "s/^package: .* versionName='\([^']*\)'.*/\1/p" | head -n1)
+          vcode=$("$AAPT" dump badging naruto-1.79.79.9.apk | sed -n "s/^package: .* versionCode='\([^']*\)'.*/\1/p" | head -n1)
+          test "$pkg" = 'com.tencent.KiHan'
+          test "$ver" = '1.79.79.9'
+          {
+            echo "package=$pkg"
+            echo "versionName=$ver"
+            echo "versionCode=$vcode"
+            echo "sizeBytes=$(stat -c%s naruto-1.79.79.9.apk)"
+            echo "sha256=$(cut -d' ' -f1 meta/SHA256SUMS.txt)"
+            echo "md5=$(cut -d' ' -f1 meta/MD5SUMS.txt)"
+            "$AAPT" dump badging naruto-1.79.79.9.apk | grep '^native-code:' || true
+          } | tee meta/verified.txt
+
+      - name: Upload verification metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: naruto-1.79.79.9-parallel-metadata
+          path: meta/
+          retention-days: 90
+          compression-level: 6
