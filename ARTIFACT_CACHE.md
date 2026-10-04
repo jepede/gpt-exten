@@ -6,6 +6,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| PUBG MOBILE Global Base APK | 4.6.0 (21525) | Android | arm64-v8a | `37217716536` | SINGLE | `2027-01-02T16:41:47Z` |
 | radare2 | 6.2.2 | Linux / Debian | x86_64 | `36873712969` | SINGLE | `2026-12-30T14:06:12Z` |
 | TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-releasecomplete-v3 | Linux | x86_64 | `34698530131` | SINGLE | `2026-12-11T14:10:58Z` |
 | Android SDK Build-Tools | 34.0.0 | Linux | x86_64 | `34698130020` | SINGLE | `2026-12-11T14:02:53Z` |
@@ -1141,3 +1142,50 @@ Download Artifact `11168472545`, verify the Artifact ZIP SHA256 `a627196da624e8a
 ### Restore
 
 Download Artifact `11169466690`, verify ZIP SHA256 `8596cfe7c823d64bc2df16b8bd8720bad8110b5e03b31f948952d8600526aa33`, extract the two Debian packages, verify the per-file SHA256 values above, then install both with `dpkg -i`. This cache is for restoring Debian 13 host binutils 2.44 shared libraries after testing the isolated Debian 12 GDB bundle; it must not be mixed into the isolated GDB root.
+
+
+## PUBG MOBILE Global Base APK 4.6.0 (21525)
+
+- Name: PUBG MOBILE Global Base APK
+- Version: 4.6.0
+- Version Code: `21525`
+- Package: `com.tencent.ig`
+- Platform: Android
+- Architecture: `arm64-v8a`
+- Region: Global
+- Workflow: `.github/workflows/fetch-pubg-global-arm64-apk.yml`
+- Workflow Name: `Fetch PUBG Global ARM64 Base APK`
+- Run ID: `37217716536`
+- Run Conclusion: `success`
+- Source: APKMirror / Level Infinite, latest PUBG MOBILE arm64-v8a OBB-bundle release; workflow selects its separate Base APK download and does not download the OBB
+- Source Page: `https://www.apkmirror.com/apk/level-infinite/playerunknowns-battlegrounds-pubg-mobile/pubg-mobile-4-6-0-release/pubg-mobile-4-6-0-2-android-apk-download/`
+- Storage Mode: `SINGLE`
+- Artifact Name: `pubg-mobile-global-4.6.0-21525-arm64-v8a`
+- Artifact ID: `11308584380`
+- Artifact ZIP Size: `107406885` bytes
+- Artifact Digest: `sha256:677af3e93aa55b485613352eb58f9eec93ae4d79d0803a6431ba4c80d2b68e58`
+- Original File: `PUBG-MOBILE-Global-4.6.0-21525-arm64-v8a.apk`
+- Original Size: `107399819` bytes
+- Original MD5: `ac9ba3006c7c1dcdddf320f8e821f9c7`
+- Original SHA256: `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696`
+- Part Count: `1`
+- Created At: `2026-10-04T16:42:04Z`
+- Expires At: `2027-01-02T16:41:47Z`
+- OBB Downloaded: `no`
+- Verification: AAPT confirmed `com.tencent.ig`, versionName `4.6.0`, versionCode `21525`; ZIP and AAPT both confirmed native ABI is only `arm64-v8a`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| PUBG MOBILE Global Base APK | 4.6.0 (21525) | Android | arm64-v8a | `PUBG-MOBILE-Global-4.6.0-21525-arm64-v8a.apk` | `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `11308584380` | `pubg-mobile-global-4.6.0-21525-arm64-v8a` | `107399819` | `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696` | `107406885` | `sha256:677af3e93aa55b485613352eb58f9eec93ae4d79d0803a6431ba4c80d2b68e58` | `2026-10-04T16:42:04Z` | `2027-01-02T16:41:47Z` |
+
+### Restore
+
+下载 Artifact `11308584380`，校验 Artifact ZIP digest `677af3e93aa55b485613352eb58f9eec93ae4d79d0803a6431ba4c80d2b68e58`；解压得到 `PUBG-MOBILE-Global-4.6.0-21525-arm64-v8a.apk`，再校验 APK SHA256 `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696`。该缓存只包含 Base APK 和校验元数据，不包含 `.obb`。
