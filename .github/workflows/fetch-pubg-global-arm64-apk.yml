@@ -40,13 +40,12 @@ jobs:
           set -euo pipefail
 
           cat > .tmp/pubg-fetch/download.ts <<'EOF'
-          import { mkdirSync, statSync, unlinkSync } from "node:fs";
+          import { mkdirSync, statSync } from "node:fs";
           import { load } from "cheerio";
 
           const BASE = "https://www.apkmirror.com";
           const APP_URL =
             BASE + "/apk/level-infinite/playerunknowns-battlegrounds-pubg-mobile/";
-          const COOKIE_JAR = "cookies.txt";
           const UA =
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
             "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
@@ -55,69 +54,31 @@ jobs:
             return new URL(href, BASE).href;
           }
 
-          function curlText(url: string, referer?: string) {
-            const cmd = [
-              "curl",
-              "-fsSL",
-              "--retry", "3",
-              "--retry-delay", "2",
-              "--retry-all-errors",
-              "--connect-timeout", "20",
-              "--max-time", "90",
-              "-A", UA,
-              "-H", "Accept-Language: en-US,en;q=0.9",
-              "-b", COOKIE_JAR,
-              "-c", COOKIE_JAR,
-            ];
-            if (referer) cmd.push("-e", referer);
-            cmd.push(url);
-
-            const p = Bun.spawnSync({
-              cmd,
-              stdout: "pipe",
-              stderr: "pipe",
+          async function fetchText(url: string, referer?: string) {
+            const r = await fetch(url, {
+              headers: {
+                "User-Agent": UA,
+                "Accept-Language": "en-US,en;q=0.9",
+                "Accept":
+                  "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                ...(referer ? { Referer: referer } : {}),
+              },
+              redirect: "follow",
             });
-            if (p.exitCode !== 0) {
-              throw new Error(
-                "curl HTML request failed: " +
-                  new TextDecoder().decode(p.stderr).slice(-1000),
-              );
+
+            if (!r.ok) {
+              throw new Error(`GET ${url} -> HTTP ${r.status}`);
             }
 
-            const text = new TextDecoder().decode(p.stdout);
+            const text = await r.text();
             if (
               text.includes("Enable JavaScript and cookies to continue") ||
               text.includes("cf-chl-")
             ) {
               throw new Error("APKMirror returned a Cloudflare challenge");
             }
-            return text;
-          }
 
-          function curlFile(url: string, referer: string, out: string) {
-            const p = Bun.spawnSync({
-              cmd: [
-                "curl",
-                "-fL",
-                "--retry", "3",
-                "--retry-delay", "2",
-                "--retry-all-errors",
-                "--connect-timeout", "20",
-                "--max-time", "600",
-                "-A", UA,
-                "-H", "Accept-Language: en-US,en;q=0.9",
-                "-b", COOKIE_JAR,
-                "-c", COOKIE_JAR,
-                "-e", referer,
-                "-o", out,
-                url,
-              ],
-              stdout: "inherit",
-              stderr: "inherit",
-            });
-            if (p.exitCode !== 0) {
-              throw new Error(`APK curl download failed: exit ${p.exitCode}`);
-            }
+            return { text, finalUrl: r.url };
           }
 
           function resolveLatestRelease(html: string) {
@@ -135,6 +96,7 @@ jobs:
               if (!/^PUBG MOBILE\s+\d/i.test(name)) continue;
               return { name, url: absolute(href) };
             }
+
             throw new Error("Latest PUBG MOBILE release could not be resolved");
           }
 
@@ -177,6 +139,7 @@ jobs:
                 };
               }
             }
+
             throw new Error("Dedicated arm64-v8a OBB bundle row not found");
           }
 
@@ -215,24 +178,21 @@ jobs:
           }
 
           async function oneAttempt(attempt: number) {
-            try {
-              unlinkSync(COOKIE_JAR);
-            } catch {}
-
             console.log(`Resolve attempt ${attempt}/5`);
 
-            const appHtml = curlText(APP_URL);
-            const latest = resolveLatestRelease(appHtml);
+            const app = await fetchText(APP_URL);
+            const latest = resolveLatestRelease(app.text);
             console.log("Latest release:", latest.name);
 
-            const releaseHtml = curlText(latest.url, APP_URL);
-            const variant = resolveArm64Bundle(releaseHtml);
+            const release = await fetchText(latest.url, APP_URL);
+            const variant = resolveArm64Bundle(release.text);
             console.log("Selected:", JSON.stringify(variant));
 
-            const detailHtml = curlText(variant.url, latest.url);
-            const detailText = load(detailHtml)("body")
+            const detail = await fetchText(variant.url, latest.url);
+            const detailText = load(detail.text)("body")
               .text()
               .replace(/\s+/g, " ");
+
             const m = detailText.match(
               /Version:\s*([0-9.]+)\s*\((\d+)\)/,
             );
@@ -247,21 +207,20 @@ jobs:
               throw new Error("Wrong package page: com.tencent.ig not found");
             }
 
-            const basePage = resolveBaseApkLink(detailHtml);
+            const basePage = resolveBaseApkLink(detail.text);
 
-            // The nonce is short-lived. Request it immediately using the same
-            // cookie jar and Referer.
-            const downloadHtml = curlText(basePage, variant.url);
+            // Request the short-lived Base APK nonce immediately.
+            const download = await fetchText(basePage, variant.url);
             if (
-              downloadHtml.includes("thank_you_invalid_nonce") ||
-              downloadHtml.includes(
+              download.finalUrl.includes("thank_you_invalid_nonce") ||
+              download.text.includes(
                 "The download link you clicked on has expired",
               )
             ) {
               throw new Error("APKMirror base-APK nonce expired");
             }
 
-            const finalUrl = resolveFinalDownload(downloadHtml);
+            const finalUrl = resolveFinalDownload(download.text);
 
             mkdirSync("../../out", { recursive: true });
             const dest =
@@ -270,7 +229,31 @@ jobs:
             console.log(
               `Downloading Base APK only: PUBG MOBILE ${versionName} (${versionCode}) arm64-v8a`,
             );
-            curlFile(finalUrl, basePage, dest);
+
+            const apk = await fetch(finalUrl, {
+              headers: {
+                "User-Agent": UA,
+                Referer: basePage,
+              },
+              redirect: "follow",
+            });
+
+            if (!apk.ok || !apk.body) {
+              throw new Error(
+                `Base APK download -> HTTP ${apk.status} ${apk.statusText}`,
+              );
+            }
+
+            const contentType = apk.headers.get("content-type") ?? "";
+            if (/text\/html/i.test(contentType)) {
+              const body = await apk.text();
+              throw new Error(
+                "Expected APK bytes but received HTML: " +
+                  body.slice(0, 240).replace(/\s+/g, " "),
+              );
+            }
+
+            await Bun.write(dest, apk);
 
             const size = statSync(dest).size;
             if (size < 20 * 1024 * 1024) {
@@ -279,7 +262,14 @@ jobs:
 
             console.log(
               JSON.stringify(
-                { versionName, versionCode, dest, size, variant },
+                {
+                  versionName,
+                  versionCode,
+                  dest,
+                  size,
+                  variant,
+                  contentType,
+                },
                 null,
                 2,
               ),
@@ -294,7 +284,7 @@ jobs:
             } catch (e) {
               lastError = e;
               console.error(e);
-              if (attempt < 5) await Bun.sleep(5000);
+              if (attempt < 5) await Bun.sleep(3000);
             }
           }
           throw lastError;
