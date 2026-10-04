@@ -14,7 +14,7 @@ permissions:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -25,112 +25,325 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Install APKMirror downloader
+      - name: Install HTML parser
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p .tmp/pubg-fetch out
           cd .tmp/pubg-fetch
           bun init -y >/dev/null
-          bun add apkmirror-downloader@2.0.10
+          bun add cheerio@1.1.2
 
-      - name: Download latest PUBG MOBILE Global ARM64 base APK
+      - name: Resolve and download latest ARM64 base APK only
         shell: bash
         run: |
           set -euo pipefail
 
           cat > .tmp/pubg-fetch/download.ts <<'EOF'
-          import { mkdirSync } from "node:fs";
-          import { APKMirrorDownloader } from "apkmirror-downloader";
+          import { mkdirSync, statSync, unlinkSync } from "node:fs";
+          import { load } from "cheerio";
 
-          mkdirSync("../../out", { recursive: true });
+          const BASE = "https://www.apkmirror.com";
+          const APP_URL =
+            BASE + "/apk/level-infinite/playerunknowns-battlegrounds-pubg-mobile/";
+          const COOKIE_JAR = "cookies.txt";
+          const UA =
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
+            "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
 
-          const result = await APKMirrorDownloader.download(
-            {
-              org: "level-infinite",
-              repo: "playerunknowns-battlegrounds-pubg-mobile",
-            },
-            {
-              version: "latest",
-              arch: "arm64-v8a",
-              dpi: "*",
-              type: "bundle",
-              outDir: "../../out",
-              outFile: "pubg-global-arm64-latest",
-              overwrite: true,
-            },
-          );
+          function absolute(href: string) {
+            return new URL(href, BASE).href;
+          }
 
-          console.log(JSON.stringify(result, null, 2));
+          function curlText(url: string, referer?: string) {
+            const cmd = [
+              "curl",
+              "-fsSL",
+              "--retry", "3",
+              "--retry-delay", "2",
+              "--retry-all-errors",
+              "--connect-timeout", "20",
+              "--max-time", "90",
+              "-A", UA,
+              "-H", "Accept-Language: en-US,en;q=0.9",
+              "-b", COOKIE_JAR,
+              "-c", COOKIE_JAR,
+            ];
+            if (referer) cmd.push("-e", referer);
+            cmd.push(url);
+
+            const p = Bun.spawnSync({
+              cmd,
+              stdout: "pipe",
+              stderr: "pipe",
+            });
+            if (p.exitCode !== 0) {
+              throw new Error(
+                "curl HTML request failed: " +
+                  new TextDecoder().decode(p.stderr).slice(-1000),
+              );
+            }
+
+            const text = new TextDecoder().decode(p.stdout);
+            if (
+              text.includes("Enable JavaScript and cookies to continue") ||
+              text.includes("cf-chl-")
+            ) {
+              throw new Error("APKMirror returned a Cloudflare challenge");
+            }
+            return text;
+          }
+
+          function curlFile(url: string, referer: string, out: string) {
+            const p = Bun.spawnSync({
+              cmd: [
+                "curl",
+                "-fL",
+                "--retry", "3",
+                "--retry-delay", "2",
+                "--retry-all-errors",
+                "--connect-timeout", "20",
+                "--max-time", "600",
+                "-A", UA,
+                "-H", "Accept-Language: en-US,en;q=0.9",
+                "-b", COOKIE_JAR,
+                "-c", COOKIE_JAR,
+                "-e", referer,
+                "-o", out,
+                url,
+              ],
+              stdout: "inherit",
+              stderr: "inherit",
+            });
+            if (p.exitCode !== 0) {
+              throw new Error(`APK curl download failed: exit ${p.exitCode}`);
+            }
+          }
+
+          function resolveLatestRelease(html: string) {
+            const $ = load(html);
+            const table = $('.listWidget:has(a[name="all_versions"])').first();
+            if (!table.length) {
+              throw new Error("APKMirror all_versions table not found");
+            }
+
+            for (const row of table.children().toArray().slice(2, -1)) {
+              const a = $(row).find(".table-cell").eq(1).find("a").first();
+              const name = a.text().replace(/\s+/g, " ").trim();
+              const href = a.attr("href");
+              if (!name || !href) continue;
+              if (!/^PUBG MOBILE\s+\d/i.test(name)) continue;
+              return { name, url: absolute(href) };
+            }
+            throw new Error("Latest PUBG MOBILE release could not be resolved");
+          }
+
+          function resolveArm64Bundle(html: string) {
+            const $ = load(html);
+            const table = $(".variants-table").first();
+            if (!table.length) {
+              throw new Error("APKMirror variants table not found");
+            }
+
+            for (const row of table.children().toArray().slice(1)) {
+              const cells = $(row).find(".table-cell");
+              if (cells.length < 4) continue;
+
+              const first = cells.eq(0);
+              const href = first.find("a").first().attr("href");
+              if (!href) continue;
+
+              const label = first.text().replace(/\s+/g, " ").trim();
+              const arch = cells.eq(1).text().replace(/\s+/g, " ").trim();
+              const minAndroid = cells.eq(2).text().replace(/\s+/g, " ").trim();
+              const dpi = cells.eq(3).text().replace(/\s+/g, " ").trim();
+
+              console.log(
+                "Candidate:",
+                JSON.stringify({ label, arch, minAndroid, dpi }),
+              );
+
+              if (
+                arch === "arm64-v8a" &&
+                /BUNDLE/i.test(label) &&
+                /OBB/i.test(label)
+              ) {
+                return {
+                  url: absolute(href),
+                  label,
+                  arch,
+                  minAndroid,
+                  dpi,
+                };
+              }
+            }
+            throw new Error("Dedicated arm64-v8a OBB bundle row not found");
+          }
+
+          function resolveBaseApkLink(html: string) {
+            const $ = load(html);
+            let href: string | undefined;
+
+            $("a.downloadButton").each((_, el) => {
+              if (href) return;
+              const a = $(el);
+              const h = a.attr("href");
+              const label = a.text().replace(/\s+/g, " ").trim();
+              if (!h) return;
+
+              if (
+                h.includes("forcebaseapk=true") ||
+                (/^Download APK\b/i.test(label) && !/Bundle/i.test(label))
+              ) {
+                href = absolute(h);
+              }
+            });
+
+            if (!href) {
+              throw new Error("Base APK download button was not found");
+            }
+            return href;
+          }
+
+          function resolveFinalDownload(html: string) {
+            const $ = load(html);
+            const h = $(".card-with-tabs a[href]").first().attr("href");
+            if (!h) {
+              throw new Error("Final APKMirror CDN link was not found");
+            }
+            return absolute(h);
+          }
+
+          async function oneAttempt(attempt: number) {
+            try {
+              unlinkSync(COOKIE_JAR);
+            } catch {}
+
+            console.log(`Resolve attempt ${attempt}/5`);
+
+            const appHtml = curlText(APP_URL);
+            const latest = resolveLatestRelease(appHtml);
+            console.log("Latest release:", latest.name);
+
+            const releaseHtml = curlText(latest.url, APP_URL);
+            const variant = resolveArm64Bundle(releaseHtml);
+            console.log("Selected:", JSON.stringify(variant));
+
+            const detailHtml = curlText(variant.url, latest.url);
+            const detailText = load(detailHtml)("body")
+              .text()
+              .replace(/\s+/g, " ");
+            const m = detailText.match(
+              /Version:\s*([0-9.]+)\s*\((\d+)\)/,
+            );
+            if (!m) {
+              throw new Error("versionName/versionCode could not be parsed");
+            }
+
+            const versionName = m[1];
+            const versionCode = m[2];
+
+            if (!detailText.includes("Package: com.tencent.ig")) {
+              throw new Error("Wrong package page: com.tencent.ig not found");
+            }
+
+            const basePage = resolveBaseApkLink(detailHtml);
+
+            // The nonce is short-lived. Request it immediately using the same
+            // cookie jar and Referer.
+            const downloadHtml = curlText(basePage, variant.url);
+            if (
+              downloadHtml.includes("thank_you_invalid_nonce") ||
+              downloadHtml.includes(
+                "The download link you clicked on has expired",
+              )
+            ) {
+              throw new Error("APKMirror base-APK nonce expired");
+            }
+
+            const finalUrl = resolveFinalDownload(downloadHtml);
+
+            mkdirSync("../../out", { recursive: true });
+            const dest =
+              `../../out/PUBG-MOBILE-Global-${versionName}-${versionCode}-arm64-v8a.apk`;
+
+            console.log(
+              `Downloading Base APK only: PUBG MOBILE ${versionName} (${versionCode}) arm64-v8a`,
+            );
+            curlFile(finalUrl, basePage, dest);
+
+            const size = statSync(dest).size;
+            if (size < 20 * 1024 * 1024) {
+              throw new Error(`Downloaded APK is unexpectedly small: ${size}`);
+            }
+
+            console.log(
+              JSON.stringify(
+                { versionName, versionCode, dest, size, variant },
+                null,
+                2,
+              ),
+            );
+          }
+
+          let lastError: unknown;
+          for (let attempt = 1; attempt <= 5; attempt++) {
+            try {
+              await oneAttempt(attempt);
+              process.exit(0);
+            } catch (e) {
+              lastError = e;
+              console.error(e);
+              if (attempt < 5) await Bun.sleep(5000);
+            }
+          }
+          throw lastError;
           EOF
 
           cd .tmp/pubg-fetch
+          bun run download.ts
 
-          # Upstream leaves DPI cell whitespace untrimmed, so use the supported wildcard.\n          # Keep type=bundle to select the OBB release row, then the downloader takes its Base APK button.
-          # Retry from a fresh process; never fall back to a different ABI/region.
-          for attempt in 1 2 3 4 5; do
-            echo "APKMirror fetch attempt: ${attempt}/5"
-            rm -f ../../out/pubg-global-arm64-latest.*
-            if bun run download.ts; then
-              break
-            fi
-            if [ "${attempt}" -eq 5 ]; then
-              echo "APKMirror download failed after 5 attempts" >&2
-              exit 1
-            fi
-            sleep $((attempt * 15))
-          done
-
-      - name: Normalize and verify APK
+      - name: Verify package ABI signature and integrity
         id: meta
         shell: bash
         run: |
           set -euo pipefail
           shopt -s nullglob
 
-          files=(out/pubg-global-arm64-latest.*)
-          if [ "${#files[@]}" -ne 1 ]; then
-            printf 'Expected exactly one downloaded file, got %s\n' "${#files[@]}" >&2
+          apks=(out/PUBG-MOBILE-Global-*-arm64-v8a.apk)
+          if [ "${#apks[@]}" -ne 1 ]; then
+            printf 'Expected exactly one APK, got %s\n' "${#apks[@]}" >&2
             ls -lah out || true
             exit 1
           fi
+          apk="${apks[0]}"
 
-          src="${files[0]}"
-
-          # Current APKMirror OBB release pages expose "Download APK" before
-          # "Download APK Bundle". apkmirror-downloader therefore resolves to
-          # the base APK. Keep a safe fallback if APKMirror changes that order:
-          # extract only base.apk and discard the OBB/APKM container.
-          case "${src}" in
-            *.apk)
-              apk="${src}"
-              ;;
-            *.apkm|*.xapk|*.zip)
-              mkdir -p .tmp/extracted
-              base_entry="$(unzip -Z1 "${src}" | awk '
-                /^base\.apk$/ { print; exit }
-                /(^|\/)base\.apk$/ { print; exit }
-              ')"
-              if [ -z "${base_entry}" ]; then
-                echo "Bundle downloaded, but base.apk was not found" >&2
-                unzip -Z1 "${src}" | head -100
-                exit 1
-              fi
-              unzip -p "${src}" "${base_entry}" > out/pubg-global-arm64-base.apk
-              rm -f "${src}"
-              apk="out/pubg-global-arm64-base.apk"
-              ;;
-            *)
-              echo "Unexpected download type: ${src}" >&2
-              exit 1
-              ;;
-          esac
+          python3 - "${apk}" <<'PY'
+          import sys, zipfile
+          p = sys.argv[1]
+          if not zipfile.is_zipfile(p):
+              raise SystemExit("Downloaded file is not a valid APK/ZIP")
+          with zipfile.ZipFile(p) as z:
+              names = z.namelist()
+              if "AndroidManifest.xml" not in names:
+                  raise SystemExit("AndroidManifest.xml missing")
+              abis = sorted({
+                  n.split("/")[1]
+                  for n in names
+                  if n.startswith("lib/") and len(n.split("/")) >= 3
+              })
+              print("Native ABIs from ZIP:", abis)
+              if "arm64-v8a" not in abis:
+                  raise SystemExit("arm64-v8a libraries missing")
+              if "armeabi-v7a" in abis:
+                  raise SystemExit("Unexpected armeabi-v7a in ARM64 APK")
+          PY
 
           AAPT="$(find "${ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name aapt 2>/dev/null | sort -V | tail -n1)"
-          if [ -z "${AAPT}" ]; then
-            echo "aapt not found under ANDROID_HOME=${ANDROID_HOME}" >&2
+          [ -n "${AAPT}" ] || {
+            echo "aapt not found" >&2
             exit 1
-          fi
+          }
 
           "${AAPT}" dump badging "${apk}" > out/aapt-badging.txt
           cat out/aapt-badging.txt
@@ -139,30 +352,28 @@ jobs:
           version_code="$(sed -n "s/^package:.*versionCode='\([^']*\)'.*/\1/p" out/aapt-badging.txt | head -n1)"
           version_name="$(sed -n "s/^package:.*versionName='\([^']*\)'.*/\1/p" out/aapt-badging.txt | head -n1)"
 
-          if [ "${package_name}" != "com.tencent.ig" ]; then
+          [ "${package_name}" = "com.tencent.ig" ] || {
             echo "Wrong package: ${package_name}" >&2
             exit 1
-          fi
+          }
 
-          if ! grep -q "^native-code: .*'arm64-v8a'" out/aapt-badging.txt; then
-            echo "APK is not the ARM64 variant" >&2
+          grep -q "^native-code: .*'arm64-v8a'" out/aapt-badging.txt || {
+            echo "aapt did not report arm64-v8a" >&2
             exit 1
-          fi
+          }
 
-          # The requested target is the dedicated 64-bit variant, not the
-          # universal arm64+armv7 APK.
           if grep -q "^native-code: .*'armeabi-v7a'" out/aapt-badging.txt; then
-            echo "Unexpected armeabi-v7a found; refusing universal/32-bit variant" >&2
+            echo "Unexpected armeabi-v7a" >&2
             exit 1
           fi
 
-          final="out/PUBG-MOBILE-Global-${version_name}-${version_code}-arm64-v8a.apk"
-          if [ "${apk}" != "${final}" ]; then
-            mv "${apk}" "${final}"
-          fi
+          expected="out/PUBG-MOBILE-Global-${version_name}-${version_code}-arm64-v8a.apk"
+          [ "${apk}" = "${expected}" ] || mv "${apk}" "${expected}"
+          apk="${expected}"
 
-          sha256sum "${final}" | tee out/SHA256SUMS.txt
-          stat -c '%n %s bytes' "${final}" | tee out/FILE_SIZE.txt
+          sha256sum "${apk}" | tee out/SHA256SUMS.txt
+          md5sum "${apk}" | tee out/MD5SUMS.txt
+          stat -c '%n %s bytes' "${apk}" | tee out/FILE_SIZE.txt
 
           cat > out/METADATA.txt <<EOF
           Name: PUBG MOBILE Global Base APK
@@ -174,13 +385,13 @@ jobs:
           Region: Global
           Source: APKMirror / Level Infinite
           Source App Slug: level-infinite/playerunknowns-battlegrounds-pubg-mobile
-          Selection: latest release -> arm64-v8a -> nodpi -> OBB bundle release -> base APK only
-          OBB Included: no
+          Selection: latest release -> arm64-v8a BUNDLE 1 OBB row -> Download APK (Base APK) only
+          OBB Downloaded: no
           EOF
 
           echo "version_name=${version_name}" >> "${GITHUB_OUTPUT}"
           echo "version_code=${version_code}" >> "${GITHUB_OUTPUT}"
-          echo "apk_path=${final}" >> "${GITHUB_OUTPUT}"
+          echo "apk_path=${apk}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload PUBG APK artifact
         uses: actions/upload-artifact@v4
@@ -189,6 +400,7 @@ jobs:
           path: |
             ${{ steps.meta.outputs.apk_path }}
             out/SHA256SUMS.txt
+            out/MD5SUMS.txt
             out/FILE_SIZE.txt
             out/METADATA.txt
             out/aapt-badging.txt
