@@ -1,4 +1,4 @@
-name: Fetch PUBG Global ARM64 Base APK
+name: Sync PUBG Global ARM64 libUE4
 
 on:
   workflow_dispatch:
@@ -9,12 +9,15 @@ on:
       - ".github/workflows/fetch-pubg-global-arm64-apk.yml"
 
 permissions:
-  contents: read
+  contents: write
+
+env:
+  RELEASE_TAG: v1.0.1
 
 jobs:
-  fetch:
+  sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -34,25 +37,25 @@ jobs:
           bun init -y >/dev/null
           bun add cheerio@1.1.2
 
-      - name: Resolve and download latest ARM64 base APK only
+      - name: Resolve latest PUBG Global ARM64 version
+        id: resolve
         shell: bash
         run: |
           set -euo pipefail
 
-          cat > .tmp/pubg-fetch/download.ts <<'EOF'
-          import { mkdirSync, statSync } from "node:fs";
+          cat > .tmp/pubg-fetch/resolve.ts <<'EOF'
           import { load } from "cheerio";
 
           const BASE = "https://www.apkmirror.com";
           const APP_URL =
             BASE + "/apk/level-infinite/playerunknowns-battlegrounds-pubg-mobile/";
+
           function absolute(href: string) {
             return new URL(href, BASE).href;
           }
 
-          async function fetchText(url: string, referer?: string) {
+          async function fetchText(url: string) {
             const r = await fetch(url);
-
             if (!r.ok) {
               throw new Error(`GET ${url} -> HTTP ${r.status}`);
             }
@@ -107,11 +110,6 @@ jobs:
               const minAndroid = cells.eq(2).text().replace(/\s+/g, " ").trim();
               const dpi = cells.eq(3).text().replace(/\s+/g, " ").trim();
 
-              console.log(
-                "Candidate:",
-                JSON.stringify({ label, arch, minAndroid, dpi }),
-              );
-
               if (
                 arch === "arm64-v8a" &&
                 /BUNDLE/i.test(label) &&
@@ -130,12 +128,155 @@ jobs:
             throw new Error("Dedicated arm64-v8a OBB bundle row not found");
           }
 
+          const app = await fetchText(APP_URL);
+          const latest = resolveLatestRelease(app.text);
+
+          const release = await fetchText(latest.url);
+          const variant = resolveArm64Bundle(release.text);
+
+          const detail = await fetchText(variant.url);
+          const detailText = load(detail.text)("body")
+            .text()
+            .replace(/\s+/g, " ");
+
+          const m = detailText.match(
+            /Version:\s*([0-9.]+)\s*\((\d+)\)/,
+          );
+          if (!m) {
+            throw new Error("versionName/versionCode could not be parsed");
+          }
+
+          if (!detailText.includes("Package: com.tencent.ig")) {
+            throw new Error("Resolved page is not PUBG Global com.tencent.ig");
+          }
+
+          const versionName = m[1];
+          const versionCode = m[2];
+          const parts = versionName.split(".");
+          const shortVersion =
+            parts.length >= 2 ? `${parts[0]}.${parts[1]}` : versionName;
+
+          const resolved = {
+            packageName: "com.tencent.ig",
+            versionName,
+            versionCode,
+            shortVersion,
+            latest,
+            variant,
+          };
+
+          await Bun.write(
+            "../../out/resolved.json",
+            JSON.stringify(resolved, null, 2),
+          );
+          console.log(JSON.stringify(resolved, null, 2));
+          EOF
+
+          cd .tmp/pubg-fetch
+          for attempt in 1 2 3 4 5; do
+            echo "Resolve attempt: ${attempt}/5"
+            if bun run resolve.ts; then
+              break
+            fi
+            if [ "${attempt}" -eq 5 ]; then
+              exit 1
+            fi
+            sleep 3
+          done
+          cd ../..
+
+          python3 - <<'PY'
+          import json
+          import os
+
+          with open("out/resolved.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          outputs = {
+              "package_name": data["packageName"],
+              "version_name": data["versionName"],
+              "version_code": data["versionCode"],
+              "short_version": data["shortVersion"],
+              "variant_url": data["variant"]["url"],
+          }
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              for key, value in outputs.items():
+                  f.write(f"{key}={value}\n")
+          PY
+
+      - name: Check existing v1.0.1 release asset
+        id: release_check
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          asset="libUE4-GL-${{ steps.resolve.outputs.short_version }}.so"
+
+          gh release view "${RELEASE_TAG}"             --repo "${GITHUB_REPOSITORY}"             --json tagName >/dev/null
+
+          gh release view "${RELEASE_TAG}"             --repo "${GITHUB_REPOSITORY}"             --json assets             --jq '.assets[].name' > out/release-assets-before.txt
+
+          if grep -Fxq "${asset}" out/release-assets-before.txt; then
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+            echo "Asset already exists: ${asset}"
+            echo "Nothing to do."
+          else
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+            echo "Asset missing: ${asset}"
+          fi
+
+          echo "asset_name=${asset}" >> "${GITHUB_OUTPUT}"
+
+      - name: Already synchronized
+        if: steps.release_check.outputs.exists == 'true'
+        shell: bash
+        run: |
+          echo "${{ steps.release_check.outputs.asset_name }} already exists in ${RELEASE_TAG}; exiting without downloading the APK."
+
+      - name: Download latest ARM64 Base APK
+        if: steps.release_check.outputs.exists != 'true'
+        id: download
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > .tmp/pubg-fetch/download.ts <<'EOF'
+          import { load } from "cheerio";
+          import { mkdirSync, statSync } from "node:fs";
+
+          const BASE = "https://www.apkmirror.com";
+
+          function absolute(href: string) {
+            return new URL(href, BASE).href;
+          }
+
+          async function fetchText(url: string) {
+            const r = await fetch(url);
+            if (!r.ok) {
+              throw new Error(`GET ${url} -> HTTP ${r.status}`);
+            }
+
+            const text = await r.text();
+            if (
+              text.includes("Enable JavaScript and cookies to continue") ||
+              text.includes("cf-chl-")
+            ) {
+              throw new Error("APKMirror returned a Cloudflare challenge");
+            }
+
+            return { text, finalUrl: r.url };
+          }
+
           function resolveBaseApkLink(html: string) {
             const $ = load(html);
             let href: string | undefined;
 
             $("a.downloadButton").each((_, el) => {
               if (href) return;
+
               const a = $(el);
               const h = a.attr("href");
               const label = a.text().replace(/\s+/g, " ").trim();
@@ -152,229 +293,211 @@ jobs:
             if (!href) {
               throw new Error("Base APK download button was not found");
             }
+
             return href;
           }
 
           function resolveFinalDownload(html: string) {
             const $ = load(html);
-            const h = $(".card-with-tabs a[href]").first().attr("href");
-            if (!h) {
-              throw new Error("Final APKMirror CDN link was not found");
+            const href = $(".card-with-tabs a[href]").first().attr("href");
+            if (!href) {
+              throw new Error("Final APKMirror download URL not found");
             }
-            return absolute(h);
+            return absolute(href);
           }
 
-          async function oneAttempt(attempt: number) {
-            console.log(`Resolve attempt ${attempt}/5`);
+          const resolved = await Bun.file("../../out/resolved.json").json();
+          const variantUrl = resolved.variant.url;
+          const versionName = resolved.versionName;
+          const versionCode = resolved.versionCode;
 
-            const app = await fetchText(APP_URL);
-            const latest = resolveLatestRelease(app.text);
-            console.log("Latest release:", latest.name);
+          const detail = await fetchText(variantUrl);
+          const detailText = load(detail.text)("body")
+            .text()
+            .replace(/\s+/g, " ");
 
-            const release = await fetchText(latest.url, APP_URL);
-            const variant = resolveArm64Bundle(release.text);
-            console.log("Selected:", JSON.stringify(variant));
+          if (!detailText.includes("Package: com.tencent.ig")) {
+            throw new Error("Base APK page is not com.tencent.ig");
+          }
 
-            const detail = await fetchText(variant.url, latest.url);
-            const detailText = load(detail.text)("body")
-              .text()
-              .replace(/\s+/g, " ");
+          const basePage = resolveBaseApkLink(detail.text);
+          const download = await fetchText(basePage);
 
-            const m = detailText.match(
-              /Version:\s*([0-9.]+)\s*\((\d+)\)/,
-            );
-            if (!m) {
-              throw new Error("versionName/versionCode could not be parsed");
-            }
+          if (
+            download.finalUrl.includes("thank_you_invalid_nonce") ||
+            download.text.includes("The download link you clicked on has expired")
+          ) {
+            throw new Error("APKMirror Base APK nonce expired");
+          }
 
-            const versionName = m[1];
-            const versionCode = m[2];
+          const finalUrl = resolveFinalDownload(download.text);
 
-            if (!detailText.includes("Package: com.tencent.ig")) {
-              throw new Error("Wrong package page: com.tencent.ig not found");
-            }
-
-            const basePage = resolveBaseApkLink(detail.text);
-
-            // Request the short-lived Base APK nonce immediately.
-            const download = await fetchText(basePage, variant.url);
-            if (
-              download.finalUrl.includes("thank_you_invalid_nonce") ||
-              download.text.includes(
-                "The download link you clicked on has expired",
-              )
-            ) {
-              throw new Error("APKMirror base-APK nonce expired");
-            }
-
-            const finalUrl = resolveFinalDownload(download.text);
-
-            mkdirSync("../../out", { recursive: true });
-            const dest =
-              `../../out/PUBG-MOBILE-Global-${versionName}-${versionCode}-arm64-v8a.apk`;
-
-            console.log(
-              `Downloading Base APK only: PUBG MOBILE ${versionName} (${versionCode}) arm64-v8a`,
-            );
-
-            const apk = await fetch(finalUrl);
-
-            if (!apk.ok || !apk.body) {
-              throw new Error(
-                `Base APK download -> HTTP ${apk.status} ${apk.statusText}`,
-              );
-            }
-
-            const contentType = apk.headers.get("content-type") ?? "";
-            if (/text\/html/i.test(contentType)) {
-              const body = await apk.text();
-              throw new Error(
-                "Expected APK bytes but received HTML: " +
-                  body.slice(0, 240).replace(/\s+/g, " "),
-              );
-            }
-
-            await Bun.write(dest, apk);
-
-            const size = statSync(dest).size;
-            if (size < 20 * 1024 * 1024) {
-              throw new Error(`Downloaded APK is unexpectedly small: ${size}`);
-            }
-
-            console.log(
-              JSON.stringify(
-                {
-                  versionName,
-                  versionCode,
-                  dest,
-                  size,
-                  variant,
-                  contentType,
-                },
-                null,
-                2,
-              ),
+          const apk = await fetch(finalUrl);
+          if (!apk.ok || !apk.body) {
+            throw new Error(
+              `Base APK download -> HTTP ${apk.status} ${apk.statusText}`,
             );
           }
 
-          let lastError: unknown;
-          for (let attempt = 1; attempt <= 5; attempt++) {
-            try {
-              await oneAttempt(attempt);
-              process.exit(0);
-            } catch (e) {
-              lastError = e;
-              console.error(e);
-              if (attempt < 5) await Bun.sleep(3000);
-            }
+          const contentType = apk.headers.get("content-type") ?? "";
+          if (/text\/html/i.test(contentType)) {
+            throw new Error("Expected APK bytes but received HTML");
           }
-          throw lastError;
+
+          mkdirSync("../../out", { recursive: true });
+          const dest =
+            `../../out/PUBG-MOBILE-Global-${versionName}-${versionCode}-arm64-v8a.apk`;
+
+          await Bun.write(dest, apk);
+
+          const size = statSync(dest).size;
+          if (size < 20 * 1024 * 1024) {
+            throw new Error(`Downloaded APK is unexpectedly small: ${size}`);
+          }
+
+          console.log(`${dest} ${size} bytes`);
           EOF
 
           cd .tmp/pubg-fetch
-          bun run download.ts
+          for attempt in 1 2 3 4 5; do
+            echo "Download attempt: ${attempt}/5"
+            rm -f ../../out/PUBG-MOBILE-Global-*-arm64-v8a.apk
+            if bun run download.ts; then
+              break
+            fi
+            if [ "${attempt}" -eq 5 ]; then
+              exit 1
+            fi
+            sleep 3
+          done
+          cd ../..
 
-      - name: Verify package ABI signature and integrity
-        id: meta
+          apk="out/PUBG-MOBILE-Global-${{ steps.resolve.outputs.version_name }}-${{ steps.resolve.outputs.version_code }}-arm64-v8a.apk"
+          test -f "${apk}"
+          echo "apk_path=${apk}" >> "${GITHUB_OUTPUT}"
+
+      - name: Verify APK and extract ARM64 libUE4.so
+        if: steps.release_check.outputs.exists != 'true'
+        id: extract
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
 
-          apks=(out/PUBG-MOBILE-Global-*-arm64-v8a.apk)
-          if [ "${#apks[@]}" -ne 1 ]; then
-            printf 'Expected exactly one APK, got %s\n' "${#apks[@]}" >&2
-            ls -lah out || true
-            exit 1
-          fi
-          apk="${apks[0]}"
+          apk="${{ steps.download.outputs.apk_path }}"
+          asset="${{ steps.release_check.outputs.asset_name }}"
+          so="out/${asset}"
+          entry="lib/arm64-v8a/libUE4.so"
 
-          python3 - "${apk}" <<'PY'
-          import sys, zipfile
-          p = sys.argv[1]
-          if not zipfile.is_zipfile(p):
+          python3 - "${apk}" "${entry}" <<'PY'
+          import sys
+          import zipfile
+
+          apk, entry = sys.argv[1], sys.argv[2]
+
+          if not zipfile.is_zipfile(apk):
               raise SystemExit("Downloaded file is not a valid APK/ZIP")
-          with zipfile.ZipFile(p) as z:
-              names = z.namelist()
+
+          with zipfile.ZipFile(apk) as z:
+              names = set(z.namelist())
               if "AndroidManifest.xml" not in names:
                   raise SystemExit("AndroidManifest.xml missing")
+              if entry not in names:
+                  raise SystemExit(f"{entry} not found in APK")
+
               abis = sorted({
-                  n.split("/")[1]
-                  for n in names
-                  if n.startswith("lib/") and len(n.split("/")) >= 3
+                  name.split("/")[1]
+                  for name in names
+                  if name.startswith("lib/") and len(name.split("/")) >= 3
               })
-              print("Native ABIs from ZIP:", abis)
+              print("Native ABIs:", abis)
+
               if "arm64-v8a" not in abis:
-                  raise SystemExit("arm64-v8a libraries missing")
+                  raise SystemExit("arm64-v8a missing")
               if "armeabi-v7a" in abis:
                   raise SystemExit("Unexpected armeabi-v7a in ARM64 APK")
           PY
 
           AAPT="$(find "${ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name aapt 2>/dev/null | sort -V | tail -n1)"
-          [ -n "${AAPT}" ] || {
-            echo "aapt not found" >&2
-            exit 1
-          }
+          test -n "${AAPT}"
 
           "${AAPT}" dump badging "${apk}" > out/aapt-badging.txt
-          cat out/aapt-badging.txt
 
           package_name="$(sed -n "s/^package: name='\([^']*\)'.*/\1/p" out/aapt-badging.txt | head -n1)"
           version_code="$(sed -n "s/^package:.*versionCode='\([^']*\)'.*/\1/p" out/aapt-badging.txt | head -n1)"
           version_name="$(sed -n "s/^package:.*versionName='\([^']*\)'.*/\1/p" out/aapt-badging.txt | head -n1)"
 
-          [ "${package_name}" = "com.tencent.ig" ] || {
-            echo "Wrong package: ${package_name}" >&2
-            exit 1
-          }
+          [ "${package_name}" = "com.tencent.ig" ]
+          [ "${version_name}" = "${{ steps.resolve.outputs.version_name }}" ]
+          [ "${version_code}" = "${{ steps.resolve.outputs.version_code }}" ]
 
-          grep -q "^native-code: .*'arm64-v8a'" out/aapt-badging.txt || {
-            echo "aapt did not report arm64-v8a" >&2
-            exit 1
-          }
+          unzip -p "${apk}" "${entry}" > "${so}"
+          test -s "${so}"
 
-          if grep -q "^native-code: .*'armeabi-v7a'" out/aapt-badging.txt; then
-            echo "Unexpected armeabi-v7a" >&2
-            exit 1
+          file "${so}"
+          readelf -h "${so}" | tee out/libUE4-elf-header.txt
+
+          readelf -h "${so}" | grep -Eq 'Class:[[:space:]]+ELF64'
+          readelf -h "${so}" | grep -Eq 'Machine:[[:space:]]+AArch64'
+
+          sha256sum "${apk}" | tee out/APK_SHA256SUMS.txt
+          sha256sum "${so}" | tee out/LIBUE4_SHA256SUMS.txt
+          stat -c '%n %s bytes' "${apk}" "${so}" | tee out/FILE_SIZES.txt
+
+          echo "so_path=${so}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload libUE4 to v1.0.1 release
+        if: steps.release_check.outputs.exists != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          so="${{ steps.extract.outputs.so_path }}"
+          asset="${{ steps.release_check.outputs.asset_name }}"
+
+          if gh release upload "${RELEASE_TAG}" "${so}"               --repo "${GITHUB_REPOSITORY}"; then
+            echo "Uploaded: ${asset}"
+          else
+            gh release view "${RELEASE_TAG}"               --repo "${GITHUB_REPOSITORY}"               --json assets               --jq '.assets[].name' > out/release-assets-race.txt
+
+            if grep -Fxq "${asset}" out/release-assets-race.txt; then
+              echo "Another run already uploaded ${asset}; treating as synchronized."
+            else
+              echo "Release upload failed and ${asset} is still absent." >&2
+              exit 1
+            fi
           fi
 
-          expected="out/PUBG-MOBILE-Global-${version_name}-${version_code}-arm64-v8a.apk"
-          [ "${apk}" = "${expected}" ] || mv "${apk}" "${expected}"
-          apk="${expected}"
+      - name: Verify release asset after upload
+        if: steps.release_check.outputs.exists != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
 
-          sha256sum "${apk}" | tee out/SHA256SUMS.txt
-          md5sum "${apk}" | tee out/MD5SUMS.txt
-          stat -c '%n %s bytes' "${apk}" | tee out/FILE_SIZE.txt
+          asset="${{ steps.release_check.outputs.asset_name }}"
 
-          cat > out/METADATA.txt <<EOF
-          Name: PUBG MOBILE Global Base APK
-          Package: ${package_name}
-          Version: ${version_name}
-          Version Code: ${version_code}
-          Platform: Android
-          Architecture: arm64-v8a
-          Region: Global
-          Source: APKMirror / Level Infinite
-          Source App Slug: level-infinite/playerunknowns-battlegrounds-pubg-mobile
-          Selection: latest release -> arm64-v8a BUNDLE 1 OBB row -> Download APK (Base APK) only
-          OBB Downloaded: no
-          EOF
+          gh release view "${RELEASE_TAG}"             --repo "${GITHUB_REPOSITORY}"             --json assets             --jq '.assets[] | [.name, (.size|tostring), .url] | @tsv'             | tee out/release-assets-after.tsv
 
-          echo "version_name=${version_name}" >> "${GITHUB_OUTPUT}"
-          echo "version_code=${version_code}" >> "${GITHUB_OUTPUT}"
-          echo "apk_path=${apk}" >> "${GITHUB_OUTPUT}"
+          cut -f1 out/release-assets-after.tsv | grep -Fxq "${asset}"
 
-      - name: Upload PUBG APK artifact
+      - name: Upload APK/extraction verification artifact
+        if: steps.release_check.outputs.exists != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: pubg-mobile-global-${{ steps.meta.outputs.version_name }}-${{ steps.meta.outputs.version_code }}-arm64-v8a
+          name: pubg-global-${{ steps.resolve.outputs.version_name }}-${{ steps.resolve.outputs.version_code }}-libue4-sync
           path: |
-            ${{ steps.meta.outputs.apk_path }}
-            out/SHA256SUMS.txt
-            out/MD5SUMS.txt
-            out/FILE_SIZE.txt
-            out/METADATA.txt
+            ${{ steps.download.outputs.apk_path }}
+            ${{ steps.extract.outputs.so_path }}
+            out/resolved.json
             out/aapt-badging.txt
+            out/libUE4-elf-header.txt
+            out/APK_SHA256SUMS.txt
+            out/LIBUE4_SHA256SUMS.txt
+            out/FILE_SIZES.txt
+            out/release-assets-after.tsv
           if-no-files-found: error
           compression-level: 0
           retention-days: 90
