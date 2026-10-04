@@ -1,0 +1,44 @@
+name: Fetch OpenSSL and curl reference sources
+
+on:
+  push:
+    paths:
+      - ".github/workflows/fetch-openssl-curl-reference-20261005.yml"
+
+jobs:
+  fetch:
+    if: github.event.head_commit.message == 'fetch OpenSSL and curl reference sources'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download official release source archives
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p out/src
+          cd out/src
+
+          curl -fL --retry 5 --retry-delay 2             -o openssl-4.0.3.tar.gz             https://github.com/openssl/openssl/releases/download/openssl-4.0.3/openssl-4.0.3.tar.gz
+          echo "325b5c806167c13b40b1ffeadfe0248197c00eccc4cf123ec1e28d2d2fd216d9  openssl-4.0.3.tar.gz" | sha256sum -c -
+
+          curl -fL --retry 5 --retry-delay 2             -o curl-8.22.0.tar.xz             https://github.com/curl/curl/releases/download/curl-8_22_0/curl-8.22.0.tar.xz
+          echo "f7ef3ae8a22e521f289803fe93543eb64c329b58aa73a9e224dfd915a2a5f4f7  curl-8.22.0.tar.xz" | sha256sum -c -
+
+          tar -xzf openssl-4.0.3.tar.gz
+          tar -xJf curl-8.22.0.tar.xz
+
+          cd ..
+          tar -czf openssl-curl-reference-sources-20261005.tar.gz             src/openssl-4.0.3 src/curl-8.22.0
+          sha256sum             src/openssl-4.0.3.tar.gz             src/curl-8.22.0.tar.xz             openssl-curl-reference-sources-20261005.tar.gz             > SHA256SUMS.txt
+
+          printf '%s\n'             'OpenSSL 4.0.3'             'curl 8.22.0'             'Purpose: temporary reference-source bundle for TLS/HTTPS implementation analysis.'             > CONTENTS.txt
+
+      - name: Upload reference bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: openssl-curl-reference-sources-20261005
+          path: |
+            out/openssl-curl-reference-sources-20261005.tar.gz
+            out/SHA256SUMS.txt
+            out/CONTENTS.txt
+          retention-days: 1
+          compression-level: 0
