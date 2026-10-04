@@ -30,6 +30,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | nlohmann/json single header | 3.12.0 | Any | Any | `32814216489` | SINGLE | `2026-11-23T05:47:17Z` |
 
 | libUE4 GL | 4.5-v1.0.1 | Android | AArch64 | `33073762454` | SINGLE | `2026-11-25T12:50:04Z` |
+| libUE4 GL | 4.6-v1.0.1 | Android | AArch64 | `37218608943` | SINGLE | `2027-01-02T16:56:20Z` |
 | VaultPony VeraCrypt-compatible CLI | 0.1.0+fb4c460 | Android (API 24+) | AArch64 | `33089426736` | SINGLE | `2026-11-25T15:43:58Z` |
 | Wine portable | 11.16 | Linux | x86_64 | `34743014984` | SINGLE | `2026-12-12T06:32:52Z` |
 | 逃跑吧！少年 4399 channel APK | 8.41.0 | Android | Multi-ABI APK | `36716019163` | SPLIT × 5 | `2026-12-29T12:38:04Z` |
@@ -1189,3 +1190,54 @@ Download Artifact `11169466690`, verify ZIP SHA256 `8596cfe7c823d64bc2df16b8bd87
 ### Restore
 
 下载 Artifact `11308584380`，校验 Artifact ZIP digest `677af3e93aa55b485613352eb58f9eec93ae4d79d0803a6431ba4c80d2b68e58`；解压得到 `PUBG-MOBILE-Global-4.6.0-21525-arm64-v8a.apk`，再校验 APK SHA256 `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696`。该缓存只包含 Base APK 和校验元数据，不包含 `.obb`。
+
+
+## libUE4 GL 4.6 v1.0.1
+
+- Name: `libUE4 GL`
+- Version: `4.6-v1.0.1`
+- PUBG Version: `4.6.0`
+- PUBG Version Code: `21525`
+- PUBG Package: `com.tencent.ig`
+- Platform: Android
+- Architecture: AArch64 / `arm64-v8a`
+- Workflow: `.github/workflows/fetch-pubg-global-arm64-apk.yml`
+- Workflow Name: `Sync PUBG Global ARM64 libUE4`
+- Run ID: `37218608943`
+- Run Attempt 1: `success` — detected missing release asset, downloaded the ARM64 Base APK, extracted and uploaded libUE4
+- Run Attempt 2: `success` — detected the asset already existed and skipped APK download, extraction, release upload, and verification Artifact upload
+- Release Tag: `v1.0.1`
+- Release Asset: `libUE4-GL-4.6.so`
+- Release Asset ID: `610224470`
+- Release Asset Size: `252290584` bytes
+- Release Asset SHA256: `abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce`
+- Release Asset URL: `https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.6.so`
+- Source APK: `PUBG-MOBILE-Global-4.6.0-21525-arm64-v8a.apk`
+- Source APK Size: `107399819` bytes
+- Source APK SHA256: `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696`
+- Extracted Path: `lib/arm64-v8a/libUE4.so`
+- Verification: extracted file is ELF64, machine `AArch64`; APK package/version/ABI were verified before extraction
+- Storage Mode: `SINGLE`
+- Verification Artifact Name: `pubg-global-4.6.0-21525-libue4-sync`
+- Verification Artifact ID: `11309845408`
+- Verification Artifact ZIP Size: `359700188` bytes
+- Verification Artifact Digest: `sha256:816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab`
+- Created At: `2026-10-04T16:56:46Z`
+- Expires At: `2027-01-02T16:56:20Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | Size | SHA256 |
+|---|---|---|---|---|---:|---|
+| libUE4 GL | 4.6-v1.0.1 | Android | AArch64 | `libUE4-GL-4.6.so` | `252290584` | `abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce` |
+| PUBG MOBILE Global Base APK | 4.6.0 (21525) | Android | arm64-v8a | `PUBG-MOBILE-Global-4.6.0-21525-arm64-v8a.apk` | `107399819` | `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Artifact Size | Artifact Digest | Expires At |
+|---:|---:|---|---:|---|---|
+| 1/1 | `11309845408` | `pubg-global-4.6.0-21525-libue4-sync` | `359700188` | `sha256:816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab` | `2027-01-02T16:56:20Z` |
+
+### Restore
+
+优先直接使用 Release `v1.0.1` 的 `libUE4-GL-4.6.so`。若按联网缓存规则恢复，则下载 Artifact `11309845408`，校验 Artifact ZIP digest `816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab`，解压得到 `libUE4-GL-4.6.so` 后再校验 SHA256 `abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce`。
