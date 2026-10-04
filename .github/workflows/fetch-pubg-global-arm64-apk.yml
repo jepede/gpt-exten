@@ -1,0 +1,197 @@
+name: Fetch PUBG Global ARM64 Base APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/fetch-pubg-global-arm64-apk.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install APKMirror downloader
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp/pubg-fetch out
+          cd .tmp/pubg-fetch
+          bun init -y >/dev/null
+          bun add apkmirror-downloader@2.0.10
+
+      - name: Download latest PUBG MOBILE Global ARM64 base APK
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > .tmp/pubg-fetch/download.ts <<'EOF'
+          import { mkdirSync } from "node:fs";
+          import { APKMirrorDownloader } from "apkmirror-downloader";
+
+          mkdirSync("../../out", { recursive: true });
+
+          const result = await APKMirrorDownloader.download(
+            {
+              org: "level-infinite",
+              repo: "playerunknowns-battlegrounds-pubg-mobile",
+            },
+            {
+              version: "latest",
+              arch: "arm64-v8a",
+              dpi: "nodpi",
+              type: "bundle",
+              outDir: "../../out",
+              outFile: "pubg-global-arm64-latest",
+              overwrite: true,
+            },
+          );
+
+          console.log(JSON.stringify(result, null, 2));
+          EOF
+
+          cd .tmp/pubg-fetch
+
+          # APKMirror occasionally rate-limits/Cloudflare-challenges CI traffic.
+          # Retry from a fresh process; never fall back to a different ABI/region.
+          for attempt in 1 2 3 4 5; do
+            echo "APKMirror fetch attempt: ${attempt}/5"
+            rm -f ../../out/pubg-global-arm64-latest.*
+            if bun run download.ts; then
+              break
+            fi
+            if [ "${attempt}" -eq 5 ]; then
+              echo "APKMirror download failed after 5 attempts" >&2
+              exit 1
+            fi
+            sleep $((attempt * 15))
+          done
+
+      - name: Normalize and verify APK
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          files=(out/pubg-global-arm64-latest.*)
+          if [ "${#files[@]}" -ne 1 ]; then
+            printf 'Expected exactly one downloaded file, got %s\n' "${#files[@]}" >&2
+            ls -lah out || true
+            exit 1
+          fi
+
+          src="${files[0]}"
+
+          # Current APKMirror OBB release pages expose "Download APK" before
+          # "Download APK Bundle". apkmirror-downloader therefore resolves to
+          # the base APK. Keep a safe fallback if APKMirror changes that order:
+          # extract only base.apk and discard the OBB/APKM container.
+          case "${src}" in
+            *.apk)
+              apk="${src}"
+              ;;
+            *.apkm|*.xapk|*.zip)
+              mkdir -p .tmp/extracted
+              base_entry="$(unzip -Z1 "${src}" | awk '
+                /^base\.apk$/ { print; exit }
+                /(^|\/)base\.apk$/ { print; exit }
+              ')"
+              if [ -z "${base_entry}" ]; then
+                echo "Bundle downloaded, but base.apk was not found" >&2
+                unzip -Z1 "${src}" | head -100
+                exit 1
+              fi
+              unzip -p "${src}" "${base_entry}" > out/pubg-global-arm64-base.apk
+              rm -f "${src}"
+              apk="out/pubg-global-arm64-base.apk"
+              ;;
+            *)
+              echo "Unexpected download type: ${src}" >&2
+              exit 1
+              ;;
+          esac
+
+          AAPT="$(find "${ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name aapt 2>/dev/null | sort -V | tail -n1)"
+          if [ -z "${AAPT}" ]; then
+            echo "aapt not found under ANDROID_HOME=${ANDROID_HOME}" >&2
+            exit 1
+          fi
+
+          "${AAPT}" dump badging "${apk}" > out/aapt-badging.txt
+          cat out/aapt-badging.txt
+
+          package_name="$(sed -n "s/^package: name='\([^']*\)'.*/\1/p" out/aapt-badging.txt | head -n1)"
+          version_code="$(sed -n "s/^package:.*versionCode='\([^']*\)'.*/\1/p" out/aapt-badging.txt | head -n1)"
+          version_name="$(sed -n "s/^package:.*versionName='\([^']*\)'.*/\1/p" out/aapt-badging.txt | head -n1)"
+
+          if [ "${package_name}" != "com.tencent.ig" ]; then
+            echo "Wrong package: ${package_name}" >&2
+            exit 1
+          fi
+
+          if ! grep -q "^native-code: .*'arm64-v8a'" out/aapt-badging.txt; then
+            echo "APK is not the ARM64 variant" >&2
+            exit 1
+          fi
+
+          # The requested target is the dedicated 64-bit variant, not the
+          # universal arm64+armv7 APK.
+          if grep -q "^native-code: .*'armeabi-v7a'" out/aapt-badging.txt; then
+            echo "Unexpected armeabi-v7a found; refusing universal/32-bit variant" >&2
+            exit 1
+          fi
+
+          final="out/PUBG-MOBILE-Global-${version_name}-${version_code}-arm64-v8a.apk"
+          if [ "${apk}" != "${final}" ]; then
+            mv "${apk}" "${final}"
+          fi
+
+          sha256sum "${final}" | tee out/SHA256SUMS.txt
+          stat -c '%n %s bytes' "${final}" | tee out/FILE_SIZE.txt
+
+          cat > out/METADATA.txt <<EOF
+          Name: PUBG MOBILE Global Base APK
+          Package: ${package_name}
+          Version: ${version_name}
+          Version Code: ${version_code}
+          Platform: Android
+          Architecture: arm64-v8a
+          Region: Global
+          Source: APKMirror / Level Infinite
+          Source App Slug: level-infinite/playerunknowns-battlegrounds-pubg-mobile
+          Selection: latest release -> arm64-v8a -> nodpi -> OBB bundle release -> base APK only
+          OBB Included: no
+          EOF
+
+          echo "version_name=${version_name}" >> "${GITHUB_OUTPUT}"
+          echo "version_code=${version_code}" >> "${GITHUB_OUTPUT}"
+          echo "apk_path=${final}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload PUBG APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pubg-mobile-global-${{ steps.meta.outputs.version_name }}-${{ steps.meta.outputs.version_code }}-arm64-v8a
+          path: |
+            ${{ steps.meta.outputs.apk_path }}
+            out/SHA256SUMS.txt
+            out/FILE_SIZE.txt
+            out/METADATA.txt
+            out/aapt-badging.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
