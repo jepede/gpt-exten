@@ -46,25 +46,12 @@ jobs:
           const BASE = "https://www.apkmirror.com";
           const APP_URL =
             BASE + "/apk/level-infinite/playerunknowns-battlegrounds-pubg-mobile/";
-          const UA =
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
-            "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
-
           function absolute(href: string) {
             return new URL(href, BASE).href;
           }
 
           async function fetchText(url: string, referer?: string) {
-            const r = await fetch(url, {
-              headers: {
-                "User-Agent": UA,
-                "Accept-Language": "en-US,en;q=0.9",
-                "Accept":
-                  "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                ...(referer ? { Referer: referer } : {}),
-              },
-              redirect: "follow",
-            });
+            const r = await fetch(url);
 
             if (!r.ok) {
               throw new Error(`GET ${url} -> HTTP ${r.status}`);
@@ -230,13 +217,7 @@ jobs:
               `Downloading Base APK only: PUBG MOBILE ${versionName} (${versionCode}) arm64-v8a`,
             );
 
-            const apk = await fetch(finalUrl, {
-              headers: {
-                "User-Agent": UA,
-                Referer: basePage,
-              },
-              redirect: "follow",
-            });
+            const apk = await fetch(finalUrl);
 
             if (!apk.ok || !apk.body) {
               throw new Error(
