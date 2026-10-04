@@ -54,7 +54,7 @@ jobs:
               version: "latest",
               arch: "arm64-v8a",
               dpi: "nodpi",
-              type: "bundle",
+              type: "apk",
               outDir: "../../out",
               outFile: "pubg-global-arm64-latest",
               overwrite: true,
@@ -66,7 +66,7 @@ jobs:
 
           cd .tmp/pubg-fetch
 
-          # APKMirror occasionally rate-limits/Cloudflare-challenges CI traffic.
+          # APKMirror currently exposes the OBB variant row through a label containing "APK";\n          # apkmirror-downloader classifies that row as type=apk before checking BUNDLE.
           # Retry from a fresh process; never fall back to a different ABI/region.
           for attempt in 1 2 3 4 5; do
             echo "APKMirror fetch attempt: ${attempt}/5"
