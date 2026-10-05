@@ -1,0 +1,36 @@
+name: TinyHTTPS legacy reference 20261005
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/tinyhttps-legacy-reference-20261005.yml'
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download official legacy reference source (test only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
+            https://api.github.com/repos/openssl/openssl/git/ref/tags/OpenSSL_1_0_2u \
+            -o out/tag-reference.json
+          curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
+            https://codeload.github.com/openssl/openssl/tar.gz/refs/tags/OpenSSL_1_0_2u \
+            -o out/openssl-OpenSSL_1_0_2u.tar.gz
+          tar -tzf out/openssl-OpenSSL_1_0_2u.tar.gz >/dev/null
+          test "$(stat -c %s out/openssl-OpenSSL_1_0_2u.tar.gz)" -lt 503316480
+          cd out
+          sha256sum openssl-OpenSSL_1_0_2u.tar.gz tag-reference.json >SHA256SUMS
+          printf '%s\n' 'Temporary official historical source. For isolated local interoperability tests only, never a production dependency.' >README.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tinyhttps-openssl-1.0.2u-source-20261005
+          path: out/
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
