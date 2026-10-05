@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   fetch:
@@ -273,12 +273,41 @@ jobs:
             gaokao-english-national-I-2017-2026-txt.zip
           retention-days: 1
           compression-level: 6
+      - name: Publish run metadata
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          RUN_CONCLUSION_HINT: ${{ job.status }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout -B main origin/main
+          {
+            echo "run_id=$RUN_ID"
+            echo "run_number=$RUN_NUMBER"
+            echo "run_attempt=$RUN_ATTEMPT"
+            echo "job_status_at_metadata_step=$RUN_CONCLUSION_HINT"
+            echo "workflow=Fetch Gaokao English TXT"
+            echo "artifact_name=gaokao-english-national-I-2017-2026-txt"
+          } > .tmp-gaokao-last-run.txt
+          git add .tmp-gaokao-last-run.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Record temporary Gaokao extraction run $RUN_ID"
+            git push origin main
+          fi
       - name: Validate all ten years
         shell: bash
         run: |
           cat gaokao_english_txt/MANIFEST.tsv
-          if grep -q 
-\tFAILED
+          if grep -q 'FAILED
+            echo "One or more years failed extraction." >&2
+            exit 2
+          fi
+          test "$(awk -F '\t' 'NR>1 && $7=="OK"{n++} END{print n+0}' gaokao_english_txt/MANIFEST.tsv)" -eq 10
  gaokao_english_txt/MANIFEST.tsv; then
             echo "One or more years failed extraction." >&2
             exit 2
