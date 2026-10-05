@@ -1,0 +1,39 @@
+name: Temporary Virtual Palate formatter bundle
+
+on:
+  push:
+    branches:
+      - tmp/virtual-palate-format-tools-20261005
+    paths:
+      - .github/workflows/tmp-virtual-palate-format-tools.yml
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build formatter bundle
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 -m pip install --disable-pip-version-check --target formatter_bundle \
+            "clang-format==18.1.8" \
+            "black==25.1.0" \
+            "cmakelang==0.6.13"
+          python3 - <<'PY'
+          import black
+          print("black", black.__version__)
+          PY
+          formatter_bundle/clang_format/data/bin/clang-format --version
+          PYTHONPATH="$PWD/formatter_bundle" python3 -m cmakelang.format --version || true
+          tar -C formatter_bundle -czf virtual-palate-formatters-linux-x86_64.tar.gz .
+          sha256sum virtual-palate-formatters-linux-x86_64.tar.gz > SHA256SUMS.txt
+
+      - name: Upload formatter bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: virtual-palate-formatters-linux-x86_64
+          path: |
+            virtual-palate-formatters-linux-x86_64.tar.gz
+            SHA256SUMS.txt
+          retention-days: 1
+          compression-level: 0
