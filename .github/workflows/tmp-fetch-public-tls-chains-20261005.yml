@@ -1,0 +1,48 @@
+name: Temporary fetch public TLS chains 20261005
+
+on:
+  push:
+    paths:
+      - ".github/workflows/tmp-fetch-public-tls-chains-20261005.yml"
+
+jobs:
+  fetch:
+    if: github.event.head_commit.message == 'tmp fetch public TLS chains'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture current server chains
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p out
+          hosts=(example.com google.com github.com cloudflare.com letsencrypt.org wikipedia.org apple.com microsoft.com)
+          cat > /tmp/split.py <<'PY'
+          import base64, pathlib, re, subprocess, sys
+          host=sys.argv[1]
+          data=sys.stdin.read()
+          blocks=re.findall(r"-----BEGIN CERTIFICATE-----\s*(.*?)\s*-----END CERTIFICATE-----",data,re.S)
+          if not blocks:
+              raise SystemExit("no certificates for "+host)
+          d=pathlib.Path("out")/host
+          d.mkdir(parents=True,exist_ok=True)
+          for i,b in enumerate(blocks):
+              der=base64.b64decode(re.sub(r"\s+","",b),validate=True)
+              (d/f"cert-{i}.der").write_bytes(der)
+          (d/"count.txt").write_text(str(len(blocks))+"\n")
+          PY
+          for h in "${hosts[@]}"; do
+            timeout 25 openssl s_client -connect "$h:443" -servername "$h" -showcerts </dev/null 2>/dev/null               | python3 /tmp/split.py "$h"
+          done
+          find out -type f -print -exec sha256sum {} \; > MANIFEST.txt
+          tar -czf public-tls-chains-20261005.tar.gz out MANIFEST.txt
+          sha256sum public-tls-chains-20261005.tar.gz > SHA256SUMS.txt
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-tls-chains-20261005
+          path: |
+            public-tls-chains-20261005.tar.gz
+            SHA256SUMS.txt
+          retention-days: 1
+          compression-level: 0
