@@ -19,7 +19,7 @@ jobs:
             "clang-format==18.1.8" \
             "black==25.1.0" \
             "cmakelang==0.6.13"
-          python3 - <<'PY'
+          PYTHONPATH="$PWD/formatter_bundle" python3 - <<'PY'
           import black
           print("black", black.__version__)
           PY
