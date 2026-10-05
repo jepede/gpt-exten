@@ -1,0 +1,260 @@
+name: Fetch Gaokao English TXT
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-gaokao-english-txt.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install extractor dependencies
+        run: python -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
+      - name: Fetch and normalize papers
+        shell: bash
+        run: |
+          cat > /tmp/extract_gaokao.py <<'PY'
+          import hashlib, html as htmlmod, re, sys, time
+          from pathlib import Path
+          from urllib.parse import urljoin
+          import requests
+          from bs4 import BeautifulSoup
+
+          OUT = Path("gaokao_english_txt")
+          OUT.mkdir(exist_ok=True)
+          S = requests.Session()
+          S.headers.update({
+              "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/128 Safari/537.36",
+              "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.7",
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          })
+
+          known = {
+              2019: "https://zy.21cnjy.com/5933650",
+              2020: "https://zy.21cnjy.com/7996753",
+              2021: "https://zy.21cnjy.com/9420474",
+              2022: "https://zy.21cnjy.com/12401051",
+              2023: "https://zy.21cnjy.com/16187687",
+              2024: "https://zy.21cnjy.com/20569440",
+              2025: "https://zy.21cnjy.com/23168059",
+              2026: "https://zy.21cnjy.com/25946873",
+          }
+
+          fallback = {
+              2019: "https://gaokao.exam8.com/4474201.html",
+              2020: "https://www.en-sky.com/post/275.html",
+              2021: "https://www.en-sky.com/post/589.html",
+              2022: "https://www.en-sky.com/post/773.html",
+              2025: "https://www.qisuen.cn/resource/detail?id=118472",
+              2026: "https://www.en-sky.com/post/1238.html",
+          }
+
+          def get(url, timeout=30):
+              last = None
+              for i in range(4):
+                  try:
+                      r = S.get(url, timeout=timeout)
+                      if r.status_code == 200 and len(r.content) > 1000:
+                          if not r.encoding or r.encoding.lower() == "iso-8859-1":
+                              r.encoding = r.apparent_encoding or "utf-8"
+                          return r.text
+                      last = RuntimeError(f"{url}: HTTP {r.status_code}, {len(r.content)} bytes")
+                  except Exception as e:
+                      last = e
+                  time.sleep(1.5*(i+1))
+              raise last
+
+          def discover_old(year):
+              index = f"https://www.21cnjy.com/gaokao/{year}/"
+              h = get(index)
+              # isolate 新课标一卷 / 全国I卷 section before the next national paper section
+              starts = [p for p in (h.find("新课标一卷"), h.find("新课标Ⅰ"), h.find("全国卷I"), h.find("全国Ⅰ卷")) if p >= 0]
+              if not starts:
+                  raise RuntimeError(f"{year}: cannot locate national-I section")
+              st = min(starts)
+              tails = [p for p in (h.find("新课标二卷", st+1), h.find("全国卷Ⅱ", st+1), h.find("全国II卷", st+1)) if p >= 0]
+              ed = min(tails) if tails else min(len(h), st+80000)
+              seg = h[st:ed]
+              # locate English block and then the WORD hyperlink
+              ep = seg.find("英语")
+              if ep < 0:
+                  raise RuntimeError(f"{year}: cannot locate English block")
+              ss = seg[ep:ep+12000]
+              # Prefer href whose anchor text is WORD
+              ms = re.findall(r'href=["\']([^"\']+)["\'][^>]*>\s*(?:<[^>]+>\s*)*WORD\s*(?:</[^>]+>\s*)*</a>', ss, flags=re.I|re.S)
+              if not ms:
+                  # 21cnjy URLs often expose resource IDs in /H/4/39950/NNNN.shtml
+                  ms = re.findall(r'href=["\']([^"\']*(?:21cnjy\.com|/H/)[^"\']+)["\']', ss, flags=re.I)
+              if not ms:
+                  raise RuntimeError(f"{year}: cannot discover WORD resource")
+              u = urljoin(index, htmlmod.unescape(ms[0]))
+              m = re.search(r'/H/4/39950/(\d+)\.shtml', u)
+              if m:
+                  u = "https://zy.21cnjy.com/" + m.group(1)
+              return u
+
+          def text_from_html(raw):
+              soup = BeautifulSoup(raw, "lxml")
+              for x in soup(["script","style","noscript","svg","header","footer","nav"]):
+                  x.decompose()
+              # Drop visually irrelevant controls and short menu blocks.
+              txt = soup.get_text("\n")
+              txt = htmlmod.unescape(txt).replace("\r", "")
+              txt = txt.replace("\u3000", " ")
+              lines = []
+              for ln in txt.split("\n"):
+                  ln = re.sub(r'[ \t\xa0]+', ' ', ln).strip()
+                  if not ln:
+                      continue
+                  if ln in {"资源下载","立即下载","免费下载","收藏","分享","网站首页","登录","注册"}:
+                      continue
+                  lines.append(ln)
+              return "\n".join(lines)
+
+          START_PATTERNS = [
+              r'绝密[★*]?\s*(?:启用前|考试启用前)',
+              r'20(?:1[7-9]|2[0-6])年普通高等学校招生全国统一考试',
+          ]
+          END_PATTERNS = [
+              r'\n(?:20(?:1[7-9]|2[0-6])年)?[^\n]{0,20}参考答案',
+              r'\n参考答案',
+              r'\n答案(?:及|与)?解析',
+              r'\nImage资源列表',
+              r'\n资源列表',
+              r'\n缩略图、资源来源',
+          ]
+
+          def clean_exam(txt, year):
+              # normalize punctuation/spacing conservatively
+              txt = txt.replace("英 语", "英语")
+              starts = []
+              for p in START_PATTERNS:
+                  m = re.search(p, txt)
+                  if m: starts.append(m.start())
+              if starts:
+                  txt = txt[min(starts):]
+              # Avoid accidentally starting at a page-title mention preceding the paper.
+              title = f"{year}年普通高等学校招生全国统一考试"
+              first = txt.find(title)
+              if first >= 0 and first > 500:
+                  txt = txt[first:]
+              # Cut answer/analysis appendices.
+              ends = []
+              for p in END_PATTERNS:
+                  m = re.search(p, txt)
+                  if m and m.start() > 1500:
+                      ends.append(m.start())
+              if ends:
+                  txt = txt[:min(ends)]
+              # Some resource pages contain a duplicate scan/OCR copy. Keep first complete copy.
+              occurrences = [m.start() for m in re.finditer(re.escape(title), txt)]
+              if len(occurrences) >= 2 and occurrences[1] > 4000:
+                  txt = txt[:occurrences[1]]
+              # Remove common page headers / OCR page-number lines while preserving questions.
+              out=[]
+              for ln in txt.splitlines():
+                  if re.search(r'英语试题第\s*\d+\s*页.*共\s*\d+\s*页', ln):
+                      continue
+                  if re.fullmatch(r'[裂口Zz0-9 ]{6,}', ln):
+                      continue
+                  out.append(ln)
+              txt = "\n".join(out)
+              txt = re.sub(r'\n{3,}', '\n\n', txt).strip() + "\n"
+              return txt
+
+          manifest = ["Year\tPaper\tSource\tChars\tBytes\tSHA256\tStatus"]
+          combined = []
+          failures = []
+
+          for year in range(2017, 2027):
+              urls=[]
+              try:
+                  if year in known:
+                      urls.append(known[year])
+                  else:
+                      urls.append(discover_old(year))
+              except Exception as e:
+                  failures.append(f"{year} discovery: {e}")
+              if year in fallback:
+                  urls.append(fallback[year])
+              best = None
+              best_url = None
+              errors=[]
+              for url in dict.fromkeys(urls):
+                  try:
+                      raw = get(url)
+                      txt = clean_exam(text_from_html(raw), year)
+                      score = len(txt)
+                      # Require actual exam structural markers.
+                      markers = sum(k in txt for k in ("第一部分","第二部分","阅读","写作"))
+                      if markers < 2:
+                          raise RuntimeError(f"too few exam markers ({markers}), chars={score}")
+                      if score < 6000:
+                          raise RuntimeError(f"extracted text too short: {score}")
+                      if best is None or len(txt) > len(best):
+                          best, best_url = txt, url
+                  except Exception as e:
+                      errors.append(f"{url}: {e}")
+              if best is None:
+                  msg = " | ".join(errors) or "no usable source"
+                  failures.append(f"{year}: {msg}")
+                  stub = f"{year} 高考英语全国I卷\n\n[提取失败]\n{msg}\n"
+                  fn = OUT / f"{year}_gaokao_english_national_I_FAILED.txt"
+                  fn.write_text(stub, encoding="utf-8")
+                  sha=hashlib.sha256(stub.encode()).hexdigest()
+                  manifest.append(f"{year}\tFAILED\t-\t{len(stub)}\t{len(stub.encode())}\t{sha}\tFAILED")
+                  continue
+
+              label = "全国I卷" if year <= 2020 else ("新高考全国I卷" if year <= 2022 else ("新课标I卷" if year <= 2025 else "全国I卷"))
+              header = (
+                  f"{year}年高考英语 {label}\n"
+                  f"纯文本提取版（UTF-8）\n"
+                  f"Source: {best_url}\n"
+                  "Note: 保留试题正文、题号、选项和写作要求；不附答案解析。网页/PDF转写可能存在少量标点或特殊符号差异。\n"
+                  + "="*72 + "\n\n"
+              )
+              final = header + best
+              fn = OUT / f"{year}_gaokao_english_{'national_I' if year<=2020 or year==2026 else 'new_gaokao_I'}.txt"
+              fn.write_text(final, encoding="utf-8")
+              b=final.encode("utf-8")
+              sha=hashlib.sha256(b).hexdigest()
+              manifest.append(f"{year}\t{label}\t{best_url}\t{len(final)}\t{len(b)}\t{sha}\tOK")
+              combined.append(final + "\n\n")
+
+          (OUT/"2017-2026_gaokao_english_national_I_combined.txt").write_text("".join(combined), encoding="utf-8")
+          (OUT/"MANIFEST.tsv").write_text("\n".join(manifest)+"\n", encoding="utf-8")
+          (OUT/"EXTRACTION_LOG.txt").write_text(
+              "Extraction completed.\n\n" + ("\n".join(failures) if failures else "No extraction failures.\n"),
+              encoding="utf-8"
+          )
+
+          ok = sum(1 for x in manifest[1:] if x.endswith("\tOK"))
+          print("\n".join(manifest))
+          print(f"OK={ok}/10")
+          if ok < 8:
+              sys.exit(2)
+          PY
+          python /tmp/extract_gaokao.py
+          cd gaokao_english_txt
+          sha256sum *.txt MANIFEST.tsv > SHA256SUMS.txt
+          zip -9 ../gaokao-english-national-I-2017-2026-txt.zip *.txt MANIFEST.tsv SHA256SUMS.txt
+          cd ..
+          sha256sum gaokao-english-national-I-2017-2026-txt.zip
+      - name: Upload TXT bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-english-national-I-2017-2026-txt
+          path: |
+            gaokao_english_txt/
+            gaokao-english-national-I-2017-2026-txt.zip
+          retention-days: 1
+          compression-level: 6
