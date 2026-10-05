@@ -1,0 +1,171 @@
+name: Fetch Mozilla NSS TLS Root Store
+
+on:
+  push:
+    paths:
+      - ".github/workflows/fetch-mozilla-nss-rootstore-20261005.yml"
+
+jobs:
+  fetch:
+    if: github.event.head_commit.message == 'fetch Mozilla NSS TLS root store'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve Mozilla Firefox release commit
+        shell: bash
+        run: |
+          set -euxo pipefail
+          COMMIT="$(git ls-remote https://github.com/mozilla-firefox/firefox.git refs/heads/release | awk '{print $1}')"
+          test -n "$COMMIT"
+          echo "FIREFOX_RELEASE_COMMIT=$COMMIT" >> "$GITHUB_ENV"
+
+      - name: Download authoritative NSS certdata
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p out
+          URL="https://raw.githubusercontent.com/mozilla-firefox/firefox/${FIREFOX_RELEASE_COMMIT}/security/nss/lib/ckfw/builtins/certdata.txt"
+          curl -fL --retry 5 --retry-delay 2 "$URL" -o out/certdata.txt
+          sha256sum out/certdata.txt | tee out/certdata.sha256
+          printf '%s\n' "$FIREFOX_RELEASE_COMMIT" > out/firefox-release-commit.txt
+          printf '%s\n' "$URL" > out/source-url.txt
+
+      - name: Extract TLS server trust anchors
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cat > /tmp/extract_roots.py <<'PY'
+          import base64, hashlib, json, pathlib, re, struct
+
+          src = pathlib.Path("out/certdata.txt").read_text("utf-8")
+
+          def dequote(s):
+              s = s.strip()
+              if len(s) >= 2 and s[0] == '"' and s[-1] == '"':
+                  return bytes(s[1:-1], "utf-8").decode("unicode_escape")
+              return s
+
+          def decode_octal(lines):
+              out = bytearray()
+              for line in lines:
+                  for m in re.finditer(r"\\([0-7]{3})", line):
+                      out.append(int(m.group(1), 8))
+              return bytes(out)
+
+          def parse_block(block):
+              lines = block.splitlines()
+              attrs = {}
+              i = 0
+              while i < len(lines):
+                  line = lines[i].strip()
+                  i += 1
+                  if not line or line.startswith("#"):
+                      continue
+                  parts = line.split(None, 2)
+                  if len(parts) < 2:
+                      continue
+                  key, typ = parts[0], parts[1]
+                  rest = parts[2] if len(parts) > 2 else ""
+                  if typ == "MULTILINE_OCTAL":
+                      acc = []
+                      while i < len(lines) and lines[i].strip() != "END":
+                          acc.append(lines[i])
+                          i += 1
+                      if i < len(lines) and lines[i].strip() == "END":
+                          i += 1
+                      attrs[key] = decode_octal(acc)
+                  elif typ == "UTF8":
+                      attrs[key] = dequote(rest)
+                  else:
+                      attrs[key] = rest.strip()
+              return attrs
+
+          certs = {}
+          trusts = {}
+          for raw in re.split(r"\n\s*\n", src):
+              a = parse_block(raw)
+              cls = a.get("CKA_CLASS", "")
+              sha1 = a.get("CKA_CERT_SHA1_HASH")
+              if not isinstance(sha1, (bytes, bytearray)):
+                  continue
+              if cls == "CKO_CERTIFICATE":
+                  der = a.get("CKA_VALUE")
+                  if not isinstance(der, (bytes, bytearray)):
+                      continue
+                  if hashlib.sha1(der).digest() != bytes(sha1):
+                      raise SystemExit("SHA1 mismatch in certdata certificate block")
+                  certs[bytes(sha1)] = {
+                      "der": bytes(der),
+                      "label": a.get("CKA_LABEL", ""),
+                      "server_distrust_after": a.get("CKA_NSS_SERVER_DISTRUST_AFTER"),
+                  }
+              elif cls == "CKO_NSS_TRUST":
+                  trusts[bytes(sha1)] = a
+
+          roots = []
+          for sha1, tr in trusts.items():
+              if tr.get("CKA_TRUST_SERVER_AUTH") != "CKT_NSS_TRUSTED_DELEGATOR":
+                  continue
+              c = certs.get(sha1)
+              if not c:
+                  raise SystemExit("trusted root missing matching certificate")
+              roots.append((sha1, c))
+          roots.sort(key=lambda x: (x[1]["label"], x[0]))
+
+          pack = bytearray(b"THCA1\0")
+          pack += struct.pack(">I", len(roots))
+          manifest = {
+              "format": "THCA1",
+              "source": "Mozilla NSS certdata.txt",
+              "tls_server_trust_anchor_count": len(roots),
+              "roots": []
+          }
+          pem = []
+          for sha1, c in roots:
+              der = c["der"]
+              da = c["server_distrust_after"]
+              if isinstance(da, (bytes, bytearray)):
+                  da = bytes(da).decode("ascii", "replace")
+              else:
+                  da = ""
+              label = c["label"].encode("utf-8")
+              dab = da.encode("ascii")
+              pack += struct.pack(">IHH", len(der), len(label), len(dab))
+              pack += der + label + dab
+              b64 = base64.b64encode(der).decode()
+              pem += ["# " + c["label"], "-----BEGIN CERTIFICATE-----"]
+              pem += [b64[i:i+64] for i in range(0, len(b64), 64)]
+              pem += ["-----END CERTIFICATE-----", ""]
+              manifest["roots"].append({
+                  "label": c["label"],
+                  "sha1": sha1.hex(),
+                  "sha256": hashlib.sha256(der).hexdigest(),
+                  "server_distrust_after": da or None,
+                  "der_size": len(der),
+              })
+
+          pathlib.Path("out/mozilla-tls-roots.thca").write_bytes(pack)
+          pathlib.Path("out/mozilla-tls-roots.pem").write_text("\n".join(pem), "ascii")
+          pathlib.Path("out/mozilla-tls-roots.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False)+"\n", "utf-8")
+          pathlib.Path("out/root-count.txt").write_text(str(len(roots))+"\n")
+          PY
+          python3 /tmp/extract_roots.py
+          sha256sum out/mozilla-tls-roots.thca out/mozilla-tls-roots.pem out/mozilla-tls-roots.json | tee out/generated.sha256
+
+      - name: Package source and generated trust store
+        shell: bash
+        run: |
+          set -euxo pipefail
+          tar -C out -czf mozilla-nss-tls-rootstore-20261005.tar.gz             certdata.txt certdata.sha256 firefox-release-commit.txt source-url.txt             mozilla-tls-roots.thca mozilla-tls-roots.pem mozilla-tls-roots.json             root-count.txt generated.sha256
+          sha256sum mozilla-nss-tls-rootstore-20261005.tar.gz > bundle.sha256
+          du -b mozilla-nss-tls-rootstore-20261005.tar.gz
+          cat out/root-count.txt
+
+      - name: Upload root store bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: mozilla-nss-tls-rootstore-20261005
+          path: |
+            mozilla-nss-tls-rootstore-20261005.tar.gz
+            bundle.sha256
+          retention-days: 400
+          compression-level: 0
