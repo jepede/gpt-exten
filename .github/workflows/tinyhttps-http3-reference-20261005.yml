@@ -1,0 +1,39 @@
+name: TinyHTTPS HTTP3 reference 20261005
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/workflows/tinyhttps-http3-reference-20261005.yml']
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Temporary test tools and standards, not production dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/wheels out/rfc
+          python -m pip download --only-binary=:all: --dest out/wheels 'aioquic==1.3.0'
+          for n in 7541 9000 9001 9002 9113 9114 9204 8446 5246 6101; do
+            curl --fail --location --retry 3 --proto '=https' --tlsv1.2 "https://www.rfc-editor.org/rfc/rfc${n}.txt" -o "out/rfc/rfc${n}.txt"
+          done
+          python -m pip --version >out/python-tool-version.txt
+          printf '%s\n' 'Temporary loopback-only test reference. Production TinyHTTPS has no aioquic/Python/OpenSSL dependency.' >out/README.txt
+          (cd out && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum >SHA256SUMS)
+          tar -czf reference.tar.gz out
+          test "$(stat -c %s reference.tar.gz)" -lt 503316480
+          mkdir artifact
+          mv reference.tar.gz artifact/
+          (cd artifact && sha256sum reference.tar.gz >SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tinyhttps-aioquic-1.3.0-cp313-linux-x86_64-20261005
+          path: artifact/
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
