@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - '.github/workflows/fetch-gaokao-english-txt.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/fetch-gaokao-english-txt.yml'
   workflow_dispatch:
 
 permissions:
@@ -39,14 +42,16 @@ jobs:
           })
 
           known = {
-              2019: "https://zy.21cnjy.com/5933650",
-              2020: "https://zy.21cnjy.com/7996753",
-              2021: "https://zy.21cnjy.com/9420474",
-              2022: "https://zy.21cnjy.com/12401051",
-              2023: "https://zy.21cnjy.com/16187687",
-              2024: "https://zy.21cnjy.com/20569440",
-              2025: "https://zy.21cnjy.com/23168059",
-              2026: "https://zy.21cnjy.com/25946873",
+              2017: "https://read01.com/DgBnGA.html",
+              2018: "https://www.sohu.com/a/234718898_809571",
+              2019: "https://www.cpsenglish.com/question/33442",
+              2020: "https://www.en-sky.com/post/275.html",
+              2021: "https://www.en-sky.com/post/589.html",
+              2022: "https://www.en-sky.com/post/773.html",
+              2023: "https://www.cpsenglish.com/article/1168",
+              2024: "https://www.cpsenglish.com/article/1223",
+              2025: "https://www.yeyulingfeng.com/wendang/350971.html",
+              2026: "https://www.en-sky.com/post/1238.html",
           }
 
           fallback = {
@@ -131,6 +136,11 @@ jobs:
               r'\nImage资源列表',
               r'\n资源列表',
               r'\n缩略图、资源来源',
+              r'\n发表于[：:]?',
+              r'\n资料信息',
+              r'\n上一篇',
+              r'\n相关推荐',
+              r'\n相关文档',
           ]
 
           def clean_exam(txt, year):
@@ -165,6 +175,13 @@ jobs:
                   if re.search(r'英语试题第\s*\d+\s*页.*共\s*\d+\s*页', ln):
                       continue
                   if re.fullmatch(r'[裂口Zz0-9 ]{6,}', ln):
+                      continue
+                  # Remove answer keys/analysis accidentally embedded by source pages.
+                  if re.match(r'^(?:答案[：:]|参考答案[：:]|正确答案[：:]|〖答案〗)', ln):
+                      continue
+                  if re.fullmatch(r'(?:\d{1,2}\s*[—–-]\s*\d{1,2}\s*[：:]?\s*)?[A-D]{3,}(?:\s+[A-D]{3,})*', ln):
+                      continue
+                  if re.fullmatch(r'(?:\d{1,2}[—–-]\d{1,2}\s+[A-D]{3,}\s*){1,6}', ln):
                       continue
                   out.append(ln)
               txt = "\n".join(out)
@@ -240,8 +257,8 @@ jobs:
           ok = sum(1 for x in manifest[1:] if x.endswith("\tOK"))
           print("\n".join(manifest))
           print(f"OK={ok}/10")
-          if ok < 8:
-              sys.exit(2)
+          if ok < 10:
+              print(f"WARNING: only {ok}/10 years extracted; artifact will still be uploaded for diagnosis.", file=sys.stderr)
           PY
           python /tmp/extract_gaokao.py
           cd gaokao_english_txt
@@ -258,3 +275,14 @@ jobs:
             gaokao-english-national-I-2017-2026-txt.zip
           retention-days: 1
           compression-level: 6
+      - name: Validate all ten years
+        shell: bash
+        run: |
+          cat gaokao_english_txt/MANIFEST.tsv
+          if grep -q 
+\tFAILED
+ gaokao_english_txt/MANIFEST.tsv; then
+            echo "One or more years failed extraction." >&2
+            exit 2
+          fi
+          test "$(awk -F '\t' 'NR>1 && $7=="OK"{n++} END{print n+0}' gaokao_english_txt/MANIFEST.tsv)" -eq 10
