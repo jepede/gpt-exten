@@ -286,3 +286,5 @@ jobs:
             exit 2
           fi
           test "$(awk -F '\t' 'NR>1 && $7=="OK"{n++} END{print n+0}' gaokao_english_txt/MANIFEST.tsv)" -eq 10
+
+# trigger fresh PR run
