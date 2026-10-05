@@ -1,0 +1,98 @@
+name: Temporary libUE4 v1.0.1 regression fetch
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/tmp-libue4-v1.0.1-regression.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      assets: ${{ steps.assets.outputs.matrix }}
+    steps:
+      - name: Discover libUE4 release assets
+        id: assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v1.0.1" > release.json
+          jq '[.assets[]
+               | select(.name | test("^libUE4.*\\.so$"))
+               | {name,size,id,digest:(.digest // null),created_at,updated_at,browser_download_url}]'              release.json > all-libue4-assets.json
+
+          jq '[.[] | select(.name != "libUE4-GL-4.5.so" and .name != "libUE4-GL-4.6.so")]'              all-libue4-assets.json > uncached-libue4-assets.json
+
+          echo "All libUE4 assets:"
+          jq -r '.[] | [.name, (.size|tostring), (.digest // "no-digest")] | @tsv' all-libue4-assets.json
+          echo "Assets requiring temporary fetch:"
+          jq -r '.[] | [.name, (.size|tostring), (.digest // "no-digest")] | @tsv' uncached-libue4-assets.json
+
+          if jq -e '.[] | select(.size >= 480000000)' uncached-libue4-assets.json >/dev/null; then
+            echo "::error::At least one asset is >= 480,000,000 bytes; refusing to create a potentially >512MB artifact."
+            exit 42
+          fi
+
+          matrix="$(jq -c '.' uncached-libue4-assets.json)"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: libue4-v1.0.1-release-manifest
+          path: |
+            all-libue4-assets.json
+            uncached-libue4-assets.json
+          compression-level: 0
+          retention-days: 1
+
+  fetch:
+    needs: discover
+    if: ${{ needs.discover.outputs.assets != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        asset: ${{ fromJson(needs.discover.outputs.assets) }}
+    steps:
+      - name: Download exact release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSET_NAME: ${{ matrix.asset.name }}
+          EXPECTED_SIZE: ${{ matrix.asset.size }}
+          EXPECTED_DIGEST: ${{ matrix.asset.digest }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          gh release download v1.0.1             --repo "${GITHUB_REPOSITORY}"             --pattern "${ASSET_NAME}"             --dir out
+
+          test -f "out/${ASSET_NAME}"
+          actual_size="$(stat -c %s "out/${ASSET_NAME}")"
+          test "${actual_size}" = "${EXPECTED_SIZE}"
+
+          sha256sum "out/${ASSET_NAME}" | tee "out/${ASSET_NAME}.sha256"
+          file "out/${ASSET_NAME}" | tee "out/${ASSET_NAME}.file.txt"
+
+          cat > "out/${ASSET_NAME}.release-meta.json" <<EOF
+          {
+            "name": $(jq -Rn --arg v "${ASSET_NAME}" '$v'),
+            "expected_size": ${EXPECTED_SIZE},
+            "expected_digest": $(jq -Rn --arg v "${EXPECTED_DIGEST}" '$v'),
+            "release_tag": "v1.0.1",
+            "repository": "${GITHUB_REPOSITORY}"
+          }
+          EOF
+
+      - name: Upload one asset per artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-${{ matrix.asset.name }}
+          path: out/
+          compression-level: 0
+          retention-days: 1
