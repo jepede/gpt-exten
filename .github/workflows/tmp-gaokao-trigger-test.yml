@@ -1,0 +1,21 @@
+name: Temporary Gaokao Trigger Test
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write marker
+        run: |
+          mkdir -p out
+          printf 'run_id=%s\n' "${{ github.run_id }}" > out/run.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-trigger-smoke
+          path: out/run.txt
+          retention-days: 1
