@@ -3,6 +3,7 @@
 GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Version + Platform + Architecture` 查询；是否仍可用以 GitHub 实际返回的 `expires_at` 为准。
 
 ## Index
+| Mozilla NSS TLS Root Store | release-b9bd270cfa3e-20261005 | Any | Any | `37253767754` | SINGLE | `2027-01-03T02:02:10Z` |
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
@@ -1241,3 +1242,47 @@ Download Artifact `11169466690`, verify ZIP SHA256 `8596cfe7c823d64bc2df16b8bd87
 ### Restore
 
 优先直接使用 Release `v1.0.1` 的 `libUE4-GL-4.6.so`。若按联网缓存规则恢复，则下载 Artifact `11309845408`，校验 Artifact ZIP digest `816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab`，解压得到 `libUE4-GL-4.6.so` 后再校验 SHA256 `abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce`。
+
+
+## Mozilla NSS TLS Root Store release-b9bd270cfa3e-20261005
+
+- Name: Mozilla NSS TLS Root Store
+- Version: release-b9bd270cfa3e-20261005
+- Source: Mozilla Firefox release branch NSS `security/nss/lib/ckfw/builtins/certdata.txt`
+- Firefox Release Commit: `b9bd270cfa3ea2f17871975ac8fa5a5afdf93842`
+- certdata.txt SHA256: `beb7e6dfe6499926e52c075c27bcfbe4c957f8609c575b3860273ae2806f63eb`
+- Selection: Mozilla NSS `SERVER_AUTH` + `TRUSTED_DELEGATOR`, cross-checked with curl 8.22.0 official `mk-ca-bundle.pl`
+- TLS Server Trust Anchors: `121`
+- Workflow: `.github/workflows/fetch-mozilla-nss-rootstore-20261005.yml`
+- Run ID: `37253767754`
+- Run Conclusion: `success`
+- Requested Retention: `400 days`
+- Storage Mode: `SINGLE`
+- Artifact Name: `mozilla-nss-tls-rootstore-20261005`
+- Artifact ID: `11321254343`
+- Artifact ZIP Size: `514597` bytes
+- Artifact ZIP SHA256 / Digest: `5a73a5d0fd3a57092367ddcdd8a0887f48b568ec21d111332232aa1a25a28145`
+- Original File: `mozilla-nss-tls-rootstore-20261005.tar.gz`
+- Original Size: `514175` bytes
+- Original SHA256: `c0761aa6e48fd7c81852f0e7a1125bb4b89b212f32b4cf74742c834f8a754e97`
+- Part Count: `1`
+- Created At: `2026-10-05T02:02:16Z`
+- Expires At: `2027-01-03T02:02:10Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Mozilla NSS certdata | Firefox release `b9bd270cfa3e` | Any | Any | `certdata.txt` | `beb7e6dfe6499926e52c075c27bcfbe4c957f8609c575b3860273ae2806f63eb` |
+| Mozilla TLS Root Store DER pack | THCA2 / 121 roots | Any | Any | `mozilla-tls-roots.thca` | `ec2aeb1a6cbfcb9cad4a5842d8f24d9273c10596219d6559fb62910c433f486f` |
+| Mozilla TLS Root Store PEM | 121 roots | Any | Any | `mozilla-tls-roots.pem` | `bc96d4f2521bed110477519f2c9695e120ca4ad3a2c9bf09fad947abc863517a` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `11321254343` | `mozilla-nss-tls-rootstore-20261005` | `514175` | `c0761aa6e48fd7c81852f0e7a1125bb4b89b212f32b4cf74742c834f8a754e97` | `514597` | `sha256:5a73a5d0fd3a57092367ddcdd8a0887f48b568ec21d111332232aa1a25a28145` | `2026-10-05T02:02:16Z` | `2027-01-03T02:02:10Z` |
+
+### Restore
+
+Download Artifact `11321254343`, verify Artifact ZIP SHA256 `5a73a5d0...`, extract `mozilla-nss-tls-rootstore-20261005.tar.gz`, verify SHA256 `c0761aa6...`, then verify `source.sha256` and `generated.sha256` inside the TAR before use.
