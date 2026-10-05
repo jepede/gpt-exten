@@ -1,0 +1,52 @@
+name: Fetch Gaokao English TXT V2
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check requests beautifulsoup4 lxml
+
+      - name: Extract papers
+        id: extract
+        continue-on-error: true
+        run: python scripts/tmp_extract_gaokao_english.py
+
+      - name: Package text files
+        shell: bash
+        run: |
+          cd gaokao_english_txt
+          sha256sum *.txt MANIFEST.tsv EXTRACTION_LOG.txt > SHA256SUMS.txt
+          zip -9 ../gaokao-english-national-I-2017-2026-txt.zip *.txt MANIFEST.tsv EXTRACTION_LOG.txt SHA256SUMS.txt
+          cd ..
+          sha256sum gaokao-english-national-I-2017-2026-txt.zip
+
+      - name: Upload TXT bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-english-national-I-2017-2026-txt-v2
+          path: |
+            gaokao_english_txt/
+            gaokao-english-national-I-2017-2026-txt.zip
+          retention-days: 1
+          compression-level: 6
+
+      - name: Validate completeness
+        shell: bash
+        run: |
+          cat gaokao_english_txt/MANIFEST.tsv
+          count="$(awk -F '\t' 'NR>1 && $8=="OK"{n++} END{print n+0}' gaokao_english_txt/MANIFEST.tsv)"
+          echo "valid years: $count/10"
+          test "$count" -eq 10
