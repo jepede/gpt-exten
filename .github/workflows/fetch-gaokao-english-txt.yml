@@ -5,8 +5,6 @@ on:
     paths:
       - '.github/workflows/fetch-gaokao-english-txt.yml'
   pull_request:
-    paths:
-      - '.github/workflows/fetch-gaokao-english-txt.yml'
   workflow_dispatch:
 
 permissions:
