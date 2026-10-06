@@ -1,0 +1,110 @@
+name: Temporary Gaokao Supplement Bridge
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+    paths:
+      - '.github/workflows/temp-gaokao-supplement-bridge.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-and-pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Fetch supplemental repositories
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p sources out
+          : > out/SOURCE_COMMITS.txt
+          : > out/SOURCE_SIZES.txt
+          clone_repo() {
+            local url="$1"
+            local dir="$2"
+            git clone --depth 1 "$url" "sources/$dir"
+            if git -C "sources/$dir" lfs ls-files >/tmp/lfs.txt 2>/dev/null && [ -s /tmp/lfs.txt ]; then
+              git -C "sources/$dir" lfs pull
+            fi
+            {
+              printf '%s\t' "$dir"
+              git -C "sources/$dir" rev-parse HEAD
+            } >> out/SOURCE_COMMITS.txt
+            rm -rf "sources/$dir/.git"
+            du -sb "sources/$dir" | tee -a out/SOURCE_SIZES.txt
+          }
+          clone_repo https://github.com/deekur/gaokaophysics.git deekur-gaokaophysics
+          clone_repo https://github.com/Zaxaerith/GaokaoCHN.git Zaxaerith-GaokaoCHN
+          clone_repo https://github.com/Zaxaerith/GaokaoENG.git Zaxaerith-GaokaoENG
+          clone_repo https://github.com/Zaxaerith/GaokaoGEO.git Zaxaerith-GaokaoGEO
+
+          python3 - <<'PY'
+          from pathlib import Path
+          sig=b"version https://git-lfs.github.com/spec/v1"
+          hits=[]
+          for p in Path("sources").rglob("*"):
+              if p.is_file():
+                  try:
+                      if p.stat().st_size < 1024 and sig in p.read_bytes():
+                          hits.append(str(p))
+                  except OSError:
+                      pass
+          Path("out/UNRESOLVED_LFS_POINTERS.txt").write_text("\n".join(hits), encoding="utf-8")
+          if hits:
+              raise SystemExit("unresolved Git LFS pointers:\n" + "\n".join(hits))
+          PY
+
+      - name: Package and split
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar --zstd -cf out/gaokao-supplements.tar.zst sources
+          sha256sum out/gaokao-supplements.tar.zst > out/BUNDLE_SHA256.txt
+          stat -c '%n %s bytes' out/gaokao-supplements.tar.zst > out/BUNDLE_SIZE.txt
+          split -b 300M -d -a 2 out/gaokao-supplements.tar.zst out/gaokao-supplements.part.
+          sha256sum out/gaokao-supplements.part.* > out/PARTS_SHA256SUMS.txt
+          ls -lh out/gaokao-supplements.part.*
+
+      - name: Upload metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-supplements-metadata
+          path: |
+            out/SOURCE_COMMITS.txt
+            out/SOURCE_SIZES.txt
+            out/UNRESOLVED_LFS_POINTERS.txt
+            out/BUNDLE_SHA256.txt
+            out/BUNDLE_SIZE.txt
+            out/PARTS_SHA256SUMS.txt
+          retention-days: 1
+          compression-level: 9
+
+      - name: Upload part 00
+        if: ${{ hashFiles('out/gaokao-supplements.part.00') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-supplements-part-00
+          path: out/gaokao-supplements.part.00
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload part 01
+        if: ${{ hashFiles('out/gaokao-supplements.part.01') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-supplements-part-01
+          path: out/gaokao-supplements.part.01
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload part 02
+        if: ${{ hashFiles('out/gaokao-supplements.part.02') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-supplements-part-02
+          path: out/gaokao-supplements.part.02
+          retention-days: 1
+          compression-level: 0
