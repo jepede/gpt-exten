@@ -27,6 +27,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p out
+          exec > >(tee out/build.log) 2>&1
           ROOT="$PWD/install"
           cd nghttp3-1.18.0
           autoreconf -fi
@@ -37,7 +39,6 @@ jobs:
           autoreconf -fi
           PKG_CONFIG_PATH="$ROOT/lib/pkgconfig" ./configure --prefix="$ROOT" --with-gnutls
           make -j2
-          mkdir -p ../out
           cp examples/gtlsserver ../out/ngtcp2-gtlsserver
           cp "$ROOT/lib/"libnghttp3.so* ../out/ || true
           cp "$ROOT/lib/"libngtcp2.so* ../out/ || true
@@ -48,6 +49,7 @@ jobs:
           du -sb . > SIZE.txt
           test "$(du -sb . | cut -f1)" -lt 503316480
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: tinyhttps-ngtcp2-v2-server-1.25.0
           path: out/
