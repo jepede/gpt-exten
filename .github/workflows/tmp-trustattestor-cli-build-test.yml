@@ -1,5 +1,5 @@
 name: Temp TrustAttestor CLI Build Test
-# rerun after fmt pin c83f1330
+# rerun after fmt compatibility fix a78f7b55
 
 on:
   push:
