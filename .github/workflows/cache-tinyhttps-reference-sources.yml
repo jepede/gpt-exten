@@ -1,0 +1,59 @@
+name: Cache TinyHTTPS OpenSSL curl reference sources
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/cache-tinyhttps-reference-sources.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      OPENSSL_TAG: openssl-4.0.3
+      CURL_TAG: curl-8_22_0
+    steps:
+      - name: Download fixed upstream source releases
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          curl --fail --location --retry 5 --retry-all-errors --proto '=https' --tlsv1.2 \
+            "https://codeload.github.com/openssl/openssl/tar.gz/refs/tags/${OPENSSL_TAG}" \
+            -o "out/openssl-4.0.3.tar.gz"
+          curl --fail --location --retry 5 --retry-all-errors --proto '=https' --tlsv1.2 \
+            "https://codeload.github.com/curl/curl/tar.gz/refs/tags/${CURL_TAG}" \
+            -o "out/curl-8.22.0.tar.gz"
+
+          tar -tzf out/openssl-4.0.3.tar.gz >/dev/null
+          tar -tzf out/curl-8.22.0.tar.gz >/dev/null
+
+          cat > out/SOURCES.txt <<EOF
+          OpenSSL 4.0.3
+          tag: ${OPENSSL_TAG}
+          source: https://github.com/openssl/openssl/releases/tag/${OPENSSL_TAG}
+
+          curl 8.22.0
+          tag: ${CURL_TAG}
+          source: https://github.com/curl/curl/releases/tag/${CURL_TAG}
+          EOF
+
+          (
+            cd out
+            sha256sum openssl-4.0.3.tar.gz curl-8.22.0.tar.gz > SHA256SUMS.txt
+            stat -c '%n %s' openssl-4.0.3.tar.gz curl-8.22.0.tar.gz > SIZES.txt
+          )
+          test "$(du -sb out | cut -f1)" -lt 503316480
+
+      - name: Upload source cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: tinyhttps-openssl-4.0.3-curl-8.22.0-sources
+          path: out/
+          retention-days: 400
+          compression-level: 0
+          if-no-files-found: error
