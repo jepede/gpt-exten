@@ -1,0 +1,56 @@
+name: TinyHTTPS ngtcp2 v2 interop server 20261006
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/tinyhttps-ngtcp2-v2-server-20261006.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake libtool pkg-config libev-dev libc-ares-dev libgnutls28-dev g++ make
+      - name: Fetch fixed reference sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --proto '=https' --tlsv1.2 https://codeload.github.com/ngtcp2/nghttp3/tar.gz/refs/tags/v1.18.0 -o nghttp3.tar.gz
+          curl --fail --location --retry 3 --proto '=https' --tlsv1.2 https://codeload.github.com/ngtcp2/ngtcp2/tar.gz/refs/tags/v1.25.0 -o ngtcp2.tar.gz
+          tar -xzf nghttp3.tar.gz
+          tar -xzf ngtcp2.tar.gz
+      - name: Build nghttp3 and ngtcp2 GnuTLS server
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD/install"
+          cd nghttp3-1.18.0
+          autoreconf -fi
+          ./configure --prefix="$ROOT" --enable-lib-only
+          make -j2
+          make install
+          cd ../ngtcp2-1.25.0
+          autoreconf -fi
+          PKG_CONFIG_PATH="$ROOT/lib/pkgconfig" ./configure --prefix="$ROOT" --with-gnutls
+          make -j2
+          mkdir -p ../out
+          cp examples/gtlsserver ../out/ngtcp2-gtlsserver
+          cp "$ROOT/lib/"libnghttp3.so* ../out/ || true
+          cp "$ROOT/lib/"libngtcp2.so* ../out/ || true
+          cp "$ROOT/lib/"libngtcp2_crypto_gnutls.so* ../out/ || true
+          cd ../out
+          strip ngtcp2-gtlsserver || true
+          sha256sum * > SHA256SUMS.txt
+          du -sb . > SIZE.txt
+          test "$(du -sb . | cut -f1)" -lt 503316480
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tinyhttps-ngtcp2-v2-server-1.25.0
+          path: out/
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
