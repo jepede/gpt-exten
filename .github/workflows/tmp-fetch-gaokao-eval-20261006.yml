@@ -1,0 +1,39 @@
+name: Temporary fetch GAOKAO-Eval
+
+on:
+  push:
+    branches:
+      - tmp/fetch-gaokao-eval-20261006
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch pinned source repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC_COMMIT=3a532f1cfbe14b83bf3a5da7017d6494e8bfe9ae
+          git clone https://github.com/open-compass/GAOKAO-Eval.git GAOKAO-Eval
+          git -C GAOKAO-Eval checkout "$SRC_COMMIT"
+          test "$(git -C GAOKAO-Eval rev-parse HEAD)" = "$SRC_COMMIT"
+          printf '%s\n' "$SRC_COMMIT" > SOURCE_COMMIT.txt
+          find GAOKAO-Eval -type f ! -path 'GAOKAO-Eval/.git/*' -print0 | sort -z | xargs -0 sha256sum > SOURCE_FILES.sha256
+          rm -rf GAOKAO-Eval/.git
+          tar -czf GAOKAO-Eval-3a532f1c.tar.gz GAOKAO-Eval SOURCE_COMMIT.txt SOURCE_FILES.sha256
+          sha256sum GAOKAO-Eval-3a532f1c.tar.gz > ARCHIVE.sha256
+
+      - name: Upload temporary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GAOKAO-Eval-3a532f1c
+          path: |
+            GAOKAO-Eval-3a532f1c.tar.gz
+            SOURCE_COMMIT.txt
+            SOURCE_FILES.sha256
+            ARCHIVE.sha256
+          retention-days: 1
+          compression-level: 0
