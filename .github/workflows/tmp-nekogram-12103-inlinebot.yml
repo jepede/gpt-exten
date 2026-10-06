@@ -1,0 +1,80 @@
+name: Temporary Nekogram 12.10.3 Inline Bot Analysis
+
+on:
+  push:
+    branches:
+      - tmp/nekogram-12103-inlinebot-20261006
+    paths:
+      - .github/workflows/tmp-nekogram-12103-inlinebot.yml
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download official attested arm64 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://github.com/Nekogram/Nekogram/releases/download/v12.10.3/Nekogram-12.10.3-7089-arm64-v8a.apk'
+          curl -fL --retry 4 --retry-delay 2 -o Nekogram-12.10.3-7089-arm64-v8a.apk "$URL"
+          echo '5c9bb115daec120522aba79ee566545e7417038bef8b054dc2299a6912cf6ff7  Nekogram-12.10.3-7089-arm64-v8a.apk' | sha256sum -c -
+          stat -c 'size=%s' Nekogram-12.10.3-7089-arm64-v8a.apk
+
+      - name: Fetch JADX and decompile
+        shell: bash
+        run: |
+          set -euo pipefail
+          JURL="$(curl -fsSL https://api.github.com/repos/skylot/jadx/releases/latest | jq -r '.assets[] | select(.name | test("^jadx-[0-9.]+\\.zip$")) | .browser_download_url' | head -n1)"
+          test -n "$JURL"
+          echo "JADX=$JURL"
+          curl -fL --retry 4 --retry-delay 2 -o jadx.zip "$JURL"
+          unzip -q jadx.zip -d jadx
+          chmod +x jadx/bin/jadx
+          mkdir -p out
+          jadx/bin/jadx --no-res --comments-level none -d out Nekogram-12.10.3-7089-arm64-v8a.apk || true
+
+      - name: Extract Inline Bot evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          {
+            echo '# Nekogram 12.10.3 official APK inline/helper bot reverse-analysis'
+            echo
+            echo '## APK identity'
+            sha256sum Nekogram-12.10.3-7089-arm64-v8a.apk
+            stat -c 'size=%s' Nekogram-12.10.3-7089-arm64-v8a.apk
+            echo
+            echo '## Exact interesting matches'
+            grep -RInaE --binary-files=without-match 'HELPER_BOT|nekonotificationbot|tgdb_search_bot|usinfobot|check_for_updates|get_config|saveStorageValue|getStorageValues|deleteStorageValues|TL_messages_getInlineBotResults|messages_getInlineBotResults' out/sources 2>/dev/null || true
+            echo
+            echo '## Bot-like usernames in decompiled source'
+            grep -RhoE --binary-files=without-match '@?[A-Za-z0-9_]{5,}[Bb]ot\b' out/sources 2>/dev/null | sort -u || true
+          } | tee evidence/report.txt
+
+          # Copy the most relevant decompiled source files if present.
+          find out/sources -type f \( -name 'BuildConfig.java' -o -name 'Extra.java' -o -name 'InlineBotHelper.java' -o -name 'BaseRemoteHelper.java' -o -name 'CloudStorageHelper.java' -o -name 'ConfigHelper.java' -o -name 'UpdateHelper.java' \) -print0 | while IFS= read -r -d '' f; do
+            cp --parents "$f" evidence/
+          done
+
+          # Preserve contextual snippets around every bot-ish occurrence.
+          grep -RInaE -B12 -A20 --binary-files=without-match 'nekonotificationbot|HELPER_BOT|helperBot|InlineBot|check_for_updates|get_config|saveStorageValue|getStorageValues|deleteStorageValues' out/sources 2>/dev/null > evidence/context.txt || true
+
+          echo '--- REPORT ---'
+          cat evidence/report.txt
+          echo '--- CONTEXT HEAD ---'
+          head -n 500 evidence/context.txt || true
+
+      - name: Upload analysis evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: nekogram-12.10.3-inlinebot-analysis
+          path: evidence/
+          retention-days: 1
+          if-no-files-found: error
