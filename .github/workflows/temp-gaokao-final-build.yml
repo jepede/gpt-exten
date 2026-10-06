@@ -1,0 +1,205 @@
+name: Temporary Gaokao Final Build
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+    paths:
+      - '.github/workflows/temp-gaokao-final-build.yml'
+      - 'tools/organize_gaokao_final.py'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout organizer
+        uses: actions/checkout@v4
+
+      - name: Download previously fetched source artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p incoming/primary/{p00,p01,p02,meta}
+          mkdir -p incoming/supp/{p00,p01,meta}
+
+          gh run download 37491476797 --repo "$GITHUB_REPOSITORY" -n gaokao-sources-part-00 -D incoming/primary/p00
+          gh run download 37491476797 --repo "$GITHUB_REPOSITORY" -n gaokao-sources-part-01 -D incoming/primary/p01
+          gh run download 37491476797 --repo "$GITHUB_REPOSITORY" -n gaokao-sources-part-02 -D incoming/primary/p02
+          gh run download 37491476797 --repo "$GITHUB_REPOSITORY" -n gaokao-sources-metadata -D incoming/primary/meta
+
+          gh run download 37492050991 --repo "$GITHUB_REPOSITORY" -n gaokao-supplements-part-00 -D incoming/supp/p00
+          gh run download 37492050991 --repo "$GITHUB_REPOSITORY" -n gaokao-supplements-part-01 -D incoming/supp/p01
+          gh run download 37492050991 --repo "$GITHUB_REPOSITORY" -n gaokao-supplements-metadata -D incoming/supp/meta
+
+      - name: Reassemble and verify source bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work input
+          cat             incoming/primary/p00/gaokao-sources.part.00             incoming/primary/p01/gaokao-sources.part.01             incoming/primary/p02/gaokao-sources.part.02             > work/gaokao-sources.tar.zst
+          expected_primary="$(awk 'NR==1{print $1}' incoming/primary/meta/BUNDLE_SHA256.txt)"
+          actual_primary="$(sha256sum work/gaokao-sources.tar.zst | awk '{print $1}')"
+          test "$expected_primary" = "$actual_primary"
+
+          cat             incoming/supp/p00/gaokao-supplements.part.00             incoming/supp/p01/gaokao-supplements.part.01             > work/gaokao-supplements.tar.zst
+          expected_supp="$(awk 'NR==1{print $1}' incoming/supp/meta/BUNDLE_SHA256.txt)"
+          actual_supp="$(sha256sum work/gaokao-supplements.tar.zst | awk '{print $1}')"
+          test "$expected_supp" = "$actual_supp"
+
+          echo "Primary bundle SHA256: $actual_primary"
+          echo "Supplement bundle SHA256: $actual_supp"
+          tar --zstd -xf work/gaokao-sources.tar.zst -C input
+          tar --zstd -xf work/gaokao-supplements.tar.zst -C input
+          du -sh input/sources/* | sort -h
+
+      - name: Ensure PDF text tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftotext >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y poppler-utils
+          fi
+          pdftotext -v 2>&1 | head -n 1 || true
+
+      - name: Organize and deduplicate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/organize_gaokao_final.py input Gaokao-Papers-1952-2026
+          mkdir -p Gaokao-Papers-1952-2026/报告
+          cp incoming/primary/meta/SOURCE_COMMITS.txt Gaokao-Papers-1952-2026/报告/SOURCE_COMMITS_PRIMARY.txt
+          cp incoming/primary/meta/SOURCE_SIZES.txt Gaokao-Papers-1952-2026/报告/SOURCE_SIZES_PRIMARY.txt
+          cp incoming/supp/meta/SOURCE_COMMITS.txt Gaokao-Papers-1952-2026/报告/SOURCE_COMMITS_SUPPLEMENT.txt
+          cp incoming/supp/meta/SOURCE_SIZES.txt Gaokao-Papers-1952-2026/报告/SOURCE_SIZES_SUPPLEMENT.txt
+          find Gaokao-Papers-1952-2026 -type f | wc -l
+          du -sh Gaokao-Papers-1952-2026
+          cat Gaokao-Papers-1952-2026/报告/SUMMARY.json
+
+      - name: Build ZIP and split below connector ceiling
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          root=Path("Gaokao-Papers-1952-2026")
+          out=Path("final/gaokao-papers-1952-2026.zip")
+          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6, allowZip64=True) as z:
+              for p in sorted(root.rglob("*")):
+                  if p.is_file():
+                      z.write(p, p.relative_to(root.parent))
+          print(out, out.stat().st_size)
+          PY
+          sha256sum final/gaokao-papers-1952-2026.zip > final/ARCHIVE_SHA256.txt
+          stat -c '%n %s bytes' final/gaokao-papers-1952-2026.zip > final/ARCHIVE_SIZE.txt
+          split -b 300M -d -a 2 final/gaokao-papers-1952-2026.zip final/gaokao-papers-1952-2026.zip.part.
+          sha256sum final/gaokao-papers-1952-2026.zip.part.* > final/PARTS_SHA256SUMS.txt
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          root=Path("Gaokao-Papers-1952-2026")
+          out=Path("final/gaokao-index-and-reports.zip")
+          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+              for p in [root/"README.md", *sorted((root/"报告").rglob("*"))]:
+                  if p.is_file():
+                      z.write(p, p.relative_to(root.parent))
+          PY
+
+          cat final/ARCHIVE_SIZE.txt
+          cat final/ARCHIVE_SHA256.txt
+          ls -lh final/gaokao-papers-1952-2026.zip.part.*
+          cat final/PARTS_SHA256SUMS.txt
+
+      - name: Upload index and reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-final-index-and-reports
+          path: |
+            final/gaokao-index-and-reports.zip
+            final/ARCHIVE_SHA256.txt
+            final/ARCHIVE_SIZE.txt
+            final/PARTS_SHA256SUMS.txt
+          retention-days: 1
+          compression-level: 9
+
+      - name: Upload final part 00
+        if: ${{ hashFiles('final/gaokao-papers-1952-2026.zip.part.00') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-final-part-00
+          path: final/gaokao-papers-1952-2026.zip.part.00
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload final part 01
+        if: ${{ hashFiles('final/gaokao-papers-1952-2026.zip.part.01') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-final-part-01
+          path: final/gaokao-papers-1952-2026.zip.part.01
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload final part 02
+        if: ${{ hashFiles('final/gaokao-papers-1952-2026.zip.part.02') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-final-part-02
+          path: final/gaokao-papers-1952-2026.zip.part.02
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload final part 03
+        if: ${{ hashFiles('final/gaokao-papers-1952-2026.zip.part.03') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-final-part-03
+          path: final/gaokao-papers-1952-2026.zip.part.03
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload final part 04
+        if: ${{ hashFiles('final/gaokao-papers-1952-2026.zip.part.04') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-final-part-04
+          path: final/gaokao-papers-1952-2026.zip.part.04
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload final part 05
+        if: ${{ hashFiles('final/gaokao-papers-1952-2026.zip.part.05') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-final-part-05
+          path: final/gaokao-papers-1952-2026.zip.part.05
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload final part 06
+        if: ${{ hashFiles('final/gaokao-papers-1952-2026.zip.part.06') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-final-part-06
+          path: final/gaokao-papers-1952-2026.zip.part.06
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload final part 07
+        if: ${{ hashFiles('final/gaokao-papers-1952-2026.zip.part.07') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-final-part-07
+          path: final/gaokao-papers-1952-2026.zip.part.07
+          retention-days: 1
+          compression-level: 0
