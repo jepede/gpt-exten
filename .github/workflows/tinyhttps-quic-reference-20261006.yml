@@ -1,0 +1,32 @@
+name: TinyHTTPS QUIC reference 20261006
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/tinyhttps-quic-reference-20261006.yml'
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Fetch QUIC/HTTP3 reference sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          curl --fail --location --retry 3 --proto '=https' --tlsv1.2             https://codeload.github.com/ngtcp2/ngtcp2/tar.gz/refs/tags/v1.25.0             -o out/ngtcp2-v1.25.0.tar.gz
+          curl --fail --location --retry 3 --proto '=https' --tlsv1.2             https://codeload.github.com/ngtcp2/nghttp3/tar.gz/refs/tags/v1.18.0             -o out/nghttp3-v1.18.0.tar.gz
+          curl --fail --location --retry 3 --proto '=https' --tlsv1.2             https://codeload.github.com/cloudflare/quiche/tar.gz/refs/tags/0.30.0             -o out/quiche-0.30.0.tar.gz
+          for f in out/*.tar.gz; do tar -tzf "$f" >/dev/null; done
+          cd out
+          sha256sum *.tar.gz > SHA256SUMS.txt
+          stat -c '%n %s' *.tar.gz > SIZES.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tinyhttps-quic-reference-20261006
+          path: out/
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
