@@ -1,0 +1,179 @@
+name: Temporary Gaokao Sources Bridge
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+    paths:
+      - '.github/workflows/temp-gaokao-sources-bridge.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-and-pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Fetch source repositories
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p sources out
+          : > out/SOURCE_COMMITS.txt
+          : > out/SOURCE_SIZES.txt
+          : > out/LFS_AUDIT.txt
+
+          clone_repo() {
+            local url="$1"
+            local dir="$2"
+            echo "::group::clone $url"
+            git clone --depth 1 "$url" "sources/$dir"
+            if git -C "sources/$dir" lfs ls-files >/tmp/lfs.txt 2>/dev/null && [ -s /tmp/lfs.txt ]; then
+              cat /tmp/lfs.txt | tee -a out/LFS_AUDIT.txt
+              git -C "sources/$dir" lfs pull
+            else
+              echo "$dir: no Git LFS objects detected" | tee -a out/LFS_AUDIT.txt
+            fi
+            {
+              printf '%s\t' "$dir"
+              git -C "sources/$dir" rev-parse HEAD
+            } >> out/SOURCE_COMMITS.txt
+            rm -rf "sources/$dir/.git"
+            du -sb "sources/$dir" | tee -a out/SOURCE_SIZES.txt
+            echo "::endgroup::"
+          }
+
+          clone_repo https://github.com/rainewhk/gaokao.git rainewhk-gaokao
+          clone_repo https://github.com/OpenLMLab/GAOKAO-Bench.git OpenLMLab-GAOKAO-Bench
+          clone_repo https://github.com/deekur/gaokaomath.git deekur-gaokaomath
+          clone_repo https://github.com/TsubameHata/gaokao_math_corpus.git TsubameHata-gaokao_math_corpus
+          clone_repo https://github.com/qingshuo/China-Gaokao-Papers-Collection.git qingshuo-China-Gaokao-Papers-Collection
+
+          printf '%s\n' \
+            'rainewhk/gaokao' \
+            'OpenLMLab/GAOKAO-Bench' \
+            'deekur/gaokaomath' \
+            'TsubameHata/gaokao_math_corpus' \
+            'qingshuo/China-Gaokao-Papers-Collection' > sources/SOURCES.txt
+
+          # Audit for unresolved LFS pointer files after lfs pull.
+          python3 - <<'PY'
+          from pathlib import Path
+          hits=[]
+          sig=b"version https://git-lfs.github.com/spec/v1"
+          for p in Path("sources").rglob("*"):
+              if p.is_file():
+                  try:
+                      if p.stat().st_size < 1024 and sig in p.read_bytes():
+                          hits.append(str(p))
+                  except OSError:
+                      pass
+          Path("out/UNRESOLVED_LFS_POINTERS.txt").write_text("\n".join(hits), encoding="utf-8")
+          if hits:
+              print("Unresolved LFS pointers:", *hits, sep="\n")
+              raise SystemExit(2)
+          PY
+
+      - name: Package and split below 512 MB
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar --zstd -cf out/gaokao-sources.tar.zst sources
+          sha256sum out/gaokao-sources.tar.zst > out/BUNDLE_SHA256.txt
+          stat -c '%n %s bytes' out/gaokao-sources.tar.zst > out/BUNDLE_SIZE.txt
+
+          # Each raw part is 300 MiB, safely below the 512 MB connector ceiling
+          # even after GitHub wraps it in an artifact ZIP.
+          split -b 300M -d -a 2 out/gaokao-sources.tar.zst out/gaokao-sources.part.
+          sha256sum out/gaokao-sources.part.* > out/PARTS_SHA256SUMS.txt
+          ls -lh out/gaokao-sources.part.*
+          cat out/BUNDLE_SHA256.txt
+          cat out/PARTS_SHA256SUMS.txt
+
+      - name: Upload metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-sources-metadata
+          path: |
+            out/SOURCE_COMMITS.txt
+            out/SOURCE_SIZES.txt
+            out/LFS_AUDIT.txt
+            out/UNRESOLVED_LFS_POINTERS.txt
+            out/BUNDLE_SHA256.txt
+            out/BUNDLE_SIZE.txt
+            out/PARTS_SHA256SUMS.txt
+          retention-days: 1
+          compression-level: 9
+
+      - name: Upload part 00
+        if: ${{ hashFiles('out/gaokao-sources.part.00') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-sources-part-00
+          path: out/gaokao-sources.part.00
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload part 01
+        if: ${{ hashFiles('out/gaokao-sources.part.01') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-sources-part-01
+          path: out/gaokao-sources.part.01
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload part 02
+        if: ${{ hashFiles('out/gaokao-sources.part.02') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-sources-part-02
+          path: out/gaokao-sources.part.02
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload part 03
+        if: ${{ hashFiles('out/gaokao-sources.part.03') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-sources-part-03
+          path: out/gaokao-sources.part.03
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload part 04
+        if: ${{ hashFiles('out/gaokao-sources.part.04') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-sources-part-04
+          path: out/gaokao-sources.part.04
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload part 05
+        if: ${{ hashFiles('out/gaokao-sources.part.05') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-sources-part-05
+          path: out/gaokao-sources.part.05
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload part 06
+        if: ${{ hashFiles('out/gaokao-sources.part.06') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-sources-part-06
+          path: out/gaokao-sources.part.06
+          retention-days: 1
+          compression-level: 0
+
+      - name: Upload part 07
+        if: ${{ hashFiles('out/gaokao-sources.part.07') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-sources-part-07
+          path: out/gaokao-sources.part.07
+          retention-days: 1
+          compression-level: 0
