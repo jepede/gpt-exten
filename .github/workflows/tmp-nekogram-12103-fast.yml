@@ -1,0 +1,68 @@
+name: Temporary Nekogram 12.10.3 Fast Smali Bot Analysis
+
+on:
+  push:
+    branches:
+      - tmp/nekogram-12103-inlinebot-20261006
+    paths:
+      - .github/workflows/tmp-nekogram-12103-fast.yml
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download and verify official APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 4 --retry-delay 2             -o app.apk             'https://github.com/Nekogram/Nekogram/releases/download/v12.10.3/Nekogram-12.10.3-7089-arm64-v8a.apk'
+          echo '5c9bb115daec120522aba79ee566545e7417038bef8b054dc2299a6912cf6ff7  app.apk' | sha256sum -c -
+
+      - name: Fetch Apktool and decode smali
+        shell: bash
+        run: |
+          set -euo pipefail
+          AURL="$(curl -fsSL https://api.github.com/repos/iBotPeaches/Apktool/releases/latest | jq -r '.assets[] | select(.name | test("^apktool_[0-9.]+\\.jar$")) | .browser_download_url' | head -n1)"
+          test -n "$AURL"
+          echo "APKTOOL=$AURL"
+          curl -fL --retry 4 -o apktool.jar "$AURL"
+          java -jar apktool.jar d -f -r -o smali-out app.apk >/tmp/apktool.log 2>&1 || { cat /tmp/apktool.log; exit 1; }
+
+      - name: Locate actual inline/helper bot constants
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          {
+            echo '# APK'
+            sha256sum app.apk
+            echo
+            echo '# Direct string hits in decoded smali'
+            grep -RInaE -i -B20 -A40 --binary-files=without-match               'nekonotificationbot|tgdb_search_bot|usinfobot|helper[_ -]?bot|check_for_updates|get_config|saveStorageValue|getStorageValues|deleteStorageValues|inlinebot'               smali-out/smali* 2>/dev/null || true
+            echo
+            echo '# Bot-like string literals'
+            grep -RhoE --include='*.smali' 'const-string[^"]*"[^"]*[Bb]ot[^"]*"' smali-out/smali* 2>/dev/null | sort -u || true
+          } | tee evidence/report.txt
+
+          # Save only matching smali files for compact review.
+          grep -RIlE -i             'nekonotificationbot|tgdb_search_bot|usinfobot|check_for_updates|get_config|saveStorageValue|getStorageValues|deleteStorageValues|inlinebot'             smali-out/smali* 2>/dev/null | while read -r f; do
+              mkdir -p "evidence/$(dirname "$f")"
+              cp "$f" "evidence/$f"
+          done || true
+
+          cat /tmp/apktool.log > evidence/apktool.log
+          echo '--- FAST REPORT ---'
+          cat evidence/report.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nekogram-12.10.3-smali-bot-analysis
+          path: evidence/
+          retention-days: 1
+          if-no-files-found: error
