@@ -1,0 +1,40 @@
+name: TinyHTTPS quiche interop server 20261006
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/tinyhttps-quiche-server-20261006.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Fetch quiche 0.30.0 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
+            https://codeload.github.com/cloudflare/quiche/tar.gz/refs/tags/0.30.0 -o quiche.tar.gz
+          tar -xzf quiche.tar.gz
+      - name: Build HTTP/3 reference server
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd quiche-0.30.0
+          cargo build --release -p quiche --example http3-server
+          mkdir -p ../out
+          cp target/release/examples/http3-server ../out/quiche-http3-server
+          strip ../out/quiche-http3-server || true
+          cd ../out
+          sha256sum quiche-http3-server > SHA256SUMS.txt
+          stat -c '%n %s' quiche-http3-server > SIZES.txt
+          test "$(stat -c %s quiche-http3-server)" -lt 503316480
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tinyhttps-quiche-http3-server-0.30.0
+          path: out/
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
