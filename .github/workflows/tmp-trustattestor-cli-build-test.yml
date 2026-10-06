@@ -1,5 +1,5 @@
 name: Temp TrustAttestor CLI Build Test
-# rerun after fmt compatibility fix a78f7b55
+# rerun after fmt locale disable 0482e344
 
 on:
   push:
