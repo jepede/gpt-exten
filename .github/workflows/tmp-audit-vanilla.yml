@@ -1,0 +1,40 @@
+name: Temporary Vanilla Source Audit
+
+on:
+  push:
+    branches:
+      - tmp/audit-vanilla-20261006
+    paths:
+      - .github/workflows/tmp-audit-vanilla.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone Vanilla
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch vanilla https://github.com/reddxae/Vanilla.git target
+          git -C target rev-parse HEAD
+
+      - name: Run source audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x tools/tmp-vanilla-audit.sh
+          ./tools/tmp-vanilla-audit.sh
+
+      - name: Upload compact audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: vanilla-source-audit-20261006
+          path: evidence/vanilla-audit.md
+          retention-days: 1
+          if-no-files-found: error
