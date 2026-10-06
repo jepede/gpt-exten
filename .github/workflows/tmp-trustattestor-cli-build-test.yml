@@ -1,0 +1,100 @@
+name: Temp TrustAttestor CLI Build Test
+
+on:
+  push:
+    paths:
+      - '.github/workflows/tmp-trustattestor-cli-build-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout TrustAttestor test branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: jepede/TrustAttestor
+          ref: feat/cli-build-pipeline
+          path: target
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up Java 17
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android command-line tools
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools
+
+      - name: Install pinned TrustAttestor toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          props=target/android/gradle.properties
+          prop() {
+            awk -F= -v key="$1" '$1 == key { print $2; exit }' "$props"
+          }
+          compile_sdk="$(prop trustattestor.android.compileSdk)"
+          build_tools="$(prop trustattestor.android.buildTools)"
+          d8_build_tools="$(prop trustattestor.android.d8BuildTools)"
+          cmake="$(prop trustattestor.android.cmake)"
+          ndk="$(prop trustattestor.android.ndk)"
+          sdkmanager --install \
+            'platform-tools' \
+            "platforms;android-${compile_sdk}" \
+            "build-tools;${build_tools}" \
+            "build-tools;${d8_build_tools}" \
+            "cmake;${cmake}" \
+            "ndk;${ndk}"
+
+      - name: Build through CLI
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash target/android/build-cli.sh debug \
+            --no-sdk-install \
+            --build-root "$RUNNER_TEMP/trustattestor-build"
+
+      - name: Run host regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          export TRUST_ATTESTOR_BUILD_ROOT="$RUNNER_TEMP/trustattestor-build"
+          export GRADLE_USER_HOME="$TRUST_ATTESTOR_BUILD_ROOT/gradle-user"
+          export ANDROID_USER_HOME="$TRUST_ATTESTOR_BUILD_ROOT/android-user"
+          export TRUST_ATTESTOR_TEMP="$TRUST_ATTESTOR_BUILD_ROOT/temp"
+          export TEMP="$TRUST_ATTESTOR_TEMP" TMP="$TRUST_ATTESTOR_TEMP" TMPDIR="$TRUST_ATTESTOR_TEMP"
+          cd target/android
+          ./gradlew --no-daemon --console=plain --stacktrace \
+            "-PtrustAttestorBuildRoot=$TRUST_ATTESTOR_BUILD_ROOT" \
+            :dex:check :app:testDebugUnitTest
+
+      - name: Record artifact checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk='${{ steps.build.outputs.apk_path }}'
+          sha256sum "$apk" | tee "$RUNNER_TEMP/SHA256SUMS.txt"
+          "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --print-certs "$apk" | tee "$RUNNER_TEMP/apksigner.txt"
+
+      - name: Upload test result
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trustattestor-cli-build-test
+          path: |
+            ${{ steps.build.outputs.apk_path }}
+            ${{ runner.temp }}/SHA256SUMS.txt
+            ${{ runner.temp }}/apksigner.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
