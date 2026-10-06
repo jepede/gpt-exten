@@ -1,4 +1,5 @@
 name: Temp TrustAttestor CLI Build Test
+# rerun after fmt pin c83f1330
 
 on:
   push:
