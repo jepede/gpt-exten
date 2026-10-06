@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| TinyHTTPS OpenSSL + curl reference sources | OpenSSL 4.0.3 + curl 8.22.0 | Any | Any | `37458536791` | SINGLE | `2027-01-04T11:45:33Z` |
 | PUBG MOBILE Global Base APK | 4.6.0 (21525) | Android | arm64-v8a | `37217716536` | SINGLE | `2027-01-02T16:41:47Z` |
 | radare2 | 6.2.2 | Linux / Debian | x86_64 | `36873712969` | SINGLE | `2026-12-30T14:06:12Z` |
 | TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-releasecomplete-v3 | Linux | x86_64 | `34698530131` | SINGLE | `2026-12-11T14:10:58Z` |
@@ -1286,3 +1287,47 @@ Download Artifact `11169466690`, verify ZIP SHA256 `8596cfe7c823d64bc2df16b8bd87
 ### Restore
 
 Download Artifact `11321254343`, verify Artifact ZIP SHA256 `5a73a5d0...`, extract `mozilla-nss-tls-rootstore-20261005.tar.gz`, verify SHA256 `c0761aa6...`, then verify `source.sha256` and `generated.sha256` inside the TAR before use.
+
+
+## TinyHTTPS OpenSSL 4.0.3 + curl 8.22.0 reference sources
+
+- Name: `TinyHTTPS OpenSSL + curl reference sources`
+- Version: `OpenSSL 4.0.3 + curl 8.22.0`
+- Platform: Any
+- Architecture: Any
+- Workflow: `.github/workflows/cache-tinyhttps-reference-sources.yml`
+- Workflow Name: `Cache TinyHTTPS OpenSSL curl reference sources`
+- Run ID: `37458536791`
+- Run Conclusion: `success`
+- Repository Visibility: `Public`
+- Requested Retention: `400 days`
+- Effective Retention: actual GitHub expiry below
+- Storage Mode: `SINGLE`
+- Artifact Name: `tinyhttps-openssl-4.0.3-curl-8.22.0-sources`
+- Artifact ID: `11411116830`
+- Artifact Archive Size: `59117818` bytes
+- Artifact Archive SHA256 / Digest: `608684e7f70296d287fc33a3e673efb4c59588d9db72812f49af55e147ee172e`
+- Original File: `openssl-4.0.3.tar.gz` + `curl-8.22.0.tar.gz`
+- Original Size: `59116768` bytes combined
+- Original SHA256: OpenSSL `29cbaaabad1f3b0e8f28274eb8445a1cb0c54af21a6f845882ee018763df7159`; curl `222c6b5c1f368ac63aed59bce2774eb5def9e8e67e46e800be182e684d2845a3`
+- Source Manifest SHA256: `64ff386c25b282641db60c57e4ba19cec40becaf26deee322aacbbdbcc54deee`
+- Part Count: `1`
+- Created At: `2026-10-06T11:45:45Z`
+- Expires At: `2027-01-04T11:45:33Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| OpenSSL source | 4.0.3 | Any | Any | `openssl-4.0.3.tar.gz` | `29cbaaabad1f3b0e8f28274eb8445a1cb0c54af21a6f845882ee018763df7159` |
+| curl source | 8.22.0 | Any | Any | `curl-8.22.0.tar.gz` | `222c6b5c1f368ac63aed59bce2774eb5def9e8e67e46e800be182e684d2845a3` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `11411116830` | `tinyhttps-openssl-4.0.3-curl-8.22.0-sources` | `59116768` combined | per-file hashes above | `59117818` | `sha256:608684e7f70296d287fc33a3e673efb4c59588d9db72812f49af55e147ee172e` | `2026-10-06T11:45:45Z` | `2027-01-04T11:45:33Z` |
+
+### Restore
+
+Download Artifact `11411116830`, verify the Artifact ZIP SHA256 `608684e7f70296d287fc33a3e673efb4c59588d9db72812f49af55e147ee172e`, extract both source archives, then verify `SHA256SUMS.txt`. OpenSSL 4.0.3 must match `29cbaaabad1f3b0e8f28274eb8445a1cb0c54af21a6f845882ee018763df7159`; curl 8.22.0 must match `222c6b5c1f368ac63aed59bce2774eb5def9e8e67e46e800be182e684d2845a3`.
