@@ -11,17 +11,15 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - name: Fetch verified nghttp3 v1.18.0 commit
+      - name: Fetch verified nghttp3 v1.18.0 commit with submodules
         shell: bash
         run: |
           set -euo pipefail
           commit=dbfc24286138cb0b6490160e7ca87fe1ce6722a0
-          curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
-            "https://codeload.github.com/ngtcp2/nghttp3/tar.gz/${commit}" \
-            -o nghttp3.tar.gz
-          sha256sum nghttp3.tar.gz | tee SOURCE_SHA256.txt
-          mkdir src
-          tar -xzf nghttp3.tar.gz -C src --strip-components=1
+          git clone --filter=blob:none --recurse-submodules --branch v1.18.0 --depth 1 \
+            https://github.com/ngtcp2/nghttp3.git src
+          test "$(git -C src rev-parse HEAD)" = "${commit}"
+          git -C src submodule status --recursive | tee SUBMODULES.txt
           printf 'nghttp3 v1.18.0\ncommit=%s\ntag_object=868e81b343d1350597b47f78a5958d60c3695aa4\n' "${commit}" > SOURCE.txt
       - name: Build qpack reference tool
         shell: bash
