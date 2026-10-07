@@ -1,0 +1,39 @@
+name: Temporary TinyHTTPS aioquic QPACK peer 20261007
+on:
+  push:
+    paths:
+      - '.github/workflows/tmp-tinyhttps-aioquic-qpack-20261007.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Download reproducible aioquic wheel set
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/wheels
+          python -m pip download --only-binary=:all: --dest out/wheels 'aioquic==1.3.0'
+          cd out
+          find wheels -type f -maxdepth 1 -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          python - <<'PY'
+          import json, pathlib
+          files=[]
+          for p in sorted(pathlib.Path('wheels').glob('*')):
+              files.append({'name':p.name,'size':p.stat().st_size})
+          pathlib.Path('MANIFEST.json').write_text(json.dumps(files,indent=2)+'\n')
+          PY
+          du -sb . > SIZE.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tinyhttps-aioquic-1.3.0-qpack-peer-wheels
+          path: out/
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
