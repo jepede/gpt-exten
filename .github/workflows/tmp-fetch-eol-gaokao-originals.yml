@@ -1,0 +1,184 @@
+name: Temporary fetch EOL national Gaokao originals 2015-2024
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Discover and fetch original files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install -q requests beautifulsoup4
+          cat >/tmp/eol.py <<'PY'
+          import requests,re,json,time,hashlib
+          from bs4 import BeautifulSoup
+          from pathlib import Path
+          from urllib.parse import urljoin,urlparse,unquote
+          ROOT='https://gaokao.eol.cn'
+          OUT=Path('out'); OUT.mkdir()
+          S=requests.Session(); S.headers.update({'User-Agent':'Mozilla/5.0 Chrome/140'})
+          subjects=['语文','英语']
+          required={}
+          for y in range(2015,2025):
+              if y==2015: vs=['全国Ⅰ','全国Ⅱ']
+              elif 2016<=y<=2019: vs=['全国Ⅰ','全国Ⅱ','全国Ⅲ']
+              elif y==2020: vs=['全国Ⅰ','全国Ⅱ','全国Ⅲ','新高考Ⅰ','新高考Ⅱ']
+              elif 2021<=y<=2023: vs=['全国甲','全国乙','新高考Ⅰ','新高考Ⅱ']
+              else: vs=['全国甲','新课标Ⅰ','新课标Ⅱ']
+              for s in subjects:
+                  for v in vs: required[(y,s,v)]=[]
+
+          def get(u,timeout=25):
+              for i in range(3):
+                  try:
+                      r=S.get(u,timeout=timeout,allow_redirects=True)
+                      if r.status_code<500:return r
+                  except Exception: pass
+                  time.sleep(.7+i)
+              return None
+
+          def hasnum(t,n):
+              z=t.replace(' ','').upper()
+              arr={1:['全国卷1','全国I','全国Ⅰ','新课标1','新课标I','新课标Ⅰ','新高考1','新高考I','新高考Ⅰ','全国一卷','全国1卷'],
+                   2:['全国卷2','全国II','全国Ⅱ','新课标2','新课标II','新课标Ⅱ','新高考2','新高考II','新高考Ⅱ','全国二卷','全国2卷'],
+                   3:['全国卷3','全国III','全国Ⅲ','新课标3','新课标III','新课标Ⅲ','全国三卷','全国3卷']}[n]
+              return any(x.upper() in z for x in arr)
+          def canon(y,t):
+              z=t.replace(' ','')
+              if any(x in z for x in ['答案','解析','点评','汇总','作文','评析']): return None
+              if '试题' not in z and '真题' not in z: return None
+              if y==2020:
+                  if '山东' in z and ('语文' in z or '英语' in z): return '新高考Ⅰ'
+                  if '海南' in z and ('语文' in z or '英语' in z): return '新高考Ⅱ'
+              if 2015<=y<=2020:
+                  if '全国' in z or '新课标' in z:
+                      if hasnum(z,3): return '全国Ⅲ'
+                      if hasnum(z,2): return '全国Ⅱ'
+                      if hasnum(z,1): return '全国Ⅰ'
+              elif 2021<=y<=2023:
+                  if '全国甲' in z: return '全国甲'
+                  if '全国乙' in z: return '全国乙'
+                  if '新高考' in z or '新课标' in z:
+                      if hasnum(z,2): return '新高考Ⅱ'
+                      if hasnum(z,1): return '新高考Ⅰ'
+              elif y==2024:
+                  if '全国甲' in z or ('全国卷' in z and not ('新高考' in z or '新课标' in z)): return '全国甲'
+                  if '新高考' in z or '新课标' in z:
+                      if hasnum(z,2): return '新课标Ⅱ'
+                      if hasnum(z,1): return '新课标Ⅰ'
+              return None
+
+          # Scan archive indices. 2024..2015 live well within first 70 pages.
+          for page in range(1,71):
+              u=ROOT+'/shiti/' if page==1 else f'{ROOT}/shiti/index_{page}.shtml'
+              r=get(u)
+              if not r: continue
+              soup=BeautifulSoup(r.text,'html.parser')
+              for a in soup.find_all('a',href=True):
+                  title=' '.join(a.get_text(' ',strip=True).split())
+                  if not title: continue
+                  ym=re.search(r'20(1[5-9]|2[0-4])',title)
+                  if not ym: continue
+                  y=int(ym.group(0))
+                  subj=next((s for s in subjects if s in title),None)
+                  if not subj: continue
+                  v=canon(y,title)
+                  if not v or (y,subj,v) not in required: continue
+                  href=urljoin(u,a['href'])
+                  if '/shiti/' not in href: continue
+                  if all(x['url']!=href for x in required[(y,subj,v)]):
+                      required[(y,subj,v)].append({'title':title,'url':href})
+              if page%10==0: print('scanned page',page,flush=True)
+
+          def ext_from(r,url):
+              ct=r.headers.get('content-type','').lower()
+              path=urlparse(r.url).path.lower()
+              for e in ['.docx','.doc','.pdf']:
+                  if path.endswith(e): return e
+              if 'wordprocessingml' in ct:return '.docx'
+              if 'msword' in ct:return '.doc'
+              if 'pdf' in ct:return '.pdf'
+              return ''
+
+          def try_binary(url,referer):
+              try:
+                  r=S.get(url,headers={'Referer':referer},timeout=40,allow_redirects=True)
+              except Exception:return None
+              e=ext_from(r,url)
+              if r.status_code==200 and e and len(r.content)>10000:
+                  return (r,e)
+              return None
+
+          def find_downloads(article):
+              r=get(article)
+              if not r:return []
+              soup=BeautifulSoup(r.text,'html.parser')
+              urls=[]
+              # Direct binary hrefs first, then likely download links.
+              for a in soup.find_all('a',href=True):
+                  href=urljoin(article,a['href']); txt=a.get_text(' ',strip=True)
+                  if re.search(r'\.(?:docx?|pdf)(?:\?|$)',href,re.I):
+                      urls.append(href)
+                  elif '下载' in txt or 'download' in href.lower():
+                      urls.append(href)
+              # Raw document URLs may appear in JS/text.
+              for m in re.findall(r'https?[^\"\'<> ]+?\.(?:docx?|pdf)',r.text,re.I):
+                  urls.append(m.replace('\\/','/'))
+              out=[]; seen=set()
+              for u in urls:
+                  if u in seen:continue
+                  seen.add(u)
+                  b=try_binary(u,article)
+                  if b:
+                      out.append((u,b[0],b[1]));continue
+                  # One intermediate page deep.
+                  rr=get(u)
+                  if rr and 'text/html' in rr.headers.get('content-type','').lower():
+                      ss=BeautifulSoup(rr.text,'html.parser')
+                      for aa in ss.find_all('a',href=True):
+                          h=urljoin(u,aa['href'])
+                          if re.search(r'\.(?:docx?|pdf)(?:\?|$)',h,re.I):
+                              bb=try_binary(h,u)
+                              if bb: out.append((h,bb[0],bb[1]))
+              return out
+
+          manifest=[]
+          for key,cands in sorted(required.items()):
+              y,subj,var=key
+              rec={'year':y,'subject':subj,'variant':var,'candidates':cands,'downloads':[]}
+              print('TARGET',key,'candidates',len(cands),flush=True)
+              for c in cands[:8]:
+                  ds=find_downloads(c['url'])
+                  for u,r,e in ds:
+                      sha=hashlib.sha256(r.content).hexdigest()
+                      if any(d['sha256']==sha for d in rec['downloads']):continue
+                      d=OUT/str(y)/subj/var
+                      d.mkdir(parents=True,exist_ok=True)
+                      fn=f'{y}{var}{subj}_{len(rec["downloads"])+1}{e}'
+                      p=d/fn;p.write_bytes(r.content)
+                      rec['downloads'].append({'article':c['url'],'title':c['title'],'url':u,'file':str(p),'size':len(r.content),'sha256':sha})
+                      print('DOWN',key,len(r.content),u,flush=True)
+                  if rec['downloads']: break
+              manifest.append(rec)
+          (OUT/'EOL_MANIFEST.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+          with (OUT/'EOL_COVERAGE.tsv').open('w',encoding='utf-8') as f:
+              f.write('year\tsubject\tvariant\tcandidates\tdownloads\tfirst_file\n')
+              for r in manifest:
+                  f.write(f"{r['year']}\t{r['subject']}\t{r['variant']}\t{len(r['candidates'])}\t{len(r['downloads'])}\t{r['downloads'][0]['file'] if r['downloads'] else ''}\n")
+          print('SUMMARY targets',len(manifest),'with_download',sum(bool(r['downloads']) for r in manifest))
+          PY
+          python3 /tmp/eol.py
+          du -sh out
+          cat out/EOL_COVERAGE.tsv
+      - name: Upload EOL originals
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-eol-national-originals-2015-2024
+          path: out
+          retention-days: 1
+          compression-level: 0
