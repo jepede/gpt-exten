@@ -35,7 +35,7 @@ jobs:
           cmake --build build --target qpack -j2
           mkdir -p out
           cp build/examples/qpack out/nghttp3-qpack
-          cp SOURCE.txt SOURCE_SHA256.txt out/
+          cp SOURCE.txt SUBMODULES.txt out/
           strip out/nghttp3-qpack || true
           out/nghttp3-qpack --help > out/help.txt 2>&1 || true
           (cd out && sha256sum nghttp3-qpack > SHA256SUMS.txt)
