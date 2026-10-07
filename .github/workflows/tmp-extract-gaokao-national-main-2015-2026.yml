@@ -1,0 +1,250 @@
+name: Temporary extract Gaokao national main TXT 2015-2026
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Extract national papers from public article pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install -q requests beautifulsoup4 trafilatura pillow
+          cat >/tmp/extract.py <<'PY'
+          import re, json, time, hashlib, io
+          from pathlib import Path
+          from urllib.parse import urljoin
+          import requests
+          from bs4 import BeautifulSoup
+          import trafilatura
+          from PIL import Image
+
+          ROOT='https://www.ksft.cn'
+          OUT=Path('out'); OUT.mkdir()
+          S=requests.Session()
+          S.headers.update({'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36'})
+          EXCLUDE=['模拟','模考','联考','月考','期中','期末','一模','二模','三模','适应性','押题','预测','分类汇编','专题','练习','评析','汇总','必刷题','合订本','狂K','校本','诊断','调研']
+          SUBJECTS={'yuwen':'语文','yingyu':'英语'}
+
+          REQUIRED={}
+          for y in range(2015,2027):
+              if y==2015: vs=['全国Ⅰ','全国Ⅱ']
+              elif 2016<=y<=2019: vs=['全国Ⅰ','全国Ⅱ','全国Ⅲ']
+              elif y==2020: vs=['全国Ⅰ','全国Ⅱ','全国Ⅲ','新高考Ⅰ','新高考Ⅱ']
+              elif 2021<=y<=2023: vs=['全国甲','全国乙','新高考Ⅰ','新高考Ⅱ']
+              elif y==2024: vs=['全国甲','新课标Ⅰ','新课标Ⅱ']
+              else: vs=['全国Ⅰ','全国Ⅱ']
+              for s in ['语文','英语']:
+                  for v in vs: REQUIRED[(y,s,v)]=[]
+
+          roman1=['Ⅰ','ⅰ',' I ','I卷','1卷','一卷','卷Ⅰ','卷I','课标Ⅰ','高考Ⅰ']
+          roman2=['Ⅱ','ⅱ',' II ','II卷','2卷','二卷','卷Ⅱ','卷II','课标Ⅱ','高考Ⅱ']
+          roman3=['Ⅲ','ⅲ',' III ','III卷','3卷','三卷','卷Ⅲ','卷III','课标Ⅲ','高考Ⅲ']
+          def has_num(t,n):
+              arr={1:roman1,2:roman2,3:roman3}[n]
+              tt=' '+t+' '
+              return any(x in tt for x in arr)
+          def canon(year,title):
+              t=title.replace('新课标全国','新课标').replace('新高考全国','新高考')
+              if any(x in t for x in EXCLUDE): return None
+              if year==2020:
+                  if '山东' in t and '高考' in t: return '新高考Ⅰ'
+                  if '海南' in t and '高考' in t: return '新高考Ⅱ'
+              if 2015<=year<=2020:
+                  if ('全国' in t or '新课标' in t):
+                      if has_num(t,3): return '全国Ⅲ'
+                      if has_num(t,2): return '全国Ⅱ'
+                      if has_num(t,1): return '全国Ⅰ'
+              elif 2021<=year<=2022:
+                  if '全国甲' in t: return '全国甲'
+                  if '全国乙' in t: return '全国乙'
+                  if '新高考' in t:
+                      if has_num(t,2): return '新高考Ⅱ'
+                      if has_num(t,1): return '新高考Ⅰ'
+              elif year==2023:
+                  if '全国甲' in t: return '全国甲'
+                  if '全国乙' in t: return '全国乙'
+                  if ('新高考' in t or '新课标' in t):
+                      if has_num(t,2): return '新高考Ⅱ'
+                      if has_num(t,1): return '新高考Ⅰ'
+              elif year==2024:
+                  if '全国甲' in t: return '全国甲'
+                  if ('新课标' in t or '新高考' in t):
+                      if has_num(t,2): return '新课标Ⅱ'
+                      if has_num(t,1): return '新课标Ⅰ'
+              else:
+                  if '全国' in t or '新高考' in t or '新课标' in t:
+                      if has_num(t,2): return '全国Ⅱ'
+                      if has_num(t,1): return '全国Ⅰ'
+              return None
+
+          def get(url, timeout=30):
+              for i in range(3):
+                  try:
+                      r=S.get(url,timeout=timeout)
+                      if r.status_code < 500: return r
+                  except Exception: pass
+                  time.sleep(1+i)
+              return None
+
+          # Discover candidate article pages from first five year/subject pages.
+          for year in range(2015,2027):
+              for code,subj in SUBJECTS.items():
+                  seen=set()
+                  for page in range(1,6):
+                      url=f'{ROOT}/{year}?year={year}&subject={code}&sort=asc' if page==1 else f'{ROOT}/{year}/{page}?year={year}&subject={code}&sort=asc'
+                      r=get(url)
+                      if not r: continue
+                      soup=BeautifulSoup(r.text,'html.parser')
+                      for a in soup.find_all('a',href=True):
+                          title=' '.join(a.get_text(' ',strip=True).split())
+                          href=urljoin(ROOT,a['href'])
+                          if '/article/' not in href or href in seen or str(year) not in title or subj not in title: continue
+                          seen.add(href)
+                          v=canon(year,title)
+                          if v and (year,subj,v) in REQUIRED:
+                              REQUIRED[(year,subj,v)].append({'title':title,'url':href,'kind':'ksft'})
+
+          # 2026 pages on KSFT currently expose downloads but little/no body text.
+          # Add public HTML fallbacks whose pages contain the full paper body.
+          fallbacks={
+            (2026,'语文','全国Ⅰ'):[('2026年全国I卷语文高考真题试题（含答案）','https://zy.21cnjy.com/25931986')],
+            (2026,'语文','全国Ⅱ'):[('2026年全国II卷语文试题（真题+答案+解析）','https://zy.21cnjy.com/25931775')],
+            (2026,'英语','全国Ⅰ'):[('2026年全国I卷高考英语真题试卷（含答案+音频）','https://zy.21cnjy.com/25946873')],
+            (2026,'英语','全国Ⅱ'):[('2026年新课标II卷英语试题与解析（含听力）','https://zy.21cnjy.com/25948637')],
+          }
+          for k,v in fallbacks.items():
+              for title,url in v: REQUIRED[k].append({'title':title,'url':url,'kind':'fallback'})
+
+          def clean_markdown(md,title):
+              md=md.replace('\r','')
+              # Cut obvious site chrome/download/related sections after the paper body.
+              cut_patterns=[
+                  r'\n试卷\s*\|\s*格式\s*\|\s*大小\s*\|\s*下载地址',
+                  r'\n还有一些同类型的[:：]?',
+                  r'\n今日更新\b', r'\n最多浏览\b', r'\n最近更新\b',
+                  r'\n资源下载\b'
+              ]
+              positions=[]
+              for p in cut_patterns:
+                  m=re.search(p,md,re.I)
+                  if m and m.start()>300: positions.append(m.start())
+              if positions: md=md[:min(positions)]
+              lines=[]
+              for line in md.splitlines():
+                  s=line.strip()
+                  if not s: 
+                      if lines and lines[-1]!='': lines.append('')
+                      continue
+                  if s in [title,'# '+title]: continue
+                  if re.fullmatch(r'(学年|时间|浏览|下载)[:：].*',s): continue
+                  if s.startswith('Copyright ©'): continue
+                  lines.append(line.rstrip())
+              text='\n'.join(lines)
+              text=re.sub(r'\n{3,}','\n\n',text).strip()
+              return text
+
+          img_pat=re.compile(r'!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)')
+          def fetch_image(url, referer, outdir, idx):
+              try:
+                  u=urljoin(referer,url)
+                  r=S.get(u,headers={'Referer':referer},timeout=30)
+                  if r.status_code!=200 or len(r.content)<200: return None
+                  ct=r.headers.get('content-type','').lower()
+                  if 'svg' in ct or u.lower().split('?')[0].endswith('.svg'):
+                      fn=f'fig{idx:03d}.svg'; (outdir/fn).write_bytes(r.content); return fn
+                  im=Image.open(io.BytesIO(r.content))
+                  if im.width<40 or im.height<30: return None
+                  if im.mode not in ('RGB','L'): im=im.convert('RGB')
+                  fn=f'fig{idx:03d}.webp'
+                  im.save(outdir/fn,'WEBP',quality=92,method=4)
+                  return fn
+              except Exception:
+                  return None
+
+          def extract_candidate(cand, key):
+              year,subj,variant=key
+              r=get(cand['url'],45)
+              if not r: return {'status':'fetch_fail',**cand}
+              html=r.text
+              md=trafilatura.extract(html,output_format='markdown',include_links=False,include_images=True,
+                                     include_tables=True,favor_recall=True,deduplicate=False) or ''
+              md=clean_markdown(md,cand['title'])
+              # 21cnjy often prefixes resource UI; keep only from the actual exam title/marker when possible.
+              if cand['kind']=='fallback':
+                  starts=['绝密★启用前','2026年普通高等学校招生全国统一考试','2026 年普通高等学校招生全国统一考试','普通高等学校招生全国统一考试']
+                  pos=[md.find(x) for x in starts if md.find(x)>=0]
+                  if pos: md=md[min(pos):]
+              nonws=len(re.sub(r'\s+','',img_pat.sub('',md)))
+              return {'status':'ok' if nonws>=500 else 'too_short','markdown':md,'chars':nonws,'images_raw':len(img_pat.findall(md)),**cand}
+
+          report=[]
+          chosen={}
+          for key,cands in sorted(REQUIRED.items()):
+              results=[]
+              for c in cands:
+                  z=extract_candidate(c,key)
+                  results.append(z)
+                  print('TRY',key,z.get('chars',0),z['status'],c['title'],flush=True)
+              good=[x for x in results if x.get('status')=='ok']
+              best=max(good,key=lambda x:x.get('chars',0),default=None)
+              report.append({'year':key[0],'subject':key[1],'variant':key[2],
+                             'candidate_count':len(cands),'best_title':best.get('title') if best else '',
+                             'best_url':best.get('url') if best else '',
+                             'chars':best.get('chars',0) if best else 0,
+                             'alternatives':[{'title':x.get('title'),'url':x.get('url'),'status':x.get('status'),'chars':x.get('chars',0)} for x in results]})
+              if not best:
+                  print('MISSING',key,flush=True)
+                  continue
+              year,subj,variant=key
+              stem=f'{year}{variant}{subj}'
+              d=OUT/str(year)/subj/variant
+              d.mkdir(parents=True,exist_ok=True)
+              imgdir=d/(stem+'.images')
+              md=best['markdown']
+              urls=img_pat.findall(md)
+              mapping={}
+              if urls:
+                  imgdir.mkdir(exist_ok=True)
+                  seq=0
+                  for u in urls:
+                      if u in mapping: continue
+                      seq+=1
+                      fn=fetch_image(u,best['url'],imgdir,seq)
+                      mapping[u]=fn
+                  if imgdir.exists() and not any(imgdir.iterdir()): imgdir.rmdir()
+              def repl(m):
+                  u=m.group(1); fn=mapping.get(u)
+                  return f'[插图：{stem}.images/{fn}]' if fn else '[插图：原网页图片未能下载]'
+              text=img_pat.sub(repl,md)
+              text=re.sub(r'\n{3,}','\n\n',text).strip()
+              header=(f'【年份】{year}\n【科目】{subj}\n【卷型】{variant}\n'
+                      f'【来源】{best["url"]}\n【来源标题】{best["title"]}\n'
+                      '【说明】2015-2026 主科全国卷补全；网页正文转为 TXT，网页内可获取的插图保存于同名 .images 目录。\n\n')
+              p=d/(stem+'.txt'); p.write_text(header+text+'\n',encoding='utf-8')
+              chosen[str(key)]=str(p)
+              print('CHOSEN',key,best['chars'],best['url'],flush=True)
+
+          missing=[r for r in report if not r['best_url']]
+          (OUT/'COVERAGE.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+          with (OUT/'COVERAGE.tsv').open('w',encoding='utf-8') as f:
+              f.write('year\tsubject\tvariant\tstatus\tchars\tsource\ttitle\n')
+              for r in report:
+                  f.write(f"{r['year']}\t{r['subject']}\t{r['variant']}\t{'OK' if r['best_url'] else 'MISSING'}\t{r['chars']}\t{r['best_url']}\t{r['best_title']}\n")
+          print('RESULT expected',len(report),'ok',len(report)-len(missing),'missing',len(missing))
+          for r in missing: print('MISSING_FINAL',r['year'],r['subject'],r['variant'])
+          PY
+          python3 /tmp/extract.py
+          du -sh out
+          cat out/COVERAGE.tsv
+      - name: Upload extracted TXT
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-national-main-txt-2015-2026
+          path: out
+          retention-days: 1
+          compression-level: 0
