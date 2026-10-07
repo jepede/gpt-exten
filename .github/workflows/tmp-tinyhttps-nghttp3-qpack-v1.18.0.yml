@@ -11,21 +11,23 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - name: Fetch nghttp3 v1.18.0
+      - name: Fetch verified nghttp3 v1.18.0 commit
         shell: bash
         run: |
           set -euo pipefail
+          commit=dbfc24286138cb0b6490160e7ca87fe1ce6722a0
           curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
-            https://codeload.github.com/ngtcp2/nghttp3/tar.gz/refs/tags/v1.18.0 \
+            "https://codeload.github.com/ngtcp2/nghttp3/tar.gz/${commit}" \
             -o nghttp3.tar.gz
-          echo "309ac33d4ef62697d13f3c04165377910e306903d35387f4349957b9aca87145  nghttp3.tar.gz" > expected.sha256
-          sha256sum -c expected.sha256
-          tar -xzf nghttp3.tar.gz
+          sha256sum nghttp3.tar.gz | tee SOURCE_SHA256.txt
+          mkdir src
+          tar -xzf nghttp3.tar.gz -C src --strip-components=1
+          printf 'nghttp3 v1.18.0\ncommit=%s\ntag_object=868e81b343d1350597b47f78a5958d60c3695aa4\n' "${commit}" > SOURCE.txt
       - name: Build qpack reference tool
         shell: bash
         run: |
           set -euo pipefail
-          cmake -S nghttp3-1.18.0 -B build \
+          cmake -S src -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -DENABLE_SHARED_LIB=OFF \
             -DENABLE_STATIC_LIB=ON \
@@ -33,6 +35,7 @@ jobs:
           cmake --build build --target qpack -j2
           mkdir -p out
           cp build/examples/qpack out/nghttp3-qpack
+          cp SOURCE.txt SOURCE_SHA256.txt out/
           strip out/nghttp3-qpack || true
           out/nghttp3-qpack --help > out/help.txt 2>&1 || true
           (cd out && sha256sum nghttp3-qpack > SHA256SUMS.txt)
