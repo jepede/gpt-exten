@@ -1,0 +1,35 @@
+name: Temporary crawl Gaokao main papers 2015-2026
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Probe ksft
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          python3 - <<'PY'
+          import urllib.request
+          for u in ['https://www.ksft.cn/','https://www.ksft.cn/2015','https://www.ksft.cn/2025','https://www.ksft.cn/2026']:
+              req=urllib.request.Request(u,headers={'User-Agent':'Mozilla/5.0'})
+              try:
+                  data=urllib.request.urlopen(req,timeout=30).read()
+                  fn='out/'+('home' if u.endswith('.cn/') else u.rsplit('/',1)[-1])+'.html'
+                  open(fn,'wb').write(data)
+                  print(u,len(data),fn)
+              except Exception as e: print('ERR',u,repr(e))
+          PY
+          grep -Eo 'href="[^"]+"' out/2015.html | head -80 || true
+          grep -iE '全国|高考|语文|英语' out/2015.html | head -30 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-ksft-probe
+          path: out
+          retention-days: 1
+          compression-level: 0
