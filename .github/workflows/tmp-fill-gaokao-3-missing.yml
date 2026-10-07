@@ -1,0 +1,97 @@
+name: Temporary fill three Gaokao English gaps
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Extract exact missing English papers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install -q requests beautifulsoup4 trafilatura pillow
+          cat >/tmp/fill.py <<'PY'
+          import re,io,json,time
+          from pathlib import Path
+          from urllib.parse import urljoin
+          import requests,trafilatura
+          from PIL import Image
+
+          OUT=Path('out'); OUT.mkdir()
+          S=requests.Session(); S.headers.update({'User-Agent':'Mozilla/5.0 Chrome/140'})
+          targets=[
+            (2021,'新高考Ⅰ','https://zy.21cnjy.com/9796321',
+             '2021年高考英语真题试卷（新高考Ⅰ卷）（含听力音频）'),
+            (2021,'新高考Ⅱ','https://www.xuebawang.net/t/50108',
+             '2021年普通高等学校招生全国统一考试（新高考全国Ⅱ卷）英语'),
+            (2026,'全国Ⅱ','https://zy.21cnjy.com/25940867',
+             '2026年全国二卷英语高考真题'),
+          ]
+          imgpat=re.compile(r'!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)')
+          report=[]
+          for year,variant,url,title in targets:
+              r=S.get(url,timeout=45); r.raise_for_status()
+              md=trafilatura.extract(r.text,output_format='markdown',include_images=True,include_tables=True,
+                                     include_links=False,favor_recall=True,deduplicate=False) or ''
+              # Anchor around exam content and discard obvious site tail when safely possible.
+              anchors=['2021年高考英语真题试卷（新高考Ⅰ卷）',
+                       '2021年普通高等学校招生全国统一考试（新高考全国II卷）',
+                       '2021年普通高等学校招生全国统一考试（新高考全国Ⅱ卷）',
+                       '2026年普通高等学校招生全国统一考试']
+              positions=[md.find(a) for a in anchors if md.find(a)>=0]
+              if positions: md=md[min(positions):]
+              # 21cnjy often appends file list/site chrome after full content.
+              cuts=[]
+              for pat in [r'\nImage资源列表',r'\n资源下载\s*$',r'\n更多资源']:
+                  m=re.search(pat,md)
+                  if m and m.start()>1500: cuts.append(m.start())
+              if cuts: md=md[:min(cuts)]
+              md=re.sub(r'\n{3,}','\n\n',md).strip()
+              nonws=len(re.sub(r'\s+','',imgpat.sub('',md)))
+              if nonws<1500:
+                  raise RuntimeError(f'text too short {year} {variant}: {nonws}')
+
+              stem=f'{year}{variant}英语'
+              d=OUT/str(year)/'英语'/variant; d.mkdir(parents=True)
+              imgdir=d/(stem+'.images')
+              mapping={}; idx=0
+              for u in imgpat.findall(md):
+                  if u in mapping: continue
+                  idx+=1
+                  try:
+                      rr=S.get(urljoin(url,u),headers={'Referer':url},timeout=30)
+                      if rr.status_code!=200 or len(rr.content)<200:
+                          mapping[u]=None; continue
+                      im=Image.open(io.BytesIO(rr.content))
+                      if im.width<40 or im.height<30:
+                          mapping[u]=None; continue
+                      if im.mode not in ('RGB','L'): im=im.convert('RGB')
+                      imgdir.mkdir(exist_ok=True)
+                      fn=f'fig{idx:03d}.webp'; im.save(imgdir/fn,'WEBP',quality=92,method=4)
+                      mapping[u]=fn
+                  except Exception:
+                      mapping[u]=None
+              def repl(m):
+                  fn=mapping.get(m.group(1))
+                  return f'[插图：{stem}.images/{fn}]' if fn else '[插图：原网页图片未能下载]'
+              text=imgpat.sub(repl,md)
+              text=re.sub(r'\n{3,}','\n\n',text).strip()
+              header=(f'【年份】{year}\n【科目】英语\n【卷型】{variant}\n【来源】{url}\n'
+                      f'【来源标题】{title}\n【说明】2015-2026 主科全国卷硬覆盖缺口定点补全。\n\n')
+              p=d/(stem+'.txt'); p.write_text(header+text+'\n',encoding='utf-8')
+              report.append({'year':year,'variant':variant,'url':url,'chars':nonws,'images':sum(bool(x) for x in mapping.values()),'file':str(p)})
+              print('OK',year,variant,nonws,'images',report[-1]['images'])
+          (OUT/'FILL_REPORT.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+          PY
+          python3 /tmp/fill.py
+          find out -type f -maxdepth 8 -printf '%p %s bytes\n'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gaokao-three-english-gaps
+          path: out
+          retention-days: 1
+          compression-level: 0
