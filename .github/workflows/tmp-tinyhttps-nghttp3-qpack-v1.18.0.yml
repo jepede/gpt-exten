@@ -1,0 +1,47 @@
+name: Temporary TinyHTTPS nghttp3 QPACK interop v1.18.0
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/tmp-tinyhttps-nghttp3-qpack-v1.18.0.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Fetch nghttp3 v1.18.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
+            https://codeload.github.com/ngtcp2/nghttp3/tar.gz/refs/tags/v1.18.0 \
+            -o nghttp3.tar.gz
+          echo "309ac33d4ef62697d13f3c04165377910e306903d35387f4349957b9aca87145  nghttp3.tar.gz" > expected.sha256
+          sha256sum -c expected.sha256
+          tar -xzf nghttp3.tar.gz
+      - name: Build qpack reference tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S nghttp3-1.18.0 -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_SHARED_LIB=OFF \
+            -DENABLE_STATIC_LIB=ON \
+            -DBUILD_TESTING=OFF
+          cmake --build build --target qpack -j2
+          mkdir -p out
+          cp build/examples/qpack out/nghttp3-qpack
+          strip out/nghttp3-qpack || true
+          out/nghttp3-qpack --help > out/help.txt 2>&1 || true
+          (cd out && sha256sum nghttp3-qpack > SHA256SUMS.txt)
+          stat -c '%n %s' out/nghttp3-qpack > out/SIZES.txt
+          test "$(stat -c %s out/nghttp3-qpack)" -lt 503316480
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tinyhttps-nghttp3-qpack-1.18.0
+          path: out/
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
