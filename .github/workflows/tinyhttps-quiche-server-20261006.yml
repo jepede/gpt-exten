@@ -1,4 +1,5 @@
 name: TinyHTTPS quiche interop server 20261006
+# refreshed for phase-1 interop verification
 on:
   workflow_dispatch:
   push:
