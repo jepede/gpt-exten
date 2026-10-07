@@ -7,29 +7,206 @@ permissions:
 jobs:
   crawl:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 120
     steps:
-      - name: Probe ksft
+      - name: Crawl and download genuine Gaokao Chinese English papers
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p out
-          python3 - <<'PY'
-          import urllib.request
-          for u in ['https://www.ksft.cn/','https://www.ksft.cn/2015','https://www.ksft.cn/2025','https://www.ksft.cn/2026']:
-              req=urllib.request.Request(u,headers={'User-Agent':'Mozilla/5.0'})
-              try:
-                  data=urllib.request.urlopen(req,timeout=30).read()
-                  fn='out/'+('home' if u.endswith('.cn/') else u.rsplit('/',1)[-1])+'.html'
-                  open(fn,'wb').write(data)
-                  print(u,len(data),fn)
-              except Exception as e: print('ERR',u,repr(e))
+          python3 -m pip install -q requests beautifulsoup4
+          cat > /tmp/crawl.py <<'PY'
+          import requests, re, json, os, time, hashlib
+          from bs4 import BeautifulSoup
+          from urllib.parse import urljoin, urlparse
+          from pathlib import Path
+
+          ROOT='https://www.ksft.cn'
+          OUT=Path('out')
+          OUT.mkdir(exist_ok=True)
+          sess=requests.Session()
+          sess.headers.update({'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36'})
+
+          exclude=['模拟','模考','联考','月考','期中','期末','一模','二模','三模','适应性','押题','预测','分类汇编','专题','练习','评析','汇总','学考','会考','诊断','调研','训练','校本']
+          subject_map={'yuwen':'语文','yingyu':'英语'}
+          manifest=[]
+
+          def get(url, **kw):
+              for i in range(4):
+                  try:
+                      r=sess.get(url,timeout=45,**kw)
+                      if r.status_code<500: return r
+                  except Exception:
+                      pass
+                  time.sleep(2+i)
+              raise RuntimeError('GET failed '+url)
+
+          def discover(year, code, subj):
+              found={}
+              page=1
+              while page<=20:
+                  if page==1:
+                      url=f'{ROOT}/{year}?year={year}&subject={code}&sort=asc'
+                  else:
+                      url=f'{ROOT}/{year}/{page}?year={year}&subject={code}&sort=asc'
+                  r=get(url)
+                  if r.status_code!=200: break
+                  soup=BeautifulSoup(r.text,'html.parser')
+                  article_links=[]
+                  for a in soup.find_all('a',href=True):
+                      href=urljoin(ROOT,a['href'])
+                      title=' '.join(a.get_text(' ',strip=True).split())
+                      if '/article/' not in href or not title: continue
+                      article_links.append((title,href))
+                  for title,href in article_links:
+                      # Real Gaokao paper only, reject mocks/practice/analysis pages.
+                      if str(year) not in title: continue
+                      if subj not in title: continue
+                      if not any(k in title for k in ['高考','普通高等学校招生全国统一考试','全国卷','全国Ⅰ','全国Ⅱ','全国I','全国II','新课标','新高考']): continue
+                      if any(k in title for k in exclude): continue
+                      # Avoid pure answer-only pages.
+                      if ('答案' in title or '解析' in title) and not any(k in title for k in ['试卷','真题','试题','含解析','含答案']): continue
+                      found[href]=title
+                  # Find next-page button; stop if absent.
+                  nxt=soup.select_one('a.more-btn')
+                  if not nxt or '下一页' not in nxt.get_text(strip=True): break
+                  page += 1
+              return found
+
+          def safe(s):
+              s=re.sub(r'[\\/:*?"<>|]+','_',s)
+              s=re.sub(r'\s+',' ',s).strip()
+              return s[:160]
+
+          def ext_from(resp, href):
+              cd=resp.headers.get('content-disposition','')
+              m=re.search(r'filename\*?=(?:UTF-8\'\')?["\']?([^;"\']+)',cd,re.I)
+              if m:
+                  from urllib.parse import unquote
+                  fn=unquote(m.group(1))
+                  e=Path(fn).suffix.lower()
+                  if e: return e
+              ct=resp.headers.get('content-type','').lower()
+              if 'pdf' in ct: return '.pdf'
+              if 'wordprocessingml' in ct: return '.docx'
+              if 'msword' in ct: return '.doc'
+              if 'zip' in ct: return '.zip'
+              e=Path(urlparse(resp.url).path).suffix.lower()
+              if e in ['.pdf','.docx','.doc','.zip']: return e
+              return '.bin'
+
+          def download_article(year,subj,title,url):
+              ar=get(url)
+              soup=BeautifulSoup(ar.text,'html.parser')
+              candidates=[]
+              for tr in soup.find_all('tr'):
+                  txt=' '.join(tr.get_text(' ',strip=True).split())
+                  a=tr.find('a',href=True)
+                  if not a or '/download/' not in a['href']: continue
+                  label=txt
+                  candidates.append((label,urljoin(ROOT,a['href'])))
+              if not candidates:
+                  for a in soup.find_all('a',href=True):
+                      if '/download/' in a['href']:
+                          candidates.append(('unknown',urljoin(ROOT,a['href'])))
+              # Prefer the question paper, never an answer/analysis-only row.
+              choice=None
+              for label,href in candidates:
+                  if any(x in label for x in ['试卷','试题','原卷']) and not label.startswith(('答案','解析')):
+                      choice=(label,href); break
+              if choice is None and candidates:
+                  choice=candidates[0]
+              rec={'year':year,'subject':subj,'title':title,'article_url':url,'download_candidates':candidates}
+              if not choice:
+                  rec['status']='no_download'
+                  return rec
+              label,href=choice
+              # Keep session/referer. Download endpoint may redirect to object storage.
+              rr=sess.get(href,headers={'Referer':url},timeout=90,allow_redirects=True)
+              rec.update({'download_url':href,'final_url':rr.url,'http':rr.status_code,'content_type':rr.headers.get('content-type',''),'size':len(rr.content)})
+              magic=rr.content[:8]
+              if rr.status_code!=200 or ('text/html' in rec['content_type'].lower()) or magic.startswith(b'<!DOCTYP') or magic.startswith(b'<html'):
+                  rec['status']='download_html_or_error'
+                  return rec
+              ext=ext_from(rr,href)
+              d=OUT/str(year)/subj
+              d.mkdir(parents=True,exist_ok=True)
+              fn=safe(title)+ext
+              p=d/fn
+              p.write_bytes(rr.content)
+              rec['file']=str(p)
+              rec['sha256']=hashlib.sha256(rr.content).hexdigest()
+              rec['status']='ok'
+              return rec
+
+          for year in range(2015,2027):
+              for code,subj in subject_map.items():
+                  items=discover(year,code,subj)
+                  print('DISCOVER',year,subj,len(items),flush=True)
+                  for url,title in sorted(items.items(),key=lambda z:z[1]):
+                      try:
+                          rec=download_article(year,subj,title,url)
+                      except Exception as e:
+                          rec={'year':year,'subject':subj,'title':title,'article_url':url,'status':'exception','error':repr(e)}
+                      manifest.append(rec)
+                      print(rec['status'],year,subj,title,rec.get('size',''),flush=True)
+                      time.sleep(.15)
+
+          (OUT/'MANIFEST.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+          with (OUT/'MANIFEST.tsv').open('w',encoding='utf-8') as fp:
+              fp.write('year\tsubject\tstatus\tsize\ttitle\tfile\tarticle_url\tdownload_url\tsha256\n')
+              for r in manifest:
+                  vals=[r.get('year',''),r.get('subject',''),r.get('status',''),r.get('size',''),r.get('title',''),r.get('file',''),r.get('article_url',''),r.get('download_url',''),r.get('sha256','')]
+                  fp.write('\t'.join(str(x).replace('\t',' ') for x in vals)+'\n')
+          ok=[r for r in manifest if r.get('status')=='ok']
+          print('TOTAL candidates',len(manifest),'downloaded',len(ok),'bytes',sum(r.get('size',0) for r in ok))
           PY
-          grep -Eo 'href="[^"]+"' out/2015.html | head -80 || true
-          grep -iE '全国|高考|语文|英语' out/2015.html | head -30 || true
-      - uses: actions/upload-artifact@v4
+          python3 /tmp/crawl.py
+          du -sh out
+          cat out/MANIFEST.tsv
+
+      - name: Upload manifest
+        uses: actions/upload-artifact@v4
         with:
-          name: gaokao-ksft-probe
-          path: out
+          name: gaokao-main-2015-2026-manifest
+          path: |
+            out/MANIFEST.json
+            out/MANIFEST.tsv
           retention-days: 1
           compression-level: 0
+
+      - name: Upload 2015
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2015, path: out/2015, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
+      - name: Upload 2016
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2016, path: out/2016, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
+      - name: Upload 2017
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2017, path: out/2017, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
+      - name: Upload 2018
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2018, path: out/2018, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
+      - name: Upload 2019
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2019, path: out/2019, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
+      - name: Upload 2020
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2020, path: out/2020, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
+      - name: Upload 2021
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2021, path: out/2021, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
+      - name: Upload 2022
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2022, path: out/2022, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
+      - name: Upload 2023
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2023, path: out/2023, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
+      - name: Upload 2024
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2024, path: out/2024, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
+      - name: Upload 2025
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2025, path: out/2025, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
+      - name: Upload 2026
+        uses: actions/upload-artifact@v4
+        with: {name: gaokao-main-2026, path: out/2026, retention-days: 1, compression-level: 0, if-no-files-found: ignore}
