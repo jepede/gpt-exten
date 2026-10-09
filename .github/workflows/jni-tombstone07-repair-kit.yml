@@ -1,0 +1,35 @@
+name: JNI tombstone07 repair kit
+on:
+  push:
+    branches: [repair-jni-tombstone07-20261010]
+    paths:
+      - tools/jni_tombstone07_fix.py
+      - .github/workflows/jni-tombstone07-repair-kit.yml
+permissions:
+  contents: read
+jobs:
+  verify-and-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Python and run host sanitizer regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          python3 -m py_compile tools/jni_tombstone07_fix.py
+          python3 tools/jni_tombstone07_fix.py --self-test /tmp/jni-repair-tests 2>&1 | tee out/host-regression.log
+      - name: Package repair sources and offline repacker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/jni_tombstone07_fix.py --package out/jni_tombstone07_repair_kit.zip | tee out/package.log
+          cd out && sha256sum jni_tombstone07_repair_kit.zip > SHA256SUMS.txt
+          test "$(stat -c%s jni_tombstone07_repair_kit.zip)" -lt 104857600
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jni-tombstone07-repair-kit
+          path: out/
+          if-no-files-found: error
+          retention-days: 1
