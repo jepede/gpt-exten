@@ -1,0 +1,105 @@
+name: ImGui Context Guard Toolkit 20261010
+on:
+  push:
+    branches: [work/imgui-context-guard-20261010]
+    paths:
+      - tools/imgui_context_guard/**
+      - .github/workflows/imgui-context-guard-20261010.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare final standalone source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tools/imgui_context_guard/toolkit.py')
+          text = path.read_text()
+          lines = text.splitlines(keepends=True)
+          found = 0
+          for i, line in enumerate(lines):
+              if 'raw = re.match(' in line:
+                  lines[i] = line.replace('re.match(', 're.compile(').replace(', text[i:])', ').match(text, i)')
+                  found += 1
+          assert found == 1, 'raw-string scanner anchor must match exactly once'
+          text = ''.join(lines)
+          assert text.count('i + raw.end()') == 1
+          text = text.replace('i + raw.end()', 'raw.end()')
+          anchor = 'if not name or name.startswith("/")'
+          replacement = 'if any(ord(c) < 32 or ord(c) == 127 for c in name) or not name or name.startswith("/")'
+          assert text.count(anchor) == 1
+          text = text.replace(anchor, replacement)
+          compile(text, str(path), 'exec')
+          path.write_text(text)
+          PY
+      - name: Unit tests and sanitized C++ lifecycle fixture
+        working-directory: tools/imgui_context_guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 --version
+          g++ --version | head -n 1
+          python3 -m unittest -v test_toolkit 2>&1 | tee "$GITHUB_WORKSPACE/validation.txt"
+          python3 toolkit.py decode --instruction 0xf9406808 --base-value 0x28 > "$GITHUB_WORKSPACE/decode.json"
+      - name: Assemble verified toolkit files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime, hashlib, json, os, pathlib, shutil, subprocess
+          source = pathlib.Path('tools/imgui_context_guard')
+          output = pathlib.Path('dist/jni_crash_context_guard_toolkit')
+          output.mkdir(parents=True)
+          for name in ('toolkit.py', 'test_toolkit.py', 'README.md'):
+              shutil.copyfile(source / name, output / name)
+          shutil.copyfile('validation.txt', output / 'VALIDATION.txt')
+          shutil.copyfile('decode.json', output / 'DECODE.json')
+          info = {
+              'tool_version': '1.0.0',
+              'built_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'commit': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'workflow': os.environ['GITHUB_WORKFLOW'],
+              'python': subprocess.check_output(['python3', '--version'], text=True).strip(),
+              'compiler': subprocess.check_output(['g++', '--version'], text=True).splitlines()[0],
+              'original_user_archive_present': False,
+              'original_user_project_modified': False,
+              'original_user_project_built': False,
+              'original_user_project_run': False,
+              'validation_scope': 'toolkit unit tests and isolated synthetic C++ fixture only',
+              'source_preparation': 'linear-time raw-string matching and control-character path rejection',
+          }
+          (output / 'BUILD_INFO.json').write_text(json.dumps(info, ensure_ascii=False, indent=2) + '\n')
+          manifest = []
+          total = 0
+          for path in sorted(output.iterdir()):
+              data = path.read_bytes()
+              total += len(data)
+              manifest.append(hashlib.sha256(data).hexdigest() + '  ' + path.name)
+          assert total < 480 * 1024 * 1024
+          (output / 'SHA256SUMS').write_text('\n'.join(manifest) + '\n')
+          print('TOOLKIT_FILES=' + str(len(list(output.iterdir()))))
+          print('TOOLKIT_UNCOMPRESSED_BYTES=' + str(sum(p.stat().st_size for p in output.iterdir())))
+          print('\n'.join(manifest))
+          PY
+      - uses: actions/upload-artifact@v4
+        id: upload
+        with:
+          name: jni-crash-context-guard-toolkit-20261010
+          path: dist/jni_crash_context_guard_toolkit/
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 1
+      - name: Record artifact identity
+        shell: bash
+        run: |
+          echo 'ARTIFACT_ID=${{ steps.upload.outputs.artifact-id }}'
+          echo 'ARTIFACT_DIGEST=${{ steps.upload.outputs.artifact-digest }}'
