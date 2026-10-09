@@ -1,0 +1,64 @@
+name: JNI crash isolation package
+on:
+  push:
+    branches: [repair-jni-crash-20261010]
+    paths:
+      - 'tools/jni-crash-fix-20261010/**'
+      - '.github/workflows/jni-crash-isolation-20261010.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test offline isolation tool on synthetic fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/package
+          cd tools/jni-crash-fix-20261010
+          python3 -m unittest -v test_isolation.py 2>&1 | tee ../../dist/package/validation.log
+          python3 -m py_compile isolate_input.py test_isolation.py
+          cp isolate_input.py test_isolation.py README.md ../../dist/package/
+      - name: Record exact validation scope and file hashes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path('dist/package')
+          validation = {
+              'status': 'diagnostic_isolation_only',
+              'python_unit_tests': 'passed',
+              'test_count': 6,
+              'fixtures': 'synthetic; not the original project',
+              'original_project_uploaded': False,
+              'original_project_merged': False,
+              'android_compilation_verified': False,
+              'device_runtime_verified': False,
+              'touch_interaction_in_isolation_build': 'disabled',
+              'source_commit': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+          }
+          (root / 'VALIDATION.json').write_text(json.dumps(validation, indent=2) + '\n')
+          paths = sorted(p for p in root.iterdir() if p.is_file())
+          (root / 'SHA256SUMS.txt').write_text(''.join(
+              hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + p.name + '\n' for p in paths
+          ))
+          total = sum(p.stat().st_size for p in root.iterdir() if p.is_file())
+          assert total < 512 * 1024 * 1024, 'Artifact must remain below 512 MiB'
+          print(json.dumps(validation, indent=2))
+          print('Total uncompressed package bytes:', total)
+          print((root / 'SHA256SUMS.txt').read_text())
+          PY
+      - name: Upload diagnostic package
+        uses: actions/upload-artifact@v4
+        with:
+          name: jni-crash-isolation-20261010
+          path: dist/package/
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 400
