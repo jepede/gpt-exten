@@ -215,7 +215,7 @@ include $(BUILD_SHARED_LIBRARY)
 '''
 (JNI / "Android.mk").write_text(android_mk, encoding="utf-8")
 (JNI / "Application.mk").write_text(
-    "APP_ABI := arm64-v8a\nAPP_PLATFORM := android-29\nAPP_STL := c++_static\n"
+    "APP_ABI := arm64-v8a\nAPP_PLATFORM := android-31\nAPP_STL := c++_static\n"
     "APP_CPPFLAGS += -std=c++20\n", encoding="utf-8"
 )
 readme = """# JNI Overlay - Vulkan Only
@@ -230,7 +230,7 @@ or Vulkan swapchain. The latter is intentional: SurfaceControl does not
 expose a normal native-window swapchain in this project.
 
 Dear ImGui v1.92.6 and its Vulkan and Android backends are built from source.
-The old GLES prebuilt libimgui.a was removed. Android API 29+ / ARM64.
+The old GLES prebuilt libimgui.a was removed. Android API 31+ / ARM64.
 
 Build:
     cd <project directory>
