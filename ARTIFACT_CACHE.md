@@ -1331,3 +1331,32 @@ Download Artifact `11321254343`, verify Artifact ZIP SHA256 `5a73a5d0...`, extra
 ### Restore
 
 Download Artifact `11411116830`, verify the Artifact ZIP SHA256 `608684e7f70296d287fc33a3e673efb4c59588d9db72812f49af55e147ee172e`, extract both source archives, then verify `SHA256SUMS.txt`. OpenSSL 4.0.3 must match `29cbaaabad1f3b0e8f28274eb8445a1cb0c54af21a6f845882ee018763df7159`; curl 8.22.0 must match `222c6b5c1f368ac63aed59bce2774eb5def9e8e67e46e800be182e684d2845a3`.
+
+
+## Artifact Record: JNI Vulkan complete project vulkan1.1-imgui1.92.5-ndk28c-94b51d98a2f9
+
+- Name: JNI Vulkan complete project
+- Version: vulkan1.1-imgui1.92.5-ndk28c-94b51d98a2f9
+- Platform: Android API 31+
+- Architecture: arm64-v8a
+- Artifact Name: `jni-vulkan-full`
+- Artifact ID: `11636698531`
+- Run ID: `37973436668`
+- Workflow: `.github/workflows/jni-vulkan-20261010.yml`
+- File: `jni_vulkan_full.zip` (downloaded Artifact ZIP, project at archive root)
+- Size: `6810583`
+- SHA256: `e6fe83cb7c5d44b3f8b113897b94f828f474ba41d50fe9cc2edbcd1e5ca76ebe`
+- Created At: `2026-10-09T18:29:31Z`
+- Expires At: `2027-01-07T18:27:46Z`
+- Storage Mode: SINGLE
+- Original File: `jni_vulkan_full.zip` (delivery archive itself)
+- Original Size: `6810583`
+- Original SHA256: `e6fe83cb7c5d44b3f8b113897b94f828f474ba41d50fe9cc2edbcd1e5ca76ebe`
+- Part Count: 1
+- Verification: Android release/debug builds, host input sanitizer tests, host real Vulkan rendering, delivered ZIP CRC and internal SHA256 hashes passed. Android device presentation not tested.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| JNI Vulkan complete project | vulkan1.1-imgui1.92.5-ndk28c-94b51d98a2f9 | Android API 31+ | arm64-v8a | Artifact ZIP root | `e6fe83cb7c5d44b3f8b113897b94f828f474ba41d50fe9cc2edbcd1e5ca76ebe` |
+| libAndroid.so | vulkan1.1-imgui1.92.5-ndk28c-94b51d98a2f9 | Android API 31+ | arm64-v8a | `prebuilt/arm64-v8a/libAndroid.so` | `0dba79d501e6c56322ff4c384de020b2b04ca1e03e7855cb936f83eae637cb33` |
+| libdobby.a | vulkan1.1-imgui1.92.5-ndk28c-94b51d98a2f9 | Android API 31+ | arm64-v8a | `jni/Library/dobby/arm64-v8a/libdobby.a` | `0a13c9ed67cfa8c384397d10e28f351ee1165ca74bf1b6422264cdc9d57dc66a` |
