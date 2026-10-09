@@ -1,0 +1,169 @@
+name: JNI Vulkan build and real offscreen test
+on:
+  push:
+    branches: [jni-vulkan-20261010]
+    paths:
+      - 'work/jni-vulkan/**'
+      - '.github/workflows/jni-vulkan-20261010.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect cache and restore ImGui and NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deps
+          grep -n -E 'Android NDK|imgui1.91.9b\+1.92.5|Dobby|Vulkan|Mesa' ARTIFACT_CACHE.md || true
+          fetch_artifact() {
+            local id="$1" name="$2" expected="$3"
+            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" > "deps/$id.json"
+            python3 - "$id" <<'PY'
+          import json,sys,datetime
+          a=json.load(open('deps/'+sys.argv[1]+'.json'))
+          assert not a['expired']
+          expiry=datetime.datetime.fromisoformat(a['expires_at'].replace('Z','+00:00'))
+          assert expiry>datetime.datetime.now(datetime.timezone.utc)
+          print('Reusing:',a['name'],'expires:',a['expires_at'])
+          PY
+            curl -fL --retry 3 -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'Accept: application/vnd.github+json' \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "deps/$name"
+            echo "$expected  deps/$name" | sha256sum -c -
+          }
+          fetch_artifact 10480406146 imgui-cache.zip 6443e75fcf2cf6f0a92309933be4df28d018815548d305cebcc7423c9268d5ad
+          unzip -q deps/imgui-cache.zip -d deps/imgui-cache
+          echo 'abe81599d03de3f37a1215bba236b824d7c733477a1ac68f5530be195d85e66e  deps/imgui-cache/ytbl-build-deps-v1.tar.gz' | sha256sum -c -
+          tar -xzf deps/imgui-cache/ytbl-build-deps-v1.tar.gz -C deps
+          NDK=''
+          for props in "${ANDROID_HOME:-/usr/local/lib/android/sdk}"/ndk/*/source.properties; do
+            if [[ -f "$props" ]] && grep -q '28.2.13676358' "$props"; then NDK="$(dirname "$props")"; break; fi
+          done
+          if [[ -z "$NDK" ]]; then
+            fetch_artifact 9174697344 ndk00.zip 07ce7d79e2c15bfa567e2c97e961b812eb879e96fcdfe13761889fff492adf97
+            fetch_artifact 9174699121 ndk01.zip 40693e9180b35cdbcb23ac27e1d274d783d93af3667ca126e4fd4b98febda894
+            unzip -q deps/ndk00.zip -d deps/ndkparts
+            unzip -q deps/ndk01.zip -d deps/ndkparts
+            cat deps/ndkparts/ndk-r28c.part.00 deps/ndkparts/ndk-r28c.part.01 > deps/ndk.zip
+            echo 'dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f  deps/ndk.zip' | sha256sum -c -
+            unzip -q deps/ndk.zip -d deps
+            NDK="$PWD/deps/android-ndk-r28c"
+          fi
+          echo "ANDROID_NDK_HOME=$NDK" >> "$GITHUB_ENV"
+          cat "$NDK/source.properties"
+      - name: Fetch temporary pinned Dobby sources and existing input repair source
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -n -i dobby ARTIFACT_CACHE.md || true
+          curl -fL --retry 3 https://codeload.github.com/jmpews/Dobby/tar.gz/5dfc8546954ce3b3198132ab13fddb89ee92cdd7 -o deps/dobby.tar.gz
+          tar -xzf deps/dobby.tar.gz -C deps
+          gh api 'repos/jepede/gpt-exten/contents/tools/jni_tombstone07_fix.py?ref=repair-jni-tombstone07-20261010' --jq .content | base64 -d > deps/base_repair.py
+          sha256sum deps/dobby.tar.gz deps/base_repair.py > deps/download-hashes.txt
+      - name: Assemble complete source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp -a work/jni-vulkan stage
+          python3 stage/assemble.py --project stage --imgui deps/bundle/imgui-1.92.5 \
+            --dobby deps/Dobby-5dfc8546954ce3b3198132ab13fddb89ee92cdd7 --base deps/base_repair.py
+          mkdir -p stage/verification stage/prebuilt/arm64-v8a stage/prebuilt/debug
+          cp deps/download-hashes.txt stage/verification/
+          cp "$ANDROID_NDK_HOME/source.properties" stage/verification/ndk-source.properties
+          grep '#define IMGUI_VERSION' stage/jni/Library/Imgui/imgui.h
+      - name: Build matching static Dobby dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash stage/tools/rebuild_dobby.sh 2>&1 | tee stage/verification/dobby-build.log
+      - name: Build Android release and debug variants
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_MODE=release bash stage/build.sh -j4 2>&1 | tee stage/verification/android-release-build.log
+          cp stage/libs/arm64-v8a/libAndroid.so stage/prebuilt/arm64-v8a/libAndroid.so
+          cp stage/obj/local/arm64-v8a/libAndroid.so stage/prebuilt/arm64-v8a/libAndroid.unstripped.so
+          BUILD_MODE=debug bash stage/build.sh -B -j4 2>&1 | tee stage/verification/android-debug-build.log
+          cp stage/obj/local/arm64-v8a/libAndroid.so stage/prebuilt/debug/libAndroid.so
+          READELF="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
+          "$READELF" -h -d -l stage/prebuilt/arm64-v8a/libAndroid.so | tee stage/verification/elf-report.txt
+          grep -q 'libvulkan.so' stage/verification/elf-report.txt
+          if grep -E 'NEEDED.*(libEGL|libGLES)' stage/verification/elf-report.txt; then exit 1; fi
+      - name: Run queue sanitizers and actual Vulkan offscreen rendering
+        shell: bash
+        run: |
+          set -euo pipefail
+          g++ -std=c++20 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -pthread \
+            stage/tests/test_motion_queue.cpp -o /tmp/queue-test
+          /tmp/queue-test 2>&1 | tee stage/verification/input-regression.log
+          if ! find /usr/share/vulkan/icd.d -iname '*lvp*' -print -quit 2>/dev/null | grep -q .; then
+            grep -n -i -E 'Mesa|Vulkan' ARTIFACT_CACHE.md || true
+            sudo apt-get update -qq
+            sudo apt-get install -y libvulkan1 mesa-vulkan-drivers
+          fi
+          mkdir -p deps/hostinclude
+          cp -a "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/vulkan" deps/hostinclude/
+          cp -a "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/vk_video" deps/hostinclude/
+          VK_LIB="$(find /usr/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu -name libvulkan.so.1 -print -quit)"
+          test -n "$VK_LIB"
+          g++ -std=c++20 -O1 -pthread -Ideps/hostinclude -Istage/jni/Library/Imgui \
+            -Istage/jni/Library/Imgui/backends stage/tests/vulkan_smoke.cpp \
+            stage/jni/Library/Imgui/imgui.cpp stage/jni/Library/Imgui/imgui_draw.cpp \
+            stage/jni/Library/Imgui/imgui_tables.cpp stage/jni/Library/Imgui/imgui_widgets.cpp \
+            stage/jni/Library/Imgui/backends/imgui_impl_vulkan.cpp "$VK_LIB" -ldl -o /tmp/vulkan-smoke
+          export VK_ICD_FILENAMES="$(find /usr/share/vulkan/icd.d -iname '*lvp*' -print -quit)"
+          /tmp/vulkan-smoke stage/verification/vulkan_smoke.rgba 2>&1 | tee stage/verification/vulkan-smoke.log
+      - name: Record validation results and prepare delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib,os,zlib,struct,shutil
+          p=Path('stage');v=p/'verification'
+          raw=(v/'vulkan_smoke.rgba').read_bytes();w,h=512,320
+          assert len(raw)==w*h*4
+          def chunk(t,d):return struct.pack('>I',len(d))+t+d+struct.pack('>I',zlib.crc32(t+d)&0xffffffff)
+          filtered=b''.join(b'\0'+raw[y*w*4:(y+1)*w*4] for y in range(h))
+          png=b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',w,h,8,6,0,0,0))+chunk(b'IDAT',zlib.compress(filtered))+chunk(b'IEND',b'')
+          (v/'vulkan_smoke.png').write_bytes(png)
+          status={'ndk':'r28c / 28.2.13676358','abi':'arm64-v8a','android_api':31,
+            'release_build':'passed','debug_build':'passed','elf_no_egl_gles_needed':'passed',
+            'host_input_asan_ubsan':'passed','host_vulkan_real_render':'passed',
+            'android_device_runtime':'not_tested','android_ahardwarebuffer_present':'not_tested',
+            'workflow_run_id':os.environ['GITHUB_RUN_ID'],'commit':os.environ['GITHUB_SHA'],
+            'host_vulkan_test_scope':'same VulkanCore + ImGui backend; not Android compositor or private input hooks'}
+          (v/'BUILD_STATUS.json').write_text(json.dumps(status,indent=2)+'\n')
+          for name in ['obj','libs','.build-dobby','__pycache__']:
+            shutil.rmtree(p/name,ignore_errors=True)
+          (p/'assemble.py').unlink(missing_ok=True)
+          banned={'.ttf','.otf','.ttc','.woff','.woff2','.eot','.bdf','.pcf'}
+          for f in p.rglob('*'):
+            if f.is_file() and f.suffix.lower() in banned:f.unlink()
+          files=sorted(f for f in p.rglob('*') if f.is_file() and f.name!='SHA256SUMS.txt')
+          (p/'SHA256SUMS.txt').write_text(''.join(hashlib.sha256(f.read_bytes()).hexdigest()+'  '+f.relative_to(p).as_posix()+'\n' for f in files))
+          assert sum(f.stat().st_size for f in files)<90*1024*1024
+          print('Complete project files:',len(files))
+          print(json.dumps(status,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jni-vulkan-full
+          path: stage/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+      - name: Preserve build logs if a preceding check failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jni-vulkan-failure-logs
+          path: stage/verification/
+          retention-days: 1
