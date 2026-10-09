@@ -6,7 +6,7 @@ on:
       - 'work/jni-vulkan/**'
       - '.github/workflows/jni-vulkan-20261010.yml'
 permissions:
-  contents: read
+  contents: write
   actions: read
 concurrency:
   group: jni-vulkan-build
@@ -17,6 +17,7 @@ jobs:
     timeout-minutes: 25
     env:
       GH_TOKEN: ${{ github.token }}
+      DOBBY_COMMIT: 9c85e74f92eda36b99ddb0fddb17a9df2278a4d3
     steps:
       - uses: actions/checkout@v4
       - name: Inspect cache and restore ImGui and NDK
@@ -66,7 +67,7 @@ jobs:
         run: |
           set -euo pipefail
           grep -n -i dobby ARTIFACT_CACHE.md || true
-          curl -fL --retry 3 https://codeload.github.com/jmpews/Dobby/tar.gz/5dfc8546954ce3b3198132ab13fddb89ee92cdd7 -o deps/dobby.tar.gz
+          curl -fL --retry 3 "https://codeload.github.com/jmpews/Dobby/tar.gz/$DOBBY_COMMIT" -o deps/dobby.tar.gz
           tar -xzf deps/dobby.tar.gz -C deps
           gh api 'repos/jepede/gpt-exten/contents/tools/jni_tombstone07_fix.py?ref=repair-jni-tombstone07-20261010' --jq .content | base64 -d > deps/base_repair.py
           sha256sum deps/dobby.tar.gz deps/base_repair.py > deps/download-hashes.txt
@@ -76,7 +77,7 @@ jobs:
           set -euo pipefail
           cp -a work/jni-vulkan stage
           python3 stage/assemble.py --project stage --imgui deps/bundle/imgui-1.92.5 \
-            --dobby deps/Dobby-5dfc8546954ce3b3198132ab13fddb89ee92cdd7 --base deps/base_repair.py
+            --dobby "deps/Dobby-$DOBBY_COMMIT" --base deps/base_repair.py
           python3 stage/portability.py stage
           mkdir -p stage/verification stage/prebuilt/arm64-v8a stage/prebuilt/debug
           cp deps/download-hashes.txt stage/verification/
@@ -158,12 +159,57 @@ jobs:
           print(json.dumps(status,indent=2))
           PY
       - uses: actions/upload-artifact@v4
+        id: delivery
         with:
           name: jni-vulkan-full
           path: stage/
           include-hidden-files: true
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 400
+      - name: Verify delivered archive and record actual cache expiry
+        env:
+          ARTIFACT_ID: ${{ steps.delivery.outputs.artifact-id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT_ID" > /tmp/delivery-artifact.json
+          curl -fL --retry 3 -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT_ID/zip" -o /tmp/jni_vulkan_full.zip
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib,os,zipfile,subprocess,base64,time
+          a=json.loads(Path('/tmp/delivery-artifact.json').read_text())
+          p=Path('/tmp/jni_vulkan_full.zip');sha=hashlib.sha256(p.read_bytes()).hexdigest()
+          assert a['digest']=='sha256:'+sha
+          assert p.stat().st_size<100*1024*1024
+          with zipfile.ZipFile(p) as z:
+            assert z.testzip() is None
+            for line in z.read('SHA256SUMS.txt').decode().splitlines():
+              digest,name=line.split('  ',1)
+              assert hashlib.sha256(z.read(name)).hexdigest()==digest,name
+          print('DELIVERY_ZIP_CRC_AND_ALL_FILE_HASHES=PASS')
+          print('ARTIFACT_ID='+str(a['id']))
+          print('DELIVERY_SIZE='+str(p.stat().st_size))
+          print('DELIVERY_SHA256='+sha)
+          print('EXPIRES_AT='+a['expires_at'])
+          version='vulkan1.1-imgui1.92.5-ndk28c-'+os.environ['GITHUB_SHA'][:12]
+          record=f'''\n\n## Artifact Record: JNI Vulkan complete project {version}\n\n- Name: JNI Vulkan complete project\n- Version: {version}\n- Platform: Android API 31+\n- Architecture: arm64-v8a\n- Artifact Name: `{a['name']}`\n- Artifact ID: `{a['id']}`\n- Run ID: `{os.environ['GITHUB_RUN_ID']}`\n- Workflow: `.github/workflows/jni-vulkan-20261010.yml`\n- File: `jni_vulkan_full.zip` (downloaded Artifact ZIP, project at archive root)\n- Size: `{p.stat().st_size}`\n- SHA256: `{sha}`\n- Created At: `{a['created_at']}`\n- Expires At: `{a['expires_at']}`\n- Storage Mode: SINGLE\n- Original File: `jni_vulkan_full.zip` (delivery archive itself)\n- Original Size: `{p.stat().st_size}`\n- Original SHA256: `{sha}`\n- Part Count: 1\n- Verification: Android release/debug builds, host input sanitizer tests, host real Vulkan rendering, delivered ZIP CRC and internal SHA256 hashes passed. Android device presentation not tested.\n\n| Name | Version | Platform | Architecture | File/Path | SHA256 |\n|---|---|---|---|---|---|\n| JNI Vulkan complete project | {version} | Android API 31+ | arm64-v8a | Artifact ZIP root | `{sha}` |\n'''
+          for relative in ['prebuilt/arm64-v8a/libAndroid.so','jni/Library/dobby/arm64-v8a/libdobby.a']:
+            data=(Path('stage')/relative).read_bytes()
+            record+=f"| {Path(relative).name} | {version} | Android API 31+ | arm64-v8a | `{relative}` | `{hashlib.sha256(data).hexdigest()}` |\n"
+          endpoint=f"repos/{os.environ['GITHUB_REPOSITORY']}/contents/ARTIFACT_CACHE.md"
+          for attempt in range(3):
+            current=json.loads(subprocess.check_output(['gh','api',endpoint+'?ref=main']))
+            content=base64.b64decode(current['content']).decode()
+            if str(a['id']) in content:break
+            payload={'message':'cache: verified JNI Vulkan project artifact and actual expiry',
+              'branch':'main','sha':current['sha'],
+              'content':base64.b64encode((content+record).encode()).decode()}
+            result=subprocess.run(['gh','api','--method','PUT',endpoint,'--input','-'],input=json.dumps(payload),text=True,capture_output=True)
+            if result.returncode==0:print('CACHE_RECORD_UPDATED');break
+            if attempt==2:raise RuntimeError(result.stderr)
+            time.sleep(1)
+          PY
       - name: Preserve build logs if a preceding check failed
         if: failure()
         uses: actions/upload-artifact@v4
