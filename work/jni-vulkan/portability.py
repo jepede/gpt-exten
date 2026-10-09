@@ -1,38 +1,37 @@
 #!/usr/bin/env python3
-"""Pinned-source build portability corrections, recorded in the delivered project."""
+"""Configure the pinned Android-compatible dependency; no runtime-hook changes."""
 from pathlib import Path
 import sys, hashlib, json
 
 root = Path(sys.argv[1])
-path = root / 'jni/Library/dobby/source/source/TrampolineBridge/ClosureTrampolineBridge/arm64/closure_bridge_arm64.asm'
-before = path.read_text()
-old = ('adrp TMP_REG_0, cdecl(common_closure_bridge_handler)@PAGE\n'
-       'add TMP_REG_0, TMP_REG_0, cdecl(common_closure_bridge_handler)@PAGEOFF')
-new = ('#if defined(__APPLE__)\n' + old + '\n'
-       '#else\n'
-       '// ELF position-independent GOT relocation syntax (Android/Linux).\n'
-       'adrp TMP_REG_0, :got:cdecl(common_closure_bridge_handler)\n'
-       'ldr TMP_REG_0, [TMP_REG_0, :got_lo12:cdecl(common_closure_bridge_handler)]\n'
-       '#endif')
-if new not in before:
-    if before.count(old) != 1:
-        raise SystemExit('Pinned Dobby assembly anchor changed; refusing a partial patch')
-    after = before.replace(old, new, 1)
-    path.write_text(after)
-else:
-    after = before
+old_commit = '5dfc8546954ce3b3198132ab13fddb89ee92cdd7'
+commit = '9c85e74f92eda36b99ddb0fddb17a9df2278a4d3'
+cmake = root / 'jni/Library/dobby/source/CMakeLists.txt'
+text = cmake.read_text()
+if 'option(DOBBY_GENERATE_SHARED' not in text:
+    raise SystemExit('Expected pinned pre-refactor Dobby tree, not current master')
+script = root / 'tools/rebuild_dobby.sh'
+text = script.read_text()
+text = text.replace('--target dobby_static', '--target dobby')
+text = text.replace('-DDOBBY_BUILD_TEST=OFF -DDOBBY_BUILD_EXAMPLE=OFF',
+                    '-DDOBBY_GENERATE_SHARED=OFF -DBUILD_TEST=OFF -DBUILD_EXAMPLE=OFF')
+script.write_text(text)
+for name in ['README.md', 'DEPENDENCIES.json']:
+    p = root / name
+    p.write_text(p.read_text().replace(old_commit, commit))
 v = root / 'verification'
 v.mkdir(parents=True, exist_ok=True)
-(v / 'dobby-portability.json').write_text(json.dumps({
-    'upstream_commit': '5dfc8546954ce3b3198132ab13fddb89ee92cdd7',
-    'file': str(path.relative_to(root)),
-    'change': 'Use ELF GOT relocation syntax on non-Apple ARM64; same callback address and calling convention',
-    'before_sha256': hashlib.sha256(before.encode()).hexdigest(),
-    'after_sha256': hashlib.sha256(after.encode()).hexdigest()
+(v / 'dobby-provenance.json').write_text(json.dumps({
+    'upstream_repository': 'jmpews/Dobby',
+    'upstream_commit': commit,
+    'configuration': 'Android arm64, static library, symbol resolver enabled, examples/tests disabled',
+    'upstream_source_modified': False,
+    'cmake_sha256': hashlib.sha256(cmake.read_bytes()).hexdigest(),
+    'reason': 'The newer refactored source tree did not compile for Android; use a fixed complete pre-refactor tree'
 }, indent=2) + '\n')
 core = root / 'jni/renderer/VulkanCore.h'
-text = core.read_text()
-text = text.replace('acquire.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;',
-                    'acquire.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;')
+text = core.read_text().replace(
+    'acquire.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;',
+    'acquire.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;')
 core.write_text(text)
-print('Applied Android ELF build portability fix and color-attachment blend access mask')
+print('Configured pinned Dobby:', commit)
