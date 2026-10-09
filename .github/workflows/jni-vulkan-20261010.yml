@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
   actions: read
+concurrency:
+  group: jni-vulkan-build
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -67,13 +70,14 @@ jobs:
           tar -xzf deps/dobby.tar.gz -C deps
           gh api 'repos/jepede/gpt-exten/contents/tools/jni_tombstone07_fix.py?ref=repair-jni-tombstone07-20261010' --jq .content | base64 -d > deps/base_repair.py
           sha256sum deps/dobby.tar.gz deps/base_repair.py > deps/download-hashes.txt
-      - name: Assemble complete source tree
+      - name: Assemble complete source tree and apply portability fixes
         shell: bash
         run: |
           set -euo pipefail
           cp -a work/jni-vulkan stage
           python3 stage/assemble.py --project stage --imgui deps/bundle/imgui-1.92.5 \
             --dobby deps/Dobby-5dfc8546954ce3b3198132ab13fddb89ee92cdd7 --base deps/base_repair.py
+          python3 stage/portability.py stage
           mkdir -p stage/verification stage/prebuilt/arm64-v8a stage/prebuilt/debug
           cp deps/download-hashes.txt stage/verification/
           cp "$ANDROID_NDK_HOME/source.properties" stage/verification/ndk-source.properties
