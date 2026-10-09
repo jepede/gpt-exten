@@ -30,6 +30,21 @@ if text.count(include) != 1:
 text = text.replace(include + '\n', '')
 text = '#if defined(__ANDROID__)\n' + include + '\n#endif\n\n' + text
 logging.write_text(text)
+# This pinned header uses a generic function-pointer typedef rather than void*.
+# Match only the existing four casts, preserving the original callback behavior.
+native = root / 'jni/NativeWindow.h'
+text = native.read_text()
+casts = {
+    '(void*)Hook_ANativeWindow_fromSurface': 'reinterpret_cast<dobby_dummy_func_t>(Hook_ANativeWindow_fromSurface)',
+    '(void**)&orig_ANativeWindow_fromSurface': 'reinterpret_cast<dobby_dummy_func_t*>(&orig_ANativeWindow_fromSurface)',
+    '(void*)hook_input': 'reinterpret_cast<dobby_dummy_func_t>(hook_input)',
+    '(void**)&orig_input': 'reinterpret_cast<dobby_dummy_func_t*>(&orig_input)',
+}
+for old, new in casts.items():
+    if text.count(old) != 1:
+        raise SystemExit('Unexpected existing callback cast: ' + old)
+    text = text.replace(old, new, 1)
+native.write_text(text)
 v = root / 'verification'
 v.mkdir(parents=True, exist_ok=True)
 (v / 'dobby-provenance.json').write_text(json.dumps({
@@ -38,6 +53,7 @@ v.mkdir(parents=True, exist_ok=True)
     'configuration': 'Android arm64 static library, symbol resolver enabled, examples/tests disabled',
     'upstream_source_modified': True,
     'source_patch': 'Move android/log.h include from function scope to file scope for NDK r28c',
+    'call_site_compatibility': 'Four existing callback casts changed to the pinned header function-pointer typedef; no new callback targets',
     'modified_file': str(logging.relative_to(root)),
     'before_sha256': hashlib.sha256(before).hexdigest(),
     'after_sha256': hashlib.sha256(logging.read_bytes()).hexdigest(),
@@ -49,4 +65,4 @@ text = core.read_text().replace(
     'acquire.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;',
     'acquire.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;')
 core.write_text(text)
-print('Configured pinned Dobby and corrected Android logging include scope:', commit)
+print('Configured pinned dependency, logging include scope, and matching C++ callback types:', commit)
