@@ -53,6 +53,6 @@ jobs:
           for file in project/jni/OverlaySupervisor.h project/jni/Android.mk project/jni/SurfaceViewBridge.h project/jni/InputBridge.h project/jni/NativeWindow.h project/jni/Injector.cpp project/jni/Logger.h; do
             if [ -f "$file" ]; then
               echo "##### $file"
-              nl -ba "$file" | head -500
+              nl -ba "$file" | sed -n '490,750p'
             fi
           done
