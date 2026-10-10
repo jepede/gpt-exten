@@ -96,10 +96,8 @@ s=s[:start]+new_runtime+s[stop:]
 anchor='''    VulkanState.ScreenHeight = static_cast<float>(height);'''
 assert anchor in s
 s=s.replace(anchor,anchor+'''
-    int32_t transformHint = -1;
-    const int transformRc = ANativeWindow_query(
-        gameWindow, ANATIVEWINDOW_QUERY_TRANSFORM_HINT, &transformHint);
-    LOGI("[surface] transform_hint=%d query_rc=%d", transformHint, transformRc);
+    const int nativeFormat = ANativeWindow_getFormat(gameWindow);
+    LOGI("[surface] native_window_pixel_format=%d", nativeFormat);
 ''',1)
 
 # Visual calibration: top-left vs bottom corner labels, and a crosshair
