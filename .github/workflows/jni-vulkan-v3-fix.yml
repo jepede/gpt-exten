@@ -48,7 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           ( cd project && sha256sum -c SHA256SUMS.txt )
-          python3 tools/jni-vulkan-only/repair_surface_lifecycle.py project
+          python3 tools/jni-vulkan-only/overlay_v3_diagnostics.py project
           grep -q 'workerLoop' project/jni/NativeWindow.h
           grep -q 'RunSurfaceControlOverlay(gameWindow, sessionToken)' project/jni/NativeWindow.h && exit 1 || true
           grep -q 'RunSurfaceControlOverlay(window, token)' project/jni/NativeWindow.h
