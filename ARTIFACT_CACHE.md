@@ -1360,3 +1360,31 @@ Download Artifact `11411116830`, verify the Artifact ZIP SHA256 `608684e7f70296d
 | JNI Vulkan complete project | vulkan1.1-imgui1.92.5-ndk28c-94b51d98a2f9 | Android API 31+ | arm64-v8a | Artifact ZIP root | `e6fe83cb7c5d44b3f8b113897b94f828f474ba41d50fe9cc2edbcd1e5ca76ebe` |
 | libAndroid.so | vulkan1.1-imgui1.92.5-ndk28c-94b51d98a2f9 | Android API 31+ | arm64-v8a | `prebuilt/arm64-v8a/libAndroid.so` | `0dba79d501e6c56322ff4c384de020b2b04ca1e03e7855cb936f83eae637cb33` |
 | libdobby.a | vulkan1.1-imgui1.92.5-ndk28c-94b51d98a2f9 | Android API 31+ | arm64-v8a | `jni/Library/dobby/arm64-v8a/libdobby.a` | `0a13c9ed67cfa8c384397d10e28f351ee1165ca74bf1b6422264cdc9d57dc66a` |
+
+
+## Artifact Record: JNI1 Vulkan-only Complete v1.0 (2026-10-10)
+
+- Name: JNI1 Vulkan-only Complete
+- Version: Vulkan-only-v1.0-jni1-20261010
+- Platform: Android API 31+
+- Architecture: arm64-v8a
+- Artifact Name: `jni1-vulkan-only-full-source-binaries`
+- Artifact ID: `11652900609`
+- Run ID: `38008777577`
+- Workflow: `.github/workflows/jni-vulkan-direct-delivery.yml`
+- File: `jni1-vulkan-only-full-arm64.zip`
+- Size: `12687674` bytes
+- SHA256: `cf6664b14254de267d26f8d4c991a793d527958823ec934348ce52b5d0774cda`
+- Created At: `2026-10-10T00:22:45Z`
+- Expires At: `2027-01-08T00:22:37Z`
+- Storage Mode: SINGLE
+- Original File: `jni1-vulkan-only-full-arm64.zip`
+- Original Size: `12687674` bytes
+- Original SHA256: `cf6664b14254de267d26f8d4c991a793d527958823ec934348ce52b5d0774cda`
+- Part Count: 1
+- Source: `jni1.zip` uploaded by the user; compiled ARM64 .so from GitHub Actions Run `37974144680`.
+- Validation: original JNI ZIP CRC; migrated Android ARM64 compilation; ELF DT_NEEDED includes Vulkan but no EGL/GLES; flattened project content check; SHA256 manifest. Physical Android runtime not tested.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| JNI1 Vulkan-only Complete | Vulkan-only-v1.0-jni1-20261010 | Android API 31+ | arm64-v8a | `jni1-vulkan-only-full-arm64.zip` | `cf6664b14254de267d26f8d4c991a793d527958823ec934348ce52b5d0774cda` |
