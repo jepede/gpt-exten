@@ -1388,3 +1388,32 @@ Download Artifact `11411116830`, verify the Artifact ZIP SHA256 `608684e7f70296d
 | Name | Version | Platform | Architecture | File/Path | SHA256 |
 |---|---|---|---|---|---|
 | JNI1 Vulkan-only Complete | Vulkan-only-v1.0-jni1-20261010 | Android API 31+ | arm64-v8a | `jni1-vulkan-only-full-arm64.zip` | `cf6664b14254de267d26f8d4c991a793d527958823ec934348ce52b5d0774cda` |
+
+
+## Artifact Record: JNI1 Vulkan Surface Lifecycle Fix v2
+
+- Name: JNI Vulkan Surface Lifecycle Fix
+- Version: v2-supervisor-backpressure-20261010
+- Platform: Android API 31+
+- Architecture: arm64-v8a
+- Artifact Name: `jni-vulkan-surface-lifecycle-fix-v1`
+- Artifact ID: `11652034611`
+- Run ID: `38010810572`
+- Workflow: `.github/workflows/jni-vulkan-lifecycle-fix.yml`
+- File: `jni-vulkan-surface-fix-v2-arm64.zip`
+- Size: `12703450` bytes
+- SHA256: `0b5621b3837e89324796362de8c8c89c566d9eff6afeaba5a5e8682a65260b49`
+- Created At: `2026-10-10T00:52:01Z`
+- Expires At: `2027-01-08T00:51:12Z`
+- Storage Mode: SINGLE
+- Original File: `jni-vulkan-surface-fix-v2-arm64.zip`
+- Original Size: `12703450` bytes
+- Original SHA256: `0b5621b3837e89324796362de8c8c89c566d9eff6afeaba5a5e8682a65260b49`
+- Part Count: 1
+- Source: cached complete project from Run `38008777577`, Artifact `11652900609`, originally derived from user `jni1.zip`.
+- Verification: Android NDK r28c arm64 compilation success; Vulkan-only ELF dependencies; source SHA256SUMS pass; downloaded/uploaded Google Drive ZIP SHA256 independently verified with digest.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| JNI Vulkan Surface Lifecycle Fix | v2-supervisor-backpressure-20261010 | Android API 31+ | arm64-v8a | `jni-vulkan-surface-fix-v2-arm64.zip` | `0b5621b3837e89324796362de8c8c89c566d9eff6afeaba5a5e8682a65260b49` |
+
