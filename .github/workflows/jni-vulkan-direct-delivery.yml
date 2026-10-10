@@ -85,7 +85,7 @@ jobs:
                   'compiled_so_sha256':hashlib.sha256(main.read_bytes()).hexdigest(),
                   'repackage_utc':datetime.datetime.now(datetime.timezone.utc).isoformat()}
           Path('deliver/VERIFICATION.json').write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n')
-          Path('deliver/README_交付说明.md').write_text('''# JNI Vulkan-only 完整合并工程\n\n'
+          Path('deliver/README_交付说明.md').write_text('# JNI Vulkan-only 完整合并工程\n\n'
             '源项目：用户上传的 jni1.zip。此压缩包解压一次即包含 jni 源码、预编译 libs、未剥离符号文件 symbols 和校验清单。\n\n'
             '## 已验证\n- Android NDK r28c, ARM64 API 31 编译与链接通过\n'
             '- libAndroid.so 的 ELF DT_NEEDED 包含 libvulkan.so，不包含 libEGL/libGLES/libOpenGL\n'
