@@ -1,4 +1,4 @@
-name: JNI Vulkan v7.1 Clean Release
+name: JNI Vulkan v7.2 Minimal Production
 on:
   push:
     paths:
@@ -47,6 +47,7 @@ jobs:
           grep -q 'AMotionEvent_getRawX' project/jni/InputBridge.h
           ! grep -q 'YS TARGET' project/jni/OverlaySupervisor.h
           ! grep -q 'getPropertyInt(' project/jni/OverlaySupervisor.h
+          ! grep -rEn 'configuredFlip|configuredOffset|screenToImage|sanitizeMirrorMode|LOGI\(' project/jni/OverlayPolicy.h project/jni/OverlayRoute.h project/jni/Logger.h
           ! grep -q 'setOnComplete' project/jni/OverlaySupervisor.h
           test ! -e project/jni/OverlayProbe.h
           test -s project/jni/SurfaceBridge.h
@@ -116,7 +117,7 @@ jobs:
                   "NDK":"r28c",
                   "debug_instrumentation_removed":True,
                   "original_v7_android_runtime":"USER VERIFIED",
-                  "cleaned_v7_1_android_runtime":"NOT TESTED",
+                  "cleaned_v7_2_android_runtime":"NOT TESTED",
                   "binary_sha256":binary_sha}
           Path("BUILD-VERIFICATION.json").write_text(json.dumps(status,indent=2)+"\n")
           shutil.rmtree("obj",ignore_errors=True)
@@ -133,7 +134,7 @@ jobs:
       - name: Upload full production-only clean project
         uses: actions/upload-artifact@v4
         with:
-          name: jni-vulkan-v7-1-clean-production-arm64
+          name: jni-vulkan-v7-2-minimal-production-arm64
           path: project/
           retention-days: 90
           if-no-files-found: error

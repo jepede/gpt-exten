@@ -206,6 +206,90 @@ Error/warning Android log tag stays YS.
 This cleaned version is compiled and analyzed separately; successful
 Android 16 device testing applies to original v7, not automatically v7.1.
 """,encoding="utf-8")
+
+# Final production pass: remove obsolete DEBUG selection/flip APIs from the
+# shipped headers, not just their runtime call sites.
+sp=S.read_text(encoding="utf-8")
+sp=cut(sp,"        Parent* latest=nullptr;",
+       "        int published=0;","","remove latest-only debug selector")
+sp=rep(sp,'''            if(!ys_overlay::submitToParent(host.isSurfaceView(),hasSurfaceView,
+                                           selectedMode,&host==primary,&host==latest,
+                                           0,host.id)) {''',
+       '''            if(!ys_overlay::submitToParent(host.isSurfaceView(),hasSurfaceView)) {''',
+       "reduce production parent route to v7 validated mode=2 semantics")
+assert "selectedMode" not in sp and "latest" not in sp, "legacy debug parent selectors retained"
+S.write_text(sp,encoding="utf-8")
+
+(jni/"OverlayRoute.h").write_text("""#pragma once
+// V7 tested route: use SurfaceView root whenever it is available.
+// Before discovering SurfaceView, keep all valid fallback hosts active.
+namespace ys_overlay {
+inline int surfaceRoutePriority(bool surfaceView, int nativePriority) noexcept {
+    return surfaceView ? 1000 : nativePriority;
+}
+inline bool submitToParent(bool sourceIsSurfaceView, bool hasLiveSurfaceView) noexcept {
+    return !hasLiveSurfaceView || sourceIsSurfaceView;
+}
+}
+""",encoding="utf-8")
+
+(jni/"OverlayPolicy.h").write_text("""#pragma once
+namespace ys_overlay {
+constexpr int kPixelRgba8888=1;
+constexpr int kPixelRgbx8888=2;
+constexpr int kPixelRgb565=4;
+inline int parentPriority(int fmt) noexcept {
+    switch(fmt) {
+        case kPixelRgba8888: return 100;
+        case kPixelRgbx8888: return 90;
+        case kPixelRgb565: return 40;
+        default: return 50;
+    }
+}
+inline bool validWindowSize(int w,int h) noexcept {
+    return w>0 && h>0 && w<=8192 && h<=8192;
+}
+inline bool windowQueryFailed(int w,int h) noexcept {
+    return w<0 || h<0;
+}
+}
+""",encoding="utf-8")
+
+(jni/"Logger.h").write_text("""#pragma once
+// Production: retain genuine errors and warnings. No diagnostic log macros.
+#include <android/log.h>
+#define YS_LOG_TAG "YS"
+#define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR,YS_LOG_TAG,__VA_ARGS__))
+#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN,YS_LOG_TAG,__VA_ARGS__))
+#define ALOGE(...) LOGE(__VA_ARGS__)
+#define ALOGW(...) LOGW(__VA_ARGS__)
+""",encoding="utf-8")
+
+# After stripping informational logging, the scanner's 'found' state no
+# longer drives any decision and can be removed without altering discovery.
+bridge=jni/"SurfaceBridge.h"
+sb=bridge.read_text(encoding="utf-8")
+sb=rep(sb,"bool found=false;int tries=0;","int tries=0;","remove diagnostic discovery latch")
+sb=rep(sb,"if(got && !found){(void)0;found=true;}","(void)got;","remove diagnostic discovery branch")
+bridge.write_text(sb,encoding="utf-8")
+
+doc=root/"README.md"
+readme=doc.read_text(encoding="utf-8").replace("v7.1 Clean Production","v7.2 Minimal Production")
+readme += "\nFurther v7.2 cleanup: removed unused flip/offset policy helpers, manual\\nparent selection branches, obsolete logger macros and discovery debug latch.\\n"
+doc.write_text(readme,encoding="utf-8")
+for pth in jni.glob("*.h"):
+    ss=pth.read_text(encoding="utf-8")
+    for word in ("debug.ys.overlay","configuredFlip","configuredOffset",
+                 "sanitizeMirrorMode","sanitizeFlip","screenToImage",
+                 "OverlayProbe.h","YS TARGET","LOGI(","LOGD(",
+                 "ALOGI(","ALOGD(","[present.parent]"):
+        assert word not in ss,(pth.name,word)
+assert "YS_RegisterSurfaceView" in (jni/"Injector.cpp").read_text()
+assert "ASurfaceControl_create(parent.anchor" in sp
+assert "ys_bridge::start();" in sp
+assert "EventDeduplicator" in (jni/"EventDedup.h").read_text()
+print("NO_DEBUG_HELPERS_REMAIN=PASS")
+
 print("PRODUCTION_CLEANUP_SUCCESS")
 print("REMOVED_INFO_DEBUG_CALLS",total)
 print("SUPERVISOR_LINES",len(s.splitlines()))
