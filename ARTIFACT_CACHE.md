@@ -1477,3 +1477,35 @@ Download Artifact `11411116830`, verify the Artifact ZIP SHA256 `608684e7f70296d
 |---|---|---|---|---|---|
 | JNI Vulkan v4 Window and Touch Fix | v4-enodev-dedup-calibration-20261010 | Android API 31+ | arm64-v8a | `JNI-Vulkan-v4-Window-Touch-Fix.zip` | `112d319cb393fea7a9fd2d56d4df4f392535e725a2c10bccb1e76c77f7253756` |
 
+
+
+## Artifact Record: JNI Vulkan v7.1 Clean Production ARM64 (2026-10-10)
+
+- Name: JNI Vulkan v7.1 Clean Production ARM64
+- Version: v7.1-clean-release-20261010
+- Platform: Android API 31+ (tested baseline v7 on Android 16)
+- Architecture: arm64-v8a
+- Artifact Name: `jni-vulkan-v7-1-clean-production-arm64`
+- Artifact ID: `11661779126`
+- Run ID: `38031262676`
+- Workflow: `.github/workflows/jni-vulkan-v7-clean-release.yml`
+- File: `JNI-Vulkan-v7.1-Clean-Production-ARM64.zip`
+- Size: `8024700` bytes
+- SHA256: `664fa501312644af384a151f3e14e992ffbe5a2c3b659300da04805f8274169c`
+- Created At: `2026-10-10T06:33:10Z`
+- Expires At: `2027-01-08T06:31:58Z`
+- Storage Mode: SINGLE
+- Original File: `JNI-Vulkan-v7.1-Clean-Production-ARM64.zip`
+- Original Size: `8024700` bytes
+- Original SHA256: `664fa501312644af384a151f3e14e992ffbe5a2c3b659300da04805f8274169c`
+- Part Count: 1
+- Production `libAndroid.so` SHA256: `fa3de56692d6ebf45232b34a7e5a71cb74cf2b91aadbc486bc6802508aeecaf7`
+- Build source: verified v7 package SHA256 `e18bd5e2fabe214b785e9d602ef2ae7c18dbc8773381c35936c5c29477722ab6`, restored from GitHub blobs, then `tools/jni-vulkan-only/clean_v7_release.py`.
+- Reused cached NDK r28c artifact parts `9174697344` and `9174699121`, original NDK SHA256 `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f`.
+- Verification: CLEAN_SOURCE_VERIFIED=PASS, PRODUCTION_VULKAN_ARM64_COMPILE=PASS, CLEAN_COMPLETE_PACKAGE=PASS; Vulkan DT_NEEDED present and EGL/GLES absent; 34 source/binary files hash-verified.
+- Change: removes 5-second auto parent probing, calibration, debug properties, logs and present-receipts; retains user-tested v7 SurfaceView parent host, Vulkan and MotionEvent handling. Clean build **not yet user-device-tested**.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| JNI Vulkan v7.1 Clean Production ARM64 | v7.1-clean-release-20261010 | Android API31+ | arm64-v8a | `JNI-Vulkan-v7.1-Clean-Production-ARM64.zip` | `664fa501312644af384a151f3e14e992ffbe5a2c3b659300da04805f8274169c` |
+
