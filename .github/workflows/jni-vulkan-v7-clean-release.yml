@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   build:
@@ -34,25 +35,105 @@ jobs:
           echo FILE_TREE_BEGIN
           find project -maxdepth 4 -type f | sort | head -100
           echo FILE_TREE_END
-      - name: Inspect debug feature boundaries
+      - name: Remove obsolete debug features while retaining validated fixes
+        shell: bash
         run: |
+          set -euo pipefail
+          ( cd project && sha256sum -c SHA256SUMS.txt >/dev/null )
+          python3 tools/jni-vulkan-only/clean_v7_release.py project
+          grep -q 'ASurfaceControl_create(parent.anchor' project/jni/OverlaySupervisor.h
+          grep -q 'ys_bridge::start()' project/jni/OverlaySupervisor.h
+          grep -q 'overlay_input::eventDeduplicator().isDuplicate(identity)' project/jni/InputBridge.h
+          grep -q 'AMotionEvent_getRawX' project/jni/InputBridge.h
+          ! grep -q 'YS TARGET' project/jni/OverlaySupervisor.h
+          ! grep -q 'getPropertyInt(' project/jni/OverlaySupervisor.h
+          ! grep -q 'setOnComplete' project/jni/OverlaySupervisor.h
+          test ! -e project/jni/OverlayProbe.h
+          test -s project/jni/SurfaceBridge.h
+          echo "CLEAN_SOURCE_VERIFIED=PASS"
+
+      - name: Reuse cached Android NDK r28c part 0
+        uses: actions/download-artifact@v4
+        with:
+          name: ndk-r28c-part-00
+          run-id: 31684150811
+          github-token: ${{ github.token }}
+          path: ndkparts/part00
+
+      - name: Reuse cached Android NDK r28c part 1
+        uses: actions/download-artifact@v4
+        with:
+          name: ndk-r28c-part-01
+          run-id: 31684150811
+          github-token: ${{ github.token }}
+          path: ndkparts/part01
+
+      - name: Verify and restore cached NDK
+        run: |
+          set -euo pipefail
+          cat ndkparts/part00/ndk-r28c.part.00 ndkparts/part01/ndk-r28c.part.01 > "$RUNNER_TEMP/ndk-r28c.zip"
+          echo "dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f  $RUNNER_TEMP/ndk-r28c.zip" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/ndk"
+          unzip -q "$RUNNER_TEMP/ndk-r28c.zip" -d "$RUNNER_TEMP/ndk"
+          test -x "$RUNNER_TEMP/ndk/android-ndk-r28c/ndk-build"
+          echo "CACHED_NDK_R28C=PASS"
+
+      - name: Compile optimized ARM64 production-only Vulkan shared library
+        run: |
+          set -euo pipefail
+          export ANDROID_NDK_HOME="$RUNNER_TEMP/ndk/android-ndk-r28c"
+          cd project
+          "$ANDROID_NDK_HOME/ndk-build" -j4 NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./jni/Android.mk NDK_APPLICATION_MK=./jni/Application.mk
+          test -s libs/arm64-v8a/libAndroid.so
+          file libs/arm64-v8a/libAndroid.so
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf" -d libs/arm64-v8a/libAndroid.so > ELF-DEPENDENCIES.txt
+          grep -q 'NEEDED.*libvulkan.so' ELF-DEPENDENCIES.txt
+          ! grep -Eq 'NEEDED.*(libEGL|libGLES|libOpenGL)' ELF-DEPENDENCIES.txt
+          ! grep -rEn '#include[[:space:]]*[<"](EGL/|GLES[0-9]*/|GL/)' jni --include='*.h' --include='*.cpp'
+          echo "PRODUCTION_VULKAN_ARM64_COMPILE=PASS"
+
+      - name: Static check no probe or calibration survives and package source
+        run: |
+          set -euo pipefail
+          cd project
           python3 - <<'PY'
           from pathlib import Path
-          for f in sorted(Path('project/jni').rglob('*')):
-            if not f.is_file() or f.suffix not in ('.h','.cpp','.mk'): continue
-            if len(f.read_bytes())>180000:continue
-            s=f.read_text(errors='replace')
-            matches=[(i,l[:230]) for i,l in enumerate(s.splitlines(),1) if any(term in l for term in (
-            'probe','Probe','[diag]','[touchdiag]','[touch]','[present]','[present.parent]','[surface] frames','YS_ENABLE','CALIBRATION','YS TOP-','YS TARGET','GetForegroundDrawList','debug.ys.overlay','overlay.trace','BUILD_MODE','LOGI','ALOGI','ALOGD','LOGD','setOnComplete','ASurfaceTransactionStats'))]
-            if matches:
-              print(f'===== {f} total-lines={len(s.splitlines())} =====')
-              for i,l in matches[:160]: print(f'{i:4}: {l}')
+          import hashlib, json, shutil, subprocess
+          jni=Path("jni")
+          src=[p for p in jni.rglob("*") if p.is_file() and p.suffix in (".h",".cpp",".mk")]
+          forbidden=("debug.ys.overlay","YS_SHOW_CALIBRATION","YS TARGET","touchdiag","[present.parent]","OverlayProbe.h","LOGI(\"[touch]","ASurfaceTransaction_setOnComplete")
+          bad=[(p.as_posix(),word) for p in src if "third_party" not in p.parts for word in forbidden if word in p.read_text(errors="replace")]
+          if bad: raise SystemExit(f"DEBUG_CODE_REMAINED: {bad}")
+          if Path("prebuilt/debug").exists() or Path("tests/test_probe.cpp").exists():
+              raise SystemExit("old diagnostic deliverables remained")
+          release=Path("libs/arm64-v8a/libAndroid.so")
+          assert release.exists()
+          binary_sha=hashlib.sha256(release.read_bytes()).hexdigest()
+          status={"base":"user-device-verified-Vulkan-v7",
+                  "graphics":"Vulkan-only",
+                  "platform":"Android API31+",
+                  "ABI":"arm64-v8a",
+                  "NDK":"r28c",
+                  "debug_instrumentation_removed":True,
+                  "original_v7_android_runtime":"USER VERIFIED",
+                  "cleaned_v7_1_android_runtime":"NOT TESTED",
+                  "binary_sha256":binary_sha}
+          Path("BUILD-VERIFICATION.json").write_text(json.dumps(status,indent=2)+"\n")
+          shutil.rmtree("obj",ignore_errors=True)
+          Path("SHA256SUMS.txt").unlink(missing_ok=True)
+          entries=sorted(p for p in Path(".").rglob("*") if p.is_file())
+          with Path("SHA256SUMS.txt").open("w") as w:
+              for p in entries: w.write(hashlib.sha256(p.read_bytes()).hexdigest()+"  "+p.as_posix()+"\n")
+          print("PRODUCTION_BINARY_SHA256="+binary_sha)
+          print("SOURCE_AND_BINARY_FILES="+str(len(entries)))
           PY
-      - name: Collect key source for focused edit
-        run: |
-          for file in project/jni/OverlaySupervisor.h project/jni/Android.mk project/jni/SurfaceViewBridge.h project/jni/InputBridge.h project/jni/NativeWindow.h project/jni/Injector.cpp project/jni/Logger.h; do
-            if [ -f "$file" ]; then
-              echo "##### $file"
-              nl -ba "$file" | sed -n '490,750p'
-            fi
-          done
+          sha256sum -c SHA256SUMS.txt | tail -5
+          echo "CLEAN_COMPLETE_PACKAGE=PASS"
+
+      - name: Upload full production-only clean project
+        uses: actions/upload-artifact@v4
+        with:
+          name: jni-vulkan-v7-1-clean-production-arm64
+          path: project/
+          retention-days: 90
+          if-no-files-found: error
