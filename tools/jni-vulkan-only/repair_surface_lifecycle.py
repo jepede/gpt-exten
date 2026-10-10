@@ -239,6 +239,12 @@ inline void hack_main() noexcept {
 }
 '''
 src=head+tail
+# Android API 31+: request compositor backpressure to prevent rapid
+# buffer submissions from replacing a frame before its present callback.
+bp = "        ASurfaceTransaction_setBufferAlpha(tx, control, 1.0f);"
+assert bp in src, "SurfaceControl initialization changed"
+src = src.replace(bp, bp + "\n        ASurfaceTransaction_setEnableBackPressure(tx, control, true);", 1)
+
 assert src.count("RunSurfaceControlOverlay(")==2
 assert "OverlayRunning" not in src
 assert "ImGui_ImplVulkan_NewFrame" in src
