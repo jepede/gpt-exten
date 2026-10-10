@@ -1417,3 +1417,33 @@ Download Artifact `11411116830`, verify the Artifact ZIP SHA256 `608684e7f70296d
 |---|---|---|---|---|---|
 | JNI Vulkan Surface Lifecycle Fix | v2-supervisor-backpressure-20261010 | Android API 31+ | arm64-v8a | `jni-vulkan-surface-fix-v2-arm64.zip` | `0b5621b3837e89324796362de8c8c89c566d9eff6afeaba5a5e8682a65260b49` |
 
+
+
+## Artifact Record: JNI Vulkan v3 Surface and Input Diagnostics
+
+- Name: JNI Vulkan v3 Surface and Input Diagnostics
+- Version: v3-rawtouch-suspendresume-compositor-20261010
+- Platform: Android API 31+
+- Architecture: arm64-v8a
+- Artifact Name: `jni-vulkan-v3-surface-input-diagnostics`
+- Artifact ID: `11655401892`
+- Run ID: `38013414598`
+- Workflow: `.github/workflows/jni-vulkan-v3-fix.yml`
+- File: `JNI-Vulkan-v3-Surface-Input-Diagnostics.zip`
+- Size: `12711556` bytes
+- SHA256: `af80014eab64d25a88dc5798dd3f80eb83ea694ab9c4e5295acea4ec5425b66b`
+- Created At: `2026-10-10T01:31:05Z`
+- Expires At: `2027-01-08T01:30:09Z`
+- Storage Mode: SINGLE
+- Original File: `JNI-Vulkan-v3-Surface-Input-Diagnostics.zip`
+- Original Size: `12711556` bytes
+- Original SHA256: `af80014eab64d25a88dc5798dd3f80eb83ea694ab9c4e5295acea4ec5425b66b`
+- Part Count: 1
+- Source: cached Vulkan v2 project from Run `38010810572`, Artifact `11652034611`.
+- Verification: NDK r28c ARM64 API31 compile success; readelf dynamic dependencies include libvulkan and exclude EGL/GLES; full file SHA256SUMS checked. Physical Android runtime not tested.
+- Changes: indefinite geometry suspension/resume; sampled ASurfaceTransaction onComplete diagnostics; TAG YS; local/raw touch traces and raw coordinates default.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| JNI Vulkan v3 Surface and Input Diagnostics | v3-rawtouch-suspendresume-compositor-20261010 | Android API 31+ | arm64-v8a | `JNI-Vulkan-v3-Surface-Input-Diagnostics.zip` | `af80014eab64d25a88dc5798dd3f80eb83ea694ab9c4e5295acea4ec5425b66b` |
+
