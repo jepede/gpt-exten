@@ -1447,3 +1447,33 @@ Download Artifact `11411116830`, verify the Artifact ZIP SHA256 `608684e7f70296d
 |---|---|---|---|---|---|
 | JNI Vulkan v3 Surface and Input Diagnostics | v3-rawtouch-suspendresume-compositor-20261010 | Android API 31+ | arm64-v8a | `JNI-Vulkan-v3-Surface-Input-Diagnostics.zip` | `af80014eab64d25a88dc5798dd3f80eb83ea694ab9c4e5295acea4ec5425b66b` |
 
+
+
+## Artifact Record: JNI Vulkan v4 Window and Touch Fix (2026-10-10)
+
+- Name: JNI Vulkan v4 Window and Touch Fix
+- Version: v4-enodev-dedup-calibration-20261010
+- Platform: Android API 31+
+- Architecture: arm64-v8a
+- Artifact Name: `jni-vulkan-v4-input-layer-diagnostics`
+- Artifact ID: `11655293904`
+- Run ID: `38014372015`
+- Workflow: `.github/workflows/jni-vulkan-v4-fix.yml`
+- File: `JNI-Vulkan-v4-Window-Touch-Fix.zip`
+- Size: `12722272` bytes
+- SHA256: `112d319cb393fea7a9fd2d56d4df4f392535e725a2c10bccb1e76c77f7253756`
+- Created At: `2026-10-10T01:45:45Z`
+- Expires At: `2027-01-08T01:45:04Z`
+- Storage Mode: SINGLE
+- Original File: `JNI-Vulkan-v4-Window-Touch-Fix.zip`
+- Original Size: `12722272` bytes
+- Original SHA256: `112d319cb393fea7a9fd2d56d4df4f392535e725a2c10bccb1e76c77f7253756`
+- Part Count: 1
+- Build Inputs: cached Vulkan v3 Artifact ID `11655401892`, cached NDK r28c Artifact parts `9174697344` and `9174699121`.
+- Verification: GitHub Actions ARM64 ndk-build success; libvulkan.so DT_NEEDED and no EGL/GLES; complete SHA256SUMS passed. Real game rendering / overlay visibility not verified.
+- Changes: treats ANativeWindow negative width/height as fatal query errors (-19=-ENODEV); bounded zero-size wait; event timestamp+pointer dedup ring for MotionEvent::copyFrom; corrected pointerIndex logging; visual corner/crosshair calibration; YS logs.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| JNI Vulkan v4 Window and Touch Fix | v4-enodev-dedup-calibration-20261010 | Android API 31+ | arm64-v8a | `JNI-Vulkan-v4-Window-Touch-Fix.zip` | `112d319cb393fea7a9fd2d56d4df4f392535e725a2c10bccb1e76c77f7253756` |
+
