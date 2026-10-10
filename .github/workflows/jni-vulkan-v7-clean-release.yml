@@ -1,0 +1,58 @@
+name: JNI Vulkan v7.1 Clean Release
+on:
+  push:
+    paths:
+      - '.github/workflows/jni-vulkan-v7-clean-release.yml'
+      - 'tools/jni-vulkan-only/clean_v7_release.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover verified user-tested Vulkan v7 project
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ys-v7-chunks project
+          python3 - <<'PY' > /tmp/ys-v7-sha.txt
+          print('\n'.join(["61ad751b379f0dfde770ea9cfb89b8e6486b6dae","31665c12e04ea02e27a165ee98975233d006dce3","205dd2e2aacff0b8f9bc17d321558a2c1d3475e1","1f7b208209f2c7b0d938e69068267b25042f786f","12f4588cb8891467dd80dcc5c6685e2cbe3630fd","a7feef0317d11ef61f0bf2736298e3cb847621f3","da36d8b587a6800a4056d4f7728c0deb1e9e4ecc","1882d22aaf60c179c33512f4961e281d4af4f34e","89e1386937449f2af1a9bc2ca4512d67efd5122d"]))
+          PY
+          while read -r blob; do
+            echo "Restoring source fragment ${blob:0:12}"
+            gh api "repos/$GITHUB_REPOSITORY/git/blobs/$blob" --jq '.content' | tr -d '\n' | base64 -d >> /tmp/ys-v7-input.zip
+          done < /tmp/ys-v7-sha.txt
+          echo 'e18bd5e2fabe214b785e9d602ef2ae7c18dbc8773381c35936c5c29477722ab6  /tmp/ys-v7-input.zip' | sha256sum -c -
+          unzip -tq /tmp/ys-v7-input.zip | tail -5
+          unzip -q /tmp/ys-v7-input.zip -d project
+          echo FILE_TREE_BEGIN
+          find project -maxdepth 4 -type f | sort | head -100
+          echo FILE_TREE_END
+      - name: Inspect debug feature boundaries
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for f in sorted(Path('project/jni').rglob('*')):
+            if not f.is_file() or f.suffix not in ('.h','.cpp','.mk'): continue
+            if len(f.read_bytes())>180000:continue
+            s=f.read_text(errors='replace')
+            matches=[(i,l[:230]) for i,l in enumerate(s.splitlines(),1) if any(term in l for term in (
+            'probe','Probe','[diag]','[touchdiag]','[touch]','[present]','[present.parent]','[surface] frames','YS_ENABLE','CALIBRATION','YS TOP-','YS TARGET','GetForegroundDrawList','debug.ys.overlay','overlay.trace','BUILD_MODE','LOGI','ALOGI','ALOGD','LOGD','setOnComplete','ASurfaceTransactionStats'))]
+            if matches:
+              print(f'===== {f} total-lines={len(s.splitlines())} =====')
+              for i,l in matches[:160]: print(f'{i:4}: {l}')
+          PY
+      - name: Collect key source for focused edit
+        run: |
+          for file in project/jni/OverlaySupervisor.h project/jni/Android.mk project/jni/SurfaceViewBridge.h project/jni/InputBridge.h project/jni/NativeWindow.h project/jni/Injector.cpp project/jni/Logger.h; do
+            if [ -f "$file" ]; then
+              echo "##### $file"
+              nl -ba "$file" | head -500
+            fi
+          done
