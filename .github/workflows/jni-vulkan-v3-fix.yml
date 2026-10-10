@@ -1,0 +1,156 @@
+name: JNI Vulkan v3 Touch and Surface Diagnostics
+on:
+  push:
+    paths:
+      - '.github/workflows/jni-vulkan-v3-fix.yml'
+      - 'tools/jni-vulkan-only/overlay_v3_diagnostics.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - name: Checkout repair script
+        uses: actions/checkout@v4
+
+      - name: Check original Vulkan project artifact cache and expiry
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          grep -q '11652034611' ARTIFACT_CACHE.md
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/11652034611" > /tmp/source-meta.json
+          python3 - <<'PY'
+          import datetime,json
+          j=json.load(open('/tmp/source-meta.json'))
+          assert j['id']==11652034611 and not j['expired']
+          assert datetime.datetime.fromisoformat(j['expires_at'].replace('Z','+00:00')) > datetime.datetime.now(datetime.timezone.utc)
+          assert j['digest']=='sha256:0b5621b3837e89324796362de8c8c89c566d9eff6afeaba5a5e8682a65260b49'
+          print('SOURCE_CACHED_ARTIFACT=VALID',j['expires_at'])
+          PY
+
+      - name: Restore complete Vulkan source and binaries from cache
+        uses: actions/download-artifact@v4
+        with:
+          name: jni-vulkan-surface-lifecycle-fix-v1
+          run-id: 38010810572
+          github-token: ${{ github.token }}
+          path: project
+
+      - name: Verify original manifest and apply native surface repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          ( cd project && sha256sum -c SHA256SUMS.txt )
+          python3 tools/jni-vulkan-only/repair_surface_lifecycle.py project
+          grep -q 'workerLoop' project/jni/NativeWindow.h
+          grep -q 'RunSurfaceControlOverlay(gameWindow, sessionToken)' project/jni/NativeWindow.h && exit 1 || true
+          grep -q 'RunSurfaceControlOverlay(window, token)' project/jni/NativeWindow.h
+          grep -q '\[surface\] frames=' project/jni/NativeWindow.h
+          grep -q 'ASurfaceTransaction_setOnComplete' project/jni/NativeWindow.h
+          grep -q 'SUSPENDED' project/jni/NativeWindow.h
+          grep -q 'AMotionEvent_getRawX' project/jni/InputBridge.h
+          grep -q '"YS"' project/jni/Logger.h
+          ! grep -q 'parent window invalid for 2 seconds' project/jni/NativeWindow.h
+
+      - name: Reuse cached Android NDK part 0
+        uses: actions/download-artifact@v4
+        with:
+          name: ndk-r28c-part-00
+          run-id: 31684150811
+          github-token: ${{ github.token }}
+          path: ndkparts/part00
+
+      - name: Reuse cached Android NDK part 1
+        uses: actions/download-artifact@v4
+        with:
+          name: ndk-r28c-part-01
+          run-id: 31684150811
+          github-token: ${{ github.token }}
+          path: ndkparts/part01
+
+      - name: Verify and restore Android NDK r28c
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat ndkparts/part00/ndk-r28c.part.00 ndkparts/part01/ndk-r28c.part.01 > "$RUNNER_TEMP/ndk-r28c.zip"
+          echo "dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f  $RUNNER_TEMP/ndk-r28c.zip" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/ndk"
+          unzip -q "$RUNNER_TEMP/ndk-r28c.zip" -d "$RUNNER_TEMP/ndk"
+          test -x "$RUNNER_TEMP/ndk/android-ndk-r28c/ndk-build"
+
+      - name: Build updated ARM64 Vulkan-only JNI library
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ANDROID_NDK_HOME="$RUNNER_TEMP/ndk/android-ndk-r28c"
+          cd project
+          "$ANDROID_NDK_HOME/ndk-build" -j4 NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./jni/Android.mk NDK_APPLICATION_MK=./jni/Application.mk BUILD_MODE=debug
+          test -s libs/arm64-v8a/libAndroid.so
+          test -s obj/local/arm64-v8a/libAndroid.so
+          mkdir -p symbols
+          cp -f obj/local/arm64-v8a/libAndroid.so symbols/libAndroid-unstripped.so
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf" -d libs/arm64-v8a/libAndroid.so > dynamic_dependencies.txt
+          grep -q 'libvulkan.so' dynamic_dependencies.txt
+          ! grep -Eq 'NEEDED.*(libEGL|libGLES|libOpenGL)' dynamic_dependencies.txt
+          ! grep -rEn '#include[[:space:]]*[<"](EGL/|GLES[0-9]*/|GL/)' jni --include='*.h' --include='*.cpp'
+          echo COMPILED_ARM64_VULKAN_ONLY=PASS
+
+      - name: Verify package integrity and add runtime troubleshooting notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f project/README_SURFACE_REATTACH.md
+          cat >> project/BUILD-REPORT.txt <<'DOC'
+
+          Native Window lifecycle update:
+          - Single-shot OverlayRunning removed, replaced with one persistent supervisor.
+          - New ANativeWindow_fromSurface callbacks cancel/rebind render session.
+          - Persistent suspension/resume for invalid parent window; sampled SurfaceFlinger transaction receipt and input coord logs.
+          - This does not add hooks for different Game NativeActivity / Vulkan surface paths.
+          DOC
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,datetime,shutil
+          p=Path('project')
+          shutil.rmtree(p/'obj',ignore_errors=True)
+          status={
+              'base':'jni-vulkan-surface-fix-v2-arm64.zip',
+              'repair':'surface_v3_suspend_resume_present_receipt_raw_touch',
+              'platform':'Android API31+', 'abi':'arm64-v8a',
+              'NDK':'r28c', 'graphics':'Vulkan-only',
+              'rebuilt':'PASS','ELF Vulkan DT_NEEDED':'PASS',
+              'OpenGL EGL GLES DT_NEEDED':'NONE',
+              'real_game_login_transition':'NOT TESTED',
+              'native_worker_logs':'[surface] SUSPENDED / RESUMED; [present]; [touch]; [surface] frames',
+              'binary_sha256':hashlib.sha256((p/'libs/arm64-v8a/libAndroid.so').read_bytes()).hexdigest(),
+              'built_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat()
+          }
+          (p/'SURFACE_FIX_VALIDATION.json').write_text(json.dumps(status,ensure_ascii=False,indent=2)+'\n')
+          (p/'SHA256SUMS.txt').unlink(missing_ok=True)
+          entries=sorted(f for f in p.rglob('*') if f.is_file())
+          (p/'SHA256SUMS.txt').write_text(''.join(
+             hashlib.sha256(f.read_bytes()).hexdigest()+'  '+f.relative_to(p).as_posix()+'\n'
+             for f in entries
+          ))
+          assert len(entries)>15 and (p/'jni/NativeWindow.h').is_file()
+          print('PACKAGE_FILE_COUNT=',len(entries))
+          print('BIN_SHA256=',status['binary_sha256'])
+          PY
+          (cd project && sha256sum -c SHA256SUMS.txt | tail -5)
+          echo PACKAGE_VERIFIED=PASS
+
+      - name: Upload complete repaired Vulkan project
+        uses: actions/upload-artifact@v4
+        with:
+          name: jni-vulkan-v3-surface-input-diagnostics
+          path: project/
+          include-hidden-files: true
+          retention-days: 400
+          if-no-files-found: error
