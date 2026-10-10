@@ -1509,3 +1509,34 @@ Download Artifact `11411116830`, verify the Artifact ZIP SHA256 `608684e7f70296d
 |---|---|---|---|---|---|
 | JNI Vulkan v7.1 Clean Production ARM64 | v7.1-clean-release-20261010 | Android API31+ | arm64-v8a | `JNI-Vulkan-v7.1-Clean-Production-ARM64.zip` | `664fa501312644af384a151f3e14e992ffbe5a2c3b659300da04805f8274169c` |
 
+
+
+## JNI Vulkan v7.2 Minimal Production — 2026-10-10
+
+- Name: JNI Vulkan v7.2 Minimal Production
+- Version: 7.2 clean production (v7 tested branch)
+- Platform: Android API 31+
+- Architecture: arm64-v8a
+- Artifact Name: `jni-vulkan-v7-2-minimal-production-arm64`
+- Artifact ID: `11662600874`
+- Run ID: `38031782393`
+- Workflow: `.github/workflows/jni-vulkan-v7-clean-release.yml`
+- File: `JNI-Vulkan-v7.2-Minimal-Production-ARM64.zip`
+- Size: `8023879` bytes
+- SHA256: `f0e28cdf4907150a9c4bf1a3f8bcda692521867874c6abc9448533f6fdd7d38e`
+- Created: `2026-10-10T06:42:09Z`
+- Expires: `2027-01-08T06:41:01Z`
+- Storage: SINGLE GitHub Actions Artifact, mirrored in ChatGPT Library at `/JNI-Vulkan-v7.2-Minimal-Production-ARM64.zip`
+- Original File: `JNI-Vulkan-v7.2-Minimal-Production-ARM64.zip`
+- Original Size: `8023879` bytes
+- Original SHA256: `f0e28cdf4907150a9c4bf1a3f8bcda692521867874c6abc9448533f6fdd7d38e`
+- Part Count: 1
+- `libAndroid.so` SHA256: `fa3de56692d6ebf45232b34a7e5a71cb74cf2b91aadbc486bc6802508aeecaf7`.
+- Cached Dependencies: Android NDK r28c Parts 00 & 01, Run `31684150811`, IDs `9174697344` and `9174699121`.
+- Source: user-verified Vulkan v7 ZIP SHA256 `e18bd5e2fabe214b785e9d602ef2ae7c18dbc8773381c35936c5c29477722ab6`.
+- Verification: `NO_DEBUG_HELPERS_REMAIN=PASS`, `CLEAN_SOURCE_VERIFIED=PASS`, `PRODUCTION_VULKAN_ARM64_COMPILE=PASS`, `CLEAN_COMPLETE_PACKAGE=PASS`; no EGL/GLES, Vulkan only. Output binary SHA256 equals v7.1 release, indicating more thorough dead-source removal produced the same ARM64 optimized binary. Original v7 real-device verified by user, v7.2 needs device regression test.
+
+| Name | Version | Platform | Architecture | File | SHA256 |
+|---|---|---|---|---|---|
+| JNI Vulkan Minimal Production | v7.2 | Android API 31+ | arm64-v8a | `JNI-Vulkan-v7.2-Minimal-Production-ARM64.zip` | `f0e28cdf4907150a9c4bf1a3f8bcda692521867874c6abc9448533f6fdd7d38e` |
+
