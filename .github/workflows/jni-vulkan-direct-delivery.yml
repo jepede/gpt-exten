@@ -1,0 +1,116 @@
+name: JNI Vulkan-only Complete Deliverable
+on:
+  push:
+    paths:
+      - .github/workflows/jni-vulkan-direct-delivery.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify_package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository and cache index
+        uses: actions/checkout@v4
+      - name: Confirm cached build artifact is valid
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          grep -n 'JNI Vulkan complete project' ARTIFACT_CACHE.md || true
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/11636689328" > /tmp/input-artifact.json
+          python3 - <<'PY'
+          import json,datetime
+          x=json.load(open('/tmp/input-artifact.json'))
+          assert x['id']==11636689328 and not x['expired']
+          assert datetime.datetime.fromisoformat(x['expires_at'].replace('Z','+00:00'))>datetime.datetime.now(datetime.timezone.utc)
+          assert x['digest']=='sha256:ead86a1d4e904d9e18983b61d5dcb6fbd43f67d821b7cef55aa77d47c02f4606'
+          print('CACHED_BUILD_ARTIFACT_VERIFIED',x['id'],x['expires_at'])
+          PY
+      - name: Download previously compiled and validated build
+        uses: actions/download-artifact@v4
+        with:
+          name: jni1-vulkan-only-complete
+          path: source-artifact
+          run-id: 37974144680
+          github-token: ${{ github.token }}
+      - name: Flatten nested ZIP and revalidate complete project
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s source-artifact/jni1-vulkan-only-full.zip
+          unzip -tq source-artifact/jni1-vulkan-only-full.zip
+          mkdir -p deliver
+          unzip -q source-artifact/jni1-vulkan-only-full.zip -d deliver
+          test -s deliver/libs/arm64-v8a/libAndroid.so
+          test -s deliver/symbols/libAndroid-unstripped.so
+          test -s deliver/jni/VulkanOverlay.h
+          test -s deliver/jni/NativeWindow.h
+          test -s deliver/jni/InputBridge.h
+          test -s deliver/jni/MotionQueue.h
+          test -s deliver/jni/Library/Imgui/include/font_zt.h
+          test -s deliver/jni/third_party/imgui/backends/imgui_impl_vulkan.cpp
+          test ! -e deliver/jni/Library/Imgui/include/OpenGL.h
+          test ! -e deliver/jni/Library/Imgui/include/imgui_impl_opengl3.h
+          test ! -e deliver/jni/Library/Imgui/arm64-v8a/libimgui.a
+          if grep -r -nE '(^[[:space:]]*#include[[:space:]]*[<"](EGL/|GLES[0-9]*/|GL/)|-lEGL|-lGLES)' deliver/jni --include='*.cpp' --include='*.h' --include='*.mk'; then
+            echo 'ERROR: obsolete OpenGL/EGL/GLES include or link option' >&2
+            exit 1
+          fi
+          readelf -d deliver/libs/arm64-v8a/libAndroid.so | tee /tmp/deps.txt
+          grep -q 'libvulkan.so' /tmp/deps.txt
+          if grep -E 'NEEDED.*(libEGL|libGLES|libOpenGL)' /tmp/deps.txt; then
+            echo 'ERROR: OpenGL/EGL/GLES runtime dependency' >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile,hashlib,json,datetime
+          inner=Path('source-artifact/jni1-vulkan-only-full.zip')
+          checks=Path('source-artifact/package.sha256').read_text().strip()
+          assert checks.split()[0]==hashlib.sha256(inner.read_bytes()).hexdigest(), 'inner package sha mismatch'
+          assert all(p.is_file() for p in [
+              Path('deliver/BUILD-REPORT.txt'),Path('deliver/README-Vulkan.md'),
+              Path('deliver/dynamic_dependencies.txt'),Path('deliver/original_jni1.sha256')])
+          main=Path('deliver/libs/arm64-v8a/libAndroid.so')
+          report={'source_archive':'jni1.zip','original_build_run':37974144680,
+                  'original_build_artifact_id':11636689328,'build_abi':'arm64-v8a',
+                  'min_android_api':31,'renderer':'Vulkan-only VkImage offscreen; RGBA CPU readback to AHardwareBuffer',
+                  'android_ndk':'r28c','imgui':'v1.92.6','open_gl_egl_gles_dynamic_dependencies':False,
+                  'build_status':'PASSED on GitHub Actions','zip_integrity':'PASSED',
+                  'on_device_runtime':'NOT TESTED',
+                  'known_limitation':'CPU readback per frame; Android SurfaceControl and touch require real-device tests',
+                  'compiled_so_sha256':hashlib.sha256(main.read_bytes()).hexdigest(),
+                  'repackage_utc':datetime.datetime.now(datetime.timezone.utc).isoformat()}
+          Path('deliver/VERIFICATION.json').write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n')
+          Path('deliver/README_交付说明.md').write_text('''# JNI Vulkan-only 完整合并工程\n\n'
+            '源项目：用户上传的 jni1.zip。此压缩包解压一次即包含 jni 源码、预编译 libs、未剥离符号文件 symbols 和校验清单。\n\n'
+            '## 已验证\n- Android NDK r28c, ARM64 API 31 编译与链接通过\n'
+            '- libAndroid.so 的 ELF DT_NEEDED 包含 libvulkan.so，不包含 libEGL/libGLES/libOpenGL\n'
+            '- 已删除旧 OpenGL 预编译后端和 EGL/GLES 图形 API 使用\n'
+            '- 输入桥继续沿用修复后的 MotionQueue；菜单和 font_zt.h 保留\n'
+            '- ZIP CRC 和原内部 ZIP SHA256 已验证\n\n'
+            '## 编译\n'
+            'export ANDROID_NDK_HOME=/path/to/android-ndk-r28c\n'
+            'ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=jni/Android.mk NDK_APPLICATION_MK=jni/Application.mk\n\n'
+            '## 需真机验证\n'
+            '渲染路径为 Vulkan 离屏 -> staging CPU 读回 -> AHardwareBuffer -> ASurfaceControl。\n'
+            '是否能在目标手机正常显示透明覆盖层、完成触摸、旋转后恢复，以及帧率和稳定性，尚未实机测试。\n'
+            '不可将编译成功视为运行通过。请保留 tombstone 和 logcat 以便进一步修复。\n')
+          paths=sorted(x for x in Path('deliver').rglob('*') if x.is_file() and x.name!='SHA256SUMS.txt')
+          Path('deliver/SHA256SUMS.txt').write_text(''.join(
+            hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.relative_to('deliver').as_posix()+'\n'
+            for p in paths))
+          print('VERIFIED_FILES',len(paths))
+          print('DIRECT_PACKAGE_SHA256_MANIFEST_READY')
+          PY
+      - name: Deliver flattened full project
+        uses: actions/upload-artifact@v4
+        with:
+          name: jni1-vulkan-only-full-source-binaries
+          path: deliver/
+          retention-days: 400
+          if-no-files-found: error
+          include-hidden-files: true
