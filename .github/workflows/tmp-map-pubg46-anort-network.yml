@@ -1,0 +1,190 @@
+name: Temporary map PUBG 4.6 anort network key path
+
+on:
+  push:
+    branches:
+      - tmp/analyze-pubg46-dynkeys-20261011
+    paths:
+      - .github/workflows/tmp-map-pubg46-anort-network.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore cached APK and extract libanort
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11308584380/zip" -o apkcache.zip
+          unzip -q apkcache.zip -d apkcache
+          APK="$(find apkcache -name '*.apk' -print -quit)"
+          test -n "$APK"
+          echo "9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696  $APK" | sha256sum -c -
+          unzip -p "$APK" lib/arm64-v8a/libanort.so > libanort.so
+          echo "98118fa56a0ea03d201f841d85abf5f837906c3747d57ea63b7171af3f61ac5c  libanort.so" | sha256sum -c -
+          python3 -m pip install --user --disable-pip-version-check capstone==5.0.6 pyelftools==0.32 >/dev/null
+
+      - name: Map network calls and ACF table
+        run: |
+          python3 - <<'PY'
+          import struct, json, re
+          from pathlib import Path
+          from collections import defaultdict
+          from elftools.elf.elffile import ELFFile
+          from capstone import Cs,CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN
+          from capstone.arm64_const import ARM64_OP_IMM, ARM64_OP_REG, ARM64_OP_MEM
+
+          P=Path('libanort.so'); D=P.read_bytes()
+          md=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN); md.detail=True
+          ACF=0x1d1cd8; ACO=0x1d3620
+          INTEREST={'recv','recvfrom','send','sendto','mprotect','mmap','munmap','read','write','dlsym','memcpy','memmove'}
+
+          with P.open('rb') as f:
+              e=ELFFile(f)
+              loads=[]; execs=[]
+              for s in e.iter_segments():
+                  if s['p_type']=='PT_LOAD':
+                      x=(int(s['p_vaddr']),int(s['p_offset']),int(s['p_filesz']),int(s['p_memsz']),int(s['p_flags']))
+                      loads.append(x)
+                      if x[4]&1: execs.append(x)
+              def va2off(va):
+                  for v,o,fs,ms,fl in loads:
+                      if v<=va<v+fs: return o+(va-v)
+                  return None
+              def readq(va):
+                  o=va2off(va)
+                  return 0 if o is None else struct.unpack_from('<Q',D,o)[0]
+
+              dyn=e.get_section_by_name('.dynsym')
+              exact=defaultdict(list)
+              if dyn:
+                  for s in dyn.iter_symbols():
+                      va=int(s['st_value'])
+                      if va: exact[va].append(s.name)
+
+              # PLT mapping by relocation order.
+              pltmap={}
+              plt=e.get_section_by_name('.plt')
+              rplt=e.get_section_by_name('.rela.plt') or e.get_section_by_name('.rel.plt')
+              if plt is not None and rplt is not None:
+                  st=e.get_section(rplt['sh_link'])
+                  base=int(plt['sh_addr'])
+                  for i,r in enumerate(rplt.iter_relocations()):
+                      si=int(r.entry['r_info_sym']); nm=st.get_symbol(si).name if si else ''
+                      pltmap[base+0x20+i*0x10]=nm
+
+              # Relative relocations resolving ACF/ACO arrays.
+              rels={}
+              for sec in e.iter_sections():
+                  if sec['sh_type'] not in ('SHT_RELA','SHT_REL'): continue
+                  for r in sec.iter_relocations():
+                      ro=int(r.entry['r_offset'])
+                      if ACF<=ro<ACF+432 or ACO<=ro<ACO+168:
+                          rels[ro]=(int(r.entry.get('r_addend',0) or 0),int(r.entry['r_info_type']))
+
+              acf=[]
+              for i in range(54):
+                  va=ACF+i*8; q=readq(va); rr=rels.get(va)
+                  t=rr[0] if rr and rr[1]==1027 else q
+                  acf.append(t)
+              aco=[]
+              for i in range(21):
+                  va=ACO+i*8; q=readq(va); rr=rels.get(va)
+                  t=rr[0] if rr and rr[1]==1027 else q
+                  aco.append(t)
+
+          print('=== INTEREST PLT ===')
+          for va,nm in sorted(pltmap.items()):
+              if nm in INTEREST: print(hex(va),nm)
+
+          # Scan every executable instruction for direct BL to interesting PLT.
+          callsites=[]
+          all_ins=[]
+          for v,o,fs,ms,fl in execs:
+              insns=list(md.disasm(D[o:o+fs],v))
+              all_ins.extend(insns)
+              for i,ins in enumerate(insns):
+                  if ins.mnemonic=='bl' and ins.operands and ins.operands[0].type==ARM64_OP_IMM:
+                      t=int(ins.operands[0].imm); nm=pltmap.get(t)
+                      if nm in INTEREST:
+                          ctx=[f'0x{x.address:x}: {x.mnemonic} {x.op_str}' for x in insns[max(0,i-12):min(len(insns),i+13)]]
+                          callsites.append((ins.address,t,nm,ctx))
+          print('=== NETWORK/SYSTEM DIRECT CALLS ===')
+          for a,t,nm,ctx in callsites:
+              print(f'CALL 0x{a:x} -> {nm}@0x{t:x}')
+              for x in ctx: print(' ',x)
+              print()
+
+          # Approximate function island around target: disassemble up to 0x1200 and collect direct calls.
+          def inspect_target(t,limit=0x1200):
+              off=va2off(t)
+              if off is None:return []
+              out=[]; count=0
+              for ins in md.disasm(D[off:off+limit],t):
+                  if ins.mnemonic=='bl' and ins.operands and ins.operands[0].type==ARM64_OP_IMM:
+                      dst=int(ins.operands[0].imm); nm=pltmap.get(dst)
+                      if nm in INTEREST: out.append((ins.address,nm,dst))
+                  count+=1
+                  if ins.mnemonic=='ret' and count>5: break
+                  if count>1200: break
+              return out
+
+          print('=== ACF INTEREST CALLS ===')
+          acf_hits={}
+          for i,t in enumerate(acf):
+              hs=inspect_target(t)
+              if hs:
+                  acf_hits[i]=hs
+                  print(f'ACF[{i}] off=0x{i*8:x} target=0x{t:x} names={exact.get(t,[])}')
+                  for a,nm,d in hs: print(f'  0x{a:x}: {nm}@0x{d:x}')
+          print('=== ACO INTEREST CALLS ===')
+          aco_hits={}
+          for i,t in enumerate(aco):
+              hs=inspect_target(t)
+              if hs:
+                  aco_hits[i]=hs
+                  print(f'ACO[{i}] off=0x{i*8:x} target=0x{t:x} names={exact.get(t,[])}')
+                  for a,nm,d in hs: print(f'  0x{a:x}: {nm}@0x{d:x}')
+
+          # Find callers of ACF targets from anywhere in libanort, useful for semantic grouping.
+          acf_index={t:i for i,t in enumerate(acf) if t}
+          print('=== DIRECT CALLERS OF ACF TARGETS ===')
+          by=defaultdict(list)
+          for ins in all_ins:
+              if ins.mnemonic=='bl' and ins.operands and ins.operands[0].type==ARM64_OP_IMM:
+                  t=int(ins.operands[0].imm)
+                  if t in acf_index: by[acf_index[t]].append(ins.address)
+          for i in sorted(by):
+              print(f'ACF[{i}] target=0x{acf[i]:x} callers={[hex(x) for x in by[i][:80]]}')
+
+          # Search strings with key/network/Pak semantics.
+          print('=== SEMANTIC STRINGS ===')
+          for m in re.finditer(rb'[\x20-\x7e]{5,}',D):
+              s=m.group().decode('ascii','ignore'); q=s.lower()
+              if any(k in q for k in ('tcp','recv','send','key','crypt','pak','hotupdate','patch','decrypt','encrypt')):
+                  if len(s)<=180: print(hex(m.start()),s)
+
+          summary={
+            'acf':[hex(x) for x in acf],
+            'aco':[hex(x) for x in aco],
+            'callsites':[{'addr':hex(a),'name':nm,'plt':hex(t)} for a,t,nm,_ in callsites],
+            'acf_hits':{str(i):[{'addr':hex(a),'name':nm} for a,nm,_ in hs] for i,hs in acf_hits.items()},
+            'aco_hits':{str(i):[{'addr':hex(a),'name':nm} for a,nm,_ in hs] for i,hs in aco_hits.items()},
+          }
+          Path('anort_network_map.json').write_text(json.dumps(summary,indent=2))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-anort-network-map
+          path: anort_network_map.json
+          retention-days: 1
