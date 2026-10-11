@@ -1,0 +1,172 @@
+name: Temporary PUBG 4.6 RVA Scan
+
+on:
+  push:
+    branches:
+      - tmp/pubg46-rva-scan-20261011
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached 4.6 libUE4
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer $GH_TOKEN"             -H "X-GitHub-Api-Version: 2022-11-28"             "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11309845408/zip"             -o libcache.zip
+          echo "816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab  libcache.zip" | sha256sum -c -
+          unzip -q libcache.zip -d libcache
+          LIB="$(find libcache -name 'libUE4-GL-4.6.so' -print -quit)"
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  $LIB" | sha256sum -c -
+          cp "$LIB" libUE4.so
+
+      - name: Install analysis dependencies
+        run: python3 -m pip install --user --disable-pip-version-check capstone pyelftools
+
+      - name: Scan runtime key table RVA and protected views
+        run: |
+          python3 - <<'PY'
+          import struct, json, re
+          from pathlib import Path
+          from elftools.elf.elffile import ELFFile
+          from capstone import Cs, CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN
+
+          SO=Path("libUE4.so")
+          data=SO.read_bytes()
+          TARGET=0xF5DF260
+          TPAGE=TARGET & ~0xfff
+          print(f"FILE_SIZE=0x{len(data):x}")
+          with SO.open("rb") as f:
+              elf=ELFFile(f)
+              loads=[]
+              execs=[]
+              for i,seg in enumerate(elf.iter_segments()):
+                  if seg["p_type"]!="PT_LOAD": continue
+                  x=dict(index=i,vaddr=int(seg["p_vaddr"]),offset=int(seg["p_offset"]),
+                         filesz=int(seg["p_filesz"]),memsz=int(seg["p_memsz"]),flags=int(seg["p_flags"]))
+                  loads.append(x)
+                  if x["flags"] & 1: execs.append(x)
+                  inside=x["vaddr"] <= TARGET < x["vaddr"]+x["memsz"]
+                  if inside:
+                      print("TARGET_SEGMENT",json.dumps(x))
+                      rel=TARGET-x["vaddr"]
+                      print("TARGET_REL",hex(rel),"IN_FILE",rel < x["filesz"])
+                      if rel < x["filesz"]:
+                          off=x["offset"]+rel
+                          print("TARGET_FILE_OFF",hex(off))
+                          print("TARGET_BYTES",data[off:off+0x200].hex())
+              print("LOADS",json.dumps(loads))
+
+              # relocations referring to/near runtime table
+              for sec in elf.iter_sections():
+                  if sec["sh_type"] not in ("SHT_RELA","SHT_REL"): continue
+                  hits=[]
+                  for rel in sec.iter_relocations():
+                      add=int(rel.entry.get("r_addend",0) or 0)
+                      roff=int(rel.entry["r_offset"])
+                      if abs(add-TARGET)<0x20000 or abs(roff-TARGET)<0x20000:
+                          hits.append((roff,add,int(rel.entry["r_info_type"])))
+                  if hits:
+                      print("RELOC_SECTION",sec.name)
+                      for h in hits[:200]: print("RELOC",*(hex(x) for x in h))
+
+          # direct pointer constants
+          needle=struct.pack("<Q",TARGET)
+          p=0
+          while True:
+              p=data.find(needle,p)
+              if p<0: break
+              print("ABS_PTR_FILEOFF",hex(p))
+              p+=1
+
+          def sx(v,b):
+              s=1<<(b-1)
+              return (v^s)-s
+          def adrp_target(word,pc):
+              if (word & 0x9F000000)!=0x90000000:
+                  return None
+              immlo=(word>>29)&3
+              immhi=(word>>5)&0x7ffff
+              imm=sx((immhi<<2)|immlo,21)<<12
+              return (pc & ~0xfff)+imm
+
+          # Raw ADRP scan robust to no function analysis. Test original and XOR-0x71 restored words,
+          # with source->target relocation shifts already observed in 4.5.
+          shifts=[0,0x10000,0x20000,0x30000,0x40000,0x50000]
+          xors=[0,0x71717171]
+          candidates=[]
+          for s in execs:
+              blob=data[s["offset"]:s["offset"]+s["filesz"]]
+              base=s["vaddr"]
+              for boff in range(0,len(blob)-4,4):
+                  raw=struct.unpack_from("<I",blob,boff)[0]
+                  srcva=base+boff
+                  for xv in xors:
+                      w=raw^xv
+                      if (w & 0x9F000000)!=0x90000000: continue
+                      for sh in shifts:
+                          pc=srcva-sh
+                          t=adrp_target(w,pc)
+                          if t is None: continue
+                          if abs(t-TPAGE)<=0x10000:
+                              candidates.append((srcva,pc,t,sh,xv,raw,w,s["offset"]+boff))
+          print("ADRP_CANDIDATE_COUNT",len(candidates))
+          for c in candidates[:1000]:
+              print("ADRP_CAND",
+                    f"srcva=0x{c[0]:x}",f"pc=0x{c[1]:x}",f"target=0x{c[2]:x}",
+                    f"shift=0x{c[3]:x}",f"xor=0x{c[4]:08x}",
+                    f"raw=0x{c[5]:08x}",f"word=0x{c[6]:08x}",f"fileoff=0x{c[7]:x}")
+
+          md=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN)
+          md.detail=True
+          seen=set()
+          print("=== CONTEXTS ===")
+          for c in candidates:
+              key=(c[0],c[3],c[4])
+              if key in seen: continue
+              seen.add(key)
+              srcva,pc,t,sh,xv,raw,w,fo=c
+              # 20 insns before, 50 after; XOR view if needed, disasm at relocated PC
+              start=max(fo-20*4,0)
+              start-=start%4
+              chunk=bytearray(data[start:min(start+80*4,len(data))])
+              if xv:
+                  for i in range(len(chunk)):
+                      chunk[i]^=0x71
+              # derive source VA of start from candidate file relation
+              cand_delta=fo-start
+              dis_base=pc-cand_delta
+              print(f"CTX srcva=0x{srcva:x} pc=0x{pc:x} target=0x{t:x} shift=0x{sh:x} xor=0x{xv:08x}")
+              for ins in md.disasm(bytes(chunk),dis_base):
+                  mark=">>" if ins.address==pc else "  "
+                  print(f"{mark} 0x{ins.address:x}: {ins.mnemonic} {ins.op_str}")
+              print()
+
+          # Scan strings around PAK and key provisioning hints, compact only.
+          print("=== KEY/PATCH STRINGS ===")
+          for m in re.finditer(rb"[\x20-\x7e]{5,}",data):
+              try:s=m.group().decode("ascii")
+              except:continue
+              sl=s.lower()
+              if any(q in sl for q in (
+                  "decryptionkey","decryption key","encryptkey","encryptionkey",
+                  "dynamic key","pakkey","pak key","setdecryptionkey",
+                  "hotupdate","patchkey","downloadkey","reskey","tcp"
+              )):
+                  if len(s)<220:
+                      print(hex(m.start()),s)
+
+          # 20 hex strings: prove runtime secrets absent.
+          print("=== HEX20 ===")
+          for m in re.finditer(rb"(?<![0-9a-f])[0-9a-f]{20}(?![0-9a-f])",data):
+              print(hex(m.start()),m.group().decode())
+          PY
