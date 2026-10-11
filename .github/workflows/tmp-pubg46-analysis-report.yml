@@ -1,0 +1,75 @@
+name: Temporary PUBG 4.6 Analysis Report
+
+on:
+  push:
+    branches:
+      - tmp/pubg46-analysis-20261011
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  report:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download previous analysis artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer $GH_TOKEN"             -H "X-GitHub-Api-Version: 2022-11-28"             "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11698781914/zip"             -o analysis.zip
+          echo "14f1929a1ac43d42125d9e2546d958bbaab7308d4694c34de07fa637d57fff17  analysis.zip" | sha256sum -c -
+          unzip -q analysis.zip -d analysis
+
+      - name: Print report
+        run: |
+          set -euo pipefail
+          echo "===== REPORT ====="
+          cat analysis/work/results/REPORT.md 2>/dev/null || cat analysis/results/REPORT.md
+          echo "===== DYNAMIC MASK CANDIDATES ====="
+          CAND=$(find analysis -name dynamic_mask_candidates.txt -print -quit)
+          sed -n '1,900p' "$CAND"
+          echo "===== FOCUSED STRINGS ====="
+          STR=$(find analysis -name strings_native_focus.txt -print -quit)
+          sed -n '1,500p' "$STR"
+          echo "===== STATIC JSON COMPACT ====="
+          JS=$(find analysis -name static_scan.json -print -quit)
+          python3 - "$JS" <<'PY'
+          import json,sys,re
+          p=json.load(open(sys.argv[1]))
+          print("HEX20_COUNT",p.get("hex20_count"))
+          print("EXACT")
+          for k,v in p.get("exact_strings",{}).items():
+              print(k,[(hex(x["va"]),x["s"]) for x in v])
+          print("RANKED")
+          for x in p.get("ranked_functions",[])[:100]:
+              print(hex(x["func"]),x["score"]," | ".join(x["strings"]))
+          print("ANCHOR_XREFS")
+          exactvas={}
+          for k,v in p.get("exact_strings",{}).items():
+              for y in v: exactvas[hex(y["va"])]=k
+          for va,refs in p.get("xrefs",{}).items():
+              if va in exactvas:
+                  print(va,exactvas[va],refs[:30])
+          PY
+
+      - name: Print radare2 summary
+        run: |
+          set -euo pipefail
+          R2=$(find analysis -name r2_xrefs.json -print -quit)
+          python3 - "$R2" <<'PY'
+          import json,sys
+          p=json.load(open(sys.argv[1]))
+          if "error" in p:
+              print("R2_ERROR",p["error"])
+          else:
+              for va,x in p.items():
+                  print("TARGET",va,x.get("target"))
+                  for r in x.get("refs",[])[:12]:
+                      print("REF",r.get("ref"))
+                      print("FUNCTION",r.get("function"))
+                      print(r.get("disasm","")[:6000])
+          PY
