@@ -1,0 +1,89 @@
+name: Temporary PUBG 4.6 Dynamic Key Analysis
+
+on:
+  push:
+    branches:
+      - tmp/pubg46-analysis-20261011
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout analysis branch
+        uses: actions/checkout@v4
+
+      - name: Restore cached libUE4 4.6 artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          mkdir -p work/libcache
+          curl -fL             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer $GH_TOKEN"             -H "X-GitHub-Api-Version: 2022-11-28"             "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11309845408/zip"             -o work/libcache.zip
+          echo "816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab  work/libcache.zip" | sha256sum -c -
+          unzip -q work/libcache.zip -d work/libcache
+          LIB="$(find work/libcache -type f -name 'libUE4-GL-4.6.so' -print -quit)"
+          test -n "$LIB"
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  $LIB" | sha256sum -c -
+          cp "$LIB" work/libUE4-GL-4.6.so
+          file work/libUE4-GL-4.6.so
+          ls -lh work/libUE4-GL-4.6.so
+
+      - name: Restore cached radare2 artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          mkdir -p work/r2cache work/r2root
+          curl -fL             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer $GH_TOKEN"             -H "X-GitHub-Api-Version: 2022-11-28"             "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11168472545/zip"             -o work/r2cache.zip
+          echo "a627196da624e8aa7f1764d6ddb99c796e28f0b59ed5fae20fe492bc2212e90f  work/r2cache.zip" | sha256sum -c -
+          unzip -q work/r2cache.zip -d work/r2cache
+          DEB="$(find work/r2cache -type f -name 'radare2_6.2.2_amd64.deb' -print -quit)"
+          test -n "$DEB"
+          echo "09234e4139bf8dfcbb7fc1fdb2519859ad516e63c19d3c27d92aaecdf463b1ad  $DEB" | sha256sum -c -
+          dpkg-deb -x "$DEB" work/r2root
+          echo "$GITHUB_WORKSPACE/work/r2root/usr/bin" >> "$GITHUB_PATH"
+
+      - name: Install temporary Python analysis dependencies
+        run: |
+          python3 -m pip install --user --disable-pip-version-check capstone pyelftools r2pipe
+
+      - name: Focused native string scan
+        run: |
+          set -euxo pipefail
+          mkdir -p work/results
+          strings -a -t x work/libUE4-GL-4.6.so             | grep -Ei 'SetDecryptionKey|decryption.?key|dynamic.?key|pak.*key|key.*pak|sm4|tcp|socket|recv|response|48ea7d82db9995f2|c44d833f54ba436f'             > work/results/strings_native_focus.txt || true
+          strings -a -t x work/libUE4-GL-4.6.so             | grep -E '[[:space:]][0-9a-f]{20}$'             > work/results/strings_hex20.txt || true
+          readelf -lW work/libUE4-GL-4.6.so > work/results/readelf_program_headers.txt
+          readelf -dW work/libUE4-GL-4.6.so > work/results/readelf_dynamic.txt
+          rabin2 -I work/libUE4-GL-4.6.so > work/results/rabin_info.txt || true
+          rabin2 -zz work/libUE4-GL-4.6.so             | grep -Ei 'SetDecryptionKey|decryption.?key|dynamic.?key|sm4|tcp|socket|48ea7d82db9995f2|c44d833f54ba436f'             > work/results/rabin_strings_focus.txt || true
+
+      - name: Run AArch64 static/XREF analyzer
+        run: |
+          set -euxo pipefail
+          python3 tmp/pubg46-analysis-20261011/scan_pubg46_dynamic.py             work/libUE4-GL-4.6.so work/results
+
+      - name: Archive results
+        run: |
+          set -euxo pipefail
+          (
+            cd work/results
+            sha256sum * > SHA256SUMS.txt
+          )
+          tar -C work -czf pubg46-dynamic-key-analysis.tar.gz results
+          sha256sum pubg46-dynamic-key-analysis.tar.gz
+
+      - name: Upload analysis artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-dynamic-key-analysis
+          path: |
+            pubg46-dynamic-key-analysis.tar.gz
+            work/results/
+          retention-days: 1
