@@ -1,0 +1,35 @@
+name: Temporary PUBG 4.6 libanort target dump
+on:
+  push:
+    branches: [tmp/pubg46-dynkey-scan-20261011]
+    paths: [.github/workflows/tmp-pubg46-libanort-targets.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install --disable-pip-version-check --no-cache-dir pyelftools capstone
+      - name: Restore libanort from cached APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -o base-artifact.zip https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11308584380/zip
+          mkdir restored
+          unzip -q base-artifact.zip -d restored
+          APK=$(find restored -type f -name '*.apk' | head -1)
+          echo "9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696  $APK" | sha256sum -c -
+          unzip -p "$APK" lib/arm64-v8a/libanort.so > libanort.so
+          echo "98118fa56a0ea03d201f841d85abf5f837906c3747d57ea63b7171af3f61ac5c  libanort.so" | sha256sum -c -
+      - name: Dump targets
+        run: python3 tools/dump_libanort_targets.py libanort.so | tee target_report.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-libanort-target-dump
+          path: target_report.txt
+          retention-days: 1
