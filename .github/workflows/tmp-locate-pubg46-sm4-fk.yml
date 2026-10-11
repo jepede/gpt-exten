@@ -1,0 +1,83 @@
+name: Temporary locate PUBG 4.6 SM4 by FK machine code
+
+on:
+  push:
+    branches:
+      - tmp/analyze-pubg46-dynkeys-20261011
+    paths:
+      - .github/workflows/tmp-locate-pubg46-sm4-fk.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  locate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch verified UE4 pair
+        run: |
+          set -euo pipefail
+          curl -fL https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.5.so -o u45.so
+          curl -fL https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.6.so -o u46.so
+          echo "b5e68be0e06e52a81713c4241169ec493772bdcbca9b54b0845e89d08d2f8fdc  u45.so" | sha256sum -c -
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  u46.so" | sha256sum -c -
+          python3 -m pip install --user --disable-pip-version-check capstone==5.0.6 >/dev/null
+      - name: Search stable decoded instruction fingerprints
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from capstone import Cs,CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN
+          import json
+          md=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN)
+          a=Path('u45.so').read_bytes(); b=Path('u46.so').read_bytes()
+          t=0x8887a48;s=t+0x20000;n=0x200
+          ref=bytes(x^0x71 for x in a[s:s+n])
+          ins=list(md.disasm(ref,t))
+          for i,x in enumerate(ins[:40]): print(i,hex(x.address),x.bytes.hex(),x.mnemonic,x.op_str)
+          # Stable chunks chosen away from branch/ADRP immediates.
+          # offsets 0x10..0x28 contain FK0 MOV/MOVK + w11 setup + rev/eor/str/ldr;
+          # 0x2c..0x50 contain FK1 etc.
+          chunks=[(0x10,0x18),(0x10,0x28),(0x2c,0x48),(0x48,0x68)]
+          out=[]
+          for st,en in chunks:
+              pat=ref[st:en]
+              print('CHUNK',hex(st),hex(en),pat.hex())
+              for k in range(256):
+                  enc=bytes(x^k for x in pat)
+                  pos=0
+                  while True:
+                      q=b.find(enc,pos)
+                      if q<0:break
+                      out.append({'chunk':[st,en],'xor':k,'off':q})
+                      print('HIT chunk',hex(st),hex(en),'xor',hex(k),'off',hex(q))
+                      pos=q+1
+          # Also search exact decoded 4-byte instruction words one by one to find clusters.
+          words=[]
+          for idx in [4,5,6,7,8,9,11,12,13,14,15,16,18,19,21,22,23,24,26,27,28]:
+              if idx<len(ins): words.append((idx,ins[idx].bytes))
+          clusters={}
+          for idx,w in words:
+              for k in range(256):
+                  enc=bytes(x^k for x in w)
+                  pos=0
+                  while True:
+                      q=b.find(enc,pos)
+                      if q<0:break
+                      # candidate function start by subtracting original instruction offset
+                      start=q-idx*4
+                      clusters.setdefault((start,k),set()).add(idx)
+                      pos=q+1
+          ranked=sorted(((len(v),s,k,sorted(v)) for (s,k),v in clusters.items()),reverse=True)[:100]
+          print('RANKED')
+          for cnt,start,k,idxs in ranked[:30]:
+              if cnt>=5: print(cnt,hex(start),hex(k),idxs)
+          Path('sm4_fk_hits.json').write_text(json.dumps({'chunk_hits':out,'ranked':[{'count':c,'start':s,'xor':k,'idxs':ii} for c,s,k,ii in ranked]},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-sm4-fk-locate
+          path: sm4_fk_hits.json
+          retention-days: 1
