@@ -1,0 +1,272 @@
+name: Temporary analyze PUBG 4.6 dynamic PAK keys
+
+on:
+  push:
+    branches:
+      - tmp/analyze-pubg46-dynkeys-20261011
+    paths:
+      - .github/workflows/tmp-analyze-pubg46-dynkeys.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch cached release libUE4
+        run: |
+          set -euxo pipefail
+          curl -L --fail --retry 3 \
+            -o libUE4-GL-4.6.so \
+            https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.6.so
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  libUE4-GL-4.6.so" | sha256sum -c -
+
+      - name: Install analysis dependencies
+        run: |
+          python3 -m pip install --disable-pip-version-check capstone==5.0.6 pyelftools==0.32
+
+      - name: Analyze AArch64 dynamic-key data flow
+        run: |
+          cat > /tmp/analyze46.py <<'PY'
+          import json, os, re, struct, hashlib
+          from collections import defaultdict
+          from elftools.elf.elffile import ELFFile
+          from capstone import Cs, CS_ARCH_ARM64, CS_MODE_ARM, CS_OP_IMM, CS_OP_REG, CS_OP_MEM
+          from capstone.arm64 import ARM64_INS_ADRP, ARM64_INS_ADR, ARM64_INS_ADD, ARM64_INS_LDR, ARM64_INS_MOV, ARM64_INS_MOVZ, ARM64_INS_AND, ARM64_INS_CMP
+
+          PATH='libUE4-GL-4.6.so'
+          data=open(PATH,'rb').read()
+          sha=hashlib.sha256(data).hexdigest()
+
+          with open(PATH,'rb') as f:
+              elf=ELFFile(f)
+              loads=[]
+              execs=[]
+              for seg in elf.iter_segments():
+                  if seg['p_type']=='PT_LOAD':
+                      item=(int(seg['p_vaddr']), int(seg['p_offset']), int(seg['p_filesz']), int(seg['p_memsz']), int(seg['p_flags']))
+                      loads.append(item)
+                      if int(seg['p_flags']) & 1:
+                          execs.append(item)
+
+          def off_to_va(off):
+              for va,fo,fs,ms,fl in loads:
+                  if fo <= off < fo+fs:
+                      return va+(off-fo)
+              return None
+          def va_to_off(va):
+              for sva,fo,fs,ms,fl in loads:
+                  if sva <= va < sva+fs:
+                      o=fo+(va-sva)
+                      if o < fo+fs: return o
+              return None
+          def cstr_at(off, limit=256):
+              e=data.find(b'\0',off,min(len(data),off+limit))
+              if e<0: e=min(len(data),off+limit)
+              try: return data[off:e].decode('ascii')
+              except: return None
+
+          known_dyn = {
+              36:"df473da3aa9b5704ce73",
+              37:"46e490567d02cdb312b3",
+              38:"f838b560ec26d4ba67fd",
+              39:None,
+              40:None,
+              41:None,
+              42:"56eed0401753d9e5ee86",
+              43:"5412cc837199fa08d229",
+              44:"48750e47caff0540e2ee",
+          }
+          known_static = {
+              49:"iQ0eM0mJ7uT0kV6kL5zY",
+              50:"wD2rP3lP9xF4mE1eC5jS",
+              51:"rG0lR2rZ5vM6mW5lM1rR",
+              52:"fO3kW1fE6eD0pU1kY7xK",
+          }
+          string_hits={}
+          for label,s in [(f'dyn_{k}',v) for k,v in known_dyn.items() if v] + [(f'static_{k}',v) for k,v in known_static.items()]:
+              raw=s.encode()
+              hits=[]
+              start=0
+              while True:
+                  p=data.find(raw,start)
+                  if p<0: break
+                  hits.append({'file_off':p,'va':off_to_va(p)})
+                  start=p+1
+              string_hits[label]=hits
+
+          # enumerate 20-char lowercase hex strings
+          hex20=[]
+          for m in re.finditer(rb'(?<![0-9a-f])[0-9a-f]{20}(?![0-9a-f])', data):
+              hex20.append({'s':m.group().decode(),'file_off':m.start(),'va':off_to_va(m.start())})
+          # de-dup same string
+          uniq={}
+          for x in hex20: uniq.setdefault(x['s'],x)
+          hex20=list(uniq.values())
+
+          # raw pointer references to known strings
+          ptr_refs=defaultdict(list)
+          target_vas={}
+          for label,hits in string_hits.items():
+              if not hits: continue
+              for h in hits:
+                  va=h['va']
+                  if va is None: continue
+                  target_vas.setdefault(label,[]).append(va)
+                  needle=struct.pack('<Q',va)
+                  st=0
+                  while True:
+                      p=data.find(needle,st)
+                      if p<0: break
+                      ptr_refs[label].append({'file_off':p,'va':off_to_va(p)})
+                      st=p+1
+
+          md=Cs(CS_ARCH_ARM64, CS_MODE_ARM)
+          md.detail=True
+          insns=[]
+          for sva,fo,fs,ms,fl in execs:
+              blob=data[fo:fo+fs]
+              for ins in md.disasm(blob,sva):
+                  insns.append(ins)
+          by_addr={i.address:i for i in insns}
+          addr_list=[i.address for i in insns]
+          idx_by_addr={a:i for i,a in enumerate(addr_list)}
+
+          # Track ADRP/ADR + ADD/LDR simple xrefs for targets
+          target_to_label={}
+          for lab,vas in target_vas.items():
+              for va in vas: target_to_label[va]=lab
+          xrefs=[]
+          reg_pages={}
+          for i,ins in enumerate(insns):
+              # expire state after 8 instructions by keeping (base, index)
+              reg_pages={r:v for r,v in reg_pages.items() if i-v[1] <= 8}
+              if ins.id in (ARM64_INS_ADRP,ARM64_INS_ADR) and len(ins.operands)>=2 and ins.operands[0].type==CS_OP_REG and ins.operands[1].type==CS_OP_IMM:
+                  reg_pages[ins.operands[0].reg]=(int(ins.operands[1].imm), i, ins.address)
+                  continue
+              if ins.id==ARM64_INS_ADD and len(ins.operands)>=3:
+                  d,s,o=ins.operands[:3]
+                  if d.type==CS_OP_REG and s.type==CS_OP_REG and o.type==CS_OP_IMM and s.reg in reg_pages:
+                      base,bi,ba=reg_pages[s.reg]
+                      full=base+int(o.imm)
+                      reg_pages[d.reg]=(full,i,ba)
+                      for tv,lab in target_to_label.items():
+                          if full==tv:
+                              xrefs.append({'label':lab,'target':hex(tv),'site':hex(ins.address),'kind':'adrp_add','adrp':hex(ba)})
+              if ins.id==ARM64_INS_LDR and len(ins.operands)>=2:
+                  d,m=ins.operands[:2]
+                  if m.type==CS_OP_MEM and m.mem.base in reg_pages:
+                      base,bi,ba=reg_pages[m.mem.base]
+                      full=base+int(m.mem.disp)
+                      reg_pages[d.reg]=(full,i,ba)
+                      for tv,lab in target_to_label.items():
+                          if full==tv:
+                              xrefs.append({'label':lab,'target':hex(tv),'site':hex(ins.address),'kind':'adrp_ldr','adrp':hex(ba)})
+
+          # immediate sites relevant to key id routing
+          key_imms={0x01000000,0x00ffffff,0xff000000,17,18,19,31,49,50,52,222,39,41}
+          imm_sites=[]
+          for ins in insns:
+              vals=[]
+              for op in ins.operands:
+                  if op.type==CS_OP_IMM:
+                      vals.append(int(op.imm) & 0xffffffffffffffff)
+              matches=[v for v in vals if v in key_imms or (v & 0xffffffff) in key_imms]
+              if matches:
+                  imm_sites.append({'addr':hex(ins.address),'mnemonic':ins.mnemonic,'op_str':ins.op_str,'matches':[hex(v) for v in matches]})
+
+          def window(addr, before=18, after=24):
+              if isinstance(addr,str): addr=int(addr,16)
+              # nearest instruction
+              j=min(range(len(addr_list)), key=lambda k: abs(addr_list[k]-addr))
+              lo=max(0,j-before); hi=min(len(insns),j+after+1)
+              return [{'addr':hex(insns[k].address),'m':insns[k].mnemonic,'o':insns[k].op_str} for k in range(lo,hi)]
+
+          # cluster xrefs and raw pointer areas
+          xref_windows=[]
+          for x in xrefs[:200]:
+              xref_windows.append({'xref':x,'window':window(x['site'])})
+
+          pointer_windows=[]
+          for lab,refs in ptr_refs.items():
+              for rr in refs[:20]:
+                  off=rr['file_off']
+                  lo=max(0,off-0x80); hi=min(len(data),off+0x100)
+                  qs=[]
+                  for p in range(lo-(lo%8),hi,8):
+                      if p+8<=len(data):
+                          q=struct.unpack_from('<Q',data,p)[0]
+                          qs.append({'off':hex(p),'va':hex(off_to_va(p)) if off_to_va(p) is not None else None,'q':hex(q)})
+                  pointer_windows.append({'label':lab,'ref':rr,'qwords':qs})
+
+          # scan for potentially useful strings
+          interesting=[]
+          pat=re.compile(rb'[ -~]{5,160}\x00')
+          for m in pat.finditer(data):
+              s=m.group()[:-1].decode('ascii','ignore')
+              sl=s.lower()
+              if any(k in sl for k in ('decrypt','encrypt','pak','tcp','keyid','key_id','secret','cipher','aes','sm4')):
+                  if len(interesting)<2500:
+                      interesting.append({'s':s,'va':off_to_va(m.start()),'off':m.start()})
+
+          # windows around key routing immediates, prioritizing mask and method17
+          selected=[]
+          for it in imm_sites:
+              m=it['matches']
+              if any(x in m for x in ('0x1000000','0xffffff','0xff000000','0x11','0x27','0x29')):
+                  selected.append({'site':it,'window':window(it['addr'],12,20)})
+                  if len(selected)>=300: break
+
+          out={
+              'sha256':sha,
+              'size':len(data),
+              'loads':[{'va':hex(x[0]),'off':hex(x[1]),'filesz':hex(x[2]),'memsz':hex(x[3]),'flags':x[4]} for x in loads],
+              'string_hits':string_hits,
+              'hex20_candidates':hex20,
+              'raw_pointer_refs':ptr_refs,
+              'code_xrefs':xrefs,
+              'xref_windows':xref_windows,
+              'key_immediate_sites':imm_sites,
+              'selected_key_windows':selected,
+              'pointer_windows':pointer_windows,
+              'interesting_strings':interesting,
+          }
+          os.makedirs('analysis46',exist_ok=True)
+          with open('analysis46/analysis.json','w') as f: json.dump(out,f,indent=2)
+
+          # compact markdown
+          with open('analysis46/REPORT.md','w') as f:
+              f.write('# PUBG 4.6 dynamic key static analysis\n\n')
+              f.write(f'- SHA256: {sha}\n- Size: {len(data)}\n- hex20 candidates: {len(hex20)}\n- code xrefs to known salts/secrets: {len(xrefs)}\n\n')
+              f.write('## Known string hits\n')
+              for k,v in string_hits.items(): f.write(f'- {k}: {v}\n')
+              f.write('\n## Raw pointer refs\n')
+              for k,v in ptr_refs.items(): f.write(f'- {k}: {v}\n')
+              f.write('\n## Code xrefs\n')
+              for x in xrefs: f.write(f'- {x}\n')
+              f.write('\n## Key immediate sites summary\n')
+              for it in imm_sites[:1000]: f.write(f'- {it}\n')
+          print(json.dumps({
+              'sha256':sha,
+              'size':len(data),
+              'string_hits':{k:len(v) for k,v in string_hits.items()},
+              'hex20_candidates':len(hex20),
+              'raw_pointer_refs':{k:len(v) for k,v in ptr_refs.items()},
+              'code_xrefs':len(xrefs),
+              'key_imm_sites':len(imm_sites),
+          },indent=2))
+          PY
+          python3 /tmp/analyze46.py
+          tar -czf pubg46-dynkey-analysis.tar.gz analysis46
+
+      - name: Upload temporary analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-dynkey-static-analysis
+          path: pubg46-dynkey-analysis.tar.gz
+          retention-days: 1
