@@ -1,0 +1,83 @@
+name: Temporary fingerprint PUBG 4.6 SM4 island
+
+on:
+  push:
+    branches:
+      - tmp/analyze-pubg46-dynkeys-20261011
+    paths:
+      - .github/workflows/tmp-fingerprint-pubg46-sm4.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fp:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch verified UE4 pair
+        run: |
+          set -euo pipefail
+          curl -fL https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.5.so -o u45.so
+          curl -fL https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.6.so -o u46.so
+          echo "b5e68be0e06e52a81713c4241169ec493772bdcbca9b54b0845e89d08d2f8fdc  u45.so" | sha256sum -c -
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  u46.so" | sha256sum -c -
+          python3 -m pip install --user --disable-pip-version-check capstone==5.0.6 >/dev/null
+      - name: Fingerprint protected SM4 island
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from capstone import Cs,CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN
+          import json, math
+          md=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN);md.detail=False
+          a=Path('u45.so').read_bytes(); b=Path('u46.so').read_bytes()
+          # 4.5 recovered code: source target+0x20000, byte XOR 0x71.
+          t45=0x8887a48; s45=t45+0x20000; n=0x600
+          ref=bytes(x^0x71 for x in a[s45:s45+n])
+          refins=list(md.disasm(ref,t45))
+          refm=[x.mnemonic for x in refins[:160]]
+          print('REF',hex(t45),'src',hex(s45),'insns',len(refins),'first',[(x.mnemonic,x.op_str) for x in refins[:30]])
+          delta=0x1b4000
+          pred=t45+delta
+          print('PRED_TARGET',hex(pred),'PRED_SOURCE_+20000',hex(pred+0x20000))
+          def score(blob,va):
+              ins=list(md.disasm(blob,va))
+              ms=[x.mnemonic for x in ins[:160]]
+              # prefix exact mnemonic agreement + validity
+              k=min(len(ms),len(refm))
+              agree=sum(ms[i]==refm[i] for i in range(k))
+              # 4-byte coverage before decoder stops
+              return (agree, k, len(ins), ms[:20], [(x.mnemonic,x.op_str) for x in ins[:20]])
+          tests=[]
+          # likely layouts: around predicted target/source, 0x1000 pages +/-0x40000; all single-byte XORs.
+          centers=[pred,pred+0x20000,pred-0x20000,pred+0x40000]
+          seen=set()
+          for center in centers:
+              for d in range(-0x40000,0x40001,0x1000):
+                  base=center+d
+                  if base<0 or base+n>len(b): continue
+                  key0=(base,)
+                  if key0 in seen:continue
+                  seen.add(key0)
+                  raw=b[base:base+n]
+                  # cheap try raw plus selected keys first, then all keys only if needed
+                  for kx in range(256):
+                      blob=raw if kx==0 else bytes(x^kx for x in raw)
+                      sc=score(blob,pred)
+                      agree,kk,ni,ms,di=sc
+                      if agree>=8 or (ni>=100 and agree>=4):
+                          tests.append({'source':base,'xor':kx,'agree':agree,'k':kk,'insns':ni,'mn':ms,'dis':di})
+          tests=sorted(tests,key=lambda x:(x['agree'],x['insns']),reverse=True)[:50]
+          print('TOP')
+          for x in tests[:20]:
+              print('src',hex(x['source']),'xor',hex(x['xor']),'agree',x['agree'],'ins',x['insns'])
+              print(x['dis'][:12])
+          Path('sm4_fingerprint.json').write_text(json.dumps({'ref_first':[(x.mnemonic,x.op_str) for x in refins[:80]],'pred':pred,'top':tests},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-sm4-fingerprint
+          path: sm4_fingerprint.json
+          retention-days: 1
