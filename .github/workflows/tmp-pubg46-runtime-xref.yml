@@ -1,0 +1,164 @@
+name: Temporary PUBG 4.6 Runtime Pointer XREF
+
+on:
+  push:
+    branches:
+      - tmp/pubg46-xref-20261011b
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached libUE4 4.6
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer $GH_TOKEN"             -H "X-GitHub-Api-Version: 2022-11-28"             "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11309845408/zip"             -o libcache.zip
+          echo "816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab  libcache.zip" | sha256sum -c -
+          unzip -q libcache.zip -d libcache
+          LIB="$(find libcache -name 'libUE4-GL-4.6.so' -print -quit)"
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  $LIB" | sha256sum -c -
+          cp "$LIB" libUE4.so
+
+      - name: Install analysis dependencies
+        run: python3 -m pip install --user --disable-pip-version-check capstone pyelftools
+
+      - name: Trace runtime relocation slots
+        run: |
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          from collections import defaultdict
+          from elftools.elf.elffile import ELFFile
+          from capstone import Cs, CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN
+          from capstone.arm64_const import ARM64_OP_REG, ARM64_OP_IMM, ARM64_OP_MEM
+
+          data=Path("libUE4.so").read_bytes()
+          SLOT_BASE=0xEE9F000
+          PRIMARY=0xEE9F020
+
+          with open("libUE4.so","rb") as f:
+              elf=ELFFile(f)
+              loads=[]; execs=[]; rels={}
+              for s in elf.iter_segments():
+                  if s["p_type"]!="PT_LOAD": continue
+                  rec=(int(s["p_vaddr"]),int(s["p_offset"]),int(s["p_filesz"]),int(s["p_memsz"]),int(s["p_flags"]))
+                  loads.append(rec)
+                  if rec[4]&1: execs.append(rec)
+              for sec in elf.iter_sections():
+                  if sec["sh_type"] not in ("SHT_RELA","SHT_REL"): continue
+                  for r in sec.iter_relocations():
+                      ro=int(r.entry["r_offset"]); ad=int(r.entry.get("r_addend",0) or 0)
+                      if SLOT_BASE-0x200 <= ro < SLOT_BASE+0x400:
+                          rels[ro]=(ad,int(r.entry["r_info_type"]),sec.name)
+
+          def va2off(va):
+              for v,o,fs,ms,fl in loads:
+                  if v<=va<v+fs:return o+(va-v)
+              return None
+          def readq(va):
+              off=va2off(va)
+              if off is None:return None
+              return struct.unpack_from("<Q",data,off)[0]
+
+          print("=== RELOC MAP AROUND 0xEE9F000 ===")
+          for ro in sorted(rels):
+              ad,ty,sec=rels[ro]
+              print(f"slot=0x{ro:x} addend=0x{ad:x} type={ty} section={sec}")
+
+          print("=== RAW SLOT QWORDS ===")
+          for va in range(SLOT_BASE-0x40,SLOT_BASE+0x100,8):
+              q=readq(va)
+              if q is not None:
+                  tag=" PRIMARY" if va==PRIMARY else ""
+                  print(f"0x{va:x}: 0x{q:016x}{tag}")
+
+          md=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN); md.detail=True
+          targets=set(rels)
+          # Always include key slots of interest even if no reloc was parsed.
+          targets.update([0xEE9F020,0xEE9F028,0xEE9F038])
+          pages=defaultdict(set)
+          for t in targets: pages[t&~0xfff].add(t)
+
+          allhits=[]
+          # Disassemble each executable segment once and detect adrp->memory/add exact refs within 12 instructions.
+          for v,o,fs,ms,fl in execs:
+              blob=data[o:o+fs]
+              insns=list(md.disasm(blob,v))
+              for i,ins in enumerate(insns):
+                  if ins.mnemonic!="adrp" or len(ins.operands)<2:continue
+                  ops=ins.operands
+                  if ops[0].type!=ARM64_OP_REG or ops[1].type!=ARM64_OP_IMM:continue
+                  page=int(ops[1].imm)
+                  if page not in pages:continue
+                  br=ops[0].reg
+                  for j in range(i+1,min(i+13,len(insns))):
+                      x=insns[j]
+                      resolved=[]
+                      # Memory operands based on ADRP result.
+                      for oo in x.operands:
+                          if oo.type==ARM64_OP_MEM and oo.mem.base==br:
+                              a=page+int(oo.mem.disp)
+                              if a in targets: resolved.append(a)
+                      # ADD materialization.
+                      if x.mnemonic=="add" and len(x.operands)>=3 and x.operands[1].type==ARM64_OP_REG and x.operands[1].reg==br and x.operands[2].type==ARM64_OP_IMM:
+                          a=page+int(x.operands[2].imm)
+                          if a in targets: resolved.append(a)
+                      if resolved:
+                          for a in resolved:
+                              allhits.append((a,ins.address,x.address,i,j,insns))
+                          break
+                      # Stop if branch/return before use; calls do not stop because ADRP reg may survive only by ABI if caller-saved,
+                      # but common compiler sequences use it immediately.
+                      if x.mnemonic in ("ret","b","br"):break
+
+          print("=== EXACT CODE XREFS TO RELOCATION SLOTS ===")
+          by=defaultdict(list)
+          for h in allhits:by[h[0]].append(h)
+          for target in sorted(by):
+              ad=rels.get(target)
+              print(f"TARGET_SLOT 0x{target:x} reloc={ad} XREFS={len(by[target])}")
+              for k,h in enumerate(by[target][:30]):
+                  a,adrpva,useva,i,j,insns=h
+                  print(f"  XREF[{k}] ADRP=0x{adrpva:x} USE=0x{useva:x}")
+                  lo=max(0,i-16); hi=min(len(insns),j+36)
+                  for z in insns[lo:hi]:
+                      mark=">>" if z.address in (adrpva,useva) else "  "
+                      print(f"{mark} 0x{z.address:x}: {z.mnemonic} {z.op_str}")
+                  print()
+          print("TOTAL_XREFS",len(allhits))
+
+          # Collect probable function starts for primary slot xrefs and scan BL callers.
+          starts=set()
+          def find_start(insns,idx):
+              for k in range(idx,max(-1,idx-0x300),-1):
+                  z=insns[k]
+                  if z.mnemonic=="stp" and "x29, x30" in z.op_str and "[sp" in z.op_str:
+                      return z.address
+              return insns[max(0,idx-0x80)].address
+
+          for h in by.get(PRIMARY,[]):
+              _,_,_,i,j,insns=h
+              starts.add(find_start(insns,i))
+
+          print("=== PROBABLE FUNCTIONS AND CALLERS ===")
+          print("FUNCTION_STARTS",[hex(x) for x in sorted(starts)])
+          if starts:
+              callers=defaultdict(list)
+              for v,o,fs,ms,fl in execs:
+                  for ins in md.disasm(data[o:o+fs],v):
+                      if ins.mnemonic=="bl" and len(ins.operands)==1 and ins.operands[0].type==ARM64_OP_IMM:
+                          t=int(ins.operands[0].imm)
+                          if t in starts:callers[t].append(ins.address)
+              for s in sorted(starts):
+                  print(f"FUNC 0x{s:x} CALLERS", [hex(x) for x in callers[s][:100]])
+          PY
