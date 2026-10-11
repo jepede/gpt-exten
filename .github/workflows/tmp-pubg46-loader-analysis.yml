@@ -1,0 +1,161 @@
+name: Temporary PUBG 4.6 Loader Analysis
+
+on:
+  push:
+    branches:
+      - tmp/pubg46-analysis-c-20261011
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached libUE4 4.6
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer $GH_TOKEN"             -H "X-GitHub-Api-Version: 2022-11-28"             "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11309845408/zip"             -o libcache.zip
+          echo "816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab  libcache.zip" | sha256sum -c -
+          unzip -q libcache.zip -d libcache
+          LIB="$(find libcache -name 'libUE4-GL-4.6.so' -print -quit)"
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  $LIB" | sha256sum -c -
+          cp "$LIB" libUE4.so
+
+      - name: Install analysis dependencies
+        run: python3 -m pip install --user --disable-pip-version-check capstone pyelftools
+
+      - name: Analyze loader and added PT_LOADs
+        run: |
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          from collections import defaultdict
+          from elftools.elf.elffile import ELFFile
+          from capstone import Cs, CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN
+          from capstone.arm64_const import ARM64_OP_IMM, ARM64_OP_REG, ARM64_OP_MEM
+
+          data=Path("libUE4.so").read_bytes()
+          md=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN); md.detail=True
+
+          with open("libUE4.so","rb") as f:
+              elf=ELFFile(f)
+              loads=[]
+              for i,s in enumerate(elf.iter_segments()):
+                  if s["p_type"]=="PT_LOAD":
+                      loads.append((i,int(s["p_vaddr"]),int(s["p_offset"]),int(s["p_filesz"]),int(s["p_memsz"]),int(s["p_flags"])))
+              print("=== PT_LOADS ===")
+              for x in loads:print(x)
+
+              print("=== SECTIONS CONTAINING KEY GLOBALS ===")
+              for va in (0xEE9F020,0xF5DF260,0xF5DF340,0xF5DF1C0):
+                  hit=[]
+                  for s in elf.iter_sections():
+                      a=int(s["sh_addr"]); z=int(s["sh_size"])
+                      if a<=va<a+z:
+                          hit.append((s.name,hex(a),hex(z),s["sh_type"],int(s["sh_flags"])))
+                  print(hex(va),hit)
+
+              print("=== DYNAMIC INIT/FINI ===")
+              dyn=elf.get_section_by_name(".dynamic")
+              if dyn:
+                  for tag in dyn.iter_tags():
+                      if tag.entry.d_tag in ("DT_INIT","DT_FINI","DT_INIT_ARRAY","DT_INIT_ARRAYSZ","DT_FINI_ARRAY","DT_FINI_ARRAYSZ"):
+                          print(tag.entry.d_tag,hex(int(tag.entry.d_val)))
+
+              print("=== DYNSYM TARGETS ===")
+              ds=elf.get_section_by_name(".dynsym")
+              syms={}
+              if ds:
+                  for s in ds.iter_symbols():
+                      n=s.name
+                      if any(q in n.lower() for q in ("mprotect","memcpy","memmove","mmap","munmap","syscall","pthread_once")):
+                          syms[n]=int(s["st_value"])
+                          print(n,hex(int(s["st_value"])),s["st_info"]["type"])
+
+              print("=== RELOCS FOR TARGET IMPORTS ===")
+              import_slots={}
+              for sec in elf.iter_sections():
+                  if sec["sh_type"] not in ("SHT_RELA","SHT_REL"):continue
+                  link=elf.get_section(sec["sh_link"]) if sec["sh_link"] else None
+                  for r in sec.iter_relocations():
+                      si=int(r.entry["r_info_sym"])
+                      if not si or link is None:continue
+                      sym=link.get_symbol(si)
+                      if sym.name in syms:
+                          ro=int(r.entry["r_offset"])
+                          import_slots[ro]=sym.name
+                          print(sec.name,sym.name,hex(ro),r.entry["r_info_type"])
+
+              # Map VA->file offset
+              def va2off(va):
+                  for _,v,o,fs,ms,fl in loads:
+                      if v<=va<v+fs:return o+(va-v)
+                  return None
+
+              # Dump/disasm added executable PT_LOADs (those above original large code range)
+              print("=== ADDED EXEC SEGMENT DISASM ===")
+              added=[x for x in loads if (x[5]&1) and x[1]>=0xF000000]
+              for idx,v,o,fs,ms,fl in added:
+                  print(f"SEG idx={idx} va=0x{v:x} off=0x{o:x} filesz=0x{fs:x}")
+                  ins=list(md.disasm(data[o:o+fs],v))
+                  for z in ins[:1600]:
+                      print(f"0x{z.address:x}: {z.mnemonic} {z.op_str}")
+
+              # Get DT_INIT and emit tight disassembly around it, plus direct branch graph one level.
+              init=None
+              if dyn:
+                  for tag in dyn.iter_tags():
+                      if tag.entry.d_tag=="DT_INIT":init=int(tag.entry.d_val)
+              print("=== DT_INIT FOCUSED ===",hex(init) if init else None)
+              if init:
+                  off=va2off(init)
+                  if off is not None:
+                      chunk=data[off:off+0x1000]
+                      ins=list(md.disasm(chunk,init))
+                      branches=[]
+                      for z in ins[:500]:
+                          print(f"INIT 0x{z.address:x}: {z.mnemonic} {z.op_str}")
+                          if z.mnemonic in ("bl","b") and z.operands and z.operands[0].type==ARM64_OP_IMM:
+                              branches.append(int(z.operands[0].imm))
+                          if z.mnemonic=="ret": break
+                      print("INIT_BRANCH_TARGETS",[hex(x) for x in sorted(set(branches))])
+
+              # Find any normal-code refs to import GOT slots for mprotect/mmap/memcpy etc.
+              print("=== IMPORT SLOT XREFS ===")
+              slotpages=defaultdict(set)
+              for ro in import_slots:slotpages[ro&~0xfff].add(ro)
+              for idx,v,o,fs,ms,fl in loads:
+                  if not (fl&1):continue
+                  ins=list(md.disasm(data[o:o+fs],v))
+                  for i,z in enumerate(ins):
+                      if z.mnemonic!="adrp" or len(z.operands)<2 or z.operands[0].type!=ARM64_OP_REG or z.operands[1].type!=ARM64_OP_IMM:continue
+                      page=int(z.operands[1].imm)
+                      if page not in slotpages:continue
+                      r=z.operands[0].reg
+                      for y in ins[i+1:min(i+10,len(ins))]:
+                          vals=[]
+                          for oo in y.operands:
+                              if oo.type==ARM64_OP_MEM and oo.mem.base==r:
+                                  a=page+int(oo.mem.disp)
+                                  if a in import_slots:vals.append(a)
+                          if vals:
+                              for a in vals:
+                                  print(f"{import_slots[a]} SLOT=0x{a:x} ADRP=0x{z.address:x} USE=0x{y.address:x} {y.mnemonic} {y.op_str}")
+                              break
+
+              # Section/range around key relocation slots for context.
+              print("=== DATA AROUND 0xEE9F020 ===")
+              for va in range(0xEE9EF00,0xEE9F100,8):
+                  off=va2off(va)
+                  if off is not None:
+                      q=struct.unpack_from("<Q",data,off)[0]
+                      print(hex(va),hex(q))
+          PY
