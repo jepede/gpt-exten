@@ -1,4 +1,4 @@
-name: Temporary analyze PUBG 4.6 dynamic PAK keys
+name: Temporary diff PUBG 4.5 4.6 protector init
 
 on:
   push:
@@ -13,44 +13,110 @@ permissions:
 jobs:
   analyze:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch verified libUE4
+      - name: Fetch verified libUE4 pair
         run: |
           set -euxo pipefail
-          curl -L --fail --retry 3 -o libUE4-GL-4.6.so \
-            https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.6.so
+          curl -L --fail --retry 3 -o libUE4-GL-4.5.so https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.5.so
+          curl -L --fail --retry 3 -o libUE4-GL-4.6.so https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.6.so
+          echo "b5e68be0e06e52a81713c4241169ec493772bdcbca9b54b0845e89d08d2f8fdc  libUE4-GL-4.5.so" | sha256sum -c -
           echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  libUE4-GL-4.6.so" | sha256sum -c -
-      - name: Probe XOR 0x71 overlay
+          python3 -m pip install --disable-pip-version-check capstone==5.0.6 pyelftools==0.32
+      - name: Diff ELF protector entrypoints
         run: |
-          python3 - <<'PY'
-          import json, hashlib
-          d=open('libUE4-GL-4.6.so','rb').read()
-          pats={
-            'dyn37':b'46e490567d02cdb312b3',
-            'dyn38':b'f838b560ec26d4ba67fd',
-            'dyn42':b'56eed0401753d9e5ee86',
-            'static50':b'wD2rP3lP9xF4mE1eC5jS',
-            'global17':b'48ea7d82db9995f2',
-            'sm4_sbox_32':bytes([0x34,0x66,0x25,0x74,0x89,0x78,0xE4,0xA9,0x5A,0x41,0xBC,0x7A,0xD6,0x16,0x21,0x23,0x4D,0x61,0xDA,0x94,0x9B,0xDF,0x13,0x3C,0x69,0x3A,0x31,0x0A,0x5F,0xD7,0x99,0x95]),
-            'sm4_ck_16':bytes.fromhex('2bb90e0083e70a3a675c3b9ebfdadbad')
-          }
-          out={}
-          for name,p in pats.items():
-              enc=bytes(x^0x71 for x in p)
-              hits=[]; pos=0
-              while True:
-                  q=d.find(enc,pos)
-                  if q<0: break
-                  hits.append({'off':q,'page':q&~0xfff})
-                  pos=q+1
-              out[name]=hits
-          print(json.dumps(out,indent=2))
-          open('probe71.json','w').write(json.dumps(out,indent=2))
+          cat > /tmp/diffinit.py <<'PY'
+          import json, hashlib, difflib, math, collections
+          from elftools.elf.elffile import ELFFile
+          from capstone import Cs, CS_ARCH_ARM64, CS_MODE_ARM
+
+          md=Cs(CS_ARCH_ARM64, CS_MODE_ARM)
+          md.detail=False
+
+          def entropy(b):
+              if not b:return 0.0
+              c=collections.Counter(b); n=len(b)
+              return -sum((v/n)*math.log2(v/n) for v in c.values())
+
+          def parse(path):
+              raw=open(path,'rb').read()
+              with open(path,'rb') as f:
+                  elf=ELFFile(f)
+                  loads=[]
+                  dyn_tags={}
+                  for seg in elf.iter_segments():
+                      if seg['p_type']=='PT_LOAD':
+                          loads.append({
+                              'vaddr':int(seg['p_vaddr']), 'off':int(seg['p_offset']),
+                              'filesz':int(seg['p_filesz']), 'memsz':int(seg['p_memsz']),
+                              'flags':int(seg['p_flags']), 'align':int(seg['p_align'])
+                          })
+                      if seg['p_type']=='PT_DYNAMIC':
+                          for tag in seg.iter_tags():
+                              name=tag.entry.d_tag
+                              val=getattr(tag.entry,'d_val',None)
+                              ptr=getattr(tag.entry,'d_ptr',None)
+                              dyn_tags.setdefault(str(name),[]).append(int(ptr if ptr is not None else val or 0))
+                  imports=[]
+                  sec=elf.get_section_by_name('.dynsym')
+                  if sec:
+                      for s in sec.iter_symbols():
+                          if s['st_shndx']=='SHN_UNDEF' and s.name:
+                              imports.append(s.name)
+              def va2off(va):
+                  for x in loads:
+                      if x['vaddr']<=va<x['vaddr']+x['filesz']:
+                          return x['off']+(va-x['vaddr'])
+                  return None
+              init=(dyn_tags.get('DT_INIT') or [None])[0]
+              init_arr=dyn_tags.get('DT_INIT_ARRAY',[])
+              init_arr_sz=(dyn_tags.get('DT_INIT_ARRAYSZ') or [0])[0]
+              init_dis=[]
+              if init is not None:
+                  o=va2off(init)
+                  if o is not None:
+                      blob=raw[o:o+0x3000]
+                      for ins in md.disasm(blob,init):
+                          init_dis.append({'a':ins.address,'m':ins.mnemonic,'o':ins.op_str,'b':ins.bytes.hex()})
+                          if len(init_dis)>=1200: break
+              for x in loads:
+                  x['entropy']=entropy(raw[x['off']:x['off']+x['filesz']])
+              return {
+                  'path':path,'sha256':hashlib.sha256(raw).hexdigest(),'size':len(raw),
+                  'loads':loads,'dyn_tags':dyn_tags,'DT_INIT':init,
+                  'DT_INIT_ARRAY':init_arr,'DT_INIT_ARRAYSZ':init_arr_sz,
+                  'imports_interesting':[x for x in imports if any(k in x.lower() for k in ['mprotect','mmap','memcpy','memmove','dl','pthread','syscall'])],
+                  'init_dis':init_dis
+              }
+
+          a=parse('libUE4-GL-4.5.so'); b=parse('libUE4-GL-4.6.so')
+          ma=[x['m'] for x in a['init_dis']]
+          mb=[x['m'] for x in b['init_dis']]
+          sm=difflib.SequenceMatcher(None,ma,mb,autojunk=False)
+          blocks=[{'a':x.a,'b':x.b,'size':x.size} for x in sm.get_matching_blocks() if x.size>=4]
+          # show top same mnemonic blocks with actual instructions
+          top=sorted(blocks,key=lambda x:-x['size'])[:30]
+          for x in top:
+              x['a_addr']=hex(a['init_dis'][x['a']]['a']) if x['a']<len(a['init_dis']) else None
+              x['b_addr']=hex(b['init_dis'][x['b']]['a']) if x['b']<len(b['init_dis']) else None
+              x['a_ins']=a['init_dis'][x['a']:x['a']+min(x['size'],20)]
+              x['b_ins']=b['init_dis'][x['b']:x['b']+min(x['size'],20)]
+          out={'v45':a,'v46':b,'matching_blocks':top}
+          open('protector_init_diff.json','w').write(json.dumps(out,indent=2))
+          print('4.5 DT_INIT',hex(a['DT_INIT']) if a['DT_INIT'] else None,'loads',a['loads'])
+          print('4.6 DT_INIT',hex(b['DT_INIT']) if b['DT_INIT'] else None,'loads',b['loads'])
+          print('interesting imports 4.5',a['imports_interesting'])
+          print('interesting imports 4.6',b['imports_interesting'])
+          print('top matching mnemonic blocks:')
+          for x in top[:10]:
+              print(x['size'],x['a_addr'],x['b_addr'])
+              print(' 45',[(i['m'],i['o']) for i in x['a_ins'][:8]])
+              print(' 46',[(i['m'],i['o']) for i in x['b_ins'][:8]])
           PY
+          python3 /tmp/diffinit.py
       - uses: actions/upload-artifact@v4
         with:
-          name: pubg46-xor71-probe
-          path: probe71.json
+          name: pubg45-46-protector-init-diff
+          path: protector_init_diff.json
           retention-days: 1
