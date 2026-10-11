@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore cached APK and extract libanort
+      - name: Restore cached APK and libanort
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -29,20 +29,20 @@ jobs:
           unzip -p "$APK" lib/arm64-v8a/libanort.so > libanort.so
           echo "98118fa56a0ea03d201f841d85abf5f837906c3747d57ea63b7171af3f61ac5c  libanort.so" | sha256sum -c -
 
-      - name: Analyze g_acf_array function table
+      - name: Recover ACF table and flattened CFG
         run: |
           python3 -m pip install --user --disable-pip-version-check capstone pyelftools >/dev/null
           python3 - <<'PY'
           import struct
           from pathlib import Path
+          from collections import deque, defaultdict
           from elftools.elf.elffile import ELFFile
           from capstone import Cs,CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN
-          from capstone.arm64_const import ARM64_OP_IMM
+          from capstone.arm64_const import ARM64_OP_IMM,ARM64_OP_MEM,ARM64_OP_REG
 
-          data=Path('libanort.so').read_bytes()
+          DATA=Path('libanort.so').read_bytes()
+          ENTRY=0x3f7ac
           ACF=0x1d1cd8
-          ACO=0x1d3620
-          OFFSETS=[0x28,0x38,0x40,0x48,0xb0,0xb8,0xc0,0x100,0x188]
 
           with open('libanort.so','rb') as f:
               e=ELFFile(f)
@@ -56,92 +56,155 @@ jobs:
                   return None
               def readq(va):
                   o=va2off(va)
-                  return None if o is None else struct.unpack_from('<Q',data,o)[0]
+                  return None if o is None else struct.unpack_from('<Q',DATA,o)[0]
 
-              print('=== LOADS ===')
-              for x in loads:print(tuple(hex(y) if isinstance(y,int) else y for y in x))
+              dyn=e.get_section_by_name('.dynsym')
+              exact={}
+              if dyn:
+                  for s in dyn.iter_symbols():
+                      va=int(s['st_value'])
+                      if va: exact.setdefault(va,[]).append(s.name)
 
-              dynsym=e.get_section_by_name('.dynsym')
-              sym_by_addr={}
-              if dynsym:
-                  for s in dynsym.iter_symbols():
-                      va=int(s['st_value']);sz=int(s['st_size'])
-                      if va:sym_by_addr.setdefault(va,[]).append((s.name,sz))
+              # PLT resolver: AArch64 .plt0=32 bytes, each following slot=16 bytes in relocation order.
+              pltmap={}
+              plt=e.get_section_by_name('.plt')
+              rplt=e.get_section_by_name('.rela.plt') or e.get_section_by_name('.rel.plt')
+              if plt and rplt:
+                  st=e.get_section(rplt['sh_link'])
+                  base=int(plt['sh_addr'])
+                  for i,r in enumerate(rplt.iter_relocations()):
+                      si=int(r.entry['r_info_sym'])
+                      name=st.get_symbol(si).name if si else ''
+                      pltmap[base+0x20+i*0x10]=name
 
               rels={}
               for sec in e.iter_sections():
                   if sec['sh_type'] not in ('SHT_RELA','SHT_REL'):continue
-                  st=e.get_section(sec['sh_link']) if sec['sh_link'] else None
                   for r in sec.iter_relocations():
                       ro=int(r.entry['r_offset'])
-                      if ACF <= ro < ACF+432 or ACO <= ro < ACO+168:
-                          si=int(r.entry['r_info_sym']); name=''
-                          if si and st is not None:
-                              try:name=st.get_symbol(si).name
-                              except:pass
-                          rels[ro]=(int(r.entry.get('r_addend',0) or 0),int(r.entry['r_info_type']),name,sec.name)
+                      if ACF<=ro<ACF+432:
+                          rels[ro]=(int(r.entry.get('r_addend',0) or 0),int(r.entry['r_info_type']))
 
-              print('=== ACF ENTRIES ===')
+              print('=== G_ACF_ARRAY 54 ENTRIES ===')
               for i in range(54):
                   va=ACF+i*8
-                  q=readq(va)
+                  q=readq(va) or 0
                   rel=rels.get(va)
-                  resolved=(rel[0] if rel and rel[1]==1027 else q)
-                  mark=' *USED*' if i*8 in OFFSETS else ''
-                  names=sym_by_addr.get(resolved,[])
-                  print(f'i={i:02d} off=0x{i*8:03x} slot=0x{va:x} disk={hex(q) if q is not None else None} reloc={rel} resolved=0x{resolved:x} syms={names}{mark}')
-
-              print('=== ACO ENTRIES ===')
-              for i in range(21):
-                  va=ACO+i*8;q=readq(va);rel=rels.get(va)
-                  resolved=(rel[0] if rel and rel[1]==1027 else (q or 0))
-                  print(f'i={i:02d} off=0x{i*8:03x} slot=0x{va:x} disk={hex(q) if q is not None else None} reloc={rel} resolved=0x{resolved:x} syms={sym_by_addr.get(resolved,[])}')
-
-              targets={}
-              for off in OFFSETS:
-                  va=ACF+off
-                  q=readq(va);rel=rels.get(va)
-                  resolved=(rel[0] if rel and rel[1]==1027 else (q or 0))
-                  if resolved:targets[off]=resolved
-
-              print('=== USED TARGETS ===')
-              for off,t in targets.items():
-                  print(f'ACF+0x{off:x} -> 0x{t:x} syms={sym_by_addr.get(t,[])}')
+                  t=rel[0] if rel and rel[1]==1027 else q
+                  print(f'{i:02d} off=0x{i*8:03x} -> 0x{t:x} names={exact.get(t,[])}')
+              print('ACF_INDEX32',hex((rels.get(ACF+0x100) or (readq(ACF+0x100),0))[0]))
 
               md=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN);md.detail=True
-              for off,t in targets.items():
-                  fo=va2off(t)
-                  if fo is None:continue
-                  print(f'===== DISASM ACF+0x{off:x} TARGET 0x{t:x} =====')
-                  count=0
-                  for ins in md.disasm(data[fo:fo+0x500],t):
-                      print(f'0x{ins.address:x}: {ins.mnemonic} {ins.op_str}')
-                      count+=1
-                      if ins.mnemonic=='ret' and count>4:break
-                      if count>=180:break
+              def one(va):
+                  o=va2off(va)
+                  if o is None:return None
+                  xs=list(md.disasm(DATA[o:o+4],va,1))
+                  return xs[0] if xs else None
+              def is_cond(ins):
+                  m=ins.mnemonic
+                  return m.startswith('b.') or m.startswith('cb') or m.startswith('tb')
+              def imm_target(ins):
+                  for op in ins.operands:
+                      if op.type==ARM64_OP_IMM:return int(op.imm)
+                  return None
 
-              print('=== ALL EXPORTED ELF_HOOK_STUBS ===')
-              if dynsym:
-                  for s in dynsym.iter_symbols():
-                      if s.name.startswith('ELF_HOOK_STUB_'):
-                          print(s.name,hex(int(s['st_value'])),hex(int(s['st_size'])))
+              # Recursive reachable CFG bounded to surrounding code island.
+              Q=deque([ENTRY]); seen_blocks=set(); blocks={}; insn_owner={}
+              LO,HI=0x3f000,0x41000
+              while Q and len(seen_blocks)<2000:
+                  start=Q.popleft()
+                  if start in seen_blocks or not (LO<=start<HI):continue
+                  seen_blocks.add(start)
+                  cur=start; arr=[]
+                  for _ in range(4096):
+                      if not (LO<=cur<HI):break
+                      ins=one(cur)
+                      if not ins:break
+                      arr.append(ins);insn_owner[cur]=start
+                      m=ins.mnemonic
+                      if m=='ret' or m=='br':
+                          break
+                      if m=='b':
+                          t=imm_target(ins)
+                          if t is not None and LO<=t<HI:Q.append(t)
+                          break
+                      if is_cond(ins):
+                          t=imm_target(ins)
+                          if t is not None and LO<=t<HI:Q.append(t)
+                          Q.append(cur+4)
+                          break
+                      cur+=4
+                  blocks[start]=arr
 
-              # Strings near functions in ACF table to give semantic clues.
-              print('=== ASCII NEAR USED TARGETS ===')
-              for off,t in targets.items():
-                  fo=va2off(t)
-                  if fo is None:continue
-                  lo=max(0,fo-0x2000);hi=min(len(data),fo+0x3000)
-                  blob=data[lo:hi]
-                  out=[]
-                  i=0
-                  while i<len(blob):
-                      j=i
-                      while j<len(blob) and 32<=blob[j]<127:j+=1
-                      if j-i>=6:
-                          s=blob[i:j].decode('ascii','ignore')
-                          if len(s)<=160:out.append((lo+i,s))
-                      i=max(j+1,i+1)
-                  print(f'TARGET ACF+0x{off:x} 0x{t:x}')
-                  for p,s in out[-30:]:print(hex(p),s)
+              print('=== CFG SUMMARY ===')
+              print('blocks',len(blocks),'instructions',sum(len(v) for v in blocks.values()))
+              rets=[];calls=[];state_writes=[];memwrites=[];branches=[]
+              for b,arr in sorted(blocks.items()):
+                  for idx,ins in enumerate(arr):
+                      m=ins.mnemonic
+                      if m=='ret':rets.append(ins.address)
+                      if m=='bl':
+                          t=imm_target(ins)
+                          calls.append((ins.address,'bl',t, exact.get(t,[]), pltmap.get(t)))
+                      elif m=='blr':
+                          calls.append((ins.address,'blr',None,[],None,ins.op_str))
+                      if m.startswith('str') or m.startswith('stp') or m.startswith('stur'):
+                          # record state slot and all writes, with local context
+                          for op in ins.operands:
+                              if op.type==ARM64_OP_MEM:
+                                  base=ins.reg_name(op.mem.base)
+                                  disp=int(op.mem.disp)
+                                  if base=='sp' and disp==0x20:
+                                      ctx=arr[max(0,idx-5):idx+1]
+                                      state_writes.append((ins.address,[f'{x.mnemonic} {x.op_str}' for x in ctx]))
+                                  memwrites.append((ins.address,m,ins.op_str,base,disp))
+                                  break
+                      if m=='b' or is_cond(ins):
+                          branches.append((ins.address,m,ins.op_str,imm_target(ins)))
+              print('returns',[hex(x) for x in rets])
+              print('=== DIRECT/INDIRECT CALLS ===')
+              for c in calls:
+                  if c[1]=='bl':
+                      print(f'0x{c[0]:x} BL -> 0x{(c[2] or 0):x} exact={c[3]} plt={c[4]}')
+                  else:
+                      print(f'0x{c[0]:x} BLR {c[5]}')
+              print('=== STATE WRITES [sp,#0x20] ===')
+              for a,ctx in state_writes:
+                  print('STATE@'+hex(a))
+                  for x in ctx:print(' ',x)
+              print('=== MEMORY WRITES (unique forms) ===')
+              forms={}
+              for a,m,op,b,d in memwrites:
+                  forms.setdefault((m,op,b,d),a)
+              for (m,op,b,d),a in list(forms.items())[:300]:
+                  print(f'0x{a:x}: {m} {op} base={b} disp={d:+#x}')
+              print('=== BLOCK EDGES ===')
+              for b,arr in sorted(blocks.items()):
+                  if not arr:continue
+                  last=arr[-1];m=last.mnemonic
+                  edges=[]
+                  if m=='b':
+                      t=imm_target(last)
+                      if t is not None:edges.append(t)
+                  elif is_cond(last):
+                      t=imm_target(last)
+                      if t is not None:edges.append(t)
+                      edges.append(last.address+4)
+                  elif m not in ('ret','br'):
+                      edges.append(last.address+4)
+                  print(f'0x{b:x} -> '+','.join(hex(x) for x in edges)+' last='+m+' '+last.op_str)
+
+              # Direct calls' first-level function bodies, compact until first ret.
+              print('=== CALLEE SUMMARIES ===')
+              direct=sorted({c[2] for c in calls if c[1]=='bl' and c[2] and c[2] not in pltmap})
+              for t in direct:
+                  if va2off(t) is None:continue
+                  print(f'CALLEE 0x{t:x} names={exact.get(t,[])}')
+                  cur=t
+                  for n in range(80):
+                      ins=one(cur)
+                      if not ins:break
+                      print(f'  0x{cur:x}: {ins.mnemonic} {ins.op_str}')
+                      cur+=4
+                      if ins.mnemonic=='ret':break
           PY
