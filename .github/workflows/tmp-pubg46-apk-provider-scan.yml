@@ -1,0 +1,42 @@
+name: Temporary PUBG 4.6 APK native provider scan
+on:
+  push:
+    branches: [tmp/pubg46-dynkey-scan-20261011]
+    paths: [.github/workflows/tmp-pubg46-apk-provider-scan.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install --disable-pip-version-check --no-cache-dir pyelftools
+      - name: Restore cached base APK artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -o base-artifact.zip \
+            https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11308584380/zip
+          mkdir restored
+          unzip -q base-artifact.zip -d restored
+          find restored -maxdepth 2 -type f -printf '%p %s bytes\n'
+          APK=$(find restored -type f -name '*.apk' | head -1)
+          test -n "$APK"
+          echo "9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696  $APK" | sha256sum -c -
+          mkdir apk
+          unzip -q "$APK" 'lib/arm64-v8a/*.so' -d apk
+          find apk/lib/arm64-v8a -type f -name '*.so' -printf '%f %s bytes\n' | sort
+      - name: Scan providers
+        run: |
+          python3 tools/scan_pubg46_apk_native_providers.py apk/lib/arm64-v8a | tee provider_report.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-apk-native-provider-scan
+          path: |
+            provider_report.txt
+            apk_native_scan.json
+          retention-days: 1
