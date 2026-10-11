@@ -1,0 +1,212 @@
+name: Temporary PUBG 4.6 Key Slot XREF
+
+on:
+  push:
+    branches:
+      - tmp/pubg46-keyslot-20261011
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached libUE4 4.6
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer $GH_TOKEN"             -H "X-GitHub-Api-Version: 2022-11-28"             "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11309845408/zip"             -o libcache.zip
+          echo "816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab  libcache.zip" | sha256sum -c -
+          unzip -q libcache.zip -d libcache
+          LIB="$(find libcache -name 'libUE4-GL-4.6.so' -print -quit)"
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  $LIB" | sha256sum -c -
+          cp "$LIB" libUE4.so
+
+      - name: Install capstone and pyelftools
+        run: python3 -m pip install --user --disable-pip-version-check capstone pyelftools
+
+      - name: Exact key-slot analysis
+        run: |
+          python3 - <<'PY'
+          import struct, re
+          from collections import defaultdict
+          from pathlib import Path
+          from elftools.elf.elffile import ELFFile
+          from capstone import Cs, CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN
+          from capstone.arm64_const import ARM64_OP_REG, ARM64_OP_IMM, ARM64_OP_MEM
+
+          SO=Path("libUE4.so")
+          data=SO.read_bytes()
+          SLOT=0x30124e0
+          TABLE=0xF5DF260
+          PAGE=SLOT & ~0xfff
+          OFF=SLOT & 0xfff
+
+          with SO.open("rb") as f:
+              elf=ELFFile(f)
+              loads=[]
+              execs=[]
+              for s in elf.iter_segments():
+                  if s["p_type"]!="PT_LOAD": continue
+                  d=(int(s["p_vaddr"]),int(s["p_offset"]),int(s["p_filesz"]),int(s["p_memsz"]),int(s["p_flags"]))
+                  loads.append(d)
+                  if d[4]&1: execs.append(d)
+
+              def va2off(va):
+                  for v,o,fs,ms,fl in loads:
+                      if v<=va<v+fs: return o+(va-v)
+                  return None
+              def classify(va):
+                  for v,o,fs,ms,fl in loads:
+                      if v<=va<v+ms:
+                          return f"LOAD va=0x{v:x} +0x{va-v:x} flags={fl} filebacked={va<v+fs}"
+                  return "outside"
+              def cstr(va,limit=180):
+                  off=va2off(va)
+                  if off is None: return None
+                  z=data.find(b'\0',off,min(len(data),off+limit))
+                  if z<0:z=min(len(data),off+limit)
+                  b=data[off:z]
+                  if b and all((32<=x<127) or x in (9,10,13) for x in b):
+                      try:return b.decode('ascii')
+                      except:return None
+                  return None
+
+              print(f"SLOT=0x{SLOT:x} TABLE=0x{TABLE:x} SLOT_PAGE=0x{PAGE:x} SLOT_OFF=0x{OFF:x}")
+              so=va2off(SLOT)
+              print("SLOT_FILEOFF",hex(so) if so is not None else None)
+              if so is not None:
+                  q=struct.unpack_from("<Q",data,so)[0]
+                  print("SLOT_QWORD",hex(q),"class=",classify(q))
+                  print("SLOT_QWORD_STRING",repr(cstr(q)))
+
+              print("=== SLOT NEIGHBOR QWORDS ===")
+              start=SLOT-0x100
+              for va in range(start,SLOT+0x108,8):
+                  off=va2off(va)
+                  if off is None: continue
+                  q=struct.unpack_from("<Q",data,off)[0]
+                  s=cstr(q)
+                  tag="<SLOT>" if va==SLOT else ""
+                  extra=(" str="+repr(s)) if s else ""
+                  if q or abs(va-SLOT)<=0x30:
+                      print(f"0x{va:x}: 0x{q:016x} {classify(q)}{extra} {tag}")
+
+              # Search exact absolute table pointer values in file.
+              needle=struct.pack("<Q",TABLE)
+              pos=[]
+              p=0
+              while True:
+                  p=data.find(needle,p)
+                  if p<0:break
+                  pos.append(p);p+=1
+              print("TABLE_ABS_POINTER_OFFSETS", [hex(x) for x in pos])
+
+              # relocations at slot or whose addend is table/slot
+              print("=== RELOCATIONS ===")
+              for sec in elf.iter_sections():
+                  if sec["sh_type"] not in ("SHT_RELA","SHT_REL"): continue
+                  for rel in sec.iter_relocations():
+                      ro=int(rel.entry["r_offset"])
+                      ad=int(rel.entry.get("r_addend",0) or 0)
+                      if abs(ro-SLOT)<0x100 or ro==SLOT or ad in (SLOT,TABLE) or abs(ad-TABLE)<0x100:
+                          print(sec.name, "r_offset",hex(ro),"addend",hex(ad),"type",rel.entry["r_info_type"])
+
+          # Exact ADRP page decoder + sequence resolver.
+          def sx(v,b):
+              m=1<<(b-1); return (v^m)-m
+          def adrp_target(w,pc):
+              if (w&0x9f000000)!=0x90000000:return None
+              immlo=(w>>29)&3; immhi=(w>>5)&0x7ffff
+              return (pc&~0xfff)+(sx((immhi<<2)|immlo,21)<<12)
+
+          md=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN); md.detail=True
+          hits=[]
+          print("=== EXACT ADRP->SLOT XREFS ===")
+          for v,o,fs,ms,fl in execs:
+              blob=data[o:o+fs]
+              insns=list(md.disasm(blob,v))
+              for i,ins in enumerate(insns):
+                  if ins.mnemonic!="adrp" or len(ins.operands)<2:continue
+                  op=ins.operands
+                  if op[0].type!=ARM64_OP_REG or op[1].type!=ARM64_OP_IMM:continue
+                  base=int(op[1].imm)
+                  # Capstone already computes ADRP absolute target on arm64.
+                  if base!=PAGE:
+                      # independently accept if decoder says exact page
+                      raw=struct.unpack_from("<I",blob,ins.address-v)[0]
+                      if adrp_target(raw,ins.address)!=PAGE:continue
+                  r=op[0].reg
+                  found=[]
+                  for j in range(i+1,min(i+9,len(insns))):
+                      x=insns[j]
+                      for oo in x.operands:
+                          if oo.type==ARM64_OP_MEM and oo.mem.base==r:
+                              addr=PAGE+int(oo.mem.disp)
+                              if addr==SLOT:
+                                  found.append((x.address,x.mnemonic,x.op_str,"MEM"))
+                          if x.mnemonic=="add" and len(x.operands)>=3 and x.operands[1].type==ARM64_OP_REG and x.operands[1].reg==r and x.operands[2].type==ARM64_OP_IMM:
+                              addr=PAGE+int(x.operands[2].imm)
+                              if addr==SLOT:
+                                  found.append((x.address,x.mnemonic,x.op_str,"ADD"))
+                      if x.mnemonic in ("ret","b","br"): break
+                  if found:
+                      hits.append((ins.address,found))
+                      print(f"XREF adrp@0x{ins.address:x} {ins.op_str}")
+                      for z in found: print("  USE",hex(z[0]),z[1],z[2],z[3])
+                      lo=max(0,i-12); hi=min(len(insns),i+30)
+                      for x in insns[lo:hi]:
+                          mark=">>" if x.address==ins.address or any(x.address==z[0] for z in found) else "  "
+                          print(f"{mark} 0x{x.address:x}: {x.mnemonic} {x.op_str}")
+                      print()
+          print("EXACT_XREF_COUNT",len(hits))
+
+          # Also identify xrefs to TABLE itself via ADRP+offset if code accesses BSS directly.
+          TPAGE=TABLE&~0xfff; TOFF=TABLE&0xfff
+          print("=== DIRECT TABLE XREFS ===")
+          n=0
+          for v,o,fs,ms,fl in execs:
+              blob=data[o:o+fs]
+              insns=list(md.disasm(blob,v))
+              for i,ins in enumerate(insns):
+                  if ins.mnemonic!="adrp" or len(ins.operands)<2:continue
+                  op=ins.operands
+                  if op[0].type!=ARM64_OP_REG or op[1].type!=ARM64_OP_IMM:continue
+                  if int(op[1].imm)!=TPAGE:continue
+                  r=op[0].reg
+                  for j in range(i+1,min(i+8,len(insns))):
+                      x=insns[j]
+                      ok=False
+                      for oo in x.operands:
+                          if oo.type==ARM64_OP_MEM and oo.mem.base==r and int(oo.mem.disp)==TOFF:ok=True
+                      if x.mnemonic=="add" and len(x.operands)>=3 and x.operands[1].type==ARM64_OP_REG and x.operands[1].reg==r and x.operands[2].type==ARM64_OP_IMM and int(x.operands[2].imm)==TOFF:ok=True
+                      if ok:
+                          n+=1
+                          print(f"DIRECT adrp@0x{ins.address:x} {ins.op_str} USE@0x{x.address:x} {x.mnemonic} {x.op_str}")
+                          for y in insns[max(0,i-10):min(len(insns),i+25)]:
+                              print(f"  0x{y.address:x}: {y.mnemonic} {y.op_str}")
+                          print()
+                          break
+          print("DIRECT_TABLE_XREF_COUNT",n)
+
+          # Find code xrefs to nearby RO slot page, useful if exact offset assembled over multiple adds.
+          print("=== PAGE XREF COUNTS ===")
+          counts=defaultdict(int)
+          samples={}
+          for v,o,fs,ms,fl in execs:
+              blob=data[o:o+fs]
+              for ins in md.disasm(blob,v):
+                  if ins.mnemonic=="adrp" and len(ins.operands)>=2 and ins.operands[1].type==ARM64_OP_IMM:
+                      t=int(ins.operands[1].imm)
+                      if abs(t-PAGE)<=0x4000:
+                          counts[t]+=1;samples.setdefault(t,ins.address)
+          for k in sorted(counts):
+              print(hex(k),counts[k],"sample",hex(samples[k]))
+          PY
