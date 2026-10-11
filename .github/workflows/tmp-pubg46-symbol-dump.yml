@@ -1,0 +1,25 @@
+name: Temporary PUBG 4.6 protector symbol dump
+on:
+  push:
+    branches: [tmp/pubg46-dynkey-scan-20261011]
+    paths: [.github/workflows/tmp-pubg46-symbol-dump.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install --disable-pip-version-check --no-cache-dir pyelftools capstone
+      - name: Fetch and verify
+        run: |
+          curl -fL --retry 5 -o libUE4-GL-4.6.so https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.6.so
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  libUE4-GL-4.6.so" | sha256sum -c -
+      - name: Dump symbols
+        run: python3 tools/dump_pubg46_protector_symbols.py libUE4-GL-4.6.so | tee symbols_report.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-protector-symbols
+          path: symbols_report.txt
+          retention-days: 1
