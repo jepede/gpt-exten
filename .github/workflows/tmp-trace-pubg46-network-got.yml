@@ -1,0 +1,164 @@
+name: Temporary trace PUBG 4.6 network GOT xrefs
+
+on:
+  push:
+    branches:
+      - tmp/analyze-pubg46-dynkeys-20261011
+    paths:
+      - .github/workflows/tmp-trace-pubg46-network-got.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  trace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore APK and libUE4
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11308584380/zip" -o apkcache.zip
+          unzip -q apkcache.zip -d apkcache
+          APK="$(find apkcache -name '*.apk' -print -quit)"
+          echo "9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696  $APK" | sha256sum -c -
+          unzip -p "$APK" lib/arm64-v8a/libanort.so > libanort.so
+          echo "98118fa56a0ea03d201f841d85abf5f837906c3747d57ea63b7171af3f61ac5c  libanort.so" | sha256sum -c -
+          curl -fL "https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.6.so" -o libUE4.so
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  libUE4.so" | sha256sum -c -
+          python3 -m pip install --user --disable-pip-version-check capstone==5.0.6 pyelftools==0.32 >/dev/null
+
+      - name: Trace GOT references and key strings
+        run: |
+          python3 - <<'PY'
+          import struct,re,json
+          from pathlib import Path
+          from elftools.elf.elffile import ELFFile
+          from capstone import Cs,CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN
+          from capstone.arm64_const import ARM64_OP_IMM,ARM64_OP_MEM,ARM64_OP_REG
+
+          md=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN); md.detail=True
+
+          def sx(v,b):
+              m=1<<(b-1); return (v^m)-m
+          def adrp_t(ins):
+              if ins.mnemonic!='adrp' or len(ins.operands)<2 or ins.operands[1].type!=ARM64_OP_IMM:return None
+              return int(ins.operands[1].imm)
+
+          def analyze(path, tag):
+              P=Path(path);D=P.read_bytes()
+              with P.open('rb') as f:
+                  e=ELFFile(f)
+                  loads=[];execs=[]
+                  for s in e.iter_segments():
+                      if s['p_type']=='PT_LOAD':
+                          x=(int(s['p_vaddr']),int(s['p_offset']),int(s['p_filesz']),int(s['p_memsz']),int(s['p_flags']))
+                          loads.append(x)
+                          if x[4]&1:execs.append(x)
+                  def va2off(va):
+                      for v,o,fs,ms,fl in loads:
+                          if v<=va<v+fs:return o+va-v
+                      return None
+                  dyn=e.get_section_by_name('.dynsym')
+                  syms={}
+                  if dyn:
+                      for s in dyn.iter_symbols():
+                          if s.name:syms.setdefault(s.name,[]).append((int(s['st_value']),int(s['st_size'])))
+                  # import relocation slots
+                  imp={}
+                  for sec in e.iter_sections():
+                      if sec['sh_type'] not in ('SHT_RELA','SHT_REL'):continue
+                      st=e.get_section(sec['sh_link']) if sec['sh_link'] else None
+                      for r in sec.iter_relocations():
+                          si=int(r.entry['r_info_sym']);nm=''
+                          if si and st is not None:
+                              try:nm=st.get_symbol(si).name
+                              except:pass
+                          if nm in ('recv','recvfrom','send','sendto','mmap','mprotect','memcpy','memmove','dlsym'):
+                              imp[int(r.entry['r_offset'])]=nm
+                  print(f'=== {tag} IMPORT SLOTS ===')
+                  for a,n in sorted(imp.items()):print(hex(a),n)
+
+                  insns=[]
+                  for v,o,fs,ms,fl in execs:
+                      insns.extend(md.disasm(D[o:o+fs],v))
+                  byaddr={x.address:i for i,x in enumerate(insns)}
+
+                  # Find adrp + memory use resolving exact import slot/page.
+                  print(f'=== {tag} GOT XREF CONTEXTS ===')
+                  hits=[]
+                  slots_by_page={}
+                  for a,n in imp.items(): slots_by_page.setdefault(a&~0xfff,[]).append((a,n))
+                  for i,ins in enumerate(insns):
+                      page=adrp_t(ins)
+                      if page not in slots_by_page:continue
+                      if not ins.operands or ins.operands[0].type!=ARM64_OP_REG:continue
+                      reg=ins.reg_name(ins.operands[0].reg)
+                      for j in range(i+1,min(i+12,len(insns))):
+                          z=insns[j]
+                          if z.address-ins.address>0x40:break
+                          # memory operand using ADRP destination
+                          matched=False
+                          for op in z.operands:
+                              if op.type==ARM64_OP_MEM and z.reg_name(op.mem.base)==reg:
+                                  ea=page+int(op.mem.disp)
+                                  if ea in imp:
+                                      hits.append((ins.address,z.address,ea,imp[ea]))
+                                      matched=True
+                          if matched:
+                              ctx=insns[max(0,i-8):min(len(insns),j+10)]
+                              print(f'XREF {imp[ea]} slot=0x{ea:x} ADRP=0x{ins.address:x} USE=0x{z.address:x}')
+                              for q in ctx:print(f'  0x{q.address:x}: {q.mnemonic} {q.op_str}')
+                              print()
+                  print('XREF_COUNT',len(hits))
+
+                  # Strings of interest and ordinary ADRP xrefs.
+                  pats=('SetDecryptionKey','DecryptionKey','EncryptionKey','dynamic key','DynamicKey','PakKey','pak key','TCP','tcp')
+                  strs=[]
+                  for p in pats:
+                      start=0
+                      needle=p.encode()
+                      while True:
+                          q=D.find(needle,start)
+                          if q<0:break
+                          # map file offset to VA
+                          va=None
+                          for v,o,fs,ms,fl in loads:
+                              if o<=q<o+fs:va=v+(q-o);break
+                          strs.append((p,q,va));start=q+1
+                  print(f'=== {tag} KEY STRINGS ===')
+                  for p,q,va in strs:print(p,'fileoff',hex(q),'va',hex(va) if va is not None else None)
+                  print(f'=== {tag} STRING XREFS ===')
+                  for p,q,tva in strs:
+                      if tva is None:continue
+                      page=tva&~0xfff
+                      off=tva&0xfff
+                      for i,ins in enumerate(insns):
+                          if adrp_t(ins)!=page:continue
+                          if not ins.operands or ins.operands[0].type!=ARM64_OP_REG:continue
+                          reg=ins.reg_name(ins.operands[0].reg)
+                          for j in range(i+1,min(i+10,len(insns))):
+                              z=insns[j]
+                              # add reg, reg, imm or memory reference
+                              if z.mnemonic=='add' and len(z.operands)>=3 and z.operands[1].type==ARM64_OP_REG and z.reg_name(z.operands[1].reg)==reg and z.operands[2].type==ARM64_OP_IMM:
+                                  if int(z.operands[2].imm)==off:
+                                      print(f'STRXREF {p} ADRP=0x{ins.address:x} ADD=0x{z.address:x}')
+                                      for qq in insns[max(0,i-8):min(len(insns),j+12)]: print(f'  0x{qq.address:x}: {qq.mnemonic} {qq.op_str}')
+                                      print()
+                  return {'imports':{hex(a):n for a,n in imp.items()},'strings':[{'s':p,'off':hex(q),'va':hex(v) if v is not None else None} for p,q,v in strs],
+                          'got_hits':[{'adrp':hex(a),'use':hex(u),'slot':hex(s),'name':n} for a,u,s,n in hits]}
+
+          out={'anort':analyze('libanort.so','ANORT'),'ue4':analyze('libUE4.so','UE4')}
+          Path('network_got_xrefs.json').write_text(json.dumps(out,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-network-got-xrefs
+          path: network_got_xrefs.json
+          retention-days: 1
