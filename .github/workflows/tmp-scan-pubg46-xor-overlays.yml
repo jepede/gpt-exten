@@ -1,0 +1,109 @@
+name: Temporary scan PUBG 4.6 protected PAK overlays
+
+on:
+  push:
+    branches:
+      - tmp/analyze-pubg46-dynkeys-20261011
+    paths:
+      - .github/workflows/tmp-scan-pubg46-xor-overlays.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch verified libUE4
+        run: |
+          set -euxo pipefail
+          curl -L --fail --retry 3 -o libUE4-GL-4.6.so \
+            https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.6.so
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  libUE4-GL-4.6.so" | sha256sum -c -
+
+      - name: Scan XOR protected constants
+        run: |
+          python3 - <<'PY'
+          import re, json, hashlib, struct
+          p='libUE4-GL-4.6.so'
+          d=open(p,'rb').read()
+
+          patterns = {
+            'dyn36': b'df473da3aa9b5704ce73',
+            'dyn37': b'46e490567d02cdb312b3',
+            'dyn38': b'f838b560ec26d4ba67fd',
+            'dyn42': b'56eed0401753d9e5ee86',
+            'dyn43': b'5412cc837199fa08d229',
+            'dyn44': b'48750e47caff0540e2ee',
+            'static49': b'iQ0eM0mJ7uT0kV6kL5zY',
+            'static50': b'wD2rP3lP9xF4mE1eC5jS',
+            'static51': b'rG0lR2rZ5vM6mW5lM1rR',
+            'static52': b'fO3kW1fE6eD0pU1kY7xK',
+            'global17': b'48ea7d82db9995f2',
+            'method19': b'c44d833f54ba436f',
+            'sm4_sbox_32': bytes([
+              0x34,0x66,0x25,0x74,0x89,0x78,0xE4,0xA9,0x5A,0x41,0xBC,0x7A,0xD6,0x16,0x21,0x23,
+              0x4D,0x61,0xDA,0x94,0x9B,0xDF,0x13,0x3C,0x69,0x3A,0x31,0x0A,0x5F,0xD7,0x99,0x95]),
+            'sm4_ck_16': bytes.fromhex('2bb90e0083e70a3a675c3b9ebfdadbad'),
+            'chained_xor_key': bytes.fromhex('e55b4ed1'),
+          }
+
+          results={}
+          key_score={}
+          for name,plain in patterns.items():
+              hits=[]
+              # raw + every one-byte xor
+              for k in range(256):
+                  enc=bytes(x^k for x in plain)
+                  pos=0
+                  while True:
+                      q=d.find(enc,pos)
+                      if q<0: break
+                      hits.append({'xor':k,'off':q,'page':q & ~0xfff})
+                      key_score[k]=key_score.get(k,0)+1
+                      pos=q+1
+              # UTF16LE for textual patterns
+              if all(32 <= x < 127 for x in plain):
+                  u=plain.decode('ascii').encode('utf-16le')
+                  for k in range(256):
+                      enc=bytes(x^k for x in u)
+                      q=d.find(enc)
+                      if q>=0:
+                          hits.append({'xor':k,'off':q,'page':q & ~0xfff,'encoding':'utf16le'})
+              results[name]=hits
+
+          raw_hex=[]
+          for m in re.finditer(rb'(?<![0-9a-f])[0-9a-f]{20}(?![0-9a-f])',d):
+              raw_hex.append({'s':m.group().decode(),'off':m.start()})
+          # dedup
+          seen=set(); raw_hex=[x for x in raw_hex if not (x['s'] in seen or seen.add(x['s']))]
+
+          # rank xor keys by number of distinct known patterns hit
+          distinct_by_key={}
+          for name,hits in results.items():
+              for h in hits:
+                  if 'encoding' not in h:
+                      distinct_by_key.setdefault(h['xor'],set()).add(name)
+          ranking=sorted(((k,len(v),sorted(v)) for k,v in distinct_by_key.items()), key=lambda x:(-x[1],x[0]))
+
+          out={'sha256':hashlib.sha256(d).hexdigest(),'size':len(d),'results':results,'raw_hex20':raw_hex,'xor_ranking':ranking}
+          open('pubg46-xor-overlay.json','w').write(json.dumps(out,indent=2))
+          print('SHA256',out['sha256'])
+          print('raw hex20 candidates:',raw_hex)
+          print('top XOR keys:')
+          for x in ranking[:20]: print(x)
+          print('pattern hits:')
+          for name,hits in results.items():
+              print(name, hits[:20])
+          PY
+
+      - name: Upload temporary scan
+        uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-xor-overlay-scan
+          path: pubg46-xor-overlay.json
+          retention-days: 1
