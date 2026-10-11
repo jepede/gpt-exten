@@ -1,0 +1,126 @@
+name: Temporary PUBG 4.6 Fast RVA Scan
+
+on:
+  push:
+    branches:
+      - tmp/pubg46-fastscan-20261011a
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached 4.6 libUE4
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer $GH_TOKEN"             -H "X-GitHub-Api-Version: 2022-11-28"             "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11309845408/zip"             -o libcache.zip
+          echo "816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab  libcache.zip" | sha256sum -c -
+          unzip -q libcache.zip -d libcache
+          LIB="$(find libcache -name 'libUE4-GL-4.6.so' -print -quit)"
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  $LIB" | sha256sum -c -
+          cp "$LIB" libUE4.so
+
+      - name: Build and run fast scanner
+        run: |
+          cat > /tmp/scan.cpp <<'CPP'
+          #include <elf.h>
+          #include <fcntl.h>
+          #include <sys/mman.h>
+          #include <sys/stat.h>
+          #include <unistd.h>
+          #include <cstdint>
+          #include <cstdio>
+          #include <cstdlib>
+          #include <cstring>
+          #include <vector>
+          #include <algorithm>
+
+          static inline int64_t sx(uint64_t v, int bits) {
+              uint64_t m = 1ull << (bits-1);
+              return (int64_t)((v ^ m) - m);
+          }
+          static bool adrp(uint32_t w, uint64_t pc, uint64_t &target) {
+              if ((w & 0x9f000000u) != 0x90000000u) return false;
+              uint64_t immlo=(w>>29)&3;
+              uint64_t immhi=(w>>5)&0x7ffff;
+              int64_t imm=sx((immhi<<2)|immlo,21) << 12;
+              target=(pc & ~0xfffull) + imm;
+              return true;
+          }
+          int main() {
+              const uint64_t TARGET=0xF5DF260ull;
+              const uint64_t TPAGE=TARGET & ~0xfffull;
+              int fd=open("libUE4.so",O_RDONLY);
+              struct stat st{}; fstat(fd,&st);
+              auto *p=(uint8_t*)mmap(nullptr,st.st_size,PROT_READ,MAP_PRIVATE,fd,0);
+              auto *eh=(Elf64_Ehdr*)p;
+              if (memcmp(eh->e_ident,ELFMAG,SELFMAG)) return 2;
+              auto *ph=(Elf64_Phdr*)(p+eh->e_phoff);
+              printf("ELF entry=0x%llx phnum=%u size=0x%llx\n",
+                     (unsigned long long)eh->e_entry,eh->e_phnum,(unsigned long long)st.st_size);
+              for (int i=0;i<eh->e_phnum;i++) {
+                  if (ph[i].p_type!=PT_LOAD) continue;
+                  printf("LOAD[%d] off=0x%llx va=0x%llx filesz=0x%llx memsz=0x%llx flags=%c%c%c",
+                     i,(unsigned long long)ph[i].p_offset,(unsigned long long)ph[i].p_vaddr,
+                     (unsigned long long)ph[i].p_filesz,(unsigned long long)ph[i].p_memsz,
+                     (ph[i].p_flags&PF_R)?'R':'-',(ph[i].p_flags&PF_W)?'W':'-',(ph[i].p_flags&PF_X)?'X':'-');
+                  bool in=ph[i].p_vaddr<=TARGET && TARGET<ph[i].p_vaddr+ph[i].p_memsz;
+                  if(in) {
+                    uint64_t rel=TARGET-ph[i].p_vaddr;
+                    printf(" TARGET rel=0x%llx in_file=%d",(unsigned long long)rel,(int)(rel<ph[i].p_filesz));
+                    if(rel<ph[i].p_filesz) printf(" fileoff=0x%llx",(unsigned long long)(ph[i].p_offset+rel));
+                  }
+                  printf("\n");
+              }
+
+              // exact little-endian pointers to table/base/nearby
+              for (uint64_t v: {TARGET, TPAGE, TARGET-0x10, TARGET+0x10}) {
+                  int n=0;
+                  for (size_t off=0;off+8<=(size_t)st.st_size;off++) {
+                      uint64_t x; memcpy(&x,p+off,8);
+                      if(x==v) { printf("PTR value=0x%llx fileoff=0x%zx\n",(unsigned long long)v,off); if(++n>100) break; }
+                  }
+              }
+
+              const uint64_t shifts[]={0,0x10000,0x20000,0x30000,0x40000,0x50000,0x60000,0x70000,0x80000};
+              const uint32_t xors[]={0,0x71717171u};
+              size_t count=0;
+              for (int si=0;si<eh->e_phnum;si++) {
+                  auto &s=ph[si];
+                  if(s.p_type!=PT_LOAD || !(s.p_flags&PF_X)) continue;
+                  uint64_t lim=std::min<uint64_t>(s.p_filesz,st.st_size-s.p_offset);
+                  for(uint64_t boff=0;boff+4<=lim;boff+=4) {
+                      uint32_t raw; memcpy(&raw,p+s.p_offset+boff,4);
+                      uint64_t srcva=s.p_vaddr+boff;
+                      for(uint32_t xv:xors) {
+                          uint32_t w=raw^xv;
+                          if((w&0x9f000000u)!=0x90000000u) continue;
+                          for(uint64_t sh:shifts) {
+                              if(srcva<sh) continue;
+                              uint64_t pc=srcva-sh,t;
+                              if(!adrp(w,pc,t)) continue;
+                              if(t>=TPAGE-0x20000 && t<=TPAGE+0x20000) {
+                                  printf("ADRP srcva=0x%llx pc=0x%llx target=0x%llx shift=0x%llx xor=0x%08x raw=0x%08x word=0x%08x fileoff=0x%llx\n",
+                                    (unsigned long long)srcva,(unsigned long long)pc,(unsigned long long)t,
+                                    (unsigned long long)sh,xv,raw,w,(unsigned long long)(s.p_offset+boff));
+                                  count++;
+                              }
+                          }
+                      }
+                  }
+              }
+              printf("TOTAL_ADRP_NEAR=%zu\n",count);
+              munmap(p,st.st_size); close(fd);
+          }
+          CPP
+          g++ -O3 -std=c++17 /tmp/scan.cpp -o /tmp/scan
+          /tmp/scan
