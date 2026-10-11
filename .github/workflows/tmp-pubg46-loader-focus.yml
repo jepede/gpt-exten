@@ -1,0 +1,166 @@
+name: Temporary PUBG 4.6 Loader Focus
+
+on:
+  push:
+    branches:
+      - tmp/pubg46-loader2-20261011
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached libUE4 4.6
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11309845408/zip" -o libcache.zip
+          echo "816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab  libcache.zip" | sha256sum -c -
+          unzip -q libcache.zip -d libcache
+          LIB="$(find libcache -name 'libUE4-GL-4.6.so' -print -quit)"
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  $LIB" | sha256sum -c -
+          cp "$LIB" libUE4.so
+
+      - name: Install analysis deps
+        run: python3 -m pip install --user --disable-pip-version-check capstone pyelftools
+
+      - name: Focused loader analysis
+        run: |
+          python3 - <<'PY'
+          import struct, json
+          from pathlib import Path
+          from collections import defaultdict
+          from elftools.elf.elffile import ELFFile
+          from capstone import Cs, CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN
+          from capstone.arm64_const import ARM64_OP_IMM, ARM64_OP_REG, ARM64_OP_MEM
+
+          data=Path("libUE4.so").read_bytes()
+          md=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN); md.detail=True
+          with open("libUE4.so","rb") as f:
+              elf=ELFFile(f)
+              loads=[]
+              for s in elf.iter_segments():
+                  if s["p_type"]=="PT_LOAD":
+                      loads.append((int(s["p_vaddr"]),int(s["p_offset"]),int(s["p_filesz"]),int(s["p_memsz"]),int(s["p_flags"])))
+              def va2off(va):
+                  for v,o,fs,ms,fl in loads:
+                      if v<=va<v+fs:return o+(va-v)
+                  return None
+              def disasm_range(start,size,label):
+                  off=va2off(start)
+                  print(f"===== {label} 0x{start:x}+0x{size:x} off={hex(off) if off is not None else None} =====")
+                  if off is None:return
+                  for ins in md.disasm(data[off:off+size],start):
+                      print(f"0x{ins.address:x}: {ins.mnemonic} {ins.op_str}")
+
+              # Relocations inside loader RW/GOT and selected original GOT region.
+              print("===== RELOCS F74F000-F750000 =====")
+              loader_rels={}
+              for sec in elf.iter_sections():
+                  if sec["sh_type"] not in ("SHT_RELA","SHT_REL"):continue
+                  symtab=elf.get_section(sec["sh_link"]) if sec["sh_link"] else None
+                  for r in sec.iter_relocations():
+                      ro=int(r.entry["r_offset"])
+                      if 0xF74F000 <= ro < 0xF750000:
+                          ad=int(r.entry.get("r_addend",0) or 0)
+                          si=int(r.entry["r_info_sym"])
+                          name=""
+                          if si and symtab is not None:
+                              try:name=symtab.get_symbol(si).name
+                              except:pass
+                          loader_rels[ro]=(ad,int(r.entry["r_info_type"]),name,sec.name)
+              for ro in sorted(loader_rels):
+                  print(f"0x{ro:x}: addend=0x{loader_rels[ro][0]:x} type={loader_rels[ro][1]} sym={loader_rels[ro][2]} sec={loader_rels[ro][3]}")
+
+              # Data qwords around loader tables with relocation annotation.
+              for base,size,label in [
+                  (0xF74F700,0x200,"F74F700 table/GOT"),
+                  (0xF754180,0x500,"F7541E0 metadata"),
+                  (0xF755600,0x100,"F755600 flags")
+              ]:
+                  print(f"===== QWORDS {label} =====")
+                  for va in range(base,base+size,8):
+                      off=va2off(va)
+                      if off is None:continue
+                      q=struct.unpack_from("<Q",data,off)[0]
+                      rel=loader_rels.get(va)
+                      if q or rel or va in (0xF74F7B0,0xF74F7B8,0xF74F7C0,0xF74F830):
+                          print(f"0x{va:x}: disk=0x{q:016x} reloc={rel}")
+
+              # Core helper ranges.
+              disasm_range(0xF74A000,0x900,"loader core around helper+DT_INIT")
+              disasm_range(0xF74B400,0x300,"errno/helper")
+              disasm_range(0xF74A1BC,0x500,"helper exact")
+
+              # Find every ADRP reference to loader GOT page and exact uses of key offsets.
+              print("===== XREFS TO F74F000 PAGE =====")
+              for v,o,fs,ms,fl in loads:
+                  if not (fl&1):continue
+                  insns=list(md.disasm(data[o:o+fs],v))
+                  for i,ins in enumerate(insns):
+                      if ins.mnemonic!="adrp" or len(ins.operands)<2:continue
+                      if ins.operands[0].type!=ARM64_OP_REG or ins.operands[1].type!=ARM64_OP_IMM:continue
+                      if int(ins.operands[1].imm)!=0xF74F000:continue
+                      br=ins.operands[0].reg
+                      uses=[]
+                      for j in range(i+1,min(i+12,len(insns))):
+                          x=insns[j]
+                          for oo in x.operands:
+                              if oo.type==ARM64_OP_MEM and oo.mem.base==br:
+                                  a=0xF74F000+int(oo.mem.disp)
+                                  uses.append((x.address,a,x.mnemonic,x.op_str))
+                          if x.mnemonic in ("ret","b","br"):break
+                      filt=[u for u in uses if u[1] in (0xF74F7B0,0xF74F7B8,0xF74F7C0,0xF74F830) or 0xF74F700<=u[1]<0xF74F900]
+                      if filt:
+                          print(f"ADRP 0x{ins.address:x} {ins.op_str}")
+                          for u in filt:print(f"  USE 0x{u[0]:x} addr=0x{u[1]:x} {u[2]} {u[3]}")
+                          for z in insns[max(0,i-10):min(len(insns),i+28)]:
+                              print(f"    0x{z.address:x}: {z.mnemonic} {z.op_str}")
+
+              # Find direct calls to helper addresses and calls from loader into main text.
+              print("===== CALL GRAPH EDGES FROM ADDED EXEC SEGMENT =====")
+              added=[x for x in loads if (x[4]&1) and x[0]>=0xF748000]
+              for v,o,fs,ms,fl in added:
+                  for ins in md.disasm(data[o:o+fs],v):
+                      if ins.mnemonic=="bl" and ins.operands and ins.operands[0].type==ARM64_OP_IMM:
+                          t=int(ins.operands[0].imm)
+                          print(f"BL 0x{ins.address:x} -> 0x{t:x}")
+                      elif ins.mnemonic=="b" and ins.operands and ins.operands[0].type==ARM64_OP_IMM:
+                          t=int(ins.operands[0].imm)
+                          if t < v or t >= v+fs:
+                              print(f"B  0x{ins.address:x} -> 0x{t:x}")
+
+              # Search all executable segments for BL to loader routines 0xF74A1BC and init vicinity.
+              print("===== CALLERS OF LOADER ROUTINES =====")
+              targets={0xF74A1BC,0xF74A588,0xF74B4E0}
+              for v,o,fs,ms,fl in loads:
+                  if not (fl&1):continue
+                  for ins in md.disasm(data[o:o+fs],v):
+                      if ins.mnemonic=="bl" and ins.operands and ins.operands[0].type==ARM64_OP_IMM:
+                          t=int(ins.operands[0].imm)
+                          if t in targets:
+                              print(f"CALLER 0x{ins.address:x} -> 0x{t:x}")
+
+              # Relevant strings in loader added RW ranges.
+              print("===== ASCII IN ADDED SEGMENTS =====")
+              for v,o,fs,ms,fl in loads:
+                  if v<0xF748000:continue
+                  blob=data[o:o+fs]
+                  i=0
+                  while i<len(blob):
+                      j=i
+                      while j<len(blob) and 32<=blob[j]<127:j+=1
+                      if j-i>=5:
+                          s=blob[i:j].decode("ascii","ignore")
+                          print(f"0x{v+i:x}: {s}")
+                      i=max(j+1,i+1)
+          PY
