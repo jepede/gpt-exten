@@ -17,48 +17,131 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore cached 4.6 verification artifact
+      - name: Restore cached APK and extract libanort
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          curl -fsSL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11309845408/zip" -o cache.zip
+          curl -fsSL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11309845408/zip" -o cache.zip
           echo "816ab7a7b41a2ae5c45a4d4c0373fde6eab42e561bd5c01eced4f8bd05a065ab  cache.zip" | sha256sum -c -
           unzip -q cache.zip -d cache
-          find cache -maxdepth 3 -type f -printf '%p %s\n' | sort
+          APK="$(find cache -name '*.apk' -print -quit)"
+          unzip -p "$APK" lib/arm64-v8a/libanort.so > libanort.so
+          echo "98118fa56a0ea03d201f841d85abf5f837906c3747d57ea63b7171af3f61ac5c  libanort.so" | sha256sum -c -
 
-      - name: Inspect APK native libraries
+      - name: Analyze g_acf_array function table
         run: |
-          set -euo pipefail
-          APK="$(find cache -type f -name '*.apk' -print -quit)"
-          echo "APK=$APK"
-          if [ -z "$APK" ]; then
-            echo "No APK in verification artifact"
-            exit 0
-          fi
-          echo "===== MATCHING LIBS ====="
-          unzip -l "$APK" | grep -Ei 'lib/(arm64-v8a|armeabi-v7a)/.*(anort|unpacker|tersafe|tprt|UE4|anogs|ano|tss).*\.so' | head -300 || true
-          mkdir -p out
-          python3 - "$APK" <<'PY'
-          import sys,zipfile,os,hashlib
-          apk=sys.argv[1]
-          z=zipfile.ZipFile(apk)
-          names=[n for n in z.namelist() if n.startswith('lib/arm64-v8a/') and n.endswith('.so')]
-          for n in names:
-              base=os.path.basename(n).lower()
-              if any(k in base for k in ('anort','unpacker','tersafe','tprt','ano','tss')):
-                  d=z.read(n)
-                  p='out/'+os.path.basename(n)
-                  open(p,'wb').write(d)
-                  print(n,len(d),hashlib.sha256(d).hexdigest(),p)
+          python3 -m pip install --user --disable-pip-version-check capstone pyelftools >/dev/null
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          from elftools.elf.elffile import ELFFile
+          from capstone import Cs,CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN
+          from capstone.arm64_const import ARM64_OP_IMM
+
+          data=Path('libanort.so').read_bytes()
+          ACF=0x1d1cd8
+          ACO=0x1d3620
+          OFFSETS=[0x28,0x38,0x40,0x48,0xb0,0xb8,0xc0,0x100,0x188]
+
+          with open('libanort.so','rb') as f:
+              e=ELFFile(f)
+              loads=[]
+              for s in e.iter_segments():
+                  if s['p_type']=='PT_LOAD':
+                      loads.append((int(s['p_vaddr']),int(s['p_offset']),int(s['p_filesz']),int(s['p_memsz']),int(s['p_flags'])))
+              def va2off(va):
+                  for v,o,fs,ms,fl in loads:
+                      if v<=va<v+fs:return o+va-v
+                  return None
+              def readq(va):
+                  o=va2off(va)
+                  return None if o is None else struct.unpack_from('<Q',data,o)[0]
+
+              print('=== LOADS ===')
+              for x in loads:print(tuple(hex(y) if isinstance(y,int) else y for y in x))
+
+              dynsym=e.get_section_by_name('.dynsym')
+              sym_by_addr={}
+              if dynsym:
+                  for s in dynsym.iter_symbols():
+                      va=int(s['st_value']);sz=int(s['st_size'])
+                      if va:sym_by_addr.setdefault(va,[]).append((s.name,sz))
+
+              rels={}
+              for sec in e.iter_sections():
+                  if sec['sh_type'] not in ('SHT_RELA','SHT_REL'):continue
+                  st=e.get_section(sec['sh_link']) if sec['sh_link'] else None
+                  for r in sec.iter_relocations():
+                      ro=int(r.entry['r_offset'])
+                      if ACF <= ro < ACF+432 or ACO <= ro < ACO+168:
+                          si=int(r.entry['r_info_sym']); name=''
+                          if si and st is not None:
+                              try:name=st.get_symbol(si).name
+                              except:pass
+                          rels[ro]=(int(r.entry.get('r_addend',0) or 0),int(r.entry['r_info_type']),name,sec.name)
+
+              print('=== ACF ENTRIES ===')
+              for i in range(54):
+                  va=ACF+i*8
+                  q=readq(va)
+                  rel=rels.get(va)
+                  resolved=(rel[0] if rel and rel[1]==1027 else q)
+                  mark=' *USED*' if i*8 in OFFSETS else ''
+                  names=sym_by_addr.get(resolved,[])
+                  print(f'i={i:02d} off=0x{i*8:03x} slot=0x{va:x} disk={hex(q) if q is not None else None} reloc={rel} resolved=0x{resolved:x} syms={names}{mark}')
+
+              print('=== ACO ENTRIES ===')
+              for i in range(21):
+                  va=ACO+i*8;q=readq(va);rel=rels.get(va)
+                  resolved=(rel[0] if rel and rel[1]==1027 else (q or 0))
+                  print(f'i={i:02d} off=0x{i*8:03x} slot=0x{va:x} disk={hex(q) if q is not None else None} reloc={rel} resolved=0x{resolved:x} syms={sym_by_addr.get(resolved,[])}')
+
+              targets={}
+              for off in OFFSETS:
+                  va=ACF+off
+                  q=readq(va);rel=rels.get(va)
+                  resolved=(rel[0] if rel and rel[1]==1027 else (q or 0))
+                  if resolved:targets[off]=resolved
+
+              print('=== USED TARGETS ===')
+              for off,t in targets.items():
+                  print(f'ACF+0x{off:x} -> 0x{t:x} syms={sym_by_addr.get(t,[])}')
+
+              md=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN);md.detail=True
+              for off,t in targets.items():
+                  fo=va2off(t)
+                  if fo is None:continue
+                  print(f'===== DISASM ACF+0x{off:x} TARGET 0x{t:x} =====')
+                  count=0
+                  for ins in md.disasm(data[fo:fo+0x500],t):
+                      print(f'0x{ins.address:x}: {ins.mnemonic} {ins.op_str}')
+                      count+=1
+                      if ins.mnemonic=='ret' and count>4:break
+                      if count>=180:break
+
+              print('=== ALL EXPORTED ELF_HOOK_STUBS ===')
+              if dynsym:
+                  for s in dynsym.iter_symbols():
+                      if s.name.startswith('ELF_HOOK_STUB_'):
+                          print(s.name,hex(int(s['st_value'])),hex(int(s['st_size'])))
+
+              # Strings near functions in ACF table to give semantic clues.
+              print('=== ASCII NEAR USED TARGETS ===')
+              for off,t in targets.items():
+                  fo=va2off(t)
+                  if fo is None:continue
+                  lo=max(0,fo-0x2000);hi=min(len(data),fo+0x3000)
+                  blob=data[lo:hi]
+                  out=[]
+                  i=0
+                  while i<len(blob):
+                      j=i
+                      while j<len(blob) and 32<=blob[j]<127:j+=1
+                      if j-i>=6:
+                          s=blob[i:j].decode('ascii','ignore')
+                          if len(s)<=160:out.append((lo+i,s))
+                      i=max(j+1,i+1)
+                  print(f'TARGET ACF+0x{off:x} 0x{t:x}')
+                  for p,s in out[-30:]:print(hex(p),s)
           PY
-          echo "===== FILES ====="
-          file out/* 2>/dev/null || true
-          echo "===== SYMBOL/STRING FOCUS ====="
-          for f in out/*.so; do
-            [ -f "$f" ] || continue
-            echo "--- $f ---"
-            readelf -Ws "$f" 2>/dev/null | grep -Ei 'g_acf_array|g_aco_array|decrypt_elf|stub_|recvfrom|sendto|mprotect|mmap|munmap' | head -300 || true
-            strings -a -t x "$f" | grep -Ei 'g_acf_array|g_aco_array|decrypt_elf|stub_|recvfrom|sendto|mprotect|mmap|munmap|F5DF260|SetDecryptionKey' | head -300 || true
-          done
