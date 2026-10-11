@@ -1,0 +1,46 @@
+name: Temporary PUBG 4.6 dynamic-key scan
+
+on:
+  push:
+    branches:
+      - tmp/pubg46-dynkey-scan-20261011
+    paths:
+      - .github/workflows/tmp-pubg46-dynkey-scan.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install scanner dependencies
+        run: |
+          python3 -m pip install --disable-pip-version-check --no-cache-dir pyelftools capstone
+
+      - name: Fetch verified PUBG 4.6 libUE4 release asset
+        run: |
+          set -euo pipefail
+          curl -fL --retry 5 --retry-delay 2 \
+            -o libUE4-GL-4.6.so \
+            https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.6.so
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  libUE4-GL-4.6.so" | sha256sum -c -
+          ls -lh libUE4-GL-4.6.so
+
+      - name: Run dynamic-key static scan
+        run: |
+          set -euo pipefail
+          python3 tools/scan_pubg46_dynkeys.py libUE4-GL-4.6.so scan_out
+          wc -c scan_out/*
+          sed -n '1,260p' scan_out/report.txt
+
+      - name: Upload scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-dynkey-static-scan
+          path: scan_out/
+          retention-days: 1
+          compression-level: 9
