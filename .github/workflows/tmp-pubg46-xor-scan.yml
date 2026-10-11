@@ -1,0 +1,38 @@
+name: Temporary PUBG 4.6 protected-data scan
+
+on:
+  push:
+    branches:
+      - tmp/pubg46-dynkey-scan-20261011
+    paths:
+      - .github/workflows/tmp-pubg46-xor-scan.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: python3 -m pip install --disable-pip-version-check --no-cache-dir pyelftools numpy
+      - name: Fetch and verify libUE4 4.6
+        run: |
+          set -euo pipefail
+          curl -fL --retry 5 --retry-delay 2 -o libUE4-GL-4.6.so \
+            https://github.com/jepede/gpt-exten/releases/download/v1.0.1/libUE4-GL-4.6.so
+          echo "abb9343f69735378b6aea4db97a66e9789664075b0196b1b99378514052454ce  libUE4-GL-4.6.so" | sha256sum -c -
+      - name: Scan protected constants
+        run: |
+          set -euo pipefail
+          python3 tools/scan_pubg46_xor_patterns.py libUE4-GL-4.6.so xor_out
+          cat xor_out/xor_report.txt
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-protected-data-scan
+          path: xor_out/
+          retention-days: 1
+          compression-level: 9
