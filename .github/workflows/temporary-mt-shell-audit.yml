@@ -1,0 +1,107 @@
+name: Temporary MT Shell Executor Static Audit
+on:
+  push:
+    branches: [research/mt-shell-26101061]
+  workflow_dispatch:
+jobs:
+  static-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Download official APK and verify ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --connect-timeout 20 --max-time 300 'https://pan.mt2.cn/apk/26101061' -o MT2.26.10.apk
+          ls -lh MT2.26.10.apk
+          sha256sum MT2.26.10.apk | tee SHA256SUMS.txt
+          unzip -tqq MT2.26.10.apk
+          python3 - <<'PY'
+          import zipfile
+          a=zipfile.ZipFile("MT2.26.10.apk")
+          for n in a.namelist():
+            if n.endswith(".dex") or n.startswith("lib/") and n.endswith(".so"):
+              print(n, a.getinfo(n).file_size)
+          PY
+      - name: Install JADX
+        id: jd
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --connect-timeout 20 --max-time 180 https://github.com/skylot/jadx/releases/download/v1.5.3/jadx-1.5.3.zip -o jadx.zip
+          mkdir jadx-install
+          unzip -q jadx.zip -d jadx-install
+          chmod +x jadx-install/bin/jadx
+          java -version
+          jadx-install/bin/jadx --version
+      - name: Decompile app with JADX
+        if: steps.jd.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p jadx-out
+          jadx-install/bin/jadx -j 4 -d jadx-out MT2.26.10.apk >jadx.log 2>&1 || true
+          tail -25 jadx.log
+          du -sh jadx-out || :
+      - name: Examine script execution references
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import zipfile, os, re
+          from pathlib import Path
+          a=zipfile.ZipFile("MT2.26.10.apk")
+          with open("shell-analysis.txt","w") as o:
+            def emit(x):
+              print(x)
+              o.write(str(x)+"\n")
+            emit("=== APK METADATA ===")
+            emit(f"ZIP entries: {len(a.namelist())}")
+            for n in a.namelist():
+              if n.endswith(".dex"): emit(f"DEX: {n}, {a.getinfo(n).file_size} bytes")
+            emit("=== Java snippets containing shell/script keywords ===")
+            pats=[r"脚本执行器",r"执行脚本",r"使用ROOT",r"ScriptExecutor",r"scriptExecutor",r"executeScript",r"RunScript",r"ShellSession",r"TerminalSession",r"TERMINAL",r"\bsh -c\b",r"bash -c",r"ExecScript",r"ShellScript",r"脚本未执行",r"扩展包环境",r"system shell"]
+            rx=re.compile("|".join(pats),re.I)
+            roots=[Path("jadx-out/sources"),Path("jadx-out/resources")]
+            found=0
+            for root in roots:
+              if not root.exists(): continue
+              for p in root.rglob("*"):
+                if not p.is_file() or p.suffix not in (".java",".xml",".json",".txt",".smali"):continue
+                try: s=p.read_text(encoding="utf8",errors="replace")
+                except:continue
+                m=rx.search(s)
+                if not m:continue
+                found+=1
+                if found>100:continue
+                lines=s.splitlines()
+                emit(f"--- {p}, {len(lines)} lines ---")
+                hits=0
+                for i,line in enumerate(lines):
+                  if rx.search(line):
+                    a1=max(i-2,0);b1=min(i+4,len(lines))
+                    emit(f"{i+1}: "+" ".join(lines[a1:b1])[:1600]);hits+=1
+                    if hits>=8:break
+            emit(f"TOTAL_MATCHED_FILES={found}")
+          PY
+      - name: Compress source for artifact
+        if: always()
+        shell: bash
+        run: |
+          [ ! -d jadx-out ] || tar czf jadx-sources.tar.gz jadx-out
+          ls -lh MT2.26.10.apk jadx-sources.tar.gz shell-analysis.txt SHA256SUMS.txt || true
+      - name: Upload original APK and decompiler evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mt-26101061-shell-audit-temp
+          path: |
+            MT2.26.10.apk
+            jadx-sources.tar.gz
+            shell-analysis.txt
+            SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 1
