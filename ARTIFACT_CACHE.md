@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| UPX KeyGuard Android ARM64 QEMU E2E build | v1.1-testonly-20261013 | Android/Bionic API28+ | arm64-v8a | `38335627167` | SINGLE | `2027-01-11T02:10:30Z` |
 | UPX KeyGuard Android ARM64 | 5.2.1-keyguard-arm64-demo-20261013 | Android / Bionic API 28+ | arm64-v8a | `38334950099` | SINGLE | `2027-01-11T02:01:54Z` |
 | UPX KeyGuard ARM64 Linux | v5.2.1-keyguard-v1-20261013 | Linux | AArch64 | `38333914943` | SINGLE | `2027-01-11T01:48:51Z` |
 | UPX KeyGuard | v5.2.1-keyguard-v1-20261013 | Linux | x86_64 | `38333114942` | SINGLE | `2027-01-11T01:38:45Z` |
@@ -1667,3 +1668,45 @@ Use `mcp__GitHub__download_workflow_artifact` with repository `jepede/gpt-exten`
 ### Restore
 
 Use GitHub `download_workflow_artifact` on artifact `11784720583` (run `38334950099`); validate ZIP SHA256 `25a033428a7618117d9c91d12c0dab4364efe58d7e7fda6ef376dc06eb6d3797`, extract files, and check the enclosed `SHA256SUMS` manifest after removing any `release/` prefix. Verified independently: decrypt AES-256-GCM ciphertext with demo key and zlib decompress to byte-identical ARM64 ELF; invalid key and tampering rejected; under Android 16 Bionic rootfs and qemu-aarch64-static 7.2.22 outer no-key / wrong-key exited 71/73 with zero stdout. Correct-key QEMU execution reached second execve but QEMU linux-user did not re-execute the nested ELF; original inner ELF ran successfully on the same emulator. Real phone full-path execution remains unverified.
+
+## Artifact Record: UPX KeyGuard ARM64 QEMU runtime verification v1.1
+
+- Name: UPX KeyGuard Android ARM64 QEMU E2E build
+- Version: `v1.1-testonly-20261013`
+- Platform: Android/Bionic API28+ (emulated Android 16 rootfs)
+- Architecture: arm64-v8a (loader), x86_64 (build tool)
+- Workflow: `.github/workflows/upx-keyguard-android-arm64.yml`
+- Run ID: `38335627167` (**workflow conclusion failure**: Python regression assertion used an incorrect escaped footer string; build binaries were produced; **independent local QEMU/Bionic 8/8 tests passed**)
+- Artifact Name: `upx-keyguard-android-arm64-bionic`
+- Artifact ID: `11785120751`
+- Artifact ZIP File: `UPX_ARM64_QEMU_test_intermediate.zip`
+- Artifact ZIP Size: `1353384` bytes
+- Artifact ZIP SHA256: `1c17ff9b14802a321e3f8dcbece8f797e6a65e547174024fef63014f70d59543`
+- Created At: `2026-10-13T02:11:52Z`
+- Expires At: `2027-01-11T02:10:30Z`
+- Storage Mode: `SINGLE`
+- Original File: `UPX_ARM64_QEMU_test_intermediate.zip`
+- Original Size: `1353384` bytes
+- Original SHA256: `1c17ff9b14802a321e3f8dcbece8f797e6a65e547174024fef63014f70d59543`
+- Part Count: `1`
+- Validation: Real QEMU 7.2.22 with user-provided Android 16 Bionic rootfs; production no-key and wrong-key were silent on stdout (71/73); separately compiled **QEMU_TEST_ONLY** ARM64 variant with correct key and user password printed real login-success (exit 0) or wrong-password (exit 1); no key/wrong key/tampered data/strict-no-disk checked; 8/8 succeeded, no leaked temp files. No physical Android device execution or TEE/KeyMint tested.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| UPX KeyGuard production encrypted ELF | v1.1-testonly-20261013 | Android/Bionic API28+ | ARM64 | `NGuard_UPX_Android_ARM64.so` | `e1c91fee09cd8bf86eb8606813d7d9a6ae9d79d5728b66d231676b7a4271ee69` |
+| UPX KeyGuard QEMU-only encrypted ELF | v1.1-testonly-20261013 | Android/Bionic API28+ | ARM64 | `NGuard_UPX_Android_ARM64_QEMU_TEST_ONLY.so` | `9c8c6e060a300a145b5300d0b214384e23283d7f2e9210b1e79a62df095c68ca` |
+| UPX KeyGuard Android ARM64 QEMU loader | v1.1-testonly-20261013 | Android/Bionic API28+ | ARM64 | `guard_outer_android_arm64_QEMU_TEST_ONLY` | `65fd11e11c0c664b1706637256d6f9fd3de5f1a1bec2547c328b5ca714383c42` |
+| UPX KeyGuard original ARM64 ELF (test only) | v1.1-testonly-20261013 | Android/Bionic API28+ | ARM64 | `original_android_arm64` | `b3c1302f183b1200783ff4b47fc494f9d7bc6d40a35126d2df7cf229d671e904` |
+| UPX KeyGuard x86_64 packer | v1.1-testonly-20261013 | Linux | x86_64 | `upx-keyguard-5.2.1-host-x86_64` | `3cafb52fcad6e8b0f94e3d9a90b68ef0483378abaff8a278095ada4d1ded4158` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | File/Path | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---:|---:|---|---|---:|---|---|---|
+| 1/1 | `11785120751` | `upx-keyguard-android-arm64-bionic` | `UPX_ARM64_QEMU_test_intermediate.zip` | `1353384` | `1c17ff9b14802a321e3f8dcbece8f797e6a65e547174024fef63014f70d59543` | `2026-10-13T02:11:52Z` | `2027-01-11T02:10:30Z` |
+
+### Restore
+
+Call GitHub `download_workflow_artifact` for artifact `11785120751` from run `38335627167`. Validate artifact ZIP SHA256 `1c17ff9b14802a321e3f8dcbece8f797e6a65e547174024fef63014f70d59543`. Extraction includes normal ARM64 ELF and separate QEMU-only variant. Do not ship `NGuard_UPX_Android_ARM64_QEMU_TEST_ONLY.so` as the production version. The public `demo.key` is for unit testing and is **not** a TEE hardware key.
