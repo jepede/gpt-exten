@@ -1751,3 +1751,46 @@ Call GitHub `download_workflow_artifact` for artifact `11785120751` from run `38
 ### Restore
 
 Use GitHub `download_workflow_artifact` artifact `11792870161` from run `38354591700`. Verify outer ZIP SHA256 then verify each JSON SHA256. Google root pins also verified inside the V7 issuer code. This is **not** a permanent revocation-status cache; refresh the online status within 24 hours before approving a device.
+
+
+## Artifact Record: Official AOSP Bionic Linker Android 15 + Android 16 (2026-10-13)
+
+- **Name:** Official AOSP Bionic linker sources
+- **Version:** `android-15.0.0_r36+android-16.0.0_r2`
+- **Platform:** Android Bionic source / Any host
+- **Architecture:** ARM64 / AArch64 (source includes cross-ABI code)
+- **Source:** `https://android.googlesource.com/platform/bionic` (official Google AOSP); tag checkout, not arbitrary branch
+- **AOSP Android 15 commit:** `8d67ca893c1523eb926b9080dbe4e2ffd2a27ba1`
+- **AOSP Android 16 commit:** `09a271af557444c9a6b3f3146d6d474156fd6cdb`
+- **Workflow:** `.github/workflows/aosp-linker-compat-snapshot.yml` (on `work/aosp-linker-analysis-20261013` branch)
+- **Run ID:** `38422855360` (success)
+- **Artifact Name:** `aosp-bionic-linker-15r36-16r2`
+- **Artifact ID:** `11827525995`
+- **Artifact ZIP:** `aosp-bionic-linker-15r36-16r2.zip`
+- **Artifact ZIP Size:** `760791` bytes
+- **Artifact ZIP SHA256:** `e1852fc5e8f1795a6187d2621a9ba7a54643328081cbd42c542fb8b2a851d2f6`
+- **Created At:** `2026-10-13T15:32:09Z`
+- **Expires At:** `2027-01-11T15:31:50Z` (actual returned GitHub value)
+- **Storage Mode:** `SINGLE`
+- **Original File:** `aosp-bionic-linker-15r36-16r2.tar.gz`
+- **Original Size:** `762423` bytes
+- **Original SHA256:** `849e05db5ec47e68a3ab7f1ec23edb860f635a2e38a499c8bca388b0f2f6c1c9`
+- **Part Count:** `1`
+- **Retention Requested:** `400 days`, actual GitHub expiry governs validity
+- **Validation:** GitHub Actions checkout official tags, `sha256sum` of original tarball; cached artifact ZIP downloaded and independently SHA256 checked. Includes source `linker/`, `libc/include/`, `libc/private/` and `tests/dlfcn_test.cpp` for both Android versions.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Official AOSP Bionic linker sources | android-15.0.0_r36+android-16.0.0_r2 | Android Bionic source | ARM64 / All | `aosp-bionic-linker-15r36-16r2.tar.gz` | `849e05db5ec47e68a3ab7f1ec23edb860f635a2e38a499c8bca388b0f2f6c1c9` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---:|---:|---|---:|---|---|---|
+| 1/1 | `11827525995` | `aosp-bionic-linker-15r36-16r2` | 760791 | `e1852fc5e8f1795a6187d2621a9ba7a54643328081cbd42c542fb8b2a851d2f6` | 2026-10-13T15:32:09Z | 2027-01-11T15:31:50Z |
+
+### Restore
+
+Use `download_workflow_artifact` with repo `jepede/gpt-exten` and artifact `11827525995`, confirm artifact ZIP SHA256; unpack `aosp-bionic-linker-15r36-16r2.tar.gz`, verify original SHA256 and use pinned `COMMIT.txt` per release. Reuse this artifact while GitHub reports it present and unexpired.
