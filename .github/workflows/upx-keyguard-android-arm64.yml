@@ -90,6 +90,17 @@ jobs:
           "$UPX" --seal-android-arm64 --key-file release/demo.key \
             --stub release/guard_outer_android_arm64 \
             -o release/NGuard_UPX_Android_ARM64.so release/original_android_arm64
+          # A separate, clearly TEST-ONLY Android ARM64 wrapper supports
+          # QEMU linux-user recursive exec. Production omits that code entirely.
+          "$CC" -O2 -std=c11 -D_FORTIFY_SOURCE=2 -DKG_QEMU_TEST_HARNESS=1 -fPIE -pie \
+            -Wl,-z,relro,-z,now -Wl,--gc-sections -Wl,-z,max-page-size=16384 -s \
+            -Iwork/mbedtls-src/include \
+            tools/upx-keyguard-android-arm64/guard_android.c \
+            "$MBED_LIB" -lz \
+            -o release/guard_outer_android_arm64_QEMU_TEST_ONLY
+          "$UPX" --seal-android-arm64 --key-file release/demo.key \
+            --stub release/guard_outer_android_arm64_QEMU_TEST_ONLY \
+            -o release/NGuard_UPX_Android_ARM64_QEMU_TEST_ONLY.so release/original_android_arm64
           # Verify compiled artifact is an actual Android ELF64 EM_AARCH64.
           readelf -h release/NGuard_UPX_Android_ARM64.so > release/outer_elf_header.txt
           readelf -l release/NGuard_UPX_Android_ARM64.so > release/outer_program_headers.txt
@@ -112,6 +123,12 @@ jobs:
           clear=zlib.decompress(compressed)
           original=(root/'original_android_arm64').read_bytes()
           assert original==clear, 'Exact decrypted ARM64 executable differs from original'
+          test = (root/'NGuard_UPX_Android_ARM64_QEMU_TEST_ONLY.so').read_bytes()
+          ft = test[-44:]
+          assert ft[:8] == b'UGAEAD1\\0'.replace(b'\\0',b'\\x00')
+          count = int.from_bytes(ft[8:16], 'little')
+          inner = AESGCM(key).decrypt(ft[16:28], test[-44-count:-44]+ft[28:44], b'UPX-GUARD/AES256GCM/V1')
+          assert zlib.decompress(inner) == original, 'QEMU test variant unpack mismatch'
           assert original[18] == 183 and original[19] == 0
           assert b'123456\0' not in outer, 'complete null-terminated password leaked'
           assert '请输入密码'.encode('utf8') not in outer
