@@ -1886,3 +1886,41 @@ Use `download_workflow_artifact` with repo `jepede/gpt-exten` and artifact `1182
 ### Restore
 
 Call download_workflow_artifact for repo jepede/gpt-exten with artifact_id=11833330555; verify SHA256. The archive contains libaps2_real.so, dynamic.txt, result.txt, compiled ARM64 object files, host inspector, and SHA256SUMS.txt.
+
+
+## Artifact Record: Custom linker ARM64 compatibility kit v2
+
+- Name: Custom linker ARM64 compatibility kit v2
+- Version: v2-20261013-android16-comparison
+- Platform: Android/Bionic source compatibility, Linux host
+- Architecture: AArch64 / arm64-v8a
+- Workflow: .github/workflows/package-android-linker-compat.yml
+- Run ID: 38436179725 (success)
+- Artifact Name: custom-linker-arm64-compat-kit-v2
+- Artifact ID: 11833176641
+- File: custom-linker-arm64-compat-kit-v2.zip
+- Size: 13562 bytes
+- SHA256: 6d3491f064ab42ccef49fa742722c6685ca2a1a3dfa00d6610924d3ae62f61cf
+- Created At: 2026-10-13T17:08:11Z
+- Expires At: 2027-01-11T17:08:05Z (actual GitHub value)
+- Storage Mode: SINGLE
+- Original File: custom-linker-arm64-compat-kit-v2.tar.gz
+- Original Size: verified in workflow (tarball SHA256 below)
+- Original SHA256: 6ae344dbc23945b3aaedfc34925f7e90a30ce15cdc1fe693f7c6e4cd3c768d52
+- Part Count: 1
+- Validation: GCC C11 APS2 decoder, ELF GNU version reader and 4K/16K PT_LOAD planner tests pass. Real ARM64 NDK r28c API28 compile and LLD-generated APS2 decoding independently passed in run 38435474384 (100 relocations).
+- Note: The kit is independent public C11 source + tests + integration guide. The uploaded private custom linker project is NOT included, and this is not a fully integrated production loader.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| ARM64 linker compat source bundle | v2-20261013-android16-comparison | Android/Bionic source | AArch64 | custom-linker-arm64-compat-kit-v2.tar.gz | 6ae344dbc23945b3aaedfc34925f7e90a30ce15cdc1fe693f7c6e4cd3c768d52 |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---:|---:|---|---:|---|---|
+| 1/1 | 11833176641 | custom-linker-arm64-compat-kit-v2 | 13562 | 6d3491f064ab42ccef49fa742722c6685ca2a1a3dfa00d6610924d3ae62f61cf | 2026-10-13T17:08:11Z | 2027-01-11T17:08:05Z |
+
+### Restore
+
+Download workflow artifact 11833176641 from jepede/gpt-exten, verify artifact ZIP SHA256, extract custom-linker-arm64-compat-kit-v2.tar.gz and verify SHA256, then extract compatibility/ components.
