@@ -173,17 +173,71 @@ jobs:
           EOF
 
           cd .tmp/pubg-fetch
-          for attempt in 1 2 3 4 5; do
-            echo "Resolve attempt: ${attempt}/5"
+          rm -f ../../out/resolved.json
+
+          for attempt in 1 2 3; do
+            echo "Live resolve attempt: ${attempt}/3"
             if bun run resolve.ts; then
               break
-            fi
-            if [ "${attempt}" -eq 5 ]; then
-              exit 1
             fi
             sleep 3
           done
           cd ../..
+
+          if [ ! -f out/resolved.json ]; then
+            echo "APKMirror live resolve unavailable; falling back to ARTIFACT_CACHE.md."
+
+            python3 - <<'PY'
+          import json
+          import re
+
+          text = open("ARTIFACT_CACHE.md", "r", encoding="utf-8").read()
+
+          pattern = re.compile(
+              r"^\| PUBG MOBILE Global Base APK \| "
+              r"([0-9]+(?:\.[0-9]+)+) \((\d+)\) "
+              r"\| Android \| arm64-v8a \|",
+              re.MULTILINE,
+          )
+
+          matches = pattern.findall(text)
+          if not matches:
+              raise SystemExit(
+                  "Live APKMirror resolution failed and no matching "
+                  "PUBG ARM64 cache record exists."
+              )
+
+          def version_key(item):
+              version, code = item
+              return tuple(int(x) for x in version.split(".")), int(code)
+
+          version_name, version_code = max(matches, key=version_key)
+          parts = version_name.split(".")
+          short_version = ".".join(parts[:2]) if len(parts) >= 2 else version_name
+
+          resolved = {
+              "packageName": "com.tencent.ig",
+              "versionName": version_name,
+              "versionCode": version_code,
+              "shortVersion": short_version,
+              "latest": {
+                  "name": f"PUBG MOBILE {version_name}",
+                  "url": None,
+                  "source": "ARTIFACT_CACHE.md fallback",
+              },
+              "variant": {
+                  "url": None,
+                  "arch": "arm64-v8a",
+                  "source": "ARTIFACT_CACHE.md fallback",
+              },
+          }
+
+          with open("out/resolved.json", "w", encoding="utf-8") as f:
+              json.dump(resolved, f, indent=2)
+
+          print(json.dumps(resolved, indent=2))
+          PY
+          fi
 
           python3 - <<'PY'
           import json
@@ -192,12 +246,14 @@ jobs:
           with open("out/resolved.json", "r", encoding="utf-8") as f:
               data = json.load(f)
 
+          variant = data.get("variant") or {}
+
           outputs = {
               "package_name": data["packageName"],
               "version_name": data["versionName"],
               "version_code": data["versionCode"],
               "short_version": data["shortVersion"],
-              "variant_url": data["variant"]["url"],
+              "variant_url": variant.get("url") or "",
           }
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
