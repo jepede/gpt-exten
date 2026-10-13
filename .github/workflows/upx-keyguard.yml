@@ -78,3 +78,5 @@ jobs:
           path: release/
           if-no-files-found: warn
           retention-days: 90
+
+# Rebuild with corrected source archive Base64.
