@@ -23,6 +23,7 @@ jobs:
           sudo apt-get install -y -qq libssl-dev cmake ninja-build g++ make git xz-utils
           mkdir -p /tmp/kgsrc /tmp/kgbuild release
           base64 -d tools/upx-keyguard-v1/upx_keyguard_sources.tar.gz.b64 | tar xzf - -C /tmp/kgsrc
+          cp tools/upx-keyguard-v1/patch_upx_fixed.py /tmp/kgsrc/guard/patch_upx.py
           git clone --depth 1 --branch v5.2.1 --recurse-submodules https://github.com/upx/upx.git /tmp/kgbuild/upx
           python3 /tmp/kgsrc/guard/patch_upx.py /tmp/kgbuild/upx
           (cd /tmp/kgbuild/upx && git diff -- CMakeLists.txt src/main.cpp > "$GITHUB_WORKSPACE/release/upx-5.2.1-keyguard.patch")
