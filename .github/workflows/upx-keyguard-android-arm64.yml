@@ -1,0 +1,151 @@
+name: UPX KeyGuard Android ARM64
+on:
+  push:
+    branches: [work/upx-keyguard-android-arm64-20261013]
+    paths:
+      - ".github/workflows/upx-keyguard-android-arm64.yml"
+      - "tools/upx-keyguard-android-arm64/**"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  android-arm64:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Reuse previously validated UPX 5.2.1 KeyGuard source artifact
+        uses: actions/download-artifact@v4
+        with:
+          repository: jepede/gpt-exten
+          run-id: 38333114942
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: upx-keyguard-v1-linux-x86_64
+          path: _cached_upx_521
+      - name: Compile Android ARM64 and verify cryptographic protection
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential cmake ninja-build libssl-dev zlib1g-dev file binutils python3-cryptography qemu-user
+          mkdir -p work/upx work/mbedtls release
+          # No redundant GitHub source download: use cached, validated UPX source.
+          tar -xzf _cached_upx_521/upx-keyguard-patched-upstream.tar.gz -C work/upx
+          python3 tools/upx-keyguard-android-arm64/patch_upx_android.py work/upx
+          (cd work/upx && diff -u /dev/null src/upx_guard_android_extension.hpp > ../../release/upx-android-arm64-extension.patch || test "$?" = 1)
+          cmake -S work/upx -B work/upx_build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DUPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
+          cmake --build work/upx_build --parallel 4
+          UPX="$(find work/upx_build -type f -name upx -perm -u+x | head -1)"
+          test -n "$UPX"
+          cp "$UPX" release/upx-keyguard-5.2.1-host-x86_64
+          "$UPX" --version
+          # Prefer hosted SDK/NDK: the existing NDK r28c archive is already
+          # indexed in ARTIFACT_CACHE.md; do not fetch it if NDK exists here.
+          NDK=""
+          for p in "${ANDROID_NDK_HOME:-}" "${ANDROID_NDK_ROOT:-}" "${ANDROID_NDK_LATEST_HOME:-}" /usr/local/lib/android/sdk/ndk/* /opt/android-sdk/ndk/*; do
+            if [[ -x "$p/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang" ]]; then NDK="$p"; break; fi
+          done
+          if [[ -z "$NDK" ]]; then
+            echo "No preinstalled Android NDK; the cached NDK r28c split-artifact fallback must be enabled."
+            exit 16
+          fi
+          echo "NDK: $NDK"
+          CC="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang"
+          "$CC" --version
+          git clone -q --depth 1 --branch v3.6.4 --recurse-submodules https://github.com/Mbed-TLS/mbedtls.git work/mbedtls-src
+          cmake -S work/mbedtls-src -B work/mbedtls_build -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-28 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF \
+            -DUSE_SHARED_MBEDTLS_LIBRARY=OFF \
+            -DUSE_STATIC_MBEDTLS_LIBRARY=ON
+          cmake --build work/mbedtls_build --parallel 4 --target mbedcrypto
+          MBED_LIB="$(find work/mbedtls_build -name libmbedcrypto.a | head -1)"
+          test -f "$MBED_LIB"
+          # Ordinary Android/Bionic dynamic PIE (Android 9+, 16 KiB ELF pages).
+          "$CC" -O2 -std=c11 -D_FORTIFY_SOURCE=2 -fPIE -pie \
+            -Wl,-z,relro,-z,now -Wl,-z,max-page-size=16384 \
+            -s tools/upx-keyguard-android-arm64/password_original.c \
+            -o release/original_android_arm64
+          "$CC" -O2 -std=c11 -D_FORTIFY_SOURCE=2 -fPIE -pie \
+            -Wl,-z,relro,-z,now -Wl,-z,max-page-size=16384 -s \
+            -Iwork/mbedtls-src/include \
+            tools/upx-keyguard-android-arm64/guard_android.c \
+            "$MBED_LIB" -lz \
+            -o release/guard_outer_android_arm64
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          for name in ('demo.key','wrong.key'):
+              p=Path('release')/name
+              p.write_bytes(os.urandom(32))
+              p.chmod(0o600)
+          PY
+          "$UPX" --seal-android-arm64 --key-file release/demo.key \
+            --stub release/guard_outer_android_arm64 \
+            -o release/NGuard_UPX_Android_ARM64.so release/original_android_arm64
+          # Verify compiled artifact is an actual Android ELF64 EM_AARCH64.
+          readelf -h release/NGuard_UPX_Android_ARM64.so > release/outer_elf_header.txt
+          readelf -l release/NGuard_UPX_Android_ARM64.so > release/outer_program_headers.txt
+          readelf -d release/NGuard_UPX_Android_ARM64.so > release/outer_dependencies.txt
+          file release/* | tee release/file_inventory.txt
+          grep -q 'AArch64' release/outer_elf_header.txt
+          grep -q '/system/bin/linker64' release/outer_program_headers.txt
+          # Extract, authenticate and decompress WITHOUT pretending to execute Android
+          python3 - <<'PY'
+          import hashlib, pathlib, zlib
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          root=pathlib.Path('release')
+          outer=(root/'NGuard_UPX_Android_ARM64.so').read_bytes()
+          key=(root/'demo.key').read_bytes()
+          f=outer[-44:]
+          assert f[:8]==b'UGAEAD1\0'
+          n=int.from_bytes(f[8:16],'little')
+          cipher=outer[-44-n:-44]
+          compressed=AESGCM(key).decrypt(f[16:28],cipher+f[28:44],b'UPX-GUARD/AES256GCM/V1')
+          clear=zlib.decompress(compressed)
+          original=(root/'original_android_arm64').read_bytes()
+          assert original==clear, 'Exact decrypted ARM64 executable differs from original'
+          assert original[18] == 183 and original[19] == 0
+          assert b'123456' not in outer
+          assert '请输入密码'.encode('utf8') not in outer
+          assert '登录成功'.encode('utf8') not in outer
+          try:
+              AESGCM((root/'wrong.key').read_bytes()).decrypt(f[16:28],cipher+f[28:44],b'UPX-GUARD/AES256GCM/V1')
+              raise AssertionError('Wrong key incorrectly authenticated')
+          except Exception as e:
+              from cryptography.exceptions import InvalidTag
+              if not isinstance(e,InvalidTag): raise
+          print('PASS: exact original Android ARM64 ELF restored with right key')
+          print('PASS: wrong key cannot authenticate')
+          print('PASS: outer ELF contains none of the three plaintext business strings')
+          print('ciphertext bytes=',len(cipher),'compressed bytes=',len(compressed),'ELF bytes=',len(clear))
+          print('original sha256=',hashlib.sha256(original).hexdigest())
+          (root/'verify_result.txt').write_text(
+              f'authorized_decoding=PASS\nwrong_key_authentication=REJECTED\n'
+              f'plaintext_strings_in_outer=NONE\n'
+              f'original_sha256={hashlib.sha256(original).hexdigest()}\n'
+              f'platform=Android/Bionic ARM64 (not Linux glibc ARM64)\n'
+              f'physical_android_device_executed=NO\n')
+          PY
+          # Distinctive Android interpreter, compiler and ELF headers verified.
+          # Real-phone end-to-end must still be tested by adb on user's own device.
+          cp tools/upx-keyguard-android-arm64/guard_android.c release/
+          cp tools/upx-keyguard-android-arm64/upx_guard_android_extension.hpp release/
+          cp tools/upx-keyguard-android-arm64/patch_upx_android.py release/
+          cp tools/upx-keyguard-android-arm64/password_original.c release/
+          sha256sum release/* > SHA256SUMS
+          cp SHA256SUMS release/SHA256SUMS
+      - name: Publish binaries, demo keys and reproducible sources
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upx-keyguard-android-arm64-bionic
+          path: release/
+          retention-days: 400
+          if-no-files-found: warn
