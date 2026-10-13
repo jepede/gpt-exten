@@ -1,0 +1,80 @@
+name: UPX KeyGuard v1 build and test
+on:
+  push:
+    branches: [work/upx-keyguard-20261013]
+    paths:
+      - .github/workflows/upx-keyguard.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build real UPX 5.2.1 fork and validate key-guard ELF
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libssl-dev cmake ninja-build g++ make git xz-utils
+          mkdir -p /tmp/kgsrc /tmp/kgbuild release
+          base64 -d tools/upx-keyguard-v1/upx_keyguard_sources.tar.gz.b64 | tar xzf - -C /tmp/kgsrc
+          git clone --depth 1 --branch v5.2.1 --recurse-submodules https://github.com/upx/upx.git /tmp/kgbuild/upx
+          python3 /tmp/kgsrc/guard/patch_upx.py /tmp/kgbuild/upx
+          (cd /tmp/kgbuild/upx && git diff -- CMakeLists.txt src/main.cpp > "$GITHUB_WORKSPACE/release/upx-5.2.1-keyguard.patch")
+          cmake -S /tmp/kgbuild/upx -B /tmp/kgbuild/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DUPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
+          cmake --build /tmp/kgbuild/build --parallel 4
+          UPX_EXE="$(find /tmp/kgbuild/build -type f -name upx -perm -u+x | head -1)"
+          test -n "$UPX_EXE"
+          "$UPX_EXE" --version
+          gcc -O2 -Wall -Wextra -Werror -fPIE -pie -Wl,-z,relro,-z,now /tmp/kgsrc/guard/password_original.c -o release/original_linux_x86_64
+          gcc -O2 -Wall -Wextra -Werror -fPIE -pie -Wl,-z,relro,-z,now /tmp/kgsrc/guard/guard_runtime.c -lcrypto -o release/guard_stub_linux_x86_64.so
+          cp "$UPX_EXE" release/upx-keyguard-linux-x86_64
+          chmod +x release/upx-keyguard-linux-x86_64
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          p=Path('release/demo.key'); p.write_bytes(os.urandom(32)); p.chmod(0o600)
+          p=Path('release/wrong.key');p.write_bytes(os.urandom(32));p.chmod(0o600)
+          PY
+          ./release/upx-keyguard-linux-x86_64 --seal --key-file release/demo.key --stub release/guard_stub_linux_x86_64.so -o release/password_upx_keyguard_linux_x86_64.so release/original_linux_x86_64
+          set +e
+          printf '123456\n' | UPX_GUARD_KEY_FILE=release/demo.key ./release/password_upx_keyguard_linux_x86_64.so > release/test_ok.txt 2>&1
+          a=$?
+          printf 'bad\n' | UPX_GUARD_KEY_FILE=release/demo.key ./release/password_upx_keyguard_linux_x86_64.so > release/test_bad_password.txt 2>&1
+          b=$?
+          env -u UPX_GUARD_KEY_FILE ./release/password_upx_keyguard_linux_x86_64.so > release/test_no_key.txt 2>&1
+          c=$?
+          UPX_GUARD_KEY_FILE=release/wrong.key ./release/password_upx_keyguard_linux_x86_64.so > release/test_wrong_key.txt 2>&1
+          d=$?
+          ./release/upx-keyguard-linux-x86_64 -d release/password_upx_keyguard_linux_x86_64.so -o release/unpacked_without_key > release/test_normal_upx_unpack.txt 2>&1
+          e=$?
+          set -e
+          echo "correct=$a bad_password=$b no_key=$c wrong_key=$d standard_upx_unpack=$e" | tee release/test_status.txt
+          test "$a" -eq 0
+          test "$b" -eq 1
+          test "$c" -eq 71
+          test "$d" -eq 73
+          test "$e" -ne 0
+          grep -q '登录成功' release/test_ok.txt
+          grep -q '密码错误' release/test_bad_password.txt
+          ! grep -a -q '123456' release/password_upx_keyguard_linux_x86_64.so
+          tar czf release/upx-keyguard-src-addons.tar.gz -C /tmp/kgsrc guard Makefile
+          tar czf release/upx-keyguard-patched-upstream.tar.gz -C /tmp/kgbuild/upx --exclude=.git .
+          sha256sum release/* > SHA256SUMS
+          cp SHA256SUMS release/SHA256SUMS
+          file release/* | tee file_inventory.txt
+          cat release/test_status.txt
+          cat release/test_ok.txt
+      - name: Publish validated output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upx-keyguard-v1-linux-x86_64
+          path: release/
+          if-no-files-found: warn
+          retention-days: 90
