@@ -205,7 +205,7 @@ jobs:
                   f.write(f"{key}={value}\n")
           PY
 
-      - name: Check existing v1.0.1 release asset
+      - name: Check existing v1.0.1 release assets
         id: release_check
         shell: bash
         env:
@@ -213,31 +213,123 @@ jobs:
         run: |
           set -euo pipefail
 
-          asset="libUE4-GL-${{ steps.resolve.outputs.short_version }}.so"
+          so_asset="libUE4-GL-${{ steps.resolve.outputs.short_version }}.so"
+          apk_asset="PUBG-CTF-GL-${{ steps.resolve.outputs.version_name }}.apk"
 
-          gh release view "${RELEASE_TAG}"             --repo "${GITHUB_REPOSITORY}"             --json tagName >/dev/null
+          gh release view "${RELEASE_TAG}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --json tagName >/dev/null
 
-          gh release view "${RELEASE_TAG}"             --repo "${GITHUB_REPOSITORY}"             --json assets             --jq '.assets[].name' > out/release-assets-before.txt
+          gh release view "${RELEASE_TAG}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --json assets \
+            --jq '.assets[].name' > out/release-assets-before.txt
 
-          if grep -Fxq "${asset}" out/release-assets-before.txt; then
-            echo "exists=true" >> "${GITHUB_OUTPUT}"
-            echo "Asset already exists: ${asset}"
-            echo "Nothing to do."
+          so_exists=false
+          apk_exists=false
+
+          grep -Fxq "${so_asset}" out/release-assets-before.txt && so_exists=true
+          grep -Fxq "${apk_asset}" out/release-assets-before.txt && apk_exists=true
+
+          if [ "${so_exists}" = true ] && [ "${apk_exists}" = true ]; then
+            all_exists=true
+            echo "Both assets already exist; nothing to do."
           else
-            echo "exists=false" >> "${GITHUB_OUTPUT}"
-            echo "Asset missing: ${asset}"
+            all_exists=false
           fi
 
-          echo "asset_name=${asset}" >> "${GITHUB_OUTPUT}"
+          echo "SO asset:  ${so_asset} (exists=${so_exists})"
+          echo "APK asset: ${apk_asset} (exists=${apk_exists})"
+
+          {
+            echo "so_exists=${so_exists}"
+            echo "apk_exists=${apk_exists}"
+            echo "all_exists=${all_exists}"
+            echo "so_asset_name=${so_asset}"
+            echo "apk_asset_name=${apk_asset}"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Already synchronized
-        if: steps.release_check.outputs.exists == 'true'
+        if: steps.release_check.outputs.all_exists == 'true'
         shell: bash
         run: |
-          echo "${{ steps.release_check.outputs.asset_name }} already exists in ${RELEASE_TAG}; exiting without downloading the APK."
+          echo "${{ steps.release_check.outputs.so_asset_name }} already exists."
+          echo "${{ steps.release_check.outputs.apk_asset_name }} already exists."
+          echo "Release ${RELEASE_TAG} is already synchronized; no APK download is needed."
+
+      - name: Locate cached Base APK artifact
+        if: steps.release_check.outputs.all_exists != 'true'
+        id: cache_lookup
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          version_name="${{ steps.resolve.outputs.version_name }}"
+          version_code="${{ steps.resolve.outputs.version_code }}"
+          artifact_name="pubg-mobile-global-${version_name}-${version_code}-arm64-v8a"
+          cache_key="| PUBG MOBILE Global Base APK | ${version_name} (${version_code}) | Android | arm64-v8a |"
+
+          if ! grep -Fq "${cache_key}" ARTIFACT_CACHE.md; then
+            echo "ARTIFACT_CACHE.md has no matching PUBG APK cache record."
+            echo "cache_hit=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          json="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${artifact_name}&per_page=100")"
+          artifact_id="$(printf '%s' "${json}" | jq -r '[.artifacts[] | select(.expired == false)] | sort_by(.created_at) | reverse | .[0].id // empty')"
+          run_id="$(printf '%s' "${json}" | jq -r '[.artifacts[] | select(.expired == false)] | sort_by(.created_at) | reverse | .[0].workflow_run.id // empty')"
+
+          if [ -z "${artifact_id}" ] || [ -z "${run_id}" ]; then
+            echo "Cache index matched, but the GitHub Artifact is absent or expired."
+            echo "cache_hit=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          echo "Reusable APK Artifact: ${artifact_name}"
+          echo "Artifact ID: ${artifact_id}"
+          echo "Run ID: ${run_id}"
+
+          {
+            echo "cache_hit=true"
+            echo "artifact_id=${artifact_id}"
+            echo "run_id=${run_id}"
+            echo "artifact_name=${artifact_name}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Download cached Base APK artifact
+        if: steps.cache_lookup.outputs.cache_hit == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ steps.cache_lookup.outputs.artifact_id }}
+          path: .tmp/apk-cache
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.cache_lookup.outputs.run_id }}
+
+      - name: Restore cached Base APK
+        if: steps.cache_lookup.outputs.cache_hit == 'true'
+        id: cache_restore
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          expected="out/PUBG-MOBILE-Global-${{ steps.resolve.outputs.version_name }}-${{ steps.resolve.outputs.version_code }}-arm64-v8a.apk"
+          src="$(find .tmp/apk-cache -type f -name '*.apk' -print -quit)"
+
+          if [ -z "${src}" ]; then
+            echo "Cached Artifact did not contain an APK." >&2
+            exit 1
+          fi
+
+          mkdir -p out
+          cp "${src}" "${expected}"
+          sha256sum "${expected}"
+          echo "apk_path=${expected}" >> "${GITHUB_OUTPUT}"
 
       - name: Download latest ARM64 Base APK
-        if: steps.release_check.outputs.exists != 'true'
+        if: steps.release_check.outputs.all_exists != 'true' && steps.cache_lookup.outputs.cache_hit != 'true'
         id: download
         shell: bash
         run: |
@@ -376,16 +468,22 @@ jobs:
           test -f "${apk}"
           echo "apk_path=${apk}" >> "${GITHUB_OUTPUT}"
 
-      - name: Verify APK and extract ARM64 libUE4.so
-        if: steps.release_check.outputs.exists != 'true'
-        id: extract
+      - name: Verify APK and prepare release assets
+        if: steps.release_check.outputs.all_exists != 'true'
+        id: prepare
         shell: bash
         run: |
           set -euo pipefail
 
-          apk="${{ steps.download.outputs.apk_path }}"
-          asset="${{ steps.release_check.outputs.asset_name }}"
-          so="out/${asset}"
+          if [ "${{ steps.cache_lookup.outputs.cache_hit }}" = "true" ]; then
+            apk="${{ steps.cache_restore.outputs.apk_path }}"
+          else
+            apk="${{ steps.download.outputs.apk_path }}"
+          fi
+
+          so_asset="${{ steps.release_check.outputs.so_asset_name }}"
+          apk_asset="${{ steps.release_check.outputs.apk_asset_name }}"
+          release_apk="out/${apk_asset}"
           entry="lib/arm64-v8a/libUE4.so"
 
           python3 - "${apk}" "${entry}" <<'PY'
@@ -395,7 +493,7 @@ jobs:
           apk, entry = sys.argv[1], sys.argv[2]
 
           if not zipfile.is_zipfile(apk):
-              raise SystemExit("Downloaded file is not a valid APK/ZIP")
+              raise SystemExit("Downloaded/restored file is not a valid APK/ZIP")
 
           with zipfile.ZipFile(apk) as z:
               names = set(z.namelist())
@@ -430,31 +528,40 @@ jobs:
           [ "${version_name}" = "${{ steps.resolve.outputs.version_name }}" ]
           [ "${version_code}" = "${{ steps.resolve.outputs.version_code }}" ]
 
-          unzip -p "${apk}" "${entry}" > "${so}"
-          test -s "${so}"
+          cp "${apk}" "${release_apk}"
+          sha256sum "${release_apk}" | tee out/APK_SHA256SUMS.txt
+          stat -c '%n %s bytes' "${release_apk}" | tee out/FILE_SIZES.txt
 
-          file "${so}"
-          readelf -h "${so}" | tee out/libUE4-elf-header.txt
+          echo "release_apk_path=${release_apk}" >> "${GITHUB_OUTPUT}"
 
-          readelf -h "${so}" | grep -Eq 'Class:[[:space:]]+ELF64'
-          readelf -h "${so}" | grep -Eq 'Machine:[[:space:]]+AArch64'
+          if [ "${{ steps.release_check.outputs.so_exists }}" != "true" ]; then
+            so="out/${so_asset}"
+            unzip -p "${apk}" "${entry}" > "${so}"
+            test -s "${so}"
 
-          sha256sum "${apk}" | tee out/APK_SHA256SUMS.txt
-          sha256sum "${so}" | tee out/LIBUE4_SHA256SUMS.txt
-          stat -c '%n %s bytes' "${apk}" "${so}" | tee out/FILE_SIZES.txt
+            file "${so}"
+            readelf -h "${so}" | tee out/libUE4-elf-header.txt
+            readelf -h "${so}" | grep -Eq 'Class:[[:space:]]+ELF64'
+            readelf -h "${so}" | grep -Eq 'Machine:[[:space:]]+AArch64'
 
-          echo "so_path=${so}" >> "${GITHUB_OUTPUT}"
+            sha256sum "${so}" | tee out/LIBUE4_SHA256SUMS.txt
+            stat -c '%n %s bytes' "${so}" >> out/FILE_SIZES.txt
+
+            echo "so_path=${so}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "libUE4 asset already exists; skipping extraction."
+          fi
 
       - name: Upload libUE4 to v1.0.1 release
-        if: steps.release_check.outputs.exists != 'true'
+        if: steps.release_check.outputs.so_exists != 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          so="${{ steps.extract.outputs.so_path }}"
-          asset="${{ steps.release_check.outputs.asset_name }}"
+          so="${{ steps.prepare.outputs.so_path }}"
+          asset="${{ steps.release_check.outputs.so_asset_name }}"
 
           if gh release upload "${RELEASE_TAG}" "${so}"               --repo "${GITHUB_REPOSITORY}"; then
             echo "Uploaded: ${asset}"
@@ -469,28 +576,62 @@ jobs:
             fi
           fi
 
-      - name: Verify release asset after upload
-        if: steps.release_check.outputs.exists != 'true'
+      - name: Upload PUBG APK to v1.0.1 release
+        if: steps.release_check.outputs.apk_exists != 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          asset="${{ steps.release_check.outputs.asset_name }}"
+          apk="${{ steps.prepare.outputs.release_apk_path }}"
+          asset="${{ steps.release_check.outputs.apk_asset_name }}"
 
-          gh release view "${RELEASE_TAG}"             --repo "${GITHUB_REPOSITORY}"             --json assets             --jq '.assets[] | [.name, (.size|tostring), .url] | @tsv'             | tee out/release-assets-after.tsv
+          if gh release upload "${RELEASE_TAG}" "${apk}" \
+              --repo "${GITHUB_REPOSITORY}"; then
+            echo "Uploaded: ${asset}"
+          else
+            gh release view "${RELEASE_TAG}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --json assets \
+              --jq '.assets[].name' > out/release-assets-apk-race.txt
 
-          cut -f1 out/release-assets-after.tsv | grep -Fxq "${asset}"
+            if grep -Fxq "${asset}" out/release-assets-apk-race.txt; then
+              echo "Another run already uploaded ${asset}; treating as synchronized."
+            else
+              echo "Release upload failed and ${asset} is still absent." >&2
+              exit 1
+            fi
+          fi
+
+      - name: Verify release assets after upload
+        if: steps.release_check.outputs.all_exists != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          so_asset="${{ steps.release_check.outputs.so_asset_name }}"
+          apk_asset="${{ steps.release_check.outputs.apk_asset_name }}"
+
+          gh release view "${RELEASE_TAG}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --json assets \
+            --jq '.assets[] | [.name, (.size|tostring), .url] | @tsv' \
+            | tee out/release-assets-after.tsv
+
+          cut -f1 out/release-assets-after.tsv | grep -Fxq "${so_asset}"
+          cut -f1 out/release-assets-after.tsv | grep -Fxq "${apk_asset}"
 
       - name: Upload APK/extraction verification artifact
-        if: steps.release_check.outputs.exists != 'true'
+        if: steps.release_check.outputs.all_exists != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: pubg-global-${{ steps.resolve.outputs.version_name }}-${{ steps.resolve.outputs.version_code }}-libue4-sync
           path: |
-            ${{ steps.download.outputs.apk_path }}
-            ${{ steps.extract.outputs.so_path }}
+            ${{ steps.prepare.outputs.release_apk_path }}
+            out/libUE4-GL-*.so
             out/resolved.json
             out/aapt-badging.txt
             out/libUE4-elf-header.txt
