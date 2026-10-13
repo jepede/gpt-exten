@@ -21,6 +21,16 @@ jobs:
           set -euo pipefail
           cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic compatibility/aps2_decoder_test.c -o aps2_test
           ./aps2_test
+      - name: Compile and execute ELF ABI compat units with GCC
+        run: |
+          set -euo pipefail
+          cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic compatibility/elf_versions_test.c -o elf_compat_test
+          ./elf_compat_test
+      - name: Compile and execute ELF ABI compat units with Clang ASan/UBSan
+        run: |
+          set -euo pipefail
+          clang -std=c11 -g -O1 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=all compatibility/elf_versions_test.c -o elf_compat_test_san
+          ./elf_compat_test_san
       - name: Compile and execute with Clang UBSan
         run: |
           set -euo pipefail
