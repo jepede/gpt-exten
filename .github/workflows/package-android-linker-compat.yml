@@ -1,0 +1,36 @@
+name: Package reusable Android ARM64 linker compatibility kit
+on:
+  push:
+    branches: [work/aosp-linker-analysis-20261013]
+    paths: [.github/workflows/package-android-linker-compat.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify tests and package standalone sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic compatibility/aps2_decoder_test.c -o aps2_test
+          cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic compatibility/elf_versions_test.c -o ver_test
+          cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic compatibility/elf_load_plan_test.c -o map_test
+          ./aps2_test && ./ver_test && ./map_test
+          find compatibility -type f -print0 | sort -z | xargs -0 sha256sum > compatibility/COMPONENT_SHA256SUMS.txt
+          tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+            -czf custom-linker-arm64-compat-kit-v2.tar.gz compatibility
+          sha256sum custom-linker-arm64-compat-kit-v2.tar.gz | tee custom-linker-arm64-compat-kit-v2.SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: custom-linker-arm64-compat-kit-v2
+          path: |
+            custom-linker-arm64-compat-kit-v2.tar.gz
+            custom-linker-arm64-compat-kit-v2.SHA256SUMS
+          retention-days: 400
+          if-no-files-found: error
