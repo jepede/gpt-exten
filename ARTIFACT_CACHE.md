@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| UPX KeyGuard Android ARM64 | 5.2.1-keyguard-arm64-demo-20261013 | Android / Bionic API 28+ | arm64-v8a | `38334950099` | SINGLE | `2027-01-11T02:01:54Z` |
 | UPX KeyGuard ARM64 Linux | v5.2.1-keyguard-v1-20261013 | Linux | AArch64 | `38333914943` | SINGLE | `2027-01-11T01:48:51Z` |
 | UPX KeyGuard | v5.2.1-keyguard-v1-20261013 | Linux | x86_64 | `38333114942` | SINGLE | `2027-01-11T01:38:45Z` |
 | TinyHTTPS OpenSSL + curl reference sources | OpenSSL 4.0.3 + curl 8.22.0 | Any | Any | `37458536791` | SINGLE | `2027-01-04T11:45:33Z` |
@@ -1627,3 +1628,42 @@ Call `download_workflow_artifact` on artifact `11784260295` from run `3833311494
 
 Use `mcp__GitHub__download_workflow_artifact` with repository `jepede/gpt-exten`, artifact `11784246824`, verify artifact ZIP SHA256 `8d0e705f28a290456005daaa50df89e199088acc9f083b377a3c928879ff7bd7`, then unzip and run SHA256SUMS verification. `demo.key` inside is a **public disposable test key**, not a production key; share the encrypted ELF separately from keys.
 
+
+## Artifact Record: UPX KeyGuard Android ARM64 API28 (2026-10-13)
+
+- Name: UPX KeyGuard Android ARM64
+- Version: `5.2.1-keyguard-arm64-demo-20261013`
+- Platform: Android/Bionic API 28+
+- Architecture: ARM64 / arm64-v8a / AArch64
+- Workflow: `.github/workflows/upx-keyguard-android-arm64.yml`
+- Run ID: `38334950099` (success)
+- Artifact Name: `upx-keyguard-android-arm64-bionic`
+- Artifact ID: `11784720583`
+- Artifact ZIP File: `UPX_KeyGuard_Android_ARM64_Actions_Artifact.zip`
+- Artifact ZIP Size: `1287617` bytes
+- Artifact ZIP SHA256: `25a033428a7618117d9c91d12c0dab4364efe58d7e7fda6ef376dc06eb6d3797`
+- Created At: `2026-10-13T02:03:15Z`
+- Expires At: `2027-01-11T02:01:54Z`
+- Storage Mode: `SINGLE`
+- Original File: `UPX_KeyGuard_Android_ARM64_Actions_Artifact.zip`
+- Original Size: `1287617` bytes
+- Original SHA256: `25a033428a7618117d9c91d12c0dab4364efe58d7e7fda6ef376dc06eb6d3797`
+- Part Count: `1`
+- Important: The `demo.key` in this artifact is a test software key, not hardware-backed. A physical Android phone has not been available for device-side verification.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| UPX KeyGuard encrypted outer executable SO | 5.2.1-keyguard-arm64-demo-20261013 | Android/Bionic API 28+ | arm64-v8a | `NGuard_UPX_Android_ARM64.so` | `31f60bbc41313c238d5784d2f915cfd0338e0edec2f95689eb8289f03940dda3` |
+| UPX KeyGuard original inner ELF | 5.2.1-keyguard-arm64-demo-20261013 | Android/Bionic API 28+ | arm64-v8a | `original_android_arm64` | `b3c1302f183b1200783ff4b47fc494f9d7bc6d40a35126d2df7cf229d671e904` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | File/Path | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---:|---:|---|---|---:|---|---|---|
+| 1/1 | `11784720583` | `upx-keyguard-android-arm64-bionic` | `UPX_KeyGuard_Android_ARM64_Actions_Artifact.zip` | `1287617` | `25a033428a7618117d9c91d12c0dab4364efe58d7e7fda6ef376dc06eb6d3797` | `2026-10-13T02:03:15Z` | `2027-01-11T02:01:54Z` |
+
+### Restore
+
+Use GitHub `download_workflow_artifact` on artifact `11784720583` (run `38334950099`); validate ZIP SHA256 `25a033428a7618117d9c91d12c0dab4364efe58d7e7fda6ef376dc06eb6d3797`, extract files, and check the enclosed `SHA256SUMS` manifest after removing any `release/` prefix. Verified independently: decrypt AES-256-GCM ciphertext with demo key and zlib decompress to byte-identical ARM64 ELF; invalid key and tampering rejected; under Android 16 Bionic rootfs and qemu-aarch64-static 7.2.22 outer no-key / wrong-key exited 71/73 with zero stdout. Correct-key QEMU execution reached second execve but QEMU linux-user did not re-execute the nested ELF; original inner ELF ran successfully on the same emulator. Real phone full-path execution remains unverified.
