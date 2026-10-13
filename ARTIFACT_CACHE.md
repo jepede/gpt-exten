@@ -1847,3 +1847,42 @@ Use `download_workflow_artifact` with repo `jepede/gpt-exten` and artifact `1182
 ### Restore
 
 优先直接使用 Release `v1.0.1` 中的 `PUBG-CTF-GL-4.6.0.apk`。若通过缓存恢复，则下载 Artifact `11830109931`，校验 Artifact ZIP digest `0baa17bb45dcebc39f719590725037ceef32e33403ec12bafa059a9f0ae6d18f`；解压后校验 APK SHA256 `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696`。
+
+
+## Artifact Record: Android ARM64 LLD APS2 real-ELF smoke 2026-10-13
+
+- Name: Android ARM64 LLD APS2 real-ELF smoke evidence
+- Version: ndk-r28c-api28-aps2-v1-20261013
+- Platform: Android/Bionic API 28+ target, Linux x86_64 host
+- Architecture: AArch64 / arm64-v8a
+- Workflow: .github/workflows/android-arm64-compat-smoke.yml
+- Run ID: 38435474384 (success)
+- Artifact Name: android-arm64-ndk-real-aps2-evidence
+- Artifact ID: 11833330555
+- File: android-arm64-ndk-real-aps2-evidence.zip
+- Size: 19393 bytes
+- SHA256: 4207c689719b43ad1612bcf16bfbdcea556238cc511a0ecf28b11d62aab1b895
+- Created At: 2026-10-13T17:03:41Z
+- Expires At: 2027-01-11T17:02:52Z (actual GitHub value)
+- Storage Mode: SINGLE
+- Original File: android-arm64-ndk-real-aps2-evidence.zip
+- Original Size: 19393 bytes
+- Original SHA256: 4207c689719b43ad1612bcf16bfbdcea556238cc511a0ecf28b11d62aab1b895
+- Part Count: 1
+- Source toolchain: reused cached Android NDK r28c artifacts 9174697344 and 9174699121, split-part SHA256 and reassembled NDK zip SHA256 dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f verified. No new external NDK download.
+- Results: Android NDK API28 cross-compiled APS2 / GNU version / ELF map-plan unit tests. Real NDK LLD --pack-dyn-relocs=android generated SO with DT_ANDROID_RELA = 0x450, DT_ANDROID_RELASZ = 147; APS2 decode validated 100 real AArch64 relocations.
+- Scope: isolated compatibility evidence, not end-to-end Android/Bionic shell-loader runtime test.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Android ARM64 LLD APS2 real-ELF smoke evidence | ndk-r28c-api28-aps2-v1-20261013 | Android API28+ target / Linux x86_64 host | ARM64 | android-arm64-ndk-real-aps2-evidence.zip | 4207c689719b43ad1612bcf16bfbdcea556238cc511a0ecf28b11d62aab1b895 |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---:|---:|---|---:|---|---|---|
+| 1/1 | 11833330555 | android-arm64-ndk-real-aps2-evidence | 19393 | 4207c689719b43ad1612bcf16bfbdcea556238cc511a0ecf28b11d62aab1b895 | 2026-10-13T17:03:41Z | 2027-01-11T17:02:52Z |
+
+### Restore
+
+Call download_workflow_artifact for repo jepede/gpt-exten with artifact_id=11833330555; verify SHA256. The archive contains libaps2_real.so, dynamic.txt, result.txt, compiled ARM64 object files, host inspector, and SHA256SUMS.txt.
