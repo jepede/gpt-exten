@@ -61,6 +61,7 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
             -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-28 \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS_RELEASE='-O2 -DNDEBUG -ffunction-sections -fdata-sections' \
             -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF \
             -DUSE_SHARED_MBEDTLS_LIBRARY=OFF \
             -DUSE_STATIC_MBEDTLS_LIBRARY=ON
@@ -73,7 +74,7 @@ jobs:
             -s tools/upx-keyguard-android-arm64/password_original.c \
             -o release/original_android_arm64
           "$CC" -O2 -std=c11 -D_FORTIFY_SOURCE=2 -fPIE -pie \
-            -Wl,-z,relro,-z,now -Wl,-z,max-page-size=16384 -s \
+            -Wl,-z,relro,-z,now -Wl,--gc-sections -Wl,-z,max-page-size=16384 -s \
             -Iwork/mbedtls-src/include \
             tools/upx-keyguard-android-arm64/guard_android.c \
             "$MBED_LIB" -lz \
@@ -112,7 +113,7 @@ jobs:
           original=(root/'original_android_arm64').read_bytes()
           assert original==clear, 'Exact decrypted ARM64 executable differs from original'
           assert original[18] == 183 and original[19] == 0
-          assert b'123456' not in outer
+          assert b'123456\0' not in outer, 'complete null-terminated password leaked'
           assert '请输入密码'.encode('utf8') not in outer
           assert '登录成功'.encode('utf8') not in outer
           try:
