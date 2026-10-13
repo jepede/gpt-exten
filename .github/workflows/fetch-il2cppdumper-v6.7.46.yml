@@ -1,0 +1,57 @@
+name: Fetch Il2CppDumper v6.7.46 Source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fetch-il2cppdumper-v6.7.46.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Download pinned upstream source and verify archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/Il2CppDumper-source
+          url='https://codeload.github.com/Perfare/Il2CppDumper/tar.gz/8a521b9c180cf13499253f0818cbc729dca767cb'
+          curl --fail --location --retry 5 --retry-all-errors --proto '=https' --tlsv1.2 "$url" -o out/Il2CppDumper-v6.7.46.tar.gz
+          tar -tzf out/Il2CppDumper-v6.7.46.tar.gz >/dev/null
+          tar -xzf out/Il2CppDumper-v6.7.46.tar.gz -C out/Il2CppDumper-source --strip-components=1
+          test -s out/Il2CppDumper-source/Il2CppDumper.sln
+          test -s out/Il2CppDumper-source/LICENSE
+          test -s out/Il2CppDumper-source/README.md
+          printf '%s\n' \
+            'Name: Il2CppDumper source' \
+            'Version: v6.7.46' \
+            'Platform: Any' \
+            'Architecture: Any' \
+            'Repository: https://github.com/Perfare/Il2CppDumper' \
+            'Commit: 8a521b9c180cf13499253f0818cbc729dca767cb' \
+            "Download URL: $url" > out/SOURCE_INFO.txt
+          (
+            cd out
+            sha256sum Il2CppDumper-v6.7.46.tar.gz > SHA256SUMS.txt
+            find Il2CppDumper-source -type f -print0 | sort -z | xargs -0 sha256sum >> SHA256SUMS.txt
+            stat -c '%n %s' Il2CppDumper-v6.7.46.tar.gz > SIZES.txt
+          )
+          test "$(du -sb out | cut -f1)" -lt 500000000
+          echo "Archive bytes: $(stat -c %s out/Il2CppDumper-v6.7.46.tar.gz)"
+          echo "Source files: $(find out/Il2CppDumper-source -type f | wc -l)"
+          cat out/SHA256SUMS.txt | head -n 3
+
+      - name: Upload reusable source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: il2cppdumper-source-v6.7.46
+          path: out/
+          include-hidden-files: true
+          retention-days: 400
+          compression-level: 0
+          if-no-files-found: error
