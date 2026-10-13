@@ -1,0 +1,68 @@
+name: Android ARM64 packed relocation real-ELF smoke
+on:
+  push:
+    branches: [work/aosp-linker-analysis-20261013]
+    paths: [.github/workflows/android-arm64-compat-smoke.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  ndk-real-elf:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse cached Android NDK r28c split artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p parts/00 parts/01
+          gh run download 31684150811 --repo "${{ github.repository }}" \
+            --name ndk-r28c-part-00 --dir parts/00
+          gh run download 31684150811 --repo "${{ github.repository }}" \
+            --name ndk-r28c-part-01 --dir parts/01
+          printf '%s\n' "6e87d3bb98c2bfcdb9a703affd174b85ef00fff69b9aa0056372f79046308fa1  parts/00/ndk-r28c.part.00" \
+            "bf9baef30047e4a7e1040034619728cce0b291d76e4d67b44a0d5d0554c0197c  parts/01/ndk-r28c.part.01" | sha256sum -c -
+          cat parts/00/ndk-r28c.part.00 parts/01/ndk-r28c.part.01 > ndk.zip
+          echo "dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f  ndk.zip" | sha256sum -c -
+          unzip -q ndk.zip
+          echo "CACHED_NDK_REUSE_SHA256_PASS"
+      - name: Compile headers against Android NDK API 28
+        run: |
+          set -euo pipefail
+          NDK="$PWD/android-ndk-r28c/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          mkdir -p output
+          "$NDK/aarch64-linux-android28-clang" -std=c11 -O2 -Wall -Wextra -Werror \
+            -c compatibility/aps2_decoder_test.c -o output/aps2_test_android_arm64.o
+          "$NDK/aarch64-linux-android28-clang" -std=c11 -O2 -Wall -Wextra -Werror \
+            -c compatibility/elf_versions_test.c -o output/version_test_android_arm64.o
+          "$NDK/aarch64-linux-android28-clang" -std=c11 -O2 -Wall -Wextra -Werror \
+            -c compatibility/elf_load_plan_test.c -o output/page_test_android_arm64.o
+          echo "ANDROID_NDK_R28C_C11_COMPILE_PASS"
+      - name: Generate real Android AArch64 LLD APS2 dynamic relocations
+        run: |
+          set -euo pipefail
+          NDK="$PWD/android-ndk-r28c/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          "$NDK/aarch64-linux-android28-clang" -shared -fPIC -O0 \
+            -Wl,--pack-dyn-relocs=android \
+            -Wl,-z,relro -o output/libaps2_real.so \
+            compatibility/aps2_elf_fixture.c
+          "$NDK/llvm-readelf" -d output/libaps2_real.so | tee output/dynamic.txt
+          cc -std=c11 -O2 -Wall -Wextra -Werror \
+            compatibility/aps2_elf_inspect.c -o output/aps2_elf_inspect
+          output/aps2_elf_inspect output/libaps2_real.so | tee output/result.txt
+          grep -q 'REAL_LLD_APS2_PASS' output/result.txt
+      - name: Package reproducible evidence
+        run: |
+          set -euo pipefail
+          (cd output && sha256sum ./* > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-arm64-ndk-real-aps2-evidence
+          path: output/
+          retention-days: 400
+          if-no-files-found: error
