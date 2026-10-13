@@ -1905,7 +1905,7 @@ Call download_workflow_artifact for repo jepede/gpt-exten with artifact_id=11833
 - Expires At: 2027-01-11T17:08:05Z (actual GitHub value)
 - Storage Mode: SINGLE
 - Original File: custom-linker-arm64-compat-kit-v2.tar.gz
-- Original Size: verified in workflow (tarball SHA256 below)
+- Original Size: 13165 bytes (verified by cached-artifact inspection, run 38436696056)
 - Original SHA256: 6ae344dbc23945b3aaedfc34925f7e90a30ce15cdc1fe693f7c6e4cd3c768d52
 - Part Count: 1
 - Validation: GCC C11 APS2 decoder, ELF GNU version reader and 4K/16K PT_LOAD planner tests pass. Real ARM64 NDK r28c API28 compile and LLD-generated APS2 decoding independently passed in run 38435474384 (100 relocations).
