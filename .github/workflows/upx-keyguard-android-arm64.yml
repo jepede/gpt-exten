@@ -182,7 +182,7 @@ jobs:
           damaged[-44-len(ct)+10]^=0x40
           (r/'host_test_tampered.so').write_bytes(damaged)
           (r/'host_test_tampered.so').chmod(0o700)
-          assert b'请输入密码' not in outer and b'123456\0' not in outer
+          assert '请输入密码'.encode('utf8') not in outer and b'123456\0' not in outer
           PY
           set +e
           env -u UPX_GUARD_KEY_FILE UPX_GUARD_NO_DISK=1 ./release/host_test_protected.so >release/host_no_key.txt 2>&1
@@ -212,8 +212,7 @@ jobs:
           cp tools/upx-keyguard-android-arm64/upx_guard_android_extension.hpp release/
           cp tools/upx-keyguard-android-arm64/patch_upx_android.py release/
           cp tools/upx-keyguard-android-arm64/password_original.c release/
-          sha256sum release/* > SHA256SUMS
-          cp SHA256SUMS release/SHA256SUMS
+          (cd release && find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
       - name: Publish binaries, demo keys and reproducible sources
         if: always()
         uses: actions/upload-artifact@v4
