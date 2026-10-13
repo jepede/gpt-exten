@@ -1,0 +1,33 @@
+name: Temporary LifeRestartPy source bridge
+on:
+  push:
+    branches:
+      - temp/liferestartpy-port-20261013
+    paths:
+      - '.github/workflows/temp-fetch-liferestartpy.yml'
+  workflow_dispatch:
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download source and verify tarball
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/su226/LifeRestartPy.git LifeRestartPy
+          git -C LifeRestartPy rev-parse HEAD > SOURCE_COMMIT.txt
+          tar -czf LifeRestartPy-source.tar.gz LifeRestartPy
+          sha256sum LifeRestartPy-source.tar.gz > SHA256SUMS.txt
+          ls -lh LifeRestartPy-source.tar.gz
+      - name: Upload temporary source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: liferestartpy-source-tmp
+          path: |
+            LifeRestartPy-source.tar.gz
+            SOURCE_COMMIT.txt
+            SHA256SUMS.txt
+          retention-days: 1
+          if-no-files-found: error
