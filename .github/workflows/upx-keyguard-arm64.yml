@@ -1,0 +1,101 @@
+name: UPX KeyGuard v1 ARM64 Linux
+on:
+  push:
+    branches: [work/upx-keyguard-arm64-20261013]
+    paths: [.github/workflows/upx-keyguard-arm64.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  test-native-arm64:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Restore cached UPX source artifact from successful v1 build
+        uses: actions/download-artifact@v4
+        with:
+          name: upx-keyguard-v1-linux-x86_64
+          run-id: 38333114942
+          github-token: ${{ github.token }}
+          path: prereq
+      - name: Cross-check ARM64 Linux pack/decrypt/run
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -qq -y build-essential libssl-dev cmake ninja-build xz-utils
+          mkdir -p /tmp/upxsrc out
+          tar xzf prereq/upx-keyguard-patched-upstream.tar.gz -C /tmp/upxsrc
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path('/tmp/upxsrc')
+          main=root/'src/main.cpp'
+          s=main.read_text()
+          target='#if defined(__linux__) && defined(__x86_64__)'
+          assert s.count(target)>=2
+          s=s.replace(target,'#if defined(__linux__) && (defined(__x86_64__) || defined(__aarch64__))')
+          main.write_text(s)
+          header=root/'src/upx_guard_extension.hpp'
+          s=header.read_text()
+          assert s.count(target)>=1
+          s=s.replace(target,'#if defined(__linux__) && (defined(__x86_64__) || defined(__aarch64__))')
+          assert 'h[18]==62 && h[19]==0' in s
+          s=s.replace('h[18]==62 && h[19]==0','h[18]==183 && h[19]==0')
+          header.write_text(s)
+          cmake=root/'CMakeLists.txt'
+          s=cmake.read_text()
+          assert '^(x86_64|amd64)$' in s
+          s=s.replace('^(x86_64|amd64)$','^(x86_64|amd64|aarch64|arm64)$')
+          cmake.write_text(s)
+          PY
+          cmake -S /tmp/upxsrc -B /tmp/upxbuild -G Ninja -DCMAKE_BUILD_TYPE=Release -DUPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
+          cmake --build /tmp/upxbuild --parallel 4
+          EXE="$(find /tmp/upxbuild -type f -name upx -perm -u+x | head -1)"
+          test -n "$EXE"
+          cp "$EXE" out/upx-keyguard-linux-arm64
+          chmod +x out/upx-keyguard-linux-arm64
+          gcc -O2 -Wall -Wextra -Werror -fPIE -pie -Wl,-z,relro,-z,now /tmp/upxsrc/../no_such_path.c -o /tmp/ignore || true
+          tar xzf prereq/upx-keyguard-src-addons.tar.gz -C /tmp
+          gcc -O2 -Wall -Wextra -Werror -fPIE -pie -Wl,-z,relro,-z,now /tmp/guard/password_original.c -o out/original_arm64
+          gcc -O2 -Wall -Wextra -Werror -fPIE -pie -Wl,-z,relro,-z,now /tmp/guard/guard_runtime.c -lcrypto -o out/guard_stub_linux_arm64.so
+          head -c 32 /dev/urandom > out/demo.key
+          head -c 32 /dev/urandom > out/wrong.key
+          chmod 600 out/*.key
+          out/upx-keyguard-linux-arm64 --seal --key-file out/demo.key --stub out/guard_stub_linux_arm64.so -o out/password_upx_keyguard_linux_arm64.so out/original_arm64
+          set +e
+          printf '123456\n' | UPX_GUARD_KEY_FILE=out/demo.key out/password_upx_keyguard_linux_arm64.so > out/test_ok.txt 2>&1
+          a=$?
+          printf 'bad\n' | UPX_GUARD_KEY_FILE=out/demo.key out/password_upx_keyguard_linux_arm64.so > out/test_bad.txt 2>&1
+          b=$?
+          env -u UPX_GUARD_KEY_FILE out/password_upx_keyguard_linux_arm64.so > out/test_nokey.txt 2>&1
+          c=$?
+          UPX_GUARD_KEY_FILE=out/wrong.key out/password_upx_keyguard_linux_arm64.so > out/test_wrongkey.txt 2>&1
+          d=$?
+          out/upx-keyguard-linux-arm64 -d -o out/out_no_key out/password_upx_keyguard_linux_arm64.so > out/test_outer_upx.txt 2>&1
+          e=$?
+          set -e
+          printf 'correct=%s bad_password=%s no_key=%s wrong_key=%s unpack_outer=%s\n' "$a" "$b" "$c" "$d" "$e" | tee out/test_status.txt
+          test "$a" -eq 0
+          test "$b" -eq 1
+          test "$c" -eq 71
+          test "$d" -eq 73
+          test "$e" -ne 0
+          grep -q '登录成功' out/test_ok.txt
+          grep -q '密码错误' out/test_bad.txt
+          ! grep -a -q '123456' out/password_upx_keyguard_linux_arm64.so
+          readelf -h out/password_upx_keyguard_linux_arm64.so | tee out/elf_header.txt
+          grep -q 'AArch64' out/elf_header.txt
+          tar czf out/upx-keyguard-upstream-arm64-modified-source.tar.gz -C /tmp/upxsrc .
+          ( cd out && sha256sum upx-keyguard-linux-arm64 original_arm64 guard_stub_linux_arm64.so password_upx_keyguard_linux_arm64.so > SHA256SUMS )
+      - name: Upload test artifacts, including logs on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upx-keyguard-native-linux-aarch64-v1
+          path: out/
+          if-no-files-found: warn
+          retention-days: 90
