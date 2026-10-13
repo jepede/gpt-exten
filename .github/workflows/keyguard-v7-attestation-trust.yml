@@ -1,0 +1,43 @@
+name: KeyGuard V7 attestation trust data
+on:
+  push:
+    branches: [work/keyguard-tee-v7-20261013]
+    paths: [.github/workflows/keyguard-v7-attestation-trust.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch Google attestation roots and current revocation status
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reference
+          python3 - <<'PY'
+          import json,ssl,urllib.request,datetime,pathlib,hashlib
+          base='https://android.googleapis.com/attestation/'
+          for basename in ('root','status'):
+              req=urllib.request.Request(base+basename,headers={'User-Agent':'KeyGuard-Attestation-Reference/1.0'})
+              with urllib.request.urlopen(req,context=ssl.create_default_context(),timeout=20) as src:
+                  raw=src.read(3*1024*1024+1)
+              if len(raw)>3*1024*1024: raise RuntimeError('Oversize reference data')
+              obj=json.loads(raw)
+              if basename=='root' and (not isinstance(obj,list) or len(obj)<2 or not all('BEGIN CERTIFICATE' in s for s in obj)):
+                  raise RuntimeError('Missing Google attestation roots')
+              if basename=='status' and not isinstance(obj.get('entries'),dict):
+                  raise RuntimeError('Invalid revocation status response')
+              pathlib.Path('reference/'+basename+'.json').write_text(json.dumps(obj,indent=2)+'\n')
+          meta={'fetched_at':datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),
+                'roots_url':base+'root','status_url':base+'status'}
+          pathlib.Path('reference/metadata.json').write_text(json.dumps(meta,indent=2)+'\n')
+          for p in pathlib.Path('reference').glob('*.json'):
+              print(p,p.stat().st_size,hashlib.sha256(p.read_bytes()).hexdigest())
+          PY
+      - name: Upload small trust reference artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: keyguard-v7-attestation-reference-20261013
+          path: reference/
+          retention-days: 400
