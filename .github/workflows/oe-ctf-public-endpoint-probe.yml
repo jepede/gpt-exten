@@ -1,0 +1,46 @@
+name: OE CTF Public Endpoint Probe
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/oe-ctf-public-endpoint-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Inspect known URL with bounded response
+        shell: bash
+        run: |
+          set +e
+          URL="http://www.oenb66.top/update2.php"
+          printf 'requested=%s\n' "$URL" > metadata.txt
+          curl --silent --show-error --location --max-redirs 3 --connect-timeout 8 --max-time 28 --max-filesize 1048576 --request GET \
+            --user-agent 'Mozilla/5.0 (Android 13; Mobile)' \
+            --header 'Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7' \
+            --header 'Cookie: down_ip=1' \
+            --dump-header response_headers.txt --output response.raw \
+            --write-out 'http_code=%{http_code}\neffective_url=%{url_effective}\nremote_ip=%{remote_ip}\ncontent_type=%{content_type}\nsize_download=%{size_download}\n' \
+            "$URL" >> metadata.txt 2>> metadata.txt
+          rc=$?
+          printf 'curl_exit=%d\n' "$rc" >> metadata.txt
+          test -f response.raw || : > response.raw
+          sha256sum response.raw >> metadata.txt
+          wc -c response.raw >> metadata.txt
+          head -c 512 response.raw | xxd -g1 >> metadata.txt
+          echo '---metadata---'; cat metadata.txt
+      - name: Upload bounded probe output
+        uses: actions/upload-artifact@v4
+        with:
+          name: oe-ctf-public-endpoint-probe
+          path: |
+            metadata.txt
+            response_headers.txt
+            response.raw
+          retention-days: 1
+          compression-level: 6
+          if-no-files-found: warn
