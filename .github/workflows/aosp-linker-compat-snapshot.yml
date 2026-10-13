@@ -27,7 +27,6 @@ jobs:
             git -c http.version=HTTP/1.1 clone --no-tags --depth=1 --branch="$ref" --filter=blob:none https://android.googlesource.com/platform/bionic "bionic-$ref" || git clone --no-tags --depth=1 --branch="$ref" https://github.com/aosp-mirror/platform_bionic.git "bionic-$ref"
             mkdir -p "snapshots/$ref"
             git -C "bionic-$ref" rev-parse HEAD > "snapshots/$ref/COMMIT.txt"
-            cp "bionic-$ref/NOTICE" "snapshots/$ref/NOTICE"
             cp -a "bionic-$ref/linker" "snapshots/$ref/linker"
             mkdir -p "snapshots/$ref/libc"
             cp -a "bionic-$ref/libc/private" "snapshots/$ref/libc/private"
