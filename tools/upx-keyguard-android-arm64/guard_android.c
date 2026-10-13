@@ -38,6 +38,9 @@
 #ifndef MFD_CLOEXEC
 #define MFD_CLOEXEC 1U
 #endif
+#ifndef KG_ELF_MACHINE
+#define KG_ELF_MACHINE 183U /* EM_AARCH64 on Android */
+#endif
 #define KG_CHUNK 65536U
 #define KG_FOOTER 44U
 #define KG_MAX_ELF (1024ULL * 1024ULL * 1024ULL)
@@ -178,7 +181,7 @@ static int decompress_zlib(int src, int dst) {
         read_n(dst, header, sizeof(header)) != 0) return -1;
     /* ELF64 little endian, EM_AARCH64, ET_DYN/ET_EXEC */
     if (memcmp(header, "\177ELF", 4) || header[4] != 2 ||
-        header[5] != 1 || header[18] != 183 || header[19] != 0 ||
+        header[5] != 1 || header[18] != KG_ELF_MACHINE || header[19] != 0 ||
         (header[16] != 2 && header[16] != 3)) return -1;
     return lseek(dst, 0, SEEK_SET) == 0 ? 0 : -1;
 }
