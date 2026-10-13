@@ -1,4 +1,5 @@
 #include "aps2_decoder.h"
+/* Cross-compiler regression tests. */
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
