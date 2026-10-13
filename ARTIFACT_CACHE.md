@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| PUBG CTF GL APK | 4.6.0-v1.0.1 | Android | arm64-v8a | `38431125316` | SINGLE | `2027-01-11T16:30:53Z` |
 | Google Android Key Attestation trust reference | 2026-10-13 | Any | Any | `38354591700` | SINGLE | `2027-01-11T06:03:07Z` |
 | UPX KeyGuard Android ARM64 QEMU E2E build | v1.1-testonly-20261013 | Android/Bionic API28+ | arm64-v8a | `38335627167` | SINGLE | `2027-01-11T02:10:30Z` |
 | UPX KeyGuard Android ARM64 | 5.2.1-keyguard-arm64-demo-20261013 | Android / Bionic API 28+ | arm64-v8a | `38334950099` | SINGLE | `2027-01-11T02:01:54Z` |
@@ -1794,3 +1795,55 @@ Use GitHub `download_workflow_artifact` artifact `11792870161` from run `3835459
 ### Restore
 
 Use `download_workflow_artifact` with repo `jepede/gpt-exten` and artifact `11827525995`, confirm artifact ZIP SHA256; unpack `aosp-bionic-linker-15r36-16r2.tar.gz`, verify original SHA256 and use pinned `COMMIT.txt` per release. Reuse this artifact while GitHub reports it present and unexpired.
+
+
+## PUBG CTF GL APK 4.6.0 v1.0.1
+
+- Name: `PUBG CTF GL APK`
+- Version: `4.6.0-v1.0.1`
+- PUBG Version: `4.6.0`
+- PUBG Version Code: `21525`
+- Package: `com.tencent.ig`
+- Platform: Android
+- Architecture: `arm64-v8a`
+- Region: Global
+- Workflow: `.github/workflows/fetch-pubg-global-arm64-apk.yml`
+- Workflow Name: `Sync PUBG Global ARM64 libUE4`
+- Run ID: `38431125316`
+- Run Attempt 1: `success` — APKMirror live resolution returned 403, workflow fell back to `ARTIFACT_CACHE.md`, reused the existing valid Base APK Artifact, and uploaded the APK Release asset without re-downloading from APKMirror
+- Run Attempt 2: `success` — both `libUE4-GL-4.6.so` and `PUBG-CTF-GL-4.6.0.apk` already existed, so all download/extract/upload work was skipped
+- Release Tag: `v1.0.1`
+- Release Asset: `PUBG-CTF-GL-4.6.0.apk`
+- Release Asset ID: `637604009`
+- Release Asset Size: `107399819` bytes
+- Release Asset SHA256: `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696`
+- Release Asset URL: `https://github.com/jepede/gpt-exten/releases/download/v1.0.1/PUBG-CTF-GL-4.6.0.apk`
+- Source Cache Artifact: `pubg-mobile-global-4.6.0-21525-arm64-v8a`
+- Source Cache Artifact ID: `11308584380`
+- Storage Mode: `SINGLE`
+- Verification Artifact Name: `pubg-global-4.6.0-21525-libue4-sync`
+- Verification Artifact ID: `11830109931`
+- Verification Artifact ZIP Size: `107407879` bytes
+- Verification Artifact Digest: `sha256:0baa17bb45dcebc39f719590725037ceef32e33403ec12bafa059a9f0ae6d18f`
+- Original File: `PUBG-CTF-GL-4.6.0.apk`
+- Original Size: `107399819` bytes
+- Original SHA256: `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696`
+- Part Count: `1`
+- Created At: `2026-10-13T16:31:19Z`
+- Expires At: `2027-01-11T16:30:53Z`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | Size | SHA256 |
+|---|---|---|---|---|---:|---|
+| PUBG CTF GL APK | 4.6.0-v1.0.1 | Android | arm64-v8a | `PUBG-CTF-GL-4.6.0.apk` | `107399819` | `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Original Size | Original SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | `11830109931` | `pubg-global-4.6.0-21525-libue4-sync` | `107399819` | `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696` | `107407879` | `sha256:0baa17bb45dcebc39f719590725037ceef32e33403ec12bafa059a9f0ae6d18f` | `2026-10-13T16:31:19Z` | `2027-01-11T16:30:53Z` |
+
+### Restore
+
+优先直接使用 Release `v1.0.1` 中的 `PUBG-CTF-GL-4.6.0.apk`。若通过缓存恢复，则下载 Artifact `11830109931`，校验 Artifact ZIP digest `0baa17bb45dcebc39f719590725037ceef32e33403ec12bafa059a9f0ae6d18f`；解压后校验 APK SHA256 `9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696`。
