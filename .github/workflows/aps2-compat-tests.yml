@@ -31,6 +31,13 @@ jobs:
           set -euo pipefail
           clang -std=c11 -g -O1 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=all compatibility/elf_versions_test.c -o elf_compat_test_san
           ./elf_compat_test_san
+      - name: Compile and execute 4KiB/16KiB preflight and copy tests
+        run: |
+          set -euo pipefail
+          cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic compatibility/elf_load_plan_test.c -o load_plan_test
+          ./load_plan_test
+          clang -std=c11 -g -O1 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-sanitize-recover=all compatibility/elf_load_plan_test.c -o load_plan_test_san
+          ./load_plan_test_san
       - name: Compile and execute with Clang UBSan
         run: |
           set -euo pipefail
