@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| UPX KeyGuard | v5.2.1-keyguard-v1-20261013 | Linux | x86_64 | `38333114942` | SINGLE | `2027-01-11T01:38:45Z` |
 | TinyHTTPS OpenSSL + curl reference sources | OpenSSL 4.0.3 + curl 8.22.0 | Any | Any | `37458536791` | SINGLE | `2027-01-04T11:45:33Z` |
 | PUBG MOBILE Global Base APK | 4.6.0 (21525) | Android | arm64-v8a | `37217716536` | SINGLE | `2027-01-02T16:41:47Z` |
 | radare2 | 6.2.2 | Linux / Debian | x86_64 | `36873712969` | SINGLE | `2026-12-30T14:06:12Z` |
@@ -1539,4 +1540,46 @@ Download Artifact `11411116830`, verify the Artifact ZIP SHA256 `608684e7f70296d
 | Name | Version | Platform | Architecture | File | SHA256 |
 |---|---|---|---|---|---|
 | JNI Vulkan Minimal Production | v7.2 | Android API 31+ | arm64-v8a | `JNI-Vulkan-v7.2-Minimal-Production-ARM64.zip` | `f0e28cdf4907150a9c4bf1a3f8bcda692521867874c6abc9448533f6fdd7d38e` |
+
+
+
+## Artifact Record: UPX KeyGuard v1 Linux x86_64 (2026-10-13)
+
+- **Source:** official `upx/upx` tag `v5.2.1` (modified source and add-on runtime), branch `work/upx-keyguard-20261013`
+- **Workflow:** `.github/workflows/upx-keyguard.yml`
+- **Run ID:** `38333114942` (success)
+- **Artifact Name:** `upx-keyguard-v1-linux-x86_64`
+- **Artifact ID:** `11784260295`
+- **Created At:** `2026-10-13T01:39:23Z`
+- **Expires At:** `2027-01-11T01:38:45Z`
+- **Storage Mode:** `SINGLE`
+- **Original File:** `UPX_KeyGuard_Actions_Artifact.zip` (GitHub-generated ZIP packaging the `release/` directory)
+- **Original Size:** `4626042` bytes
+- **Original SHA256:** `bbe099a78444ca37fac1c4a15c1739dcb5f46c58be86681ab62b6c16d4cb4bcb`
+- **Artifact Archive Size:** `4626042` bytes
+- **Artifact Archive SHA256:** `bbe099a78444ca37fac1c4a15c1739dcb5f46c58be86681ab62b6c16d4cb4bcb`
+- **Part Count:** `1` (well below 512MB)
+- **Validation:** GitHub Actions passed correct/no/wrong key, ordinary UPX unpack rejection; local independent Linux re-run passed; authenticated decrypt recovered internal UPX compressed file and unpacking reproduced the original ELF byte-for-byte.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| UPX KeyGuard protected demo SO | v5.2.1-keyguard-v1-20261013 | Linux | x86_64 | `password_upx_keyguard_linux_x86_64.so` | `3ae60e1dc2806f389c76c73359ac1c5d9d5a06c91a0864def724a077fe8d41ac` |
+| UPX KeyGuard modified UPX tool | v5.2.1-keyguard-v1-20261013 | Linux | x86_64 | `upx-keyguard-linux-x86_64` | `e18935fa16616eb655feda374195b8cc7cdb3f429dd8862ef0a0deaac5cb2a3e` |
+| UPX KeyGuard outer ELF stub | v5.2.1-keyguard-v1-20261013 | Linux | x86_64 | `guard_stub_linux_x86_64.so` | `e0a7544fe2ebbaa272e679b10e652cd4c06bbd781c86067d23d1fdbdbcdc8269` |
+| UPX KeyGuard original test ELF | v5.2.1-keyguard-v1-20261013 | Linux | x86_64 | `original_linux_x86_64` | `9acb77c83c3ee9b32e0ee31ea2a5478e057a65edd82f6b695a67aecdd1af918b` |
+| UPX KeyGuard patched UPX source archive | v5.2.1-keyguard-v1-20261013 | Any | Any | `upx-keyguard-patched-upstream.tar.gz` | `56028854e1bdca97507338b7891c61032ebebeaae43cf5b7ff6ffc37ee446d45` |
+| UPX KeyGuard add-on source archive | v5.2.1-keyguard-v1-20261013 | Any | Any | `upx-keyguard-src-addons.tar.gz` | `795f9b38ac1529247ff77426c87de307fad4009b8fd9fe3240722daacbcac75d` |
+| UPX KeyGuard source patch | v5.2.1-keyguard-v1-20261013 | Any | Any | `upx-5.2.1-keyguard.patch` | `d36cac8297028d7addef8f9cbbd00f36954e18fa8b6c3dc52ee0c6e6841ad452` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | File/Path | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---:|---:|---|---|---:|---|---|---|
+| 1/1 | `11784260295` | `upx-keyguard-v1-linux-x86_64` | `UPX_KeyGuard_Actions_Artifact.zip` | `4626042` | `bbe099a78444ca37fac1c4a15c1739dcb5f46c58be86681ab62b6c16d4cb4bcb` | `2026-10-13T01:39:23Z` | `2027-01-11T01:38:45Z` |
+
+### Restore
+
+Call `download_workflow_artifact` on artifact `11784260295` from run `38333114942`; verify ZIP SHA256 `bbe099a...`; unzip to get the nested ELF, packed UPX fork, source tarballs, patch and demo key; verify `SHA256SUMS` after removing the `release/` prefix, because GitHub upload-artifact flattens the source directory root. The 32-byte demo key is public testing material, **not a production secret and not Android hardware-backed**.
 
