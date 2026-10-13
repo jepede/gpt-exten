@@ -1,0 +1,51 @@
+name: AOSP Bionic linker source snapshots
+on:
+  push:
+    branches:
+      - work/aosp-linker-analysis-20261013
+    paths:
+      - .github/workflows/aosp-linker-compat-snapshot.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Download official AOSP bionic linker sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq git ca-certificates >/dev/null
+          mkdir -p snapshots
+          for ref in android-15.0.0_r36 android-16.0.0_r2; do
+            echo "::group::Fetch $ref"
+            git -c http.version=HTTP/1.1 clone --no-tags --depth=1 --branch="$ref" --filter=blob:none https://android.googlesource.com/platform/bionic "bionic-$ref" || git clone --no-tags --depth=1 --branch="$ref" https://github.com/aosp-mirror/platform_bionic.git "bionic-$ref"
+            mkdir -p "snapshots/$ref"
+            git -C "bionic-$ref" rev-parse HEAD > "snapshots/$ref/COMMIT.txt"
+            cp "bionic-$ref/NOTICE" "snapshots/$ref/NOTICE"
+            cp -a "bionic-$ref/linker" "snapshots/$ref/linker"
+            mkdir -p "snapshots/$ref/libc"
+            cp -a "bionic-$ref/libc/private" "snapshots/$ref/libc/private"
+            cp -a "bionic-$ref/libc/include" "snapshots/$ref/libc/include"
+            cp "bionic-$ref/tests/dlfcn_test.cpp" "snapshots/$ref/dlfcn_test.cpp" || true
+            echo "::endgroup::"
+          done
+          printf '%s\n' 'upstream=https://android.googlesource.com/platform/bionic' 'tags=android-15.0.0_r36,android-16.0.0_r2' > snapshots/SOURCE.txt
+          tar -czf aosp-bionic-linker-15r36-16r2.tar.gz -C snapshots .
+          sha256sum aosp-bionic-linker-15r36-16r2.tar.gz | tee SHA256SUMS.txt
+          ls -lh aosp-bionic-linker-15r36-16r2.tar.gz
+          test "$(stat -c%s aosp-bionic-linker-15r36-16r2.tar.gz)" -lt 500000000
+      - name: Upload source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: aosp-bionic-linker-15r36-16r2
+          path: |
+            aosp-bionic-linker-15r36-16r2.tar.gz
+            SHA256SUMS.txt
+          retention-days: 400
+          if-no-files-found: error
