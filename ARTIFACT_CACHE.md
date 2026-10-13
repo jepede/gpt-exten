@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| UPX KeyGuard ARM64 Linux | v5.2.1-keyguard-v1-20261013 | Linux | AArch64 | `38333914943` | SINGLE | `2027-01-11T01:48:51Z` |
 | UPX KeyGuard | v5.2.1-keyguard-v1-20261013 | Linux | x86_64 | `38333114942` | SINGLE | `2027-01-11T01:38:45Z` |
 | TinyHTTPS OpenSSL + curl reference sources | OpenSSL 4.0.3 + curl 8.22.0 | Any | Any | `37458536791` | SINGLE | `2027-01-04T11:45:33Z` |
 | PUBG MOBILE Global Base APK | 4.6.0 (21525) | Android | arm64-v8a | `37217716536` | SINGLE | `2027-01-02T16:41:47Z` |
@@ -1582,4 +1583,47 @@ Download Artifact `11411116830`, verify the Artifact ZIP SHA256 `608684e7f70296d
 ### Restore
 
 Call `download_workflow_artifact` on artifact `11784260295` from run `38333114942`; verify ZIP SHA256 `bbe099a...`; unzip to get the nested ELF, packed UPX fork, source tarballs, patch and demo key; verify `SHA256SUMS` after removing the `release/` prefix, because GitHub upload-artifact flattens the source directory root. The 32-byte demo key is public testing material, **not a production secret and not Android hardware-backed**.
+
+
+## Artifact Record: UPX KeyGuard ARM64 Linux (2026-10-13)
+
+- **Name:** UPX KeyGuard ARM64 Linux
+- **Version:** `v5.2.1-keyguard-v1-20261013`
+- **Platform:** Linux
+- **Architecture:** AArch64
+- **Source:** cached UPX 5.2.1 modified source from artifact `11784260295` (no repeated source download), ARM-native modified build branch `work/upx-keyguard-arm64-20261013`
+- **Workflow:** `.github/workflows/upx-keyguard-arm64.yml`
+- **Run ID:** `38333914943` (success)
+- **Artifact Name:** `upx-keyguard-native-linux-aarch64-v1`
+- **Artifact ID:** `11784246824`
+- **File:** `UPX_KeyGuard_ARM64_Actions_Artifact.zip`
+- **Size:** `4594253` bytes
+- **SHA256:** `8d0e705f28a290456005daaa50df89e199088acc9f083b377a3c928879ff7bd7`
+- **Created At:** `2026-10-13T01:49:52Z`
+- **Expires At:** `2027-01-11T01:48:51Z`
+- **Storage Mode:** SINGLE
+- **Original File:** `UPX_KeyGuard_ARM64_Actions_Artifact.zip`
+- **Original Size:** `4594253` bytes
+- **Original SHA256:** `8d0e705f28a290456005daaa50df89e199088acc9f083b377a3c928879ff7bd7`
+- **Part Count:** 1
+- **Validation:** Native GitHub Actions Linux AArch64 runner verified: correct key/password exit=0, wrong password exit=1, absent key exit=71, wrong key exit=73, ordinary UPX -d on encrypted outer exit=2. Independently authenticated AES-GCM recovered a 9748-byte UPX linux/arm64 inner ELF; UPX unpacked 70920-byte original with exact SHA256 match. **Not an Android/Bionic binary and not TEE bound.**
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| UPX KeyGuard ARM64 executable | v5.2.1-keyguard-v1 | Linux | AArch64 | `password_upx_keyguard_linux_arm64.so` | `fc1b8ee87f192517566b35d2a18a5ece886b260166b84c6aebe5b17805e2c56d` |
+| UPX KeyGuard ARM64 modified packer | v5.2.1-keyguard-v1 | Linux | AArch64 | `upx-keyguard-linux-arm64` | `077425d284aa18c12e18edbeaa9d09150fb2e0df043b9fdeb37e7327adb24a12` |
+| UPX KeyGuard ARM64 outer stub | v5.2.1-keyguard-v1 | Linux | AArch64 | `guard_stub_linux_arm64.so` | `492fa7844e2d179fb31661516a070465be9066311164a5ff696ceb8fe637adef` |
+| UPX KeyGuard ARM64 original sample | v5.2.1-keyguard-v1 | Linux | AArch64 | `original_arm64` | `ca7a00971324b2971cfbebb57c77a3020d9de7999bcd36be2200db1845365df4` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | File/Path | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---:|---:|---|---|---:|---|---|---|
+| 1/1 | `11784246824` | `upx-keyguard-native-linux-aarch64-v1` | `UPX_KeyGuard_ARM64_Actions_Artifact.zip` | `4594253` | `8d0e705f28a290456005daaa50df89e199088acc9f083b377a3c928879ff7bd7` | `2026-10-13T01:49:52Z` | `2027-01-11T01:48:51Z` |
+
+### Restore
+
+Use `mcp__GitHub__download_workflow_artifact` with repository `jepede/gpt-exten`, artifact `11784246824`, verify artifact ZIP SHA256 `8d0e705f28a290456005daaa50df89e199088acc9f083b377a3c928879ff7bd7`, then unzip and run SHA256SUMS verification. `demo.key` inside is a **public disposable test key**, not a production key; share the encrypted ELF separately from keys.
 
