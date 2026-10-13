@@ -43,3 +43,18 @@ jobs:
           set -euo pipefail
           clang -std=c11 -g -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all compatibility/aps2_decoder_test.c -o aps2_test_ubsan
           ./aps2_test_ubsan
+
+  native-arm64:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute ABI component regressions on native AArch64
+        run: |
+          set -euo pipefail
+          uname -m
+          cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic compatibility/aps2_decoder_test.c -o aps2_test
+          cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic compatibility/elf_versions_test.c -o version_test
+          cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic compatibility/elf_load_plan_test.c -o pages_test
+          ./aps2_test && ./version_test && ./pages_test
+          echo "NATIVE_AARCH64_REGRESSION_PASS"
