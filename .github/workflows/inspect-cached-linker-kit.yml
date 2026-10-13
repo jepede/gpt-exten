@@ -1,0 +1,26 @@
+name: Verify cached linker compat source kit metadata
+on:
+  push:
+    branches: [work/aosp-linker-analysis-20261013]
+    paths: [.github/workflows/inspect-cached-linker-kit.yml]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Reuse existing artifact, verify original size and hashes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p kit
+          gh run download 38436179725 --repo "${{ github.repository }}" --name custom-linker-arm64-compat-kit-v2 --dir kit
+          stat -c 'TARBALL_ORIGINAL_SIZE=%s' kit/custom-linker-arm64-compat-kit-v2.tar.gz
+          (cd kit && sha256sum -c custom-linker-arm64-compat-kit-v2.SHA256SUMS)
+          tar -tzf kit/custom-linker-arm64-compat-kit-v2.tar.gz | head -50
