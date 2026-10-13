@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| Google Android Key Attestation trust reference | 2026-10-13 | Any | Any | `38354591700` | SINGLE | `2027-01-11T06:03:07Z` |
 | UPX KeyGuard Android ARM64 QEMU E2E build | v1.1-testonly-20261013 | Android/Bionic API28+ | arm64-v8a | `38335627167` | SINGLE | `2027-01-11T02:10:30Z` |
 | UPX KeyGuard Android ARM64 | 5.2.1-keyguard-arm64-demo-20261013 | Android / Bionic API 28+ | arm64-v8a | `38334950099` | SINGLE | `2027-01-11T02:01:54Z` |
 | UPX KeyGuard ARM64 Linux | v5.2.1-keyguard-v1-20261013 | Linux | AArch64 | `38333914943` | SINGLE | `2027-01-11T01:48:51Z` |
@@ -1710,3 +1711,43 @@ Use GitHub `download_workflow_artifact` on artifact `11784720583` (run `38334950
 ### Restore
 
 Call GitHub `download_workflow_artifact` for artifact `11785120751` from run `38335627167`. Validate artifact ZIP SHA256 `1c17ff9b14802a321e3f8dcbece8f797e6a65e547174024fef63014f70d59543`. Extraction includes normal ARM64 ELF and separate QEMU-only variant. Do not ship `NGuard_UPX_Android_ARM64_QEMU_TEST_ONLY.so` as the production version. The public `demo.key` is for unit testing and is **not** a TEE hardware key.
+
+## Artifact Record: Google Android Key Attestation trust reference 2026-10-13
+
+- Name: Google Android Key Attestation trust reference
+- Version: `2026-10-13`
+- Platform: Any
+- Architecture: Any
+- Workflow: `.github/workflows/keyguard-v7-attestation-trust.yml`
+- Run ID: `38354591700` (success)
+- Artifact Name: `keyguard-v7-attestation-reference-20261013`
+- Artifact ID: `11792870161`
+- Created At: `2026-10-13T06:03:12Z`
+- Expires At: `2027-01-11T06:03:07Z`
+- Storage Mode: `SINGLE`
+- File: `KeyGuard_V7_Google_Attestation_Reference.zip`
+- Size: `29751` bytes
+- SHA256: `47a3bb109fd6506200795de805a340c689a26c9f329a0e76d80b53d13ec8bc15`
+- Original File: `KeyGuard_V7_Google_Attestation_Reference.zip`
+- Original Size: `29751` bytes
+- Original SHA256: `47a3bb109fd6506200795de805a340c689a26c9f329a0e76d80b53d13ec8bc15`
+- Part Count: `1`
+- Note: ZIP includes two pinned Google attestation root certificates, current revocation entries and retrieval timestamps. Revocation data is considered **fresh for only 24 hours** by the V7 issuer; a live issuer MUST refresh status after that regardless of Artifact lifetime.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Google attestation trust roots | 2026-10-13 | Any | Any | `root.json` | `7ff10488836c6c270bb09d48fc4d43c17ae35434a42e113fed1f22f7fc4ca2ff` |
+| Google attestation revocation status | 2026-10-13 | Any | Any | `status.json` | `13e803c2dbef970961ca427951300274401813344326cbacde0a9ededfdc5433` |
+| Trust snapshot metadata | 2026-10-13 | Any | Any | `metadata.json` | `eee68536f6efae11b5f5ba582ed619401b3b7e0c1f1c8d79f5fe207a39426876` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | File/Path | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---:|---:|---|---|---:|---|---|---|
+| 1/1 | `11792870161` | `keyguard-v7-attestation-reference-20261013` | `KeyGuard_V7_Google_Attestation_Reference.zip` | `29751` | `47a3bb109fd6506200795de805a340c689a26c9f329a0e76d80b53d13ec8bc15` | `2026-10-13T06:03:12Z` | `2027-01-11T06:03:07Z` |
+
+### Restore
+
+Use GitHub `download_workflow_artifact` artifact `11792870161` from run `38354591700`. Verify outer ZIP SHA256 then verify each JSON SHA256. Google root pins also verified inside the V7 issuer code. This is **not** a permanent revocation-status cache; refresh the online status within 24 hours before approving a device.
