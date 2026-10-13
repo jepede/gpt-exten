@@ -134,6 +134,61 @@ jobs:
               f'platform=Android/Bionic ARM64 (not Linux glibc ARM64)\n'
               f'physical_android_device_executed=NO\n')
           PY
+          # Host end-to-end smoke test using the very same C loader as Android.
+          # This tests real process behavior; it does not claim Android phone execution.
+          cmake -S work/mbedtls-src -B work/mbedtls_host_build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF \
+            -DUSE_SHARED_MBEDTLS_LIBRARY=OFF \
+            -DUSE_STATIC_MBEDTLS_LIBRARY=ON
+          cmake --build work/mbedtls_host_build --parallel 4 --target mbedcrypto
+          gcc -O2 -std=c11 -Wall -Wextra -DKG_ELF_MACHINE=62 \
+            -D_FORTIFY_SOURCE=2 -fPIE -pie \
+            -Wl,-z,relro,-z,now -Wl,--gc-sections \
+            -Iwork/mbedtls-src/include \
+            tools/upx-keyguard-android-arm64/guard_android.c \
+            work/mbedtls_host_build/library/libmbedcrypto.a -lz -o release/host_test_loader
+          python3 - <<'PY'
+          import os,struct,zlib
+          from pathlib import Path
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          r=Path('release')
+          original=Path('_cached_upx_521/original_linux_x86_64').read_bytes()
+          key=(r/'demo.key').read_bytes()
+          nonce=os.urandom(12)
+          encrypted=AESGCM(key).encrypt(nonce,zlib.compress(original,9),b'UPX-GUARD/AES256GCM/V1')
+          ct,tag=encrypted[:-16],encrypted[-16:]
+          outer=(r/'host_test_loader').read_bytes()+ct+b'UGAEAD1\0'+struct.pack('<Q',len(ct))+nonce+tag
+          (r/'host_test_protected.so').write_bytes(outer)
+          (r/'host_test_protected.so').chmod(0o700)
+          damaged=bytearray(outer)
+          damaged[-44-len(ct)+10]^=0x40
+          (r/'host_test_tampered.so').write_bytes(damaged)
+          (r/'host_test_tampered.so').chmod(0o700)
+          assert b'请输入密码' not in outer and b'123456\0' not in outer
+          PY
+          set +e
+          env -u UPX_GUARD_KEY_FILE UPX_GUARD_NO_DISK=1 ./release/host_test_protected.so >release/host_no_key.txt 2>&1
+          nk=$?
+          printf '123456\n' | UPX_GUARD_NO_DISK=1 UPX_GUARD_KEY_FILE=release/demo.key ./release/host_test_protected.so >release/host_good.txt 2>&1
+          good=$?
+          printf 'invalid\n' | UPX_GUARD_NO_DISK=1 UPX_GUARD_KEY_FILE=release/demo.key ./release/host_test_protected.so >release/host_bad_password.txt 2>&1
+          bad=$?
+          UPX_GUARD_NO_DISK=1 UPX_GUARD_KEY_FILE=release/wrong.key ./release/host_test_protected.so >release/host_bad_key.txt 2>&1
+          wk=$?
+          UPX_GUARD_NO_DISK=1 UPX_GUARD_KEY_FILE=release/demo.key ./release/host_test_tampered.so >release/host_tampered.txt 2>&1
+          tampered=$?
+          set -e
+          echo "no_key=$nk right_key_right_pwd=$good right_key_wrong_pwd=$bad wrong_key=$wk tampered=$tampered" | tee release/host_runtime_status.txt
+          test "$nk" -eq 71 && test "$good" -eq 0 && test "$bad" -eq 1
+          test "$wk" -eq 73 && test "$tampered" -eq 73
+          test ! -s release/host_no_key.txt
+          test ! -s release/host_bad_key.txt
+          test ! -s release/host_tampered.txt
+          grep -q '请输入密码' release/host_good.txt
+          grep -q '登录成功' release/host_good.txt
+          grep -q '密码错误' release/host_bad_password.txt
+          echo 'PASS: C loader runtime gate is silent without key, correct key runs actual password logic, tampered and wrong key are silent.' | tee release/host_runtime_verified.txt
           # Distinctive Android interpreter, compiler and ELF headers verified.
           # Real-phone end-to-end must still be tested by adb on user's own device.
           cp tools/upx-keyguard-android-arm64/guard_android.c release/
