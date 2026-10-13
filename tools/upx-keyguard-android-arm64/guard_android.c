@@ -225,6 +225,29 @@ static int fallback_exec(int memory_fd, char **argv) {
         return fail_silent(76, "fork failed");
     }
     if (pid == 0) {
+#if defined(KG_QEMU_TEST_HARNESS)
+        /*
+         * TEST HARNESS ONLY, excluded from the production Android binary:
+         * QEMU linux-user does not automatically re-execute an ARM64 target
+         * when an ARM64 process calls execve(). Explicitly run the host QEMU
+         * executable so the authentication->inflate->inner ELF path can be
+         * tested end to end under the extracted Android/Bionic rootfs.
+         */
+        const char *qemu = getenv("UPX_GUARD_QEMU_TEST_PATH");
+        if (qemu && qemu[0] == '/') {
+            size_t ac = 0;
+            while (argv[ac] != NULL && ac < 1024) ++ac;
+            if (ac == 1024) _exit(77);
+            char **qargv = calloc(ac + 2, sizeof(*qargv));
+            if (!qargv) _exit(77);
+            qargv[0] = (char *)qemu;
+            qargv[1] = path;
+            for (size_t i = 1; i < ac; ++i) qargv[i + 1] = argv[i];
+            qargv[ac + 1] = NULL;
+            execve(qemu, qargv, environ);
+            _exit(77);
+        }
+#endif
         execve(path, argv, environ);
         _exit(75);
     }
