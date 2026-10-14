@@ -1,0 +1,26 @@
+name: Probe Delta Force CN Tencent CDN byte range throughput (temporary)
+on:
+  push:
+    branches:
+      - probe-delta-force-apk-20261014
+    paths:
+      - ".github/workflows/probe-delta-force-cdn-speed-20261014.yml"
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Compare 8 MiB byte-range throughput of official Tencent hosts
+        shell: bash
+        run: |
+          set -uo pipefail
+          p='/sjy.00022/sjy.00001/16891/apk/546F3D60B114DDD80E45A708D2D6E130.apk?fsname=com.tencent.tmgp.dfm_1.201.37117.67.apk'
+          for host in imtt.dd.qq.com imtt2.dd.qq.com imtt4.dd.qq.com; do
+            echo "PROBE ${host}"
+            curl --location --silent --show-error --connect-timeout 12 --max-time 60 \
+              --range 0-8388607 --output /dev/null \
+              --write-out 'HTTP=%{http_code} bytes=%{size_download} bytes_per_sec=%{speed_download} seconds=%{time_total} remote_ip=%{remote_ip}\n' \
+              "https://${host}${p}" || true
+          done
