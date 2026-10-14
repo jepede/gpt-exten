@@ -1,0 +1,91 @@
+name: Android ARM64 linker pressure fixtures
+on:
+  push:
+    branches: [work/aosp-linker-analysis-20261013]
+    paths:
+      - stress-tests/**
+      - .github/workflows/android-linker-stress-fixtures.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  stress-native-reference:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore cached NDK r28c
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p downloads/ndk
+          gh run download 31684150811 --repo "${{ github.repository }}" --name ndk-r28c-part-00 --dir downloads/ndk
+          gh run download 31684150811 --repo "${{ github.repository }}" --name ndk-r28c-part-01 --dir downloads/ndk
+          echo '6e87d3bb98c2bfcdb9a703affd174b85ef00fff69b9aa0056372f79046308fa1  downloads/ndk/ndk-r28c.part.00' | sha256sum -c -
+          echo 'bf9baef30047e4a7e1040034619728cce0b291d76e4d67b44a0d5d0554c0197c  downloads/ndk/ndk-r28c.part.01' | sha256sum -c -
+          cat downloads/ndk/ndk-r28c.part.00 downloads/ndk/ndk-r28c.part.01 > downloads/android-ndk-r28c-linux.zip
+          echo 'dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f  downloads/android-ndk-r28c-linux.zip' | sha256sum -c -
+          mkdir -p ndk
+          unzip -q downloads/android-ndk-r28c-linux.zip -d ndk
+          test -x ndk/android-ndk-r28c/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang
+          rm -f downloads/android-ndk-r28c-linux.zip downloads/ndk/ndk-r28c.part.*
+      - name: Restore Bionic and QEMU
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p downloads/runtime downloads/qemu runtime qemu-root
+          gh run download 38517156477 --repo "${{ github.repository }}" --name aosp-arm64-bionic-runtime --dir downloads/runtime
+          gh run download 32748029497 --repo "${{ github.repository }}" --name qemu-user-static-7.2-deb12u18-amd64 --dir downloads/qemu
+          find downloads/runtime downloads/qemu -maxdepth 2 -type f -printf '%p %s bytes\n'
+          echo '0d0c5c925cbee0c461b42a6df104e9316b52ca822c73bdb42fcd4100eae9ee8e  downloads/runtime/aosp-arm64-bionic-runtime.tar.gz' | sha256sum -c -
+          tar -xzf downloads/runtime/aosp-arm64-bionic-runtime.tar.gz -C runtime
+          echo 'c3e3ba2bd87f8c5b9a5da5ef21b5a3b82d7c63b89dd448d9ddaa4eabc5b6e402  downloads/qemu/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb' | sha256sum -c -
+          dpkg-deb -x downloads/qemu/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb qemu-root
+          test -x qemu-root/usr/bin/qemu-aarch64-static
+          test -e runtime/sysroot/system/bin/linker64
+          qemu-root/usr/bin/qemu-aarch64-static --version | head -1
+      - name: Run native reference stress matrix
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p pressure/4k pressure/16k
+          python3 stress-tests/stress_suite.py --ndk "$PWD/ndk/android-ndk-r28c" --qemu "$PWD/qemu-root/usr/bin/qemu-aarch64-static" --sysroot "$PWD/runtime/sysroot" --out pressure/4k --repeats 2 --timeout 90
+          rc4k=$?
+          python3 stress-tests/stress_suite.py --ndk "$PWD/ndk/android-ndk-r28c" --qemu "$PWD/qemu-root/usr/bin/qemu-aarch64-static" --sysroot "$PWD/runtime/sysroot" --out pressure/16k --repeats 1 --page16k --timeout 90
+          rc16k=$?
+          echo "NATIVE_REFERENCE_4K_EXIT=$rc4k"
+          echo "NATIVE_REFERENCE_16K_EXIT=$rc16k"
+          test "$rc4k" -eq 0 && test "$rc16k" -eq 0
+      - name: Save evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          python3 - <<'PY'
+          import json, pathlib
+          for p in pathlib.Path("pressure").glob("*/results.json"):
+              d=json.loads(p.read_text())
+              print(p, d['passed'], '/', d['total'])
+          PY
+          tar -czf release/android-arm64-linker-stress-fixtures.tar.gz stress-tests pressure/4k/sources pressure/16k/sources 2>/dev/null || true
+          cp pressure/4k/results.json release/results-4k.json 2>/dev/null || true
+          cp pressure/16k/results.json release/results-16k.json 2>/dev/null || true
+          sha256sum release/* > release/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-linker-stress-reference-20261014
+          path: |
+            release/
+            pressure/4k/logs/
+            pressure/16k/logs/
+          if-no-files-found: warn
+          retention-days: 1
