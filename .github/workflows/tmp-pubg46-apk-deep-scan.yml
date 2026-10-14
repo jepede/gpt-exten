@@ -1,0 +1,68 @@
+name: Temporary PUBG 4.6 APK deep scan
+
+on:
+  push:
+    branches:
+      - tmp/pubg46-apk-deep-20261014
+    paths:
+      - .github/workflows/tmp-pubg46-apk-deep-scan.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install analysis dependencies
+        run: |
+          python3 -m pip install --disable-pip-version-check --no-cache-dir pyelftools androguard
+
+      - name: Restore verified cached APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fL \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -o pubg-apk-artifact.zip \
+            https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11830109931/zip
+
+          echo "0baa17bb45dcebc39f719590725037ceef32e33403ec12bafa059a9f0ae6d18f  pubg-apk-artifact.zip" | sha256sum -c -
+
+          mkdir restored
+          unzip -q pubg-apk-artifact.zip -d restored
+          APK="$(find restored -type f -name '*.apk' | head -1)"
+          test -n "$APK"
+          echo "APK=$APK" >> "$GITHUB_ENV"
+          echo "9e28aa526caa748fc650a2f7b86f1ef545acf94f09811a5fa41414ca818e8696  $APK" | sha256sum -c -
+          ls -lh "$APK"
+
+      - name: Run APK deep scan
+        run: |
+          set -euo pipefail
+          python3 tools/pubg46_apk_deep_scan.py "$APK" apk_scan | tee apk_scan_report.txt
+
+      - name: Print focused report
+        run: |
+          set -euo pipefail
+          echo "===== FILE INVENTORY FOCUS ====="
+          grep -Ei '(^|/)(lib/arm64-v8a/.*\.so|classes.*\.dex|.*(manifest|config|patch|pak|key|hotfix|download|version).*)' apk_scan/inventory.tsv | head -n 600 || true
+          echo "===== DEEP REPORT ====="
+          cat apk_scan_report.txt
+
+      - name: Upload compact evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: pubg46-apk-deep-scan
+          path: |
+            apk_scan/scan.json
+            apk_scan/inventory.tsv
+            apk_scan_report.txt
+          retention-days: 1
+          compression-level: 9
