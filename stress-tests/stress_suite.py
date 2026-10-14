@@ -334,12 +334,14 @@ def main():
                 passed=(orig["rc"]==0 and
                         ((shell is None and not args.packer) or
                          (shell is not None and shell["rc"]==0 and
-                          normalized(orig["stdout"])==normalized(shell["stdout"]))))
+                          normalized(orig["stdout"])==normalized(shell["stdout"]) and
+                          normalized(orig["stderr"])==normalized(shell["stderr"]))))
             row={"case":sample,"iteration":n,"page16k":args.page16k,
                  "native_rc":orig["rc"],"native_rejection_expected":expected_native_reject,
                  "packer_rc":pack_rc,
                  "packed_rc":shell["rc"] if shell else None,
                  "same_stdout":normalized(orig["stdout"])==normalized(shell["stdout"]) if shell else None,
+                 "same_stderr":normalized(orig["stderr"])==normalized(shell["stderr"]) if shell else None,
                  "pass":passed}
             summary.append(row)
             print(("PASS" if passed else "FAIL"),sample,n,
@@ -356,7 +358,9 @@ def main():
           ("bad_magic",b"ABCD"+good[4:]),
           ("et_exec",good[:16]+struct.pack("<H",2)+good[18:]),
           ("wrong_arch",good[:18]+struct.pack("<H",62)+good[20:]),
-          ("oversized_phnum",good[:56]+struct.pack("<H",0xffff)+good[58:])
+          ("oversized_phnum",good[:56]+struct.pack("<H",0xffff)+good[58:]),
+          ("unaligned_phoff",good[:32]+struct.pack("<Q",struct.unpack_from("<Q",good,32)[0]+1)+good[40:]),
+          ("unaligned_shoff",good[:40]+struct.pack("<Q",struct.unpack_from("<Q",good,40)[0]+1)+good[48:])
         ]
         for name,raw in mutants:
             dest=out/("negative_"+name)
