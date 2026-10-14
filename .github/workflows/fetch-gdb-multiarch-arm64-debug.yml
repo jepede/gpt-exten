@@ -17,7 +17,8 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq gdb-multiarch python3 >/dev/null
           gdb-multiarch --version | head -1
-          mkdir -p release/bin release/lib
+          mkdir -p release/bin release/lib release/python_prefix/lib
+          cp -a /usr/lib/python3.12 release/python_prefix/lib/
           cp /usr/bin/gdb-multiarch release/bin/
           python3 - <<'PY'
           import os, subprocess, shutil
@@ -39,6 +40,7 @@ jobs:
           #!/usr/bin/env bash
           set -euo pipefail
           HERE="$(cd "$(dirname "$0")" && pwd)"
+          export PYTHONHOME="$HERE/python_prefix"
           export LD_LIBRARY_PATH="$HERE/lib:${LD_LIBRARY_PATH:-}"
           exec "$HERE/bin/gdb-multiarch" "$@"
           EOF
