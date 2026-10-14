@@ -1,0 +1,109 @@
+name: Custom linker bounded-loader hardening
+on:
+  push:
+    branches: [work/aosp-linker-analysis-20261013]
+    paths:
+      - compatibility/hardened_loader/**
+      - .github/workflows/custom-linker-hardening.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  hardening:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test hardened helpers on x86_64 with GCC and Clang sanitizers
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p release/logs
+          cd compatibility/hardened_loader
+          gcc -std=c11 -O2 -g -Wall -Wextra -Werror -Wpedantic \
+            compat_harden.c test_compat_harden.c -o ../../release/test-compat-harden-x86_64
+          ../../release/test-compat-harden-x86_64 | tee ../../release/logs/gcc-x86_64.log
+          clang -std=c11 -O1 -g -Wall -Wextra -Werror -Wpedantic \
+            -fno-omit-frame-pointer -fsanitize=address,undefined \
+            compat_harden.c test_compat_harden.c -o ../../release/test-compat-harden-asan-x86_64
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 \
+            ../../release/test-compat-harden-asan-x86_64 | tee ../../release/logs/clang-asan-ubsan.log
+      - name: Reuse cached Android NDK r28c
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p downloads/ndk ndk
+          gh run download 31684150811 --repo "${{ github.repository }}" \
+            --name ndk-r28c-part-00 --dir downloads/ndk
+          gh run download 31684150811 --repo "${{ github.repository }}" \
+            --name ndk-r28c-part-01 --dir downloads/ndk
+          echo '6e87d3bb98c2bfcdb9a703affd174b85ef00fff69b9aa0056372f79046308fa1  downloads/ndk/ndk-r28c.part.00' | sha256sum -c -
+          echo 'bf9baef30047e4a7e1040034619728cce0b291d76e4d67b44a0d5d0554c0197c  downloads/ndk/ndk-r28c.part.01' | sha256sum -c -
+          cat downloads/ndk/ndk-r28c.part.00 downloads/ndk/ndk-r28c.part.01 > downloads/android-ndk-r28c-linux.zip
+          echo 'dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f  downloads/android-ndk-r28c-linux.zip' | sha256sum -c -
+          unzip -q downloads/android-ndk-r28c-linux.zip -d ndk
+          rm -rf downloads/ndk downloads/android-ndk-r28c-linux.zip
+      - name: Cross-compile real Android ARM64 executable
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ndk=$PWD/ndk/android-ndk-r28c
+          tc="$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          "$tc/aarch64-linux-android35-clang" -std=c11 -fPIE -pie -O2 -g \
+            -Wall -Wextra -Werror -Wpedantic \
+            compatibility/hardened_loader/compat_harden.c \
+            compatibility/hardened_loader/test_compat_harden.c \
+            -o release/test-compat-harden-android35-arm64
+          "$tc/llvm-readelf" -h release/test-compat-harden-android35-arm64 \
+            | tee release/logs/android-arm64-elf-header.log
+          "$tc/llvm-readelf" -l release/test-compat-harden-android35-arm64 \
+            | tee release/logs/android-arm64-phdr.log
+      - name: Reuse cached Android 36 Bionic runtime and QEMU
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p downloads/runtime downloads/qemu runtime qemu-root
+          gh run download 38517156477 --repo "${{ github.repository }}" \
+            --name aosp-arm64-bionic-runtime --dir downloads/runtime
+          gh run download 32748029497 --repo "${{ github.repository }}" \
+            --name qemu-user-static-7.2-deb12u18-amd64 --dir downloads/qemu
+          echo '0d0c5c925cbee0c461b42a6df104e9316b52ca822c73bdb42fcd4100eae9ee8e  downloads/runtime/aosp-arm64-bionic-runtime.tar.gz' | sha256sum -c -
+          echo 'c3e3ba2bd87f8c5b9a5da5ef21b5a3b82d7c63b89dd448d9ddaa4eabc5b6e402  downloads/qemu/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb' | sha256sum -c -
+          tar -xzf downloads/runtime/aosp-arm64-bionic-runtime.tar.gz -C runtime
+          dpkg-deb -x downloads/qemu/qemu-user-static_7.2+dfsg-7+deb12u18+b3_amd64.deb qemu-root
+          test -f runtime/sysroot/system/bin/linker64
+          test -x qemu-root/usr/bin/qemu-aarch64-static
+      - name: Execute Android ARM64 checks on 4 KiB and 16 KiB QEMU guest
+        shell: bash
+        run: |
+          set -euxo pipefail
+          export ANDROID_ROOT=/system ANDROID_DATA=/data
+          export LD_LIBRARY_PATH=/system/lib64:/apex/com.android.runtime/lib64:/apex/com.android.runtime/lib64/bionic
+          q=$PWD/qemu-root/usr/bin/qemu-aarch64-static
+          sysroot=$PWD/runtime/sysroot
+          timeout 60 "$q" -L "$sysroot" "$PWD/release/test-compat-harden-android35-arm64" \
+            | tee release/logs/arm64-bionic-4k.log
+          timeout 60 "$q" -p 16384 -L "$sysroot" "$PWD/release/test-compat-harden-android35-arm64" \
+            | tee release/logs/arm64-bionic-16k.log
+      - name: Hash and package evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          find release -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > release/SHA256SUMS
+          sed -n '1,100p' release/logs/*.log | tail -80 || true
+      - name: Upload transient evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linker-hardening-evidence-20261015
+          path: release
+          retention-days: 1
+          if-no-files-found: error
