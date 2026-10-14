@@ -19,6 +19,8 @@ jobs:
           gdb-multiarch --version | head -1
           mkdir -p release/bin release/lib release/python_prefix/lib
           cp -a /usr/lib/python3.12 release/python_prefix/lib/
+          cp -a /usr/share/gdb release/gdb-data
+          find release -type l -lname '/*' -delete
           cp /usr/bin/gdb-multiarch release/bin/
           python3 - <<'PY'
           import os, subprocess, shutil
@@ -42,7 +44,7 @@ jobs:
           HERE="$(cd "$(dirname "$0")" && pwd)"
           export PYTHONHOME="$HERE/python_prefix"
           export LD_LIBRARY_PATH="$HERE/lib:${LD_LIBRARY_PATH:-}"
-          exec "$HERE/bin/gdb-multiarch" "$@"
+          exec "$HERE/bin/gdb-multiarch" --data-directory="$HERE/gdb-data" "$@"
           EOF
           chmod +x release/gdb-multiarch.sh
           release/gdb-multiarch.sh --batch -ex 'set architecture aarch64' -ex 'show architecture'
