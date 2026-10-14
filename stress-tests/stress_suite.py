@@ -96,9 +96,13 @@ static volatile unsigned char arena[32*1024*1024];
 int main(void) {
   unsigned checksum=0;
   for(size_t i=0;i<sizeof(arena);i+=4096) { arena[i]=(unsigned char)((i/4096)%251+1); }
-  for(size_t i=0;i<sizeof(arena);i+=4096) checksum+=arena[i];
+  unsigned expected=0;
+  for(size_t i=0;i<sizeof(arena);i+=4096) {
+    checksum+=arena[i];
+    expected+=(unsigned)((i/4096)%251+1);
+  }
   printf("BIG_BSS pages=%zu checksum=%u\n",sizeof(arena)/4096,checksum);
-  return checksum==1027331u?0:0; /* output compared exactly */
+  return checksum==expected?0:81;
 }
 """)
     src_write(src/"dlopen_repeat.c", r"""
@@ -303,12 +307,21 @@ def main():
                 shell=run([*qbase,packed],env=env,timeout=args.timeout)
                 save_log(logs/(sample+".packed.%d.log" % n),shell)
             else:shell=None
-            passed=(orig["rc"]==0 and
-                    ((shell is None and not args.packer) or
-                     (shell is not None and shell["rc"]==0 and
-                      normalized(orig["stdout"])==normalized(shell["stdout"]))))
+            # AOSP Bionic may correctly reject a 4 KiB-aligned ELF on a
+            # 16 KiB guest. Track that as an explicit expected rejection,
+            # NOT as a successful execution or a packed parity pass.
+            expected_native_reject=(args.page16k and sample=="reloc_aps2_4k")
+            if expected_native_reject:
+                passed=(orig["rc"]!=0 and (not args.packer or
+                        (shell is not None and shell["rc"]==0)))
+            else:
+                passed=(orig["rc"]==0 and
+                        ((shell is None and not args.packer) or
+                         (shell is not None and shell["rc"]==0 and
+                          normalized(orig["stdout"])==normalized(shell["stdout"]))))
             row={"case":sample,"iteration":n,"page16k":args.page16k,
-                 "native_rc":orig["rc"],"packer_rc":pack_rc,
+                 "native_rc":orig["rc"],"native_rejection_expected":expected_native_reject,
+                 "packer_rc":pack_rc,
                  "packed_rc":shell["rc"] if shell else None,
                  "same_stdout":normalized(orig["stdout"])==normalized(shell["stdout"]) if shell else None,
                  "pass":passed}
