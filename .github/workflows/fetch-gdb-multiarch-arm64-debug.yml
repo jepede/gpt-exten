@@ -1,0 +1,58 @@
+name: Fetch x86_64 GDB Multiarch for Android ARM64
+on:
+  push:
+    branches: [work/aosp-linker-analysis-20261013]
+    paths: [.github/workflows/fetch-gdb-multiarch-arm64-debug.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package-gdb:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Install upstream Ubuntu debugger
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gdb-multiarch python3 >/dev/null
+          gdb-multiarch --version | head -1
+          mkdir -p release/bin release/lib
+          cp /usr/bin/gdb-multiarch release/bin/
+          python3 - <<'PY'
+          import os, subprocess, shutil
+          out=subprocess.check_output(['ldd','/usr/bin/gdb-multiarch'],text=True)
+          with open('release/ldd-original.txt','w') as f:f.write(out)
+          for line in out.splitlines():
+              if '=>' not in line:continue
+              name,rest=line.split('=>',1)
+              path=rest.strip().split(' ',1)[0]
+              if not path.startswith('/'):continue
+              name=name.strip()
+              if name.startswith(('libc.so','libm.so','libpthread.so','libdl.so','libresolv.so','librt.so')):continue
+              dst=os.path.join('release/lib',os.path.basename(path))
+              shutil.copy2(path,dst)
+              alias=os.path.join('release/lib',name)
+              if dst!=alias and not os.path.exists(alias):os.symlink(os.path.basename(dst),alias)
+          PY
+          cat >release/gdb-multiarch.sh <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          HERE="$(cd "$(dirname "$0")" && pwd)"
+          export LD_LIBRARY_PATH="$HERE/lib:${LD_LIBRARY_PATH:-}"
+          exec "$HERE/bin/gdb-multiarch" "$@"
+          EOF
+          chmod +x release/gdb-multiarch.sh
+          release/gdb-multiarch.sh --batch -ex 'set architecture aarch64' -ex 'show architecture'
+          (cd release && find . -type f -print0 | sort -z | xargs -0 sha256sum) >SHA256SUMS.txt
+          tar -czf gdb-multiarch-ubuntu2404-x86_64.tar.gz -C release .
+          sha256sum gdb-multiarch-ubuntu2404-x86_64.tar.gz
+          test "$(stat -c%s gdb-multiarch-ubuntu2404-x86_64.tar.gz)" -lt 500000000
+      - name: Upload debugger
+        uses: actions/upload-artifact@v4
+        with:
+          name: gdb-multiarch-ubuntu2404-x86_64
+          path: |
+            gdb-multiarch-ubuntu2404-x86_64.tar.gz
+            SHA256SUMS.txt
+          retention-days: 400
