@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 env:
   APK_VERSION: "1.201.37117.67"
@@ -24,15 +25,56 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
-      - name: Download the Tencent-hosted official Android APK
+      - name: Cancel older in-progress runs of this exact workflow
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          old_runs="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/workflows/fetch-deltaforce-cn-android-apk.yml/runs?status=in_progress&per_page=100" \
+            --jq ".workflow_runs[] | select(.id < ${GITHUB_RUN_ID}) | .id" || true)"
+          for run_id in ${old_runs}; do
+            echo "Cancel superseded older workflow run: ${run_id}"
+            gh api -X POST "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/cancel" || true
+          done
+
+      - name: Download four official APK byte ranges concurrently
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p out/parts out/metadata
-          echo "Downloading official Tencent Android APK v${APK_VERSION}"
-          curl --fail --location --retry 8 --retry-all-errors --retry-delay 6 \
-               --connect-timeout 30 --max-time 2400 \
-               --output "out/${FILE_PREFIX}" "${APK_URL}"
+          python3 - <<'PY'
+          from concurrent.futures import ThreadPoolExecutor, as_completed
+          import os, pathlib, subprocess, time
+          total=int(os.environ["APK_SIZE"])
+          part_size=400*1024*1024
+          prefix=os.environ["FILE_PREFIX"]
+          base=pathlib.Path("out/parts")
+          url=os.environ["APK_URL"]
+          items=[(i, i*part_size, min(total-1,(i+1)*part_size-1)) for i in range((total+part_size-1)//part_size)]
+          assert len(items)==4
+          def download(spec):
+              index,start,end=spec
+              target=base / f"{prefix}.part.{index:02d}"
+              args=["curl","--fail","--location","--silent","--show-error",
+                    "--retry","8","--retry-all-errors","--retry-delay","6",
+                    "--connect-timeout","30","--max-time","2400",
+                    "--range",f"{start}-{end}","--output",str(target),
+                    "--write-out","%{http_code}",url]
+              p=subprocess.run(args,capture_output=True,text=True)
+              if p.returncode or p.stdout.strip()!="206":
+                  raise RuntimeError(f"chunk {index:02d}: curl={p.returncode} http={p.stdout.strip()} stderr={p.stderr[-1000:]}")
+              got=target.stat().st_size
+              if got!=end-start+1:
+                  raise RuntimeError(f"chunk {index:02d}: expected {end-start+1}, got {got}")
+              return index,got,str(target)
+          with ThreadPoolExecutor(max_workers=4) as pool:
+              futures=[pool.submit(download,x) for x in items]
+              for f in as_completed(futures):
+                  i,n,p=f.result()
+                  print(f"RANGE OK part {i:02d}: {n} bytes at {p}",flush=True)
+          PY
+          cat out/parts/"${FILE_PREFIX}".part.* > "out/${FILE_PREFIX}"
           test "$(stat -c '%s' "out/${FILE_PREFIX}")" = "${APK_SIZE}"
           printf '%s  %s\n' "${APK_MD5,,}" "out/${FILE_PREFIX}" | md5sum --check -
           sha256sum "out/${FILE_PREFIX}"
