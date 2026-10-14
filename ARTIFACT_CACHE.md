@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| ARM64 NDK C debugging validation | r28c-run38642113778 | Ubuntu 24.04 Linux / Android Bionic API 36 | x86_64 host + AArch64 guest | `38642113778` | SINGLE | `2027-01-12T21:40:57Z` |
 | Delta Force CN Android APK | 1.201.37117.67 | Android | arm64-v8a | `38596903200` | SPLIT × 4 | `2027-01-12T16:18:07Z` |
 | PUBG CTF GL APK | 4.6.0-v1.0.1 | Android | arm64-v8a | `38431125316` | SINGLE | `2027-01-11T16:30:53Z` |
 | Google Android Key Attestation trust reference | 2026-10-13 | Any | Any | `38354591700` | SINGLE | `2027-01-11T06:03:07Z` |
@@ -2085,3 +2086,48 @@ cat "$(find_part 00)" "$(find_part 01)" "$(find_part 02)" "$(find_part 03)" > "$
 echo 'af03179c62ac57f05e4e6d425b2471bdf651b46c2f5a636f5a9e3fa94c78337d  DeltaForce-CN-Android-v1.201.37117.67.apk' | sha256sum -c -
 echo '546f3d60b114ddd80e45a708d2d6e130  DeltaForce-CN-Android-v1.201.37117.67.apk' | md5sum -c -
 ```
+
+
+## Artifact Record: ARM64 NDK r28c C debugging validation (2026-10-15)
+
+- **Name:** ARM64 NDK C debugging validation
+- **Version:** r28c-run38642113778
+- **Platform:** Ubuntu 24.04 Linux / Android API 36 Bionic on QEMU User 7.2.22
+- **Architecture:** x86_64 host, AArch64 Android test binary
+- **Workflow:** `.github/workflows/ndk-arm64-debug-validation.yml`
+- **Run ID:** `38642113778`
+- **Workflow Conclusion:** success
+- **Artifact Name:** `arm64-ndk-r28c-debug-validation`
+- **Artifact ID:** `11931276591`
+- **File:** `arm64-ndk-r28c-debug-evidence.zip` (GitHub artifact ZIP archive; contains tests, logs, binaries)
+- **Size:** `48966` bytes
+- **SHA256:** `9b0c29cc200a5ae2d9f1880d065238dd5508cbd1fdeb4bd033c0a51865164d1d`
+- **Created At:** `2026-10-14T21:41:50Z`
+- **Expires At:** `2027-01-12T21:40:57Z` (actual GitHub value, verified)
+- **Storage Mode:** SINGLE
+- **Original File:** `arm64-ndk-r28c-debug-evidence.zip`
+- **Original Size:** `48966` bytes
+- **Original SHA256:** `9b0c29cc200a5ae2d9f1880d065238dd5508cbd1fdeb4bd033c0a51865164d1d`
+- **Part Count:** 1
+- **Requested Retention:** 400 days (actual repository max 90 days)
+- **Source NDK:** previously cached Android NDK r28c artifact pair, run `31684150811`; SHA256 checked against original `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f`.
+- **Validation Summary:** 18 PASS, 3 UNSUPPORTED (User-mode hardware write, read, access watchpoints), 0 FAIL, across 21 tests, on GitHub Actions runner (NOT ChatGPT local container).
+- **Sources:** `tooling/arm64-ndk-debug/probe.c`, `probe_plugin.c`, `runner.py`, `build.sh`, and `install_ndk_from_cache.sh`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Android ARM64 C debug probe | NDK r28c build 38642113778 | Android API 28+ | AArch64 | `tooling/arm64-ndk-debug/build/probe` | `19f6263f1829adb9728654f9d2757ba8eaf625d8d5231ce259b298b5a6cbcf70` |
+| Android ARM64 shared-library probe | NDK r28c build 38642113778 | Android API 28+ | AArch64 | `tooling/arm64-ndk-debug/build/libprobe_plugin.so` | `c21aba09005579b57f740bfd576266860ef6552a0c74a78ca67b3264f4d50789` |
+| Raw debug tests and logs artifact ZIP | NDK r28c run 38642113778 | Linux/Android API 36 | x86_64/AArch64 | `arm64-ndk-r28c-debug-evidence.zip` | `9b0c29cc200a5ae2d9f1880d065238dd5508cbd1fdeb4bd033c0a51865164d1d` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | File Size | SHA256 | Created At | Expires At |
+|---:|---:|---|---:|---|---|---|
+| 1/1 | `11931276591` | `arm64-ndk-r28c-debug-validation` | `48966` | `9b0c29cc200a5ae2d9f1880d065238dd5508cbd1fdeb4bd033c0a51865164d1d` | `2026-10-14T21:41:50Z` | `2027-01-12T21:40:57Z` |
+
+### Restore
+
+Call `download_workflow_artifact` with repo `jepede/gpt-exten`, Artifact ID `11931276591`. Verify the ZIP SHA256 above, unpack logs and binaries, and validate the compiled probe ELF and shared-library checksums before execution. No new NDK resource download was performed during this run; both existing NDK artifact parts were reused.
