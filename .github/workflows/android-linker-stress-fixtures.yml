@@ -75,10 +75,13 @@ jobs:
               d=json.loads(p.read_text())
               print(p, d['passed'], '/', d['total'])
           PY
-          tar -czf release/android-arm64-linker-stress-fixtures.tar.gz stress-tests pressure/4k/sources pressure/16k/sources 2>/dev/null || true
+          mkdir -p release/prebuilt_4k release/prebuilt_16k
+          find pressure/4k -maxdepth 1 -type f ! -name '*.log' -exec cp {} release/prebuilt_4k/ \;
+          find pressure/16k -maxdepth 1 -type f ! -name '*.log' -exec cp {} release/prebuilt_16k/ \;
           cp pressure/4k/results.json release/results-4k.json 2>/dev/null || true
           cp pressure/16k/results.json release/results-16k.json 2>/dev/null || true
-          sha256sum release/* > release/SHA256SUMS
+          tar -czf release/android-arm64-linker-stress-fixtures.tar.gz stress-tests pressure/4k/sources pressure/16k/sources release/prebuilt_4k release/prebuilt_16k 2>/dev/null || true
+          find release -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > release/SHA256SUMS
       - uses: actions/upload-artifact@v4
         if: always()
         with:
