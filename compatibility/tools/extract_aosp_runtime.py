@@ -29,6 +29,43 @@ def sdk_from_zip(zfile):
     log('SDK_IMAGE_SIZE',IMAGE.stat().st_size)
 
 def image_fs(path):
+    import struct
+    with path.open('rb') as disk:
+        disk.seek(512)
+        gpt=disk.read(512)
+        if gpt[:8]==b'EFI PART':
+            entries_lba=struct.unpack_from('<Q',gpt,72)[0]
+            count=min(256,struct.unpack_from('<I',gpt,80)[0])
+            entry_size=struct.unpack_from('<I',gpt,84)[0]
+            partitions=[]
+            for i in range(count):
+                disk.seek(entries_lba*512+i*entry_size)
+                ent=disk.read(entry_size)
+                if not ent or ent[:16]==bytes(16):continue
+                first,last=struct.unpack_from('<QQ',ent,32)
+                name=ent[56:128].decode('utf-16le','ignore').rstrip(chr(0))
+                partitions.append((name,first,last))
+            log('GPT_PARTITIONS',partitions)
+            super_parts=[p for p in partitions if p[0].lower()=='super']
+            if not super_parts:raise RuntimeError('GPT has no dynamic super partition')
+            name,start,end=super_parts[0]
+            part=ROOT/'super.img'
+            disk.seek(start*512)
+            remaining=(end-start+1)*512
+            with part.open('wb') as dst:
+                while remaining:
+                    data=disk.read(min(4*1024*1024,remaining))
+                    if not data:raise IOError('unexpected end of GPT partition')
+                    dst.write(data);remaining-=len(data)
+            log('EXTRACTED_GPT_SUPER',part.stat().st_size)
+            unpacked=ROOT/'logical'
+            unpacked.mkdir(exist_ok=True)
+            call(['lpunpack','-v',str(part),str(unpacked)])
+            part.unlink()
+            logical=sorted(unpacked.glob('system*.img'),key=lambda p:p.stat().st_size,reverse=True)
+            if not logical:raise RuntimeError('super did not contain a system logical partition')
+            path=logical[0]
+            log('SELECTED_LOGICAL_SYSTEM',path,path.stat().st_size)
     hdr=path.open('rb').read(4)
     if hdr==bytes.fromhex('3aff26ed'):
         call(['simg2img',str(path),str(RAW)])
