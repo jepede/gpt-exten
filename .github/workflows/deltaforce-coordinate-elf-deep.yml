@@ -1,0 +1,77 @@
+name: Delta Force native ELF deep inspection
+on:
+  push:
+    branches:
+      - work/deltaforce-coordinate-re-20261015
+    paths:
+      - .github/workflows/deltaforce-coordinate-elf-deep.yml
+permissions:
+  contents: read
+  actions: read
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore four existing cached artifact parts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p work/parts
+          for i in 00 01 02 03; do
+            gh run download 38596903200 -R "$GITHUB_REPOSITORY" -n "deltaforce-cn-android-v1.201.37117.67-part-$i" -D "work/parts/$i"
+          done
+          python3 - <<'PY'
+          import hashlib,pathlib,zipfile
+          prefix='DeltaForce-CN-Android-v1.201.37117.67.apk'
+          expected=['ff89045d63daf2101f83357729c6fd501c2623d6db87fb3dd973c6e48fdb03be',
+                    '727fc9db85ce8e9df1d612d536b2c2919f05f94ae93f44141716d1f1a52655ef',
+                    '1be7e7ef8ca01bdd6677095fb6e5c20b297d0c2386a9269e58a9f3cc59773639',
+                    'ac3582fae315b8cc283df13dd1216df3f07245791f50cb90feecfc2ff74cb169']
+          full=hashlib.sha256()
+          with open('work/'+prefix,'wb') as out:
+            for idx,digest in zip(['00','01','02','03'],expected):
+              paths=list((pathlib.Path('work/parts')/idx).rglob('*.part.'+idx))
+              print('parts',idx,[str(x) for x in paths[:10]],flush=True)
+              assert len(paths)==1,(idx,paths)
+              h=hashlib.sha256()
+              with paths[0].open('rb') as src:
+                while True:
+                  b=src.read(8*1024*1024)
+                  if not b:break
+                  h.update(b); full.update(b);out.write(b)
+              assert h.hexdigest()==digest,(idx,h.hexdigest())
+              print('PART HASH OK',idx,flush=True)
+          assert full.hexdigest()=='af03179c62ac57f05e4e6d425b2471bdf651b46c2f5a636f5a9e3fa94c78337d'
+          with zipfile.ZipFile('work/'+prefix) as z:
+            print('MAIN LIBRARY CANDIDATES',[(x.filename,x.file_size) for x in z.infolist() if 'libUE4.so' in x.filename or 'libUnreal.so' in x.filename],flush=True)
+          print('APK VERIFIED',full.hexdigest(),flush=True)
+          PY
+      - name: Recover radare2 cache
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p work/r2zip
+          gh run download 36873712969 -R "$GITHUB_REPOSITORY" -n radare2-6.2.2-linux-x86_64 -D work/r2zip
+          deb="$(find work/r2zip -name 'radare2_6.2.2_amd64.deb' -print -quit)"
+          test -n "$deb"
+          echo '09234e4139bf8dfcbb7fc1fdb2519859ad516e63c19d3c27d92aaecdf463b1ad  '"$deb" | sha256sum -c -
+          sudo dpkg -i "$deb"
+          r2 -v
+      - name: Inspect code sections, text protection, old coordinate-load signature
+        run: |
+          set -euo pipefail
+          python3 tools/deltaforce_elf_deep.py work/DeltaForce-CN-Android-v1.201.37117.67.apk
+          sed -n '1,180p' reports/deltaforce2/elf_deep.md
+      - name: Preserve compact report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deltaforce-elf-deep-evidence
+          path: reports/deltaforce2/
+          if-no-files-found: warn
+          retention-days: 1
