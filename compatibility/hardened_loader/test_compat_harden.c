@@ -88,6 +88,7 @@ static void tls_test(void) {
     assert(!clh_tls_image_fits(16, 128, 3,0,base,cap));
     assert(!clh_tls_image_fits(16, 128, 16,UINT64_MAX,base,cap));
     assert(!clh_tls_image_fits(16,128,16,0,UINTPTR_MAX-1,cap));
+    assert(!clh_tls_image_fits(16,128,1,0,UINTPTR_MAX-1,cap));
     uint64_t state = UINT64_C(0x9e3779b97f4a7c15);
     for (unsigned i = 0; i != 200000; ++i) {
         state ^= state << 13;
