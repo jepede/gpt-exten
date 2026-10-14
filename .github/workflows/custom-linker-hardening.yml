@@ -59,6 +59,12 @@ jobs:
             compatibility/hardened_loader/compat_harden.c \
             compatibility/hardened_loader/test_compat_harden.c \
             -o release/test-compat-harden-android35-arm64
+          python3 stress-tests/edgecases/generate.py --ndk "$ndk" --out "$PWD/release/edgecase-fixtures"
+          "$tc/aarch64-linux-android35-clang" -std=c11 -fPIE -pie -O2 -g \
+            -Wall -Wextra -Werror \
+            compatibility/hardened_loader/compat_harden.c \
+            compatibility/hardened_loader/test_runtime_loader.c \
+            -ldl -o release/test-runtime-loader-android35-arm64
           "$tc/llvm-readelf" -h release/test-compat-harden-android35-arm64 \
             | tee release/logs/android-arm64-elf-header.log
           "$tc/llvm-readelf" -l release/test-compat-harden-android35-arm64 \
@@ -92,6 +98,10 @@ jobs:
             | tee release/logs/arm64-bionic-4k.log
           timeout 60 "$q" -p 16384 -L "$sysroot" "$PWD/release/test-compat-harden-android35-arm64" \
             | tee release/logs/arm64-bionic-16k.log
+          timeout 120 "$q" -L "$sysroot" "$PWD/release/test-runtime-loader-android35-arm64" "$PWD/release/edgecase-fixtures" \
+            | tee release/logs/arm64-bionic-runtime-72-dlopen-4k.log
+          timeout 120 "$q" -p 16384 -L "$sysroot" "$PWD/release/test-runtime-loader-android35-arm64" "$PWD/release/edgecase-fixtures" \
+            | tee release/logs/arm64-bionic-runtime-72-dlopen-16k.log
       - name: Hash and package evidence
         if: always()
         shell: bash
