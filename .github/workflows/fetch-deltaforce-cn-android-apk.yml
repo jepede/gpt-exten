@@ -1,0 +1,153 @@
+name: Download Delta Force CN Android APK (split into artifacts)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/fetch-deltaforce-cn-android-apk.yml"
+
+permissions:
+  contents: read
+
+env:
+  APK_VERSION: "1.201.37117.67"
+  APK_PACKAGE: "com.tencent.tmgp.dfm"
+  APK_SIZE: "1519215938"
+  APK_MD5: "546F3D60B114DDD80E45A708D2D6E130"
+  APK_URL: "https://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/546F3D60B114DDD80E45A708D2D6E130.apk?fsname=com.tencent.tmgp.dfm_1.201.37117.67.apk"
+  FILE_PREFIX: "DeltaForce-CN-Android-v1.201.37117.67.apk"
+
+jobs:
+  download-and-split:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - name: Download the Tencent-hosted official Android APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/parts out/metadata
+          echo "Downloading official Tencent Android APK v${APK_VERSION}"
+          curl --fail --location --retry 8 --retry-all-errors --retry-delay 6 \
+               --connect-timeout 30 --max-time 2400 \
+               --output "out/${FILE_PREFIX}" "${APK_URL}"
+          test "$(stat -c '%s' "out/${FILE_PREFIX}")" = "${APK_SIZE}"
+          printf '%s  %s\n' "${APK_MD5,,}" "out/${FILE_PREFIX}" | md5sum --check -
+          sha256sum "out/${FILE_PREFIX}"
+
+      - name: Split into four individually verifiable pieces under 512 MB
+        shell: bash
+        run: |
+          set -euo pipefail
+          split --numeric-suffixes=0 --suffix-length=2 --bytes=400M \
+                "out/${FILE_PREFIX}" "out/parts/${FILE_PREFIX}.part."
+          test "$(find out/parts -maxdepth 1 -type f | wc -l)" -eq 4
+          python3 - <<'PY'
+          import datetime, hashlib, json, os, pathlib, zipfile
+          target = pathlib.Path("out") / os.environ["FILE_PREFIX"]
+          chunks = sorted(pathlib.Path("out/parts").glob("*.part.*"))
+          def sha256(path):
+              h = hashlib.sha256()
+              with open(path, "rb") as f:
+                  for b in iter(lambda: f.read(8 * 1024 * 1024), b""):
+                      h.update(b)
+              return h.hexdigest()
+          abis = set()
+          with zipfile.ZipFile(target, "r") as z:
+              files = z.namelist()
+              assert "AndroidManifest.xml" in files, "Not an Android APK"
+              for n in files:
+                  if n.startswith("lib/") and n.count("/") >= 2:
+                      abis.add(n.split("/")[1])
+          result = {
+              "name": "Delta Force CN Android official APK",
+              "version": os.environ["APK_VERSION"],
+              "package": os.environ["APK_PACKAGE"],
+              "platform": "Android",
+              "architecture": sorted(abis),
+              "source_url": os.environ["APK_URL"],
+              "source_provider": "Tencent MyApp / imtt.dd.qq.com",
+              "original_filename": target.name,
+              "original_size": target.stat().st_size,
+              "original_sha256": sha256(target),
+              "original_md5_from_tencent": os.environ["APK_MD5"].lower(),
+              "created_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "chunk_size_max_bytes": 400 * 1024 * 1024,
+              "chunk_count": len(chunks),
+              "chunks": [
+                  {"part": i, "filename": p.name, "size": p.stat().st_size, "sha256": sha256(p)}
+                  for i, p in enumerate(chunks)
+              ]
+          }
+          assert sum(x["size"] for x in result["chunks"]) == result["original_size"]
+          assert len(chunks) == 4
+          assert all(x["size"] < 512000000 for x in result["chunks"])
+          out = pathlib.Path("out/metadata")
+          (out/"manifest.json").write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+          with (out/"SHA256SUMS.txt").open("w") as f:
+              for c in result["chunks"]:
+                  f.write(f'{c["sha256"]}  {c["filename"]}\n')
+              f.write(f'{result["original_sha256"]}  {target.name}\n')
+          print(json.dumps(result, indent=2, ensure_ascii=False))
+          PY
+
+      - name: Verify that all four parts reconstruct the official file
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          d = json.loads(pathlib.Path("out/metadata/manifest.json").read_text())
+          h = hashlib.sha256()
+          for c in d["chunks"]:
+              name = pathlib.Path("out/parts") / c["filename"]
+              hh = hashlib.sha256()
+              with open(name, "rb") as f:
+                  for buf in iter(lambda:f.read(8*1024*1024), b""):
+                      hh.update(buf)
+                      h.update(buf)
+              assert hh.hexdigest() == c["sha256"]
+          assert h.hexdigest() == d["original_sha256"]
+          print("PASS: concatenated parts match original SHA256", h.hexdigest())
+          PY
+
+      - name: Upload part 00 plus restoration manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: deltaforce-cn-android-v1.201.37117.67-part-00
+          path: |
+            out/parts/DeltaForce-CN-Android-v1.201.37117.67.apk.part.00
+            out/metadata/manifest.json
+            out/metadata/SHA256SUMS.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload part 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: deltaforce-cn-android-v1.201.37117.67-part-01
+          path: out/parts/DeltaForce-CN-Android-v1.201.37117.67.apk.part.01
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload part 02
+        uses: actions/upload-artifact@v4
+        with:
+          name: deltaforce-cn-android-v1.201.37117.67-part-02
+          path: out/parts/DeltaForce-CN-Android-v1.201.37117.67.apk.part.02
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload part 03
+        uses: actions/upload-artifact@v4
+        with:
+          name: deltaforce-cn-android-v1.201.37117.67-part-03
+          path: out/parts/DeltaForce-CN-Android-v1.201.37117.67.apk.part.03
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
