@@ -218,6 +218,110 @@ int main(void) {
 }
 """)
 
+
+    src_write(src/"dlopen_mt.c", r"""
+#define _GNU_SOURCE
+#include <pthread.h>
+#include <dlfcn.h>
+#include <stdio.h>
+#include <stdint.h>
+#define NT 8
+#define REPEAT 256
+typedef int (*entry_fn)(int);
+static void *worker(void *arg) {
+  int id=(int)(intptr_t)arg;
+  for(int i=0;i<REPEAT;i++) {
+    void *h=dlopen("libstress_plugin.so",RTLD_NOW|RTLD_LOCAL);
+    if(!h) return (void*)(intptr_t)1;
+    entry_fn f=(entry_fn)dlsym(h,"stress_entry");
+    if(!f) {dlclose(h); return (void*)(intptr_t)2;}
+    int v=f(id*REPEAT+i);
+    if(v<id*REPEAT*3+i*3) {dlclose(h);return (void*)(intptr_t)3;}
+    if(dlclose(h)) return (void*)(intptr_t)4;
+  }
+  return 0;
+}
+int main(void) {
+  pthread_t t[NT];
+  for(int i=0;i<NT;i++)
+    if(pthread_create(&t[i],0,worker,(void*)(intptr_t)i)) return 33;
+  for(int i=0;i<NT;i++) {
+    void *result=(void*)1;
+    if(pthread_join(t[i],&result)||result) return 34;
+  }
+  printf("DLOPEN_MT threads=%d opens=%d PASS\n",NT,NT*REPEAT);
+  return 0;
+}
+""")
+    src_write(src/"libtls_dtor.cpp", r"""
+#include <atomic>
+static std::atomic<int> dtors{0};
+struct Probe {
+  int value;
+  ~Probe() { dtors.fetch_add(1, std::memory_order_relaxed); }
+};
+static thread_local Probe probe{0};
+extern "C" int tls_probe(int v) {
+  probe.value=v;
+  return probe.value;
+}
+extern "C" int tls_dtor_total(void) {
+  return dtors.load(std::memory_order_relaxed);
+}
+""")
+    src_write(src/"tls_dtor.cpp", r"""
+#include <pthread.h>
+#include <cstdio>
+#include <cstdint>
+extern "C" int tls_probe(int);
+extern "C" int tls_dtor_total(void);
+#define NT 48
+static void *worker(void *arg) {
+  int id=(int)(intptr_t)arg;
+  for (int i=0;i<64;i++) {
+    int v=id*64+i;
+    if (tls_probe(v)!=v) return (void*)(intptr_t)1;
+  }
+  return nullptr;
+}
+int main() {
+  pthread_t t[NT];
+  for(int i=0;i<NT;i++) if(pthread_create(&t[i],0,worker,(void*)(intptr_t)i)) return 83;
+  for(int i=0;i<NT;i++) {
+    void *v=(void*)1;
+    if(pthread_join(t[i],&v)||v) return 84;
+  }
+  int total=tls_dtor_total();
+  printf("TLS_DTOR threads=%d destroyed=%d\n",NT,total);
+  return total==NT?0:85;
+}
+""")
+    src_write(src/"phdr_self.c", r"""
+#define _GNU_SOURCE
+#include <link.h>
+#include <stdint.h>
+#include <stdio.h>
+struct scan_state { uintptr_t target; unsigned found; };
+static int visit(struct dl_phdr_info *info,size_t size,void *opaque) {
+  (void)size;
+  struct scan_state *s=(struct scan_state*)opaque;
+  if(!info->dlpi_phdr) return 0;
+  for(ElfW(Half) i=0;i<info->dlpi_phnum;i++) {
+    const ElfW(Phdr) *p=&info->dlpi_phdr[i];
+    if(p->p_type!=PT_LOAD) continue;
+    uintptr_t base=(uintptr_t)info->dlpi_addr+(uintptr_t)p->p_vaddr;
+    if(s->target>=base && (uint64_t)(s->target-base)<p->p_memsz) s->found=1;
+  }
+  return 0;
+}
+int main(void) {
+  struct scan_state s={(uintptr_t)&main,0};
+  int rc=dl_iterate_phdr(visit,&s);
+  printf("PHDR_SELF covered=%u callback_rc=%d\n",s.found,rc);
+  return rc==0 && s.found==1?0:86;
+}
+""")
+
 def normalized(s):
     ignored=("[LINKER]","[SHELL]","linker: Warning:","WARNING: linker:")
     return "\n".join(line for line in s.splitlines() if not line.startswith(ignored)).strip()
@@ -271,6 +375,7 @@ def main():
     lib("libtop.so",src/"top.c",deps=["-L"+str(out),"-lmid","-Wl,-rpath,$ORIGIN"],flags=["-Wl,-soname,libtop.so"])
     lib("libthrower.so",src/"thrower.cpp",cxx_mode=True,flags=["-Wl,-soname,libthrower.so"])
     lib("libvers.so",src/"vers.c",flags=["-Wl,-soname,libvers.so","-Wl,--version-script="+str(src/"versions.map")])
+    lib("libtls_dtor.so",src/"libtls_dtor.cpp",cxx_mode=True,flags=["-Wl,-soname,libtls_dtor.so"])
     default=["-pie","-Wl,--export-dynamic"]
     build("reloc_rela",cc,src/"relocs.c",default)
     build("reloc_aps2",cc,src/"relocs.c",default+["-Wl,--pack-dyn-relocs=android"])
@@ -285,6 +390,9 @@ def main():
     build("ifunc_weak",cc,src/"ifunc_weak.c",default)
     build("cpp_catch",cxx,src/"cpp_catch.cpp",default,["-L"+str(out),"-lthrower","-Wl,-rpath,$ORIGIN"])
     build("vers_main",cc,src/"vers_main.c",default,["-L"+str(out),"-lvers","-Wl,-rpath,$ORIGIN"])
+    build("dlopen_mt",cc,src/"dlopen_mt.c",default+["-ldl","-pthread"])
+    build("tls_dtor",cxx,src/"tls_dtor.cpp",default+["-pthread"],["-L"+str(out),"-ltls_dtor","-Wl,-rpath,$ORIGIN"])
+    build("phdr_self",cc,src/"phdr_self.c",default+["-ldl"])
     # Verify that compiler output actually exercises packed relocations.
     # Otherwise a green run could silently be testing ordinary RELA only.
     readelf=tc/"llvm-readelf"
@@ -303,7 +411,8 @@ def main():
                                "\n"+probe["stdout"]+"\n"+probe["stderr"])
     samples=["reloc_rela","reloc_aps2","reloc_relr","reloc_aps2_4k",
              "thread_tls","big_bss","dlopen_repeat","needed_chain",
-             "constructors","ifunc_weak","cpp_catch","vers_main"]
+             "constructors","ifunc_weak","cpp_catch","vers_main",
+             "dlopen_mt","tls_dtor","phdr_self"]
     summary=[]
     qbase=[str(qemu)]
     if args.page16k:qbase+=["-p","16384"]
