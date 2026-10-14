@@ -1,10 +1,8 @@
-name: Probe Delta Force CN Tencent CDN connectivity routes (temporary)
+name: Probe Tencent CDN 16 MiB HTTP throughput (temporary)
 on:
   push:
-    branches:
-      - probe-delta-force-apk-20261014
-    paths:
-      - ".github/workflows/probe-delta-force-cdn-speed-20261014.yml"
+    branches: [probe-delta-force-apk-20261014]
+    paths: [".github/workflows/probe-delta-force-cdn-speed-20261014.yml"]
 permissions:
   contents: read
 jobs:
@@ -12,29 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect Tencent DNS and HTTP/TLS byte-range connectivity
+      - name: Download a small HTTP range and report transfer speed
         shell: bash
         run: |
           set -euo pipefail
-          for host in imtt.dd.qq.com imtt2.dd.qq.com imtt1.dd.qq.com imtt3.dd.qq.com imtt5.dd.qq.com; do
-            echo "DNS ${host}: $(dig +short A ${host} | tr '\n' ' ')"
-            echo "GoogleDNS ${host}: $(dig +short @8.8.8.8 A ${host} +time=2 +tries=1 | tr '\n' ' ')"
-          done
-          python3 - <<'PY'
-          from concurrent.futures import ThreadPoolExecutor, as_completed
-          import subprocess
-          path='/sjy.00022/sjy.00001/16891/apk/546F3D60B114DDD80E45A708D2D6E130.apk?fsname=com.tencent.tmgp.dfm_1.201.37117.67.apk'
-          schemes=['http','https']
-          hosts=['imtt.dd.qq.com','imtt2.dd.qq.com','imtt1.dd.qq.com','imtt3.dd.qq.com','imtt5.dd.qq.com']
-          def probe(args):
-              scheme,host=args
-              url=f'{scheme}://{host}{path}'
-              cmd=['curl','-L','-sS','--connect-timeout','5','--max-time','14',
-                   '--range','0-31','--max-filesize','8192',
-                   '-o','/dev/null','-w','HTTP=%{http_code} bytes=%{size_download} speed=%{speed_download} ip=%{remote_ip} content_type=%{content_type} url=%{url_effective}',url]
-              p=subprocess.run(cmd,capture_output=True,text=True)
-              return scheme,host,p.returncode,p.stdout,p.stderr[-180:]
-          with ThreadPoolExecutor(max_workers=10) as pool:
-              for f in as_completed([pool.submit(probe, (scheme,host)) for scheme in schemes for host in hosts]):
-                  print('PROBE',f.result(),flush=True)
-          PY
+          url='http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/546F3D60B114DDD80E45A708D2D6E130.apk?fsname=com.tencent.tmgp.dfm_1.201.37117.67.apk'
+          curl -fL --silent --show-error --connect-timeout 15 --max-time 120 --range 0-16777215 \
+            -o /tmp/sample.bin \
+            -w 'HTTP=%{http_code} downloaded_bytes=%{size_download} speed_Bps=%{speed_download} time_seconds=%{time_total} remote_ip=%{remote_ip}\n' "$url"
+          test "$(stat -c %s /tmp/sample.bin)" -eq 16777216
+          xxd -l 16 /tmp/sample.bin
