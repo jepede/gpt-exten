@@ -107,6 +107,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          tar -czf release/linker-hardening-source.tar.gz compatibility/hardened_loader .github/workflows/custom-linker-hardening.yml
           find release -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > release/SHA256SUMS
           sed -n '1,100p' release/logs/*.log | tail -80 || true
       - name: Upload transient evidence
