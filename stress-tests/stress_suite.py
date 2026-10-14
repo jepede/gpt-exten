@@ -285,6 +285,22 @@ def main():
     build("ifunc_weak",cc,src/"ifunc_weak.c",default)
     build("cpp_catch",cxx,src/"cpp_catch.cpp",default,["-L"+str(out),"-lthrower","-Wl,-rpath,$ORIGIN"])
     build("vers_main",cc,src/"vers_main.c",default,["-L"+str(out),"-lvers","-Wl,-rpath,$ORIGIN"])
+    # Verify that compiler output actually exercises packed relocations.
+    # Otherwise a green run could silently be testing ordinary RELA only.
+    readelf=tc/"llvm-readelf"
+    elf_tags={}
+    for tag_case,required in (
+        ("reloc_aps2","ANDROID_RELA"),
+        ("reloc_aps2_4k","ANDROID_RELA"),
+        ("reloc_relr","RELR"),
+    ):
+        probe=run([readelf,"--dynamic",out/tag_case],env=env,timeout=30)
+        save_log(logs/(tag_case+".dynamic.log"),probe)
+        present=(probe["rc"]==0 and required in probe["stdout"])
+        elf_tags[tag_case]={"required":required,"present":present}
+        if not present:
+            raise RuntimeError("EXPECTED DYNAMIC TAG MISSING: "+tag_case+" / "+required+
+                               "\n"+probe["stdout"]+"\n"+probe["stderr"])
     samples=["reloc_rela","reloc_aps2","reloc_relr","reloc_aps2_4k",
              "thread_tls","big_bss","dlopen_repeat","needed_chain",
              "constructors","ifunc_weak","cpp_catch","vers_main"]
@@ -329,7 +345,8 @@ def main():
             print(("PASS" if passed else "FAIL"),sample,n,
                   "native",orig["rc"],"pack",pack_rc,
                   "packed",shell["rc"] if shell else None,
-                  "same",row["same_stdout"],flush=True)
+                  "same",row["same_stdout"],
+                  "native_expected_reject",expected_native_reject,flush=True)
     # Malformed input checks: only Packer rejection, never execute corrupt ELFs.
     negative=[]
     if args.packer:
@@ -353,7 +370,7 @@ def main():
     result={"metadata":{"api":args.api,"page16k":args.page16k,
                         "scale":args.scale,"repeats":args.repeats,
                         "packed_mode":bool(args.packer)},
-            "positive":summary,"negative":negative,
+            "positive":summary,"negative":negative,"elf_tags":elf_tags,
             "passed":sum(x["pass"] for x in summary),
             "total":len(summary),
             "negative_rejected":sum(x["rejected"] for x in negative)}
