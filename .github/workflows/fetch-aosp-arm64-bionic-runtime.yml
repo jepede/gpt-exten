@@ -1,0 +1,89 @@
+name: Extract official Android ARM64 Bionic runtime
+on:
+  push:
+    branches: [work/aosp-linker-analysis-20261013]
+    paths: [.github/workflows/fetch-aosp-arm64-bionic-runtime.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  aosp-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install official Android image extraction tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3 curl unzip e2fsprogs file erofs-utils android-sdk-libsparse-utils >/dev/null
+      - name: Fetch official Google SDK ARM64 system image
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 https://dl.google.com/android/repository/sys-img/android/sys-img2-1.xml -o sys-img2-1.xml
+          python3 - <<'PY'
+          import xml.etree.ElementTree as E,json
+          root=E.parse('sys-img2-1.xml').getroot()
+          for ver in ('36','35'):
+              matches=[p for p in root.iter() if p.tag.endswith('remotePackage') and p.get('path')==f'system-images;android-{ver};default;arm64-v8a']
+              if not matches:continue
+              p=matches[0]
+              for a in p.iter():
+                  if not a.tag.endswith('archive'):continue
+                  u=next((x.text for x in a.iter() if x.tag.endswith('url') and x.text),None)
+                  if not u:continue
+                  size=next((x.text for x in a.iter() if x.tag.endswith('size') and x.text),None)
+                  check=next(((x.attrib.get('type'),x.text) for x in a.iter() if x.tag.endswith('checksum')),None)
+                  meta={'api':ver,'url':u if u.startswith('http') else 'https://dl.google.com/android/repository/sys-img/android/'+u,'size':size,'checksum':check}
+                  open('sdk-runtime-meta.json','w').write(json.dumps(meta,indent=2))
+                  print('SELECTED',meta)
+                  quit()
+          raise SystemExit('No official default arm64 image in Google SDK metadata')
+          PY
+          python3 - <<'PY'
+          import json,subprocess
+          d=json.load(open('sdk-runtime-meta.json'))
+          subprocess.run(['curl','-fL','--retry','4','--retry-all-errors','--connect-timeout','40','--max-time','1500',d['url'],'-o','android-arm64-system-image.zip'],check=True)
+          import hashlib
+          h=hashlib.file_digest(open('android-arm64-system-image.zip','rb'),'sha256').hexdigest()
+          print('DOWNLOAD_BYTES',__import__('os').path.getsize('android-arm64-system-image.zip'),'SHA256',h)
+          typ,digest=d.get('checksum') or (None,None)
+          if typ in ('sha1','sha256'):
+              got=hashlib.file_digest(open('android-arm64-system-image.zip','rb'),typ).hexdigest()
+              assert got.lower()==digest.lower(),f'offical checksum mismatch: {typ} {got} != {digest}'
+          open('sdk-runtime-meta.json','w').write(json.dumps(dict(d,sha256=h),indent=2))
+          PY
+      - name: Extract actual Bionic runtime ELF and APEX
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          cp sdk-runtime-meta.json release/
+          python3 compatibility/tools/extract_aosp_runtime.py android-arm64-system-image.zip 2>&1 | tee runtime-extract.log
+          cp runtime-extract.log release/runtime-extract.log
+          find release/sysroot -type f -name '*.so' -o -name 'linker64' | head -60
+          tar -czf aosp-arm64-bionic-runtime.tar.gz -C release .
+          sha256sum aosp-arm64-bionic-runtime.tar.gz > SHA256SUMS.txt
+          ls -lh aosp-arm64-bionic-runtime.tar.gz
+          test "$(stat -c%s aosp-arm64-bionic-runtime.tar.gz)" -lt 500000000
+      - name: Upload extracted runtime
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aosp-arm64-bionic-runtime
+          path: |
+            aosp-arm64-bionic-runtime.tar.gz
+            SHA256SUMS.txt
+          retention-days: 400
+          if-no-files-found: error
+      - name: Upload extraction diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aosp-arm64-bionic-extraction-debug
+          path: |
+            sdk-runtime-meta.json
+            runtime-extract.log
+            release/runtime_extraction.json
+          retention-days: 1
+          if-no-files-found: ignore
