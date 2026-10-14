@@ -1,0 +1,97 @@
+name: Delta Force UE4 Coordinate Static Analysis
+on:
+  push:
+    branches:
+      - work/deltaforce-coordinate-re-20261015
+    paths:
+      - .github/workflows/deltaforce-coordinate-static.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  coordinate-triage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      FILE_PREFIX: DeltaForce-CN-Android-v1.201.37117.67.apk
+    steps:
+      - name: Checkout temporary research branch
+        uses: actions/checkout@v4
+      - name: Restore all four existing official APK artifact parts (no re-download from source)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/parts
+          for i in 00 01 02 03; do
+            echo "Recovering cached part $i..."
+            gh run download 38596903200 -R "$GITHUB_REPOSITORY" -n "deltaforce-cn-android-v1.201.37117.67-part-$i" -D "work/parts/$i"
+          done
+          python3 - <<'PY'
+          import hashlib, pathlib, zipfile
+          sha={
+              "00":"ff89045d63daf2101f83357729c6fd501c2623d6db87fb3dd973c6e48fdb03be",
+              "01":"727fc9db85ce8e9df1d612d536b2c2919f05f94ae93f44141716d1f1a52655ef",
+              "02":"1be7e7ef8ca01bdd6677095fb6e5c20b297d0c2386a9269e58a9f3cc59773639",
+              "03":"ac3582fae315b8cc283df13dd1216df3f07245791f50cb90feecfc2ff74cb169",
+          }
+          prefix="DeltaForce-CN-Android-v1.201.37117.67.apk"
+          digest=hashlib.sha256()
+          with open("work/"+prefix,"wb") as dest:
+              for idx in ("00","01","02","03"):
+                  p=pathlib.Path("work/parts")/idx/(prefix+".part."+idx)
+                  assert p.is_file(), str(p)
+                  part=hashlib.sha256()
+                  with p.open("rb") as f:
+                      for chunk in iter(lambda:f.read(16<<20),b""):
+                          part.update(chunk);digest.update(chunk);dest.write(chunk)
+                  assert part.hexdigest()==sha[idx],(idx,part.hexdigest())
+                  print("PART VERIFIED",idx,p.stat().st_size,flush=True)
+          expected="af03179c62ac57f05e4e6d425b2471bdf651b46c2f5a636f5a9e3fa94c78337d"
+          assert digest.hexdigest()==expected,digest.hexdigest()
+          assert (pathlib.Path("work")/prefix).stat().st_size==1519215938
+          with zipfile.ZipFile("work/"+prefix) as z:
+              assert "AndroidManifest.xml" in z.namelist()
+              print("APK confirmed entries",len(z.namelist()),flush=True)
+          print("APK FULL SHA256 VALIDATED",expected,flush=True)
+          PY
+      - name: Recover cached radare2 6.2.2 without source download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          mkdir -p work/r2zip
+          gh run download 36873712969 -R "$GITHUB_REPOSITORY" -n "radare2-6.2.2-linux-x86_64" -D work/r2zip
+          deb="$(find work/r2zip -name 'radare2_6.2.2_amd64.deb' -print -quit)"
+          test -n "$deb"
+          echo '09234e4139bf8dfcbb7fc1fdb2519859ad516e63c19d3c27d92aaecdf463b1ad  '"$deb" | sha256sum -c -
+          sudo dpkg -i "$deb"
+          r2 -v
+      - name: Analyze APK, native inventory, ELF headers, strings, and ARM64 validated literal XREF
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/deltaforce_native_triage.py "work/$FILE_PREFIX"
+          sed -n '1,180p' reports/deltaforce/triage.md
+      - name: Commit auditable read-only report on temporary branch
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/deltaforce/triage.md reports/deltaforce/triage.json
+          git commit -m "Capture official Delta Force native coordinate static triage"
+          git push origin HEAD:work/deltaforce-coordinate-re-20261015
+      - name: Upload compact report (not APK)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deltaforce-coordinate-static-report
+          path: reports/deltaforce/
+          if-no-files-found: warn
+          retention-days: 1
