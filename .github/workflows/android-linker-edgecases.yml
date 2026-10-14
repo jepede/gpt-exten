@@ -51,6 +51,12 @@ jobs:
           test -x qemu-root/usr/bin/qemu-aarch64-static
           test -e runtime/sysroot/system/bin/linker64
           qemu-root/usr/bin/qemu-aarch64-static --version | head -1
+      - name: Validate public generator and packed regression driver
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile stress-tests/edgecases/generate.py stress-tests/edgecases/packed_compare.py
+          python3 stress-tests/edgecases/packed_compare.py --help >/dev/null
       - name: Build six targeted compatibility fixtures
         shell: bash
         run: |
