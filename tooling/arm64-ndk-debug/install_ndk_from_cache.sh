@@ -2,10 +2,10 @@
 # Restore NDK r28c using the two verified existing GitHub Actions artifact parts.
 # No network access required after the two artifact ZIPs have been obtained.
 set -euo pipefail
-PART00="\${1:-/mnt/data/ndk-r28c-part-00-artifact.zip}"
-PART01="\${2:-/mnt/data/ndk-r28c-part-01-artifact.zip}"
-DEST="\${NDK_DEST:-/opt}"
-STAGE="\${NDK_STAGE:-/mnt/data/ndk-r28c-staging}"
+PART00="${1:-/mnt/data/ndk-r28c-part-00-artifact.zip}"
+PART01="${2:-/mnt/data/ndk-r28c-part-01-artifact.zip}"
+DEST="${NDK_DEST:-/opt}"
+STAGE="${NDK_STAGE:-/mnt/data/ndk-r28c-staging}"
 mkdir -p "$STAGE" "$DEST"
 test -f "$PART00"
 test -f "$PART01"
