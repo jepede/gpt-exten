@@ -34,7 +34,7 @@ def parse_elf(path):
  with open(path,"rb") as f:
   hdr=f.read(64)
   if hdr[:4]!=b"\x7fELF" or hdr[4]!=2 or hdr[5]!=1:raise ValueError("not ELF64 LE")
-  _,_,_,_,_,entry,phoff,shoff,_,ehsize,phentsize,phnum,shentsize,shnum,shstrndx=struct.unpack("<16sHHIQQQIHHHHHH",hdr)
+  _,_,_,_,entry,phoff,shoff,_,ehsize,phentsize,phnum,shentsize,shnum,shstrndx=struct.unpack("<16sHHIQQQIHHHHHH",hdr)
   segments=[]
   f.seek(phoff)
   for i in range(phnum):
