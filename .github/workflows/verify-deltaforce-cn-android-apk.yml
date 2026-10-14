@@ -1,0 +1,138 @@
+name: Verify restored Delta Force CN Android APK artifacts
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify-deltaforce-cn-android-apk.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Re-download all four existing GitHub Artifacts and reconstruct APK
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APK_CACHE_RUN_ID: "38596903200"
+        run: |
+          set -euo pipefail
+          mkdir -p verified
+          cat > /tmp/verify.py <<'PY'
+          import hashlib, json, os, pathlib, subprocess, sys, time, zipfile
+
+          REPO = os.environ["GITHUB_REPOSITORY"]
+          RUN = int(os.environ["APK_CACHE_RUN_ID"])
+          BASE = "DeltaForce-CN-Android-v1.201.37117.67.apk"
+          OUTPUT = pathlib.Path("verified") / BASE
+          SHA = "af03179c62ac57f05e4e6d425b2471bdf651b46c2f5a636f5a9e3fa94c78337d"
+          MD5 = "546f3d60b114ddd80e45a708d2d6e130"
+          LENGTH = 1519215938
+          EXPECTED = [
+            ("00", 11912605268, 419430400, "ff89045d63daf2101f83357729c6fd501c2623d6db87fb3dd973c6e48fdb03be", "c6ffaca827e09cecf5a07f77724a28e3688998b61f00c271321257e76a5ab039"),
+            ("01", 11912625263, 419430400, "727fc9db85ce8e9df1d612d536b2c2919f05f94ae93f44141716d1f1a52655ef", "97d7f9fbb177b4f4841c4752516a0aa99d39202656da9bb04e731ad2050f179f"),
+            ("02", 11913085103, 419430400, "1be7e7ef8ca01bdd6677095fb6e5c20b297d0c2386a9269e58a9f3cc59773639", "80d92f97ebabc0f97cc6e69ee2fba6e27cac8b702b874626fff4035ebf4b6b17"),
+            ("03", 11912650314, 260924738, "ac3582fae315b8cc283df13dd1216df3f07245791f50cb90feecfc2ff74cb169", "cb685ddaf4a10e0ca73a9503dae30b6143295f3cc2a9248952ba6738bd020db0"),
+          ]
+
+          def digest(filename):
+              h = hashlib.sha256()
+              with open(filename, "rb") as f:
+                  for b in iter(lambda:f.read(8*1024*1024), b""):
+                      h.update(b)
+              return h.hexdigest()
+
+          def api(path):
+              r = subprocess.run(["gh", "api", path], check=True, capture_output=True, text=True)
+              return json.loads(r.stdout)
+
+          fetched = api(f"/repos/{REPO}/actions/runs/{RUN}/artifacts?per_page=100")
+          by_id = {x["id"]: x for x in fetched["artifacts"]}
+          report = {"repository":REPO, "source_run_id":RUN, "version":"1.201.37117.67", "part_count":4, "parts":[]}
+          complete_sha = hashlib.sha256()
+          complete_md5 = hashlib.md5()
+
+          with OUTPUT.open("wb") as merged:
+              for n, aid, length, part_sha, zip_sha in EXPECTED:
+                  record = by_id.get(aid)
+                  assert record and not record["expired"], f"Missing or expired Artifact {aid}"
+                  assert record["name"] == f"deltaforce-cn-android-v1.201.37117.67-part-{n}"
+                  assert record["digest"].lower() == f"sha256:{zip_sha}", f"Mismatch in GitHub-published ZIP digest part {n}"
+                  zip_dest = pathlib.Path("verified") / f"part-{n}.zip"
+                  print(f"Fetching existing artifact {aid}, part {n}", flush=True)
+                  subprocess.run([
+                     "curl","-fLSs","--retry","6","--retry-all-errors","--retry-delay","4",
+                     "--connect-timeout","30","--max-time","900",
+                     "-H",f"Authorization: Bearer {os.environ['GH_TOKEN']}",
+                     "-H","Accept: application/vnd.github+json",
+                     "-o",str(zip_dest),
+                     f"https://api.github.com/repos/{REPO}/actions/artifacts/{aid}/zip",
+                  ], check=True)
+                  got_sha = digest(zip_dest)
+                  assert got_sha == zip_sha, f"Artifact {aid} ZIP digest failed"
+                  assert zip_dest.stat().st_size == record["size_in_bytes"], "ZIP size mismatch"
+                  with zipfile.ZipFile(zip_dest) as zf:
+                      suffix = f"{BASE}.part.{n}"
+                      hits = [entry for entry in zf.infolist() if pathlib.PurePosixPath(entry.filename).name == suffix]
+                      assert len(hits)==1, f"Missing or ambiguous {suffix}: {len(hits)}"
+                      sha = hashlib.sha256()
+                      transferred = 0
+                      with zf.open(hits[0], "r") as raw:
+                          while True:
+                              block = raw.read(8 * 1024 * 1024)
+                              if not block: break
+                              sha.update(block)
+                              complete_sha.update(block)
+                              complete_md5.update(block)
+                              transferred += len(block)
+                              merged.write(block)
+                      assert transferred==length, f"part {n} size mismatch: {transferred}"
+                      assert sha.hexdigest()==part_sha, f"part {n} SHA256 mismatch"
+                  print(f"VALIDATED part-{n}, raw SHA256 {part_sha}, ZIP SHA256 {zip_sha}",flush=True)
+                  report["parts"].append({"part":n,"artifact_id":aid,"file":suffix,
+                                          "raw_bytes":transferred,"raw_sha256":sha.hexdigest(),
+                                          "zip_sha256":got_sha,"zip_bytes":zip_dest.stat().st_size,
+                                          "expires_at":record["expires_at"]})
+                  zip_dest.unlink()
+
+          report["original_bytes"] = OUTPUT.stat().st_size
+          report["original_sha256"] = complete_sha.hexdigest()
+          report["original_md5"] = complete_md5.hexdigest()
+          assert report["original_bytes"]==LENGTH, "Reconstructed APK size mismatch"
+          assert report["original_sha256"]==SHA, "Reconstructed APK SHA256 mismatch"
+          assert report["original_md5"]==MD5, "Reconstructed APK MD5 mismatch"
+          with zipfile.ZipFile(OUTPUT) as apk:
+              names=set(apk.namelist())
+              assert "AndroidManifest.xml" in names, "Reassembled file is not an APK"
+              report["abis"] = sorted({x.split("/")[1] for x in names if x.startswith("lib/") and x.count("/")>=2})
+          assert "arm64-v8a" in report["abis"]
+          report["result"]="PASS"
+          pathlib.Path("verified/verification.json").write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n")
+          print("RESTORE PASS: all four persisted GitHub Artifact ZIPs verified and APK reconstructed",flush=True)
+          print(json.dumps(report,indent=2),flush=True)
+          PY
+          python3 /tmp/verify.py
+          echo "Verification report (APK itself stays in runner, no >512MB Artifact upload):"
+          cat verified/verification.json
+          {
+             echo "### Reconstructed official Delta Force APK"
+             echo "- Status: **PASS**"
+             echo "- Source artifact run: 38596903200"
+             echo "- Original SHA256: \`af03179c62ac57f05e4e6d425b2471bdf651b46c2f5a636f5a9e3fa94c78337d\`"
+             echo "- All four downloaded Artifact ZIP SHA256 digests matched GitHub metadata"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload tiny independent verification report (NOT the APK)
+        uses: actions/upload-artifact@v4
+        with:
+          name: deltaforce-cn-apk-restoration-verification
+          path: verified/verification.json
+          if-no-files-found: error
+          retention-days: 1
