@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| Delta Force CN Android APK | 1.201.37117.67 | Android | arm64-v8a | `38596903200` | SPLIT × 4 | `2027-01-12T16:18:07Z` |
 | PUBG CTF GL APK | 4.6.0-v1.0.1 | Android | arm64-v8a | `38431125316` | SINGLE | `2027-01-11T16:30:53Z` |
 | Google Android Key Attestation trust reference | 2026-10-13 | Any | Any | `38354591700` | SINGLE | `2027-01-11T06:03:07Z` |
 | UPX KeyGuard Android ARM64 QEMU E2E build | v1.1-testonly-20261013 | Android/Bionic API28+ | arm64-v8a | `38335627167` | SINGLE | `2027-01-11T02:10:30Z` |
@@ -2014,3 +2015,64 @@ Download artifact ID `11871824237` from repo `jepede/gpt-exten`, check ZIP SHA25
 ### Restore
 
 Download artifact `11872515999` from repo `jepede/gpt-exten`; verify downloaded ZIP SHA256 `b2318392...`; unzip, check nested tar SHA256 via included `SHA256SUMS.txt`; extract to runtime root so `sysroot/system/bin/linker64` exists. For C++ tests separately add NDK r28c `libc++_shared.so`. Use `qemu-aarch64-static -L SYSROOT` with Android `LD_LIBRARY_PATH` and **remove host `LD_PRELOAD`**.
+
+
+## Delta Force CN Android Official APK 1.201.37117.67 (2026-10-14)
+
+- Name: **Delta Force CN Android APK**
+- Version: `1.201.37117.67`
+- Package: `com.tencent.tmgp.dfm`
+- Platform: `Android`
+- Architecture: `arm64-v8a` (inspected in APK `lib/` entries)
+- Repository: `jepede/gpt-exten`
+- Workflow: `.github/workflows/fetch-deltaforce-cn-android-apk.yml`
+- Run ID: `38596903200`
+- Run Conclusion: `success`
+- Official Source Landing Page: `https://a.app.qq.com/o/simple.jsp?pkgname=com.tencent.tmgp.dfm`
+- Source URL: `http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/546F3D60B114DDD80E45A708D2D6E130.apk?fsname=com.tencent.tmgp.dfm_1.201.37117.67.apk`
+- Source Notes: Tencent MyApp page published this HTTP APK URL; GitHub runner's HTTPS attempt timed out but HTTP Range requests succeeded. Published MD5 and Content-Length were checked.
+- Requested Retention: `400 days`; **Effective Retention:** GitHub-reported expiration below (~90 days).
+- Storage Mode: `SPLIT`
+- Artifact Name Prefix: `deltaforce-cn-android-v1.201.37117.67-part-`
+- Original File: `DeltaForce-CN-Android-v1.201.37117.67.apk`
+- Original Size: `1519215938` bytes
+- Original MD5 (Tencent and verified locally in Actions): `546f3d60b114ddd80e45a708d2d6e130`
+- Original SHA256: `af03179c62ac57f05e4e6d425b2471bdf651b46c2f5a636f5a9e3fa94c78337d`
+- Part Count: `4`
+- Max Raw Part Size: `419430400` bytes (400 MiB); **each artifact ZIP below 512 MB**
+- Created At: `2026-10-14T16:24:45Z` (first uploaded artifact)
+- Expires At: `2027-01-12T16:18:07Z`
+- Manifest: `metadata/manifest.json` and `metadata/SHA256SUMS.txt` are included with part 00.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Delta Force CN Android APK part 00 | 1.201.37117.67 | Android | arm64-v8a | `DeltaForce-CN-Android-v1.201.37117.67.apk.part.00` | `ff89045d63daf2101f83357729c6fd501c2623d6db87fb3dd973c6e48fdb03be` |
+| Delta Force CN Android APK part 01 | 1.201.37117.67 | Android | arm64-v8a | `DeltaForce-CN-Android-v1.201.37117.67.apk.part.01` | `727fc9db85ce8e9df1d612d536b2c2919f05f94ae93f44141716d1f1a52655ef` |
+| Delta Force CN Android APK part 02 | 1.201.37117.67 | Android | arm64-v8a | `DeltaForce-CN-Android-v1.201.37117.67.apk.part.02` | `1be7e7ef8ca01bdd6677095fb6e5c20b297d0c2386a9269e58a9f3cc59773639` |
+| Delta Force CN Android APK part 03 | 1.201.37117.67 | Android | arm64-v8a | `DeltaForce-CN-Android-v1.201.37117.67.apk.part.03` | `ac3582fae315b8cc283df13dd1216df3f07245791f50cb90feecfc2ff74cb169` |
+
+### Artifacts
+
+| Part | Artifact ID | Artifact Name | Raw Part Size | Raw Part SHA256 | Artifact ZIP Size | Artifact ZIP Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/4 | `11912605268` | `deltaforce-cn-android-v1.201.37117.67-part-00` | `419430400` | `ff89045d63daf2101f83357729c6fd501c2623d6db87fb3dd973c6e48fdb03be` | `419433088` | `sha256:c6ffaca827e09cecf5a07f77724a28e3688998b61f00c271321257e76a5ab039` | `2026-10-14T16:24:45Z` | `2027-01-12T16:18:07Z` |
+| 2/4 | `11912625263` | `deltaforce-cn-android-v1.201.37117.67-part-01` | `419430400` | `727fc9db85ce8e9df1d612d536b2c2919f05f94ae93f44141716d1f1a52655ef` | `419430612` | `sha256:97d7f9fbb177b4f4841c4752516a0aa99d39202656da9bb04e731ad2050f179f` | `2026-10-14T16:24:51Z` | `2027-01-12T16:18:07Z` |
+| 3/4 | `11913085103` | `deltaforce-cn-android-v1.201.37117.67-part-02` | `419430400` | `1be7e7ef8ca01bdd6677095fb6e5c20b297d0c2386a9269e58a9f3cc59773639` | `419430612` | `sha256:80d92f97ebabc0f97cc6e69ee2fba6e27cac8b702b874626fff4035ebf4b6b17` | `2026-10-14T16:24:57Z` | `2027-01-12T16:18:07Z` |
+| 4/4 | `11912650314` | `deltaforce-cn-android-v1.201.37117.67-part-03` | `260924738` | `ac3582fae315b8cc283df13dd1216df3f07245791f50cb90feecfc2ff74cb169` | `260924950` | `sha256:cb685ddaf4a10e0ca73a9503dae30b6143295f3cc2a9248952ba6738bd020db0` | `2026-10-14T16:25:01Z` | `2027-01-12T16:18:07Z` |
+
+### Restore
+
+Download all four Artifact ZIPs from run `38596903200` (IDs above), using `download_workflow_artifact` or the GitHub CLI. Verify each downloaded Artifact ZIP SHA256 against **Artifact ZIP Digest**; extract each ZIP, find `DeltaForce-CN-Android-v1.201.37117.67.apk.part.00` through `DeltaForce-CN-Android-v1.201.37117.67.apk.part.03`; then concatenate **in numeric order** (00, 01, 02, 03) into `DeltaForce-CN-Android-v1.201.37117.67.apk`. Check every raw part SHA256 against the Contents table, then the reconstructed file SHA256 `af03179c62ac57f05e4e6d425b2471bdf651b46c2f5a636f5a9e3fa94c78337d` and MD5 `546f3d60b114ddd80e45a708d2d6e130`.
+
+Direct CLI restore (requires authenticated `gh` and `sha256sum`):
+
+```bash
+gh run download 38596903200 -R jepede/gpt-exten -D ./deltaforce-cn-parts
+prefix="DeltaForce-CN-Android-v1.201.37117.67.apk"
+find_part() { find ./deltaforce-cn-parts -type f -name "${prefix}.part.$1" -print -quit; }
+cat "$(find_part 00)" "$(find_part 01)" "$(find_part 02)" "$(find_part 03)" > "${prefix}"
+echo 'af03179c62ac57f05e4e6d425b2471bdf651b46c2f5a636f5a9e3fa94c78337d  DeltaForce-CN-Android-v1.201.37117.67.apk' | sha256sum -c -
+echo '546f3d60b114ddd80e45a708d2d6e130  DeltaForce-CN-Android-v1.201.37117.67.apk' | md5sum -c -
+```
