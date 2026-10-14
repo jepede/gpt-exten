@@ -91,8 +91,10 @@ class Reader:
         if out.returncode: return []
         names=[]
         for line in out.stdout.splitlines():
-            m=re.search(r'/[^/]*/[^/]*/[^/]*/([^/]*)/',line)
-            if m: names.append(m.group(1))
+            parts=line.split('/')
+            # debugfs -p entries: /inode/mode/uid/gid/name/type/
+            if len(parts)>5 and parts[1].isdigit():
+                names.append(parts[5])
         log('LIST',p,names[:80])
         return names
     def copy(self,source,dest):
