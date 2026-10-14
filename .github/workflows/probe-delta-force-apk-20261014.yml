@@ -62,3 +62,26 @@ jobs:
           path: probe/
           retention-days: 1
           if-no-files-found: warn
+
+      - name: Verify Tencent CDN APK headers and APK magic (no full download)
+        shell: bash
+        run: |
+          python - <<'PY'
+          import requests
+          from urllib.parse import urlsplit
+          url='https://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/546F3D60B114DDD80E45A708D2D6E130.apk?fsname=com.tencent.tmgp.dfm_1.201.37117.67.apk'
+          print('Expected official URL:',url)
+          for method in ('HEAD','GET'):
+            try:
+              kw=dict(timeout=30,allow_redirects=True,headers={'User-Agent':'Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Mobile Safari/537.36'})
+              if method=='GET': kw['stream']=True;kw['headers']['Range']='bytes=0-31'
+              r=requests.request(method,url,**kw)
+              print('METHOD:',method,'STATUS:',r.status_code,'FINAL:',r.url)
+              for k in ['Content-Type','Content-Length','Content-Range','Accept-Ranges','Last-Modified','ETag','Content-Disposition']:
+                print(k+':',r.headers.get(k))
+              if method=='GET':
+                b=next(r.iter_content(chunk_size=32),b'')
+                print('first bytes:',repr(b[:32]),'is_zip:',b[:4]==b'PK\\x03\\x04')
+              r.close()
+            except Exception as e:print(method,'error',repr(e))
+          PY
