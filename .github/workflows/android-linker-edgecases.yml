@@ -104,6 +104,8 @@ jobs:
         run: |
           set -euo pipefail
           if test -d edgecases; then
+            cp stress-tests/edgecases/packed_compare.py edgecases/packed_compare.py
+            cp stress-tests/edgecases/generate.py edgecases/generate.py
             tar -czf android-arm64-edgecases-20261015.tar.gz -C edgecases .
             sha256sum android-arm64-edgecases-20261015.tar.gz > EDGE_SHA256SUMS
             test "$(stat -c%s android-arm64-edgecases-20261015.tar.gz)" -lt 500000000
