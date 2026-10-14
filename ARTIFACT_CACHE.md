@@ -1924,3 +1924,93 @@ Call download_workflow_artifact for repo jepede/gpt-exten with artifact_id=11833
 ### Restore
 
 Download workflow artifact 11833176641 from jepede/gpt-exten, verify artifact ZIP SHA256, extract custom-linker-arm64-compat-kit-v2.tar.gz and verify SHA256, then extract compatibility/ components.
+
+
+## Artifact Record: GDB Multiarch 15.1 x86_64 for QEMU AArch64 debugging (2026-10-14)
+
+- **Name:** GDB Multiarch debugger for Android ARM64 QEMU
+- **Version:** 15.1-1ubuntu1~24.04.1-python3.12-v3-20261014
+- **Platform:** Ubuntu 24.04 / Linux
+- **Architecture:** x86_64 host, AArch64 target remote
+- **Workflow:** `.github/workflows/fetch-gdb-multiarch-arm64-debug.yml` on branch `work/aosp-linker-analysis-20261013`
+- **Run ID:** `38516782411` (success)
+- **Artifact Name:** `gdb-multiarch-ubuntu2404-x86_64`
+- **Artifact ID:** `11871824237`
+- **Artifact ZIP File:** `gdb-multiarch-x86_64-portable-v3.zip` (local artifact download name)
+- **Artifact ZIP Size:** `33974608` bytes
+- **Artifact ZIP SHA256:** `0b6674bd5241f169eada855d657f79554fbba1d061bc9304d1e2d0526ae6a857`
+- **Created At:** `2026-10-14T05:28:26Z`
+- **Expires At:** `2027-01-12T05:28:01Z` (actual GitHub value)
+- **Storage Mode:** `SINGLE`
+- **Original File:** `gdb-multiarch-ubuntu2404-x86_64.tar.gz`
+- **Original Size:** `34214965` bytes
+- **Original SHA256:** `e4cf124f92272c12eaca6b38663f58c5983244987855544985a661458fae9d4d`
+- **Part Count:** `1`
+- **Requested Retention:** `400 days` (actual expiry governs)
+- **Source:** Official Ubuntu 24.04 `gdb-multiarch` distribution package and Python3.12 dependencies.
+- **Validation:** `--version` GDB 15.1; `set architecture aarch64`; GDB Python works; connected to QEMU `-g PORT` and read PC/SP + stack of actual Android ARM64 packed custom-linker executable, continued to normal exit. Portable wrapper may depend on x86_64 glibc compatibility.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| GDB Multiarch portable bundle | 15.1 Python3.12 v3 | Ubuntu24.04 Linux | x86_64 host, AArch64 target | `gdb-multiarch-ubuntu2404-x86_64.tar.gz` | `e4cf124f92272c12eaca6b38663f58c5983244987855544985a661458fae9d4d` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---:|---:|---|---:|---|---|---|
+| 1/1 | `11871824237` | `gdb-multiarch-ubuntu2404-x86_64` | `33974608` | `0b6674bd5241f169eada855d657f79554fbba1d061bc9304d1e2d0526ae6a857` | `2026-10-14T05:28:26Z` | `2027-01-12T05:28:01Z` |
+
+### Restore
+
+Download artifact ID `11871824237` from repo `jepede/gpt-exten`, check ZIP SHA256, extract `gdb-multiarch-ubuntu2404-x86_64.tar.gz`, check its SHA256, unpack; validate included per-file `SHA256SUMS.txt` inside the extracted portable root. Run `./gdb-multiarch.sh`.
+
+## Artifact Record: Official Google Android 36 AArch64 Bionic runtime libraries (2026-10-14)
+
+- **Name:** Official Android API36 ARM64 Bionic runtime sysroot
+- **Version:** android-36-default-arm64-v8a-r02-20261014
+- **Platform:** Android API 36 SDK system image runtime (extracted Bionic libraries and loader)
+- **Architecture:** arm64-v8a / AArch64 (emulated using x86_64 host QEMU)
+- **Source:** `https://dl.google.com/android/repository/sys-img/android/arm64-v8a-36_r02.zip`
+- **Source Archive Size:** `810736863` bytes (original image not uploaded because it exceeds 512MB single-artifact limit)
+- **Source Archive SHA256:** `c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1` (validated against official SDK XML SHA1)
+- **Extraction:** official Google image ZIP -> GPT `system.img` -> dynamic `super` -> logical `system` ext4 -> `com.android.runtime.apex` and `com.android.art.apex` -> ELF files. Extraction workflow uses `lpunpack` rebuilt from public Apache-licensed upstream source. Outputs REAL runtime .so binaries, not NDK stubs.
+- **Workflow:** `.github/workflows/fetch-aosp-arm64-bionic-runtime.yml` and `compatibility/tools/extract_aosp_runtime.py` on `work/aosp-linker-analysis-20261013`
+- **Run ID:** `38517156477` (success)
+- **Artifact Name:** `aosp-arm64-bionic-runtime`
+- **Artifact ID:** `11872515999`
+- **Artifact ZIP File:** `aosp-arm64-bionic-runtime-android36.zip` (local download name)
+- **Artifact ZIP Size:** `13982231` bytes
+- **Artifact ZIP SHA256:** `b2318392c4b67c242de6bf8f49b5a00466d9b7386a7b0f848048211fa94e2db3`
+- **Created At:** `2026-10-14T05:33:01Z`
+- **Expires At:** `2027-01-12T05:32:10Z` (actual GitHub value)
+- **Storage Mode:** `SINGLE`
+- **Original File:** `aosp-arm64-bionic-runtime.tar.gz`
+- **Original Size:** `14020506` bytes
+- **Original SHA256:** `0d0c5c925cbee0c461b42a6df104e9316b52ca822c73bdb42fcd4100eae9ee8e`
+- **Part Count:** `1`
+- **Requested Retention:** `400 days` (actual expiry governs)
+- **Validation:** Extracted 54 ARM64 runtime files, verified native ARM64 linker64, libc, libdl and libm. NDK r28c API35 executable boots under cached QEMU AArch64 static 7.2.22 with this runtime. The user private custom-linker 45-case packed-vs-native matrix passed defined runtime assertions. QEMU guest `-p 16384` separate 12/12 simulated page-size checks. Minimal runtime sysroot lacks Android device `/linkerconfig/ld.config.txt`; tests are not a device certification. App `libc++_shared.so` was added separately from the NDK for C++ tests, NOT part of this AOSP runtime artifact.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Bionic linker64 | Android API36 default r02 | Android 36 runtime | AArch64 | `sysroot/system/bin/linker64` | `30ed9bea070250e0b080c8a84d8398baab1b4eb95a90bfced82a94d5f235144b` |
+| Bionic libc | Android API36 default r02 | Android 36 runtime | AArch64 | `sysroot/apex/com.android.runtime/lib64/bionic/libc.so` | `d3f8599b8b3f00101a31f94ac170ceb5875ee8446c201cb18382b2e02df84301` |
+| Bionic libdl | Android API36 default r02 | Android 36 runtime | AArch64 | `sysroot/apex/com.android.runtime/lib64/bionic/libdl.so` | `9f6447d910742a57b398a6a3f31746e02302ee9547da6d02757f001058a69df3` |
+| Bionic libm | Android API36 default r02 | Android 36 runtime | AArch64 | `sysroot/apex/com.android.runtime/lib64/bionic/libm.so` | `44433149f62eeb8f09f38ecd3566683fac01a0f89de6ea6d15f6e4deca1ba4bc` |
+| Android system libc++ | Android API36 default r02 | Android 36 runtime | AArch64 | `sysroot/system/lib64/libc++.so` | `2267f93b8b3c9d1967f1833d5f71c7312213c43bb291250cf772800763037fb9` |
+| Android system liblog | Android API36 default r02 | Android 36 runtime | AArch64 | `sysroot/system/lib64/liblog.so` | `efcce90970ed85d61b9c05791ad76ff5f573035b1c0f7d2a3839063c7db5d1a0` |
+| Minimal runtime archive | Android API36 default r02 | Linux host / Android 36 runtime | x86_64 extraction, AArch64 payload | `aosp-arm64-bionic-runtime.tar.gz` | `0d0c5c925cbee0c461b42a6df104e9316b52ca822c73bdb42fcd4100eae9ee8e` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---:|---:|---|---:|---|---|---|
+| 1/1 | `11872515999` | `aosp-arm64-bionic-runtime` | `13982231` | `b2318392c4b67c242de6bf8f49b5a00466d9b7386a7b0f848048211fa94e2db3` | `2026-10-14T05:33:01Z` | `2027-01-12T05:32:10Z` |
+
+### Restore
+
+Download artifact `11872515999` from repo `jepede/gpt-exten`; verify downloaded ZIP SHA256 `b2318392...`; unzip, check nested tar SHA256 via included `SHA256SUMS.txt`; extract to runtime root so `sysroot/system/bin/linker64` exists. For C++ tests separately add NDK r28c `libc++_shared.so`. Use `qemu-aarch64-static -L SYSROOT` with Android `LD_LIBRARY_PATH` and **remove host `LD_PRELOAD`**.
