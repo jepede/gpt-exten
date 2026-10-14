@@ -26,6 +26,9 @@
 | constructors | 256 × scale 个初始化函数、析构记录 | C ABI 初始化生命周期 |
 | ifunc_weak | IFUNC + 未定义弱符号 | 符号选择与弱符号返回值 |
 | cpp_catch | 跨 DSO C++ 3000 次调用/1500 次异常 | 异常传播和 unwind |
+| dlopen_mt | 8 线程并发共 2048 次 dlopen/dlsym/dlclose | Loader 锁、句柄生命周期与 TLS |
+| tls_dtor | 48 线程，跨共享库 thread_local 析构计数 | __cxa_thread_atexit 与跨 DSO TLS 生命周期 |
+| phdr_self | 使用 dl_iterate_phdr 覆盖主程序 main 指令地址 | ELF 模块清单、load bias 与 PHDR 正确性 |
 | vers_main | 同名双版本导出 VERS_1/VERS_2 | GNU symbol version |
 
 生成的所有 C/C++ 测试源文件和编译、执行日志会保存在 `--out`。
@@ -45,7 +48,7 @@ python3 stress-tests/stress_suite.py \
 
 使用 `--page16k` 独立验证 QEMU 16KiB Guest（并非 16KiB 真机）。`--scale 4` 表示 32768 指针重定位和 1024 个构造函数。
 
-不提供 `--packer` 与 `--shell` 时只进行**原生基线测试**，不会将基线结果冒充加壳结果。加壳模式按以下条件判断：Packer 正常退出，原生与加壳程序均正常退出，忽略带 `[LINKER]`/ `[SHELL]` 前缀的调试日志后 stdout 一致。另有五类损坏 ELF 负面测试，检查 Packer 必须拒绝。
+不提供 `--packer` 与 `--shell` 时只进行**原生基线测试**，不会将基线结果冒充加壳结果。加壳模式按以下条件判断：Packer 正常退出，原生与加壳程序均正常退出，忽略带 `[LINKER]`/ `[SHELL]` 前缀的调试日志后 stdout 一致。另有七类损坏 ELF 负面测试，检查 Packer 必须拒绝。
 
 ## 原生 16KiB 边界说明
 
@@ -54,3 +57,7 @@ Android/Bionic 可能拒绝 PT_LOAD `p_align=4096` 的 ELF，这是原生 linker
 ## 诊断与局限
 
 `results.json` 每轮保存退出码及比较结果；`logs/*.native.N.log` 和 `logs/*.packed.N.log` 保存完整 stdout、stderr，日志中含调用命令，方便 GDB 复现。QEMU 的 Guest 模拟无法代替真实 Android 的 linkerconfig、SELinux、bionic 所有 API 版本行为。所有异常或超时都按失败计数，不能用原生退出码等于加壳退出码替代语义比较。
+
+## 测试结果真实性
+
+现有 GitHub Actions 的 `stress-native-reference` Job **只运行原生 Bionic 基线**，没有传入 `--packer/--shell`，不得称为加壳兼容性结果。必须提供实际 Phase2 私有 Packer 与 Shell 可执行文件，在对应 Android/Bionic rootfs 中用 `--packer --shell` 跑通并取得 `packed_mode=true` 的 `results.json` 后才能汇报加壳通过率。
