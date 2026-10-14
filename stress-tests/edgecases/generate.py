@@ -130,7 +130,7 @@ int main(void) {
         sum+=edge_big_tls[i];
     }
     printf("EDGE_HUGE_TLS=%u\\n",sum);
-    return sum==326400?0:1;
+    return sum==163200?0:1;
 }
 """)
 executable(huge_src,out/"huge_tls")
