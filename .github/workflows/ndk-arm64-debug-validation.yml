@@ -1,0 +1,167 @@
+name: ARM64 NDK Debug Validation (cached)
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/ndk-arm64-debug-validation.yml'
+      - 'tooling/arm64-ndk-debug/**'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # Reuse EXACT existing cached artifacts. Never redownload the NDK from Google.
+      - name: NDK cached artifact part 00
+        uses: actions/download-artifact@v4
+        with:
+          name: ndk-r28c-part-00
+          run-id: 31684150811
+          github-token: ${{ github.token }}
+          path: stage/ndk-part00
+
+      - name: NDK cached artifact part 01
+        uses: actions/download-artifact@v4
+        with:
+          name: ndk-r28c-part-01
+          run-id: 31684150811
+          github-token: ${{ github.token }}
+          path: stage/ndk-part01
+
+      - name: QEMU user-static cached artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: qemu-user-static-7.2-deb12u18-amd64
+          run-id: 32748029497
+          github-token: ${{ github.token }}
+          path: stage/qemu-package
+
+      - name: GDB Multiarch cached artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: gdb-multiarch-ubuntu2404-x86_64
+          run-id: 38516782411
+          github-token: ${{ github.token }}
+          path: stage/gdb-package
+
+      - name: Android 36 AArch64 Bionic runtime cached artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: aosp-arm64-bionic-runtime
+          run-id: 38517156477
+          github-token: ${{ github.token }}
+          path: stage/bionic-package
+
+      - name: Verify NDK split SHA256 and reconstruct original
+        shell: bash
+        run: |
+          set -euxo pipefail
+          P0="$(find stage/ndk-part00 -type f -name 'ndk-r28c.part.00' -print -quit)"
+          P1="$(find stage/ndk-part01 -type f -name 'ndk-r28c.part.01' -print -quit)"
+          test -n "$P0" && test -n "$P1"
+          printf '6e87d3bb98c2bfcdb9a703affd174b85ef00fff69b9aa0056372f79046308fa1  %s\n' "$P0" | sha256sum -c -
+          printf 'bf9baef30047e4a7e1040034619728cce0b291d76e4d67b44a0d5d0554c0197c  %s\n' "$P1" | sha256sum -c -
+          cat "$P0" "$P1" > stage/android-ndk-r28c-linux.zip
+          printf 'dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f  stage/android-ndk-r28c-linux.zip\n' | sha256sum -c -
+          unzip -q stage/android-ndk-r28c-linux.zip -d stage/ndk-installed
+          test -x stage/ndk-installed/android-ndk-r28c/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang
+          echo "NDK_ROOT=$GITHUB_WORKSPACE/stage/ndk-installed/android-ndk-r28c" >> "$GITHUB_ENV"
+          mkdir -p results
+          sha256sum stage/android-ndk-r28c-linux.zip > results/NDK_SHA256.txt
+
+      - name: Restore saved QEMU, GDB and Android Bionic tools
+        shell: bash
+        run: |
+          set -euxo pipefail
+          QEMU_DEB="$(find stage/qemu-package -type f -name '*.deb' -print -quit)"
+          printf 'c3e3ba2bd87f8c5b9a5da5ef21b5a3b82d7c63b89dd448d9ddaa4eabc5b6e402  %s\n' "$QEMU_DEB" | sha256sum -c -
+          mkdir -p stage/qemu-installed stage/gdb-installed stage/bionic-installed
+          dpkg-deb -x "$QEMU_DEB" stage/qemu-installed
+          QEMU_BIN="$GITHUB_WORKSPACE/stage/qemu-installed/usr/bin/qemu-aarch64-static"
+          test -x "$QEMU_BIN"
+          "$QEMU_BIN" --version | head -3
+          GDB_TAR="$(find stage/gdb-package -type f -name '*.tar.gz' -print -quit)"
+          printf 'e4cf124f92272c12eaca6b38663f58c5983244987855544985a661458fae9d4d  %s\n' "$GDB_TAR" | sha256sum -c -
+          tar -xzf "$GDB_TAR" -C stage/gdb-installed
+          GDB_BIN="$(find "$GITHUB_WORKSPACE/stage/gdb-installed" -type f -name 'gdb-multiarch.sh' -print -quit)"
+          test -n "$GDB_BIN"
+          chmod +x "$GDB_BIN"
+          "$GDB_BIN" --version | head -3
+          BIONIC_TAR="$(find stage/bionic-package -type f -name '*.tar.gz' -print -quit)"
+          printf '0d0c5c925cbee0c461b42a6df104e9316b52ca822c73bdb42fcd4100eae9ee8e  %s\n' "$BIONIC_TAR" | sha256sum -c -
+          tar -xzf "$BIONIC_TAR" -C stage/bionic-installed
+          LINKER="$(find "$GITHUB_WORKSPACE/stage/bionic-installed" -type f -path '*/sysroot/system/bin/linker64' -print -quit)"
+          test -n "$LINKER"
+          SYSROOT="$(dirname "$(dirname "$(dirname "$LINKER")")")"
+          test -f "$SYSROOT/apex/com.android.runtime/lib64/bionic/libc.so"
+          echo "QEMU_AARCH64=$QEMU_BIN" >> "$GITHUB_ENV"
+          echo "GDB_MULTIARCH=$GDB_BIN" >> "$GITHUB_ENV"
+          echo "BIONIC_SYSROOT=$SYSROOT" >> "$GITHUB_ENV"
+          printf '%s\n' "QEMU $QEMU_BIN" "GDB $GDB_BIN" "BIONIC $SYSROOT" > results/RESTORE_PATHS.txt
+
+      - name: Build test ELF and shared library using NDK Clang
+        shell: bash
+        run: |
+          set -euxo pipefail
+          bash tooling/arm64-ndk-debug/build.sh 2>&1 | tee results/build.log
+          mkdir -p "$BIONIC_SYSROOT/data/local/tmp"
+          cp tooling/arm64-ndk-debug/build/probe tooling/arm64-ndk-debug/build/libprobe_plugin.so "$BIONIC_SYSROOT/data/local/tmp/"
+          sha256sum "$BIONIC_SYSROOT/data/local/tmp/"* > results/ELF_SHA256SUMS.txt
+
+      - name: Run real QEMU ARM64/GDB test matrix
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          python3 -u tooling/arm64-ndk-debug/runner.py \
+            --qemu "$QEMU_AARCH64" \
+            --gdb "$GDB_MULTIARCH" \
+            --sysroot "$BIONIC_SYSROOT" \
+            --elf "$GITHUB_WORKSPACE/tooling/arm64-ndk-debug/build/probe" \
+            --logs "$GITHUB_WORKSPACE/results/logs" \
+            --environment "GitHub Actions Ubuntu 24.04 x86_64; cached NDK r28c and QEMU User 7.2" \
+            2>&1 | tee results/test_suite_console.log
+
+      - name: Publish actual results summary
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path("results/logs/results.json")
+          out=["# ARM64 NDK C Debug Validation","",
+               "Environment: GitHub Actions x86_64 Ubuntu 24.04 (NOT the ChatGPT local container).","",
+               "All results come from logs; unsupported checks are not counted as successful.",""]
+          if p.exists():
+              d=json.loads(p.read_text())
+              out+=["## Result counts","",str(d["summary"]),"",
+                    "| Case | Status | Evidence |","|---|---|---|"]
+              for c in d["checks"]:
+                  out.append("| {} | {} | results/logs/{} |".format(c["name"],c["status"],c["log"]))
+          else:
+              out+=["No JSON results produced: see test_suite_console.log and build.log."]
+          Path("results/RESULTS.md").write_text("\n".join(out)+"\n")
+          PY
+          cat results/RESULTS.md
+
+      - name: Upload compact reproducible debug evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arm64-ndk-r28c-debug-validation
+          path: |
+            results/
+            tooling/arm64-ndk-debug/probe.c
+            tooling/arm64-ndk-debug/probe_plugin.c
+            tooling/arm64-ndk-debug/runner.py
+            tooling/arm64-ndk-debug/build.sh
+            tooling/arm64-ndk-debug/build/probe
+            tooling/arm64-ndk-debug/build/libprobe_plugin.so
+          if-no-files-found: warn
+          compression-level: 6
+          retention-days: 400
