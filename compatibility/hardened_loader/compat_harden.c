@@ -149,6 +149,7 @@ int clh_tls_image_fits(uint64_t p_filesz, uint64_t p_memsz, uint64_t p_align,
     if (destination_offset > UINTPTR_MAX - area_base)
         return 0;
     uintptr_t dest = area_base + (uintptr_t)destination_offset;
+    if (p_memsz > UINTPTR_MAX - dest) return 0;
     if (dest % (uintptr_t)p_align != 0) return 0;
     return 1;
 }
