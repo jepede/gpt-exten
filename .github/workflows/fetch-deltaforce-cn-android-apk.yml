@@ -17,7 +17,7 @@ env:
   APK_PACKAGE: "com.tencent.tmgp.dfm"
   APK_SIZE: "1519215938"
   APK_MD5: "546F3D60B114DDD80E45A708D2D6E130"
-  APK_URL: "https://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/546F3D60B114DDD80E45A708D2D6E130.apk?fsname=com.tencent.tmgp.dfm_1.201.37117.67.apk"
+  APK_URL: "http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/546F3D60B114DDD80E45A708D2D6E130.apk?fsname=com.tencent.tmgp.dfm_1.201.37117.67.apk"
   FILE_PREFIX: "DeltaForce-CN-Android-v1.201.37117.67.apk"
 
 jobs:
