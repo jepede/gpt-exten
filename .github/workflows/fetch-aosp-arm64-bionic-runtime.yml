@@ -1,4 +1,5 @@
 name: Extract official Android ARM64 Bionic runtime
+# retry after correcting debugfs ls -p path indexing
 on:
   push:
     branches: [work/aosp-linker-analysis-20261013]
