@@ -98,6 +98,27 @@ jobs:
           if ok!=len(results):
               sys.exit(1)
           PY
+      - name: Test packed comparison harness using copy-only canary (NOT real packing)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > copy_only_packer.py <<'PY'
+          #!/usr/bin/env python3
+          import shutil,sys
+          shutil.copy2(sys.argv[2],sys.argv[3])
+          PY
+          chmod +x copy_only_packer.py
+          python3 stress-tests/edgecases/packed_compare.py \
+            --fixtures-dir "$PWD/edgecases" \
+            --packer "$PWD/copy_only_packer.py" \
+            --shell "$PWD/edgecases/needed72" \
+            --qemu "$PWD/qemu-root/usr/bin/qemu-aarch64-static" \
+            --sysroot "$PWD/runtime/sysroot" \
+            --out "$PWD/harness-canary" \
+            --repeats 1 \
+            --timeout 45
+          test "$(python3 -c 'import json;print(json.load(open("harness-canary/edgecase-results.json"))["counts"]["packed"])')" -eq 12
+          echo 'HARNESS_COPY_ONLY_CANARY=PASS (not a real packed regression)'
       - name: Archive edge fixture source and results
         if: always()
         shell: bash
@@ -106,6 +127,7 @@ jobs:
           if test -d edgecases; then
             cp stress-tests/edgecases/packed_compare.py edgecases/packed_compare.py
             cp stress-tests/edgecases/generate.py edgecases/generate.py
+            if test -f harness-canary/edgecase-results.json; then cp harness-canary/edgecase-results.json edgecases/harness-copy-only-canary.json; fi
             tar -czf android-arm64-edgecases-20261015.tar.gz -C edgecases .
             sha256sum android-arm64-edgecases-20261015.tar.gz > EDGE_SHA256SUMS
             test "$(stat -c%s android-arm64-edgecases-20261015.tar.gz)" -lt 500000000
