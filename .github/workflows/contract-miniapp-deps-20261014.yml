@@ -1,0 +1,39 @@
+name: Contract Miniapp Dependencies 20261014
+on:
+  push:
+    paths:
+      - '.github/workflows/contract-miniapp-deps-20261014.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+      - name: Install pinned dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deps out
+          cd deps
+          npm init -y >/dev/null
+          npm install --save-exact --omit=dev --no-fund --ignore-scripts wx-server-sdk@3.0.1 pdfjs-dist@5.4.296 @napi-rs/canvas@0.1.80 mammoth@1.11.0 exceljs@4.4.0 ajv@8.17.1
+          npm ls --depth=0 > dependency-versions.txt
+          npm audit --omit=dev --json > npm-audit.json || true
+          node -e "const c=require('@napi-rs/canvas'); console.log(c.createCanvas(1,1).toBuffer('image/png').length); import('pdfjs-dist/legacy/build/pdf.mjs').then(p=>console.log('PDF.js',p.version))" > dependency-smoke.txt
+          cd ..
+          tar -czf out/contract-deps-node20-linux-x64.tgz -C deps .
+          sha256sum out/contract-deps-node20-linux-x64.tgz | tee out/SHA256SUMS
+          size=$(stat -c%s out/contract-deps-node20-linux-x64.tgz)
+          test "$size" -lt 500000000 || { echo 'Bundle too large; refusing to upload unsplit artifact'; exit 1; }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contract-miniapp-deps-node20-linux-x64-20261014
+          path: out/
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
