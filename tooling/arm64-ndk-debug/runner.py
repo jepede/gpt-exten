@@ -86,7 +86,20 @@ def gdb_case(ns: argparse.Namespace, log_dir: pathlib.Path, name: str,
                     proc.wait(timeout=3)
     save(log_dir, name + ".gdb.log", raw)
     matched = marker in raw
-    status = verdict(matched, raw, expect=expect)
+    # Do not count a printf following 'continue' as a hit unless GDB
+    # reported the corresponding real stop. These are evidence guards.
+    if name == "software_watch":
+        matched = matched and re.search(r"Old value\s*=.*\nNew value\s*=", raw) is not None
+    elif name.startswith("hardware_") and "watch_user" in name:
+        matched = matched and (
+            re.search(r"(Old value\s*=.*\nNew value\s*=|\nValue\s*=)", raw) is not None
+        )
+    elif name in ("trap_signal", "segv_signal", "aarch64_brk_signal"):
+        sig = "SIGSEGV" if name == "segv_signal" else "SIGTRAP"
+        matched = matched and re.search(
+            r"(?:Program|Thread .*?) received signal\s+" + sig, raw
+        ) is not None
+    status = verdict(bool(matched), raw, expect=expect)
     duration = round(time.monotonic() - start, 2)
     return {"name": name, "status": status, "duration_seconds": duration,
             "returncode": gdb["returncode"],
