@@ -2062,6 +2062,15 @@ Download artifact `11872515999` from repo `jepede/gpt-exten`; verify downloaded 
 | 3/4 | `11913085103` | `deltaforce-cn-android-v1.201.37117.67-part-02` | `419430400` | `1be7e7ef8ca01bdd6677095fb6e5c20b297d0c2386a9269e58a9f3cc59773639` | `419430612` | `sha256:80d92f97ebabc0f97cc6e69ee2fba6e27cac8b702b874626fff4035ebf4b6b17` | `2026-10-14T16:24:57Z` | `2027-01-12T16:18:07Z` |
 | 4/4 | `11912650314` | `deltaforce-cn-android-v1.201.37117.67-part-03` | `260924738` | `ac3582fae315b8cc283df13dd1216df3f07245791f50cb90feecfc2ff74cb169` | `260924950` | `sha256:cb685ddaf4a10e0ca73a9503dae30b6143295f3cc2a9248952ba6738bd020db0` | `2026-10-14T16:25:01Z` | `2027-01-12T16:18:07Z` |
 
+### Independent persisted-Artifact restore check (2026-10-14)
+
+- Verification Workflow: `.github/workflows/verify-deltaforce-cn-android-apk.yml`
+- Verification Run ID: `38639952423`
+- Verification Conclusion: `success` / `PASS`
+- Verification Method: **re-download all four stored ZIP Artifacts via GitHub API**; validate each Archive SHA256 against GitHub's recorded digest, extract and validate every raw part SHA256, concatenate in numeric order, validate original length `1519215938`, SHA256 `af03179c62ac57f05e4e6d425b2471bdf651b46c2f5a636f5a9e3fa94c78337d`, MD5 `546f3d60b114ddd80e45a708d2d6e130`, and APK `AndroidManifest.xml` plus `arm64-v8a` entries.
+- Log: `https://github.com/jepede/gpt-exten/actions/runs/38639952423`
+- Report Artifact: `deltaforce-cn-apk-restoration-verification` (Artifact ID `11928879281`, verification metadata only, expires at `2026-10-15T21:24:43Z`; this temporary report is not a replacement for the APK split archives).
+
 ### Restore
 
 Download all four Artifact ZIPs from run `38596903200` (IDs above), using `download_workflow_artifact` or the GitHub CLI. Verify each downloaded Artifact ZIP SHA256 against **Artifact ZIP Digest**; extract each ZIP, find `DeltaForce-CN-Android-v1.201.37117.67.apk.part.00` through `DeltaForce-CN-Android-v1.201.37117.67.apk.part.03`; then concatenate **in numeric order** (00, 01, 02, 03) into `DeltaForce-CN-Android-v1.201.37117.67.apk`. Check every raw part SHA256 against the Contents table, then the reconstructed file SHA256 `af03179c62ac57f05e4e6d425b2471bdf651b46c2f5a636f5a9e3fa94c78337d` and MD5 `546f3d60b114ddd80e45a708d2d6e130`.
