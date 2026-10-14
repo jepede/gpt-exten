@@ -16,6 +16,13 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq python3 curl unzip e2fsprogs file erofs-utils android-sdk-libsparse-utils >/dev/null
+      - name: Build Android super partition unpacker
+        run: |
+          set -euo pipefail
+          git clone --depth=1 https://github.com/soe1hom-arch/lpunpack.git /tmp/android-lpunpack
+          echo "LPUNPACK_SOURCE_COMMIT=$(git -C /tmp/android-lpunpack rev-parse HEAD)"
+          (cd /tmp/android-lpunpack && go build -o /tmp/lpunpack .)
+          sudo install -m 0755 /tmp/lpunpack /usr/local/bin/lpunpack
       - name: Fetch official Google SDK ARM64 system image
         shell: bash
         run: |
