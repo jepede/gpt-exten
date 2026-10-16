@@ -8,30 +8,57 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   download:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
-      - name: Download Android NDK r28c for Linux
+      # Only the explicitly requested 2026-10-16 refresh deletes the August cache.
+      - name: Remove the two previous NDK r28c artifacts
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, '[replace-ndk-r28c]')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          for id in 9174697344 9174699121; do
+            if gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}" --jq '.id' >/dev/null 2>&1; then
+              gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}"
+              echo "Deleted old Android NDK r28c artifact ${id}"
+            else
+              echo "Previous artifact ${id} is already absent"
+            fi
+          done
+          for id in 9174697344 9174699121; do
+            if gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}" --jq '.id' >/dev/null 2>&1; then
+              echo "::error::Old artifact ${id} still exists"
+              exit 1
+            fi
+          done
+
+      - name: Download NDK r28c afresh from Google
         run: |
           set -euxo pipefail
           mkdir -p artifact parts
-          curl -fL --retry 5 --retry-delay 2 \
+          curl -fL --retry 5 --retry-delay 3 --connect-timeout 30 \
             -o artifact/android-ndk-r28c-linux.zip \
             https://dl.google.com/android/repository/android-ndk-r28c-linux.zip
 
-      - name: Verify SHA-1 and split into two parts
+      - name: Verify source SHA-1 SHA256 and split into 2 parts
         run: |
           set -euxo pipefail
           echo 'a7b54a5de87fecd125a17d54f73c446199e72a64  artifact/android-ndk-r28c-linux.zip' | sha1sum -c -
-          stat -c '%n %s bytes' artifact/android-ndk-r28c-linux.zip
+          echo 'dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f  artifact/android-ndk-r28c-linux.zip' | sha256sum -c -
+          test "$(stat -c %s artifact/android-ndk-r28c-linux.zip)" -eq 722261334
           split -b 380M -d -a 2 artifact/android-ndk-r28c-linux.zip parts/ndk-r28c.part.
-          ls -lh parts/
           test -f parts/ndk-r28c.part.00
           test -f parts/ndk-r28c.part.01
           test ! -f parts/ndk-r28c.part.02
+          test "$(stat -c %s parts/ndk-r28c.part.00)" -lt 512000000
+          test "$(stat -c %s parts/ndk-r28c.part.01)" -lt 512000000
+          sha256sum artifact/android-ndk-r28c-linux.zip parts/*
+          stat -c '%n %s bytes' artifact/android-ndk-r28c-linux.zip parts/*
 
       - name: Upload part 00
         uses: actions/upload-artifact@v4
