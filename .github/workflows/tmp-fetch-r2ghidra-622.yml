@@ -1,0 +1,36 @@
+name: Fetch r2ghidra 6.2.2 for ARM64 lab
+on:
+  push:
+    branches:
+      - tmp/r2ghidra-622-20261016
+    paths:
+      - .github/workflows/tmp-fetch-r2ghidra-622.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Download official release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p payload
+          cd payload
+          BASE='https://github.com/radareorg/r2ghidra/releases/download/6.2.2'
+          curl -fL --retry 4 --retry-all-errors -o r2ghidra_6.2.2_amd64.deb "$BASE/r2ghidra_6.2.2_amd64.deb"
+          curl -fL --retry 4 --retry-all-errors -o r2ghidra_sleigh-6.2.2.zip "$BASE/r2ghidra_sleigh-6.2.2.zip"
+          printf '%s  %s\n' 248f5f3f1a8ba67dac8209fa7ae0688c21d9c2802021bb77f1b9dcdf876c729f r2ghidra_6.2.2_amd64.deb > SHA256SUMS
+          printf '%s  %s\n' 05ff67acce1f32e0d97aecb59f6f2a782cc9e37c4b40ede6b66386cd651086a0 r2ghidra_sleigh-6.2.2.zip >> SHA256SUMS
+          sha256sum -c SHA256SUMS
+          du -h ./*
+      - name: Upload cached plugin assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2ghidra-6.2.2-amd64-sleigh
+          path: payload/
+          if-no-files-found: error
+          retention-days: 400
+          compression-level: 0
