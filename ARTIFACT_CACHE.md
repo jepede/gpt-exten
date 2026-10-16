@@ -18,6 +18,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | TinyHTTPS OpenSSL + curl reference sources | OpenSSL 4.0.3 + curl 8.22.0 | Any | Any | `37458536791` | SINGLE | `2027-01-04T11:45:33Z` |
 | PUBG MOBILE Global Base APK | 4.6.0 (21525) | Android | arm64-v8a | `37217716536` | SINGLE | `2027-01-02T16:41:47Z` |
 | radare2 | 6.2.2 | Linux / Debian | x86_64 | `36873712969` | SINGLE | `2026-12-30T14:06:12Z` |
+| r2ghidra | 6.2.2 | Debian / Linux | x86_64 | `38850726295` | SINGLE | `2027-01-14T04:27:37Z` |
 | TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-releasecomplete-v3 | Linux | x86_64 | `34698530131` | SINGLE | `2026-12-11T14:10:58Z` |
 | Android SDK Build-Tools | 34.0.0 | Linux | x86_64 | `34698130020` | SINGLE | `2026-12-11T14:02:53Z` |
 | TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-kotlincompile-v2 | Linux | x86_64 | `34698303924` | SINGLE | `2026-12-11T14:06:23Z` |
@@ -2131,3 +2132,46 @@ echo '546f3d60b114ddd80e45a708d2d6e130  DeltaForce-CN-Android-v1.201.37117.67.ap
 ### Restore
 
 Call `download_workflow_artifact` with repo `jepede/gpt-exten`, Artifact ID `11931276591`. Verify the ZIP SHA256 above, unpack logs and binaries, and validate the compiled probe ELF and shared-library checksums before execution. No new NDK resource download was performed during this run; both existing NDK artifact parts were reused.
+
+## r2ghidra 6.2.2 Linux x86_64 (radare2 6.2.2)
+
+- Name: `r2ghidra`
+- Version: `6.2.2`
+- Platform: `Debian / Linux`
+- Architecture: `x86_64`
+- Workflow: `.github/workflows/tmp-fetch-r2ghidra-622.yml` (temporary branch `tmp/r2ghidra-622-20261016`)
+- Run ID: `38850726295`
+- Run Number: `1`
+- Run Conclusion: `success`
+- Sources: official `radareorg/r2ghidra` GitHub release/tag `6.2.2` (`.deb` and Sleigh archive)
+- Requested Retention: `400 days`
+- Effective Retention: `90 days` (actual GitHub expiration)
+- Storage Mode: `SINGLE`
+- Artifact Name: `r2ghidra-6.2.2-amd64-sleigh`
+- Artifact ID: `12024094996`
+- File: `r2ghidra-6.2.2-amd64-sleigh-artifact.zip` (ZIP emitted by upload-artifact)
+- Size: `24255437 bytes` (artifact archive)
+- SHA256: `2be8591084f0fd0507df31086551baa8eb7e65472322cd45495b55faa4e34776` (artifact archive)
+- Created At: `2026-10-16T04:27:42Z`
+- Expires At: `2027-01-14T04:27:37Z`
+- Original File: `concat(r2ghidra_6.2.2_amd64.deb, r2ghidra_sleigh-6.2.2.zip)` (ordered, *not* an individual filename)
+- Original Size: `24254838 bytes` (sum of both original asset sizes)
+- Original SHA256: `90a82ffdf824e8f325b8c60fd3917c734b589009c6256a2196878967f96b891d` (SHA256 of ordered raw concatenation)
+- Part Count: `1`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Native Ghidra radare2 plugin | 6.2.2 | Debian / Linux | x86_64 | `r2ghidra_6.2.2_amd64.deb` | `248f5f3f1a8ba67dac8209fa7ae0688c21d9c2802021bb77f1b9dcdf876c729f` |
+| r2ghidra Sleigh language bundle | 6.2.2 | Any | Any | `r2ghidra_sleigh-6.2.2.zip` | `05ff67acce1f32e0d97aecb59f6f2a782cc9e37c4b40ede6b66386cd651086a0` |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---:|---:|---|---:|---|---|---|
+| 1/1 | `12024094996` | `r2ghidra-6.2.2-amd64-sleigh` | `24255437` | `2be8591084f0fd0507df31086551baa8eb7e65472322cd45495b55faa4e34776` | `2026-10-16T04:27:42Z` | `2027-01-14T04:27:37Z` |
+
+### Restore
+
+Check the actual artifact exists, is unexpired, and matches `Name+Version+Platform+Architecture`; download existing Artifact `12024094996` through `download_workflow_artifact`. Verify the outer ZIP SHA256, extract both files and `SHA256SUMS`, verify SHA256 for both assets, and optionally verify the original concatenated payload hash. The `.deb` contains `core_ghidra.so`, r2fidb, sleighc, and embedded Sleigh files. For isolated radare2 installation, extract with `dpkg-deb -x`, symlink the plugin and Sleigh directory under the radare2 library plugin prefix, and export `SLEIGHHOME` to that real Sleigh path. Current user-mode ARM64 sample passed `pdg` and `pdgj` under radare2 6.2.2.
