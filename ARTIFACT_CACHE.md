@@ -26,7 +26,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | Temurin JDK | 17.0.20.1+1 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |
 | Gradle | 8.10.2 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |
 | TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-deps-v1 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |
-| Android NDK | r28c | Linux | x86_64 | `38919207617` | SPLIT × 2 | `2027-01-14T14:51:48Z` |
+| Android NDK | r28c | Linux | x86_64 | `38921184228` | SPLIT × 3 | `2027-01-14T15:06:12Z` |
 | USDA FoodData Central Foundation Foods CSV | 2026-04-30 | Any | Any | `31695314247` | SINGLE | `2026-11-11T11:23:52Z` |
 | USDA FoodData Central SR Legacy CSV | 2018-04 | Any | Any | `31695560856` | SINGLE | `2026-11-11T11:27:10Z` |
 | CulinaryDB CSV bundle | 2018-03-15 | Any | Any | `31723890750` | SINGLE | `2026-11-11T17:04:36Z` |
@@ -88,22 +88,24 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 ## Android NDK r28c
 
 - Workflow: `.github/workflows/download-ndk-r28c.yml`
-- Run ID: `38919207617`
-- Run Number: `7`
+- Run ID: `38921184228`
+- Run Number: `8`
 - Run Conclusion: `success`
-- Source: `https://dl.google.com/android/repository/android-ndk-r28c-linux.zip` (new download performed 2026-10-16)
+- Run URL: https://github.com/jepede/gpt-exten/actions/runs/38921184228
+- Source: `https://dl.google.com/android/repository/android-ndk-r28c-linux.zip` (re-downloaded 2026-10-16)
 - Repository Visibility: `Public`
 - Requested Retention: `400 days`
-- Effective Retention: `90 days` (actual GitHub `expires_at` below)
+- Effective Retention: `90 days` (actual GitHub `expires_at` is authoritative)
 - Storage Mode: `SPLIT`
 - Original File: `android-ndk-r28c-linux.zip`
 - Original Size: `722261334` bytes
-- Original SHA-1: `a7b54a5de87fecd125a17d54f73c446199e72a64` (verified in refreshed workflow)
-- Original SHA256: `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f` (verified in refreshed workflow)
-- Part Count: `2`
-- Created At: `2026-10-16T14:52:06Z` to `2026-10-16T14:52:11Z`
-- Expires At: `2027-01-14T14:51:48Z`
-- Old Artifact IDs deleted and absence verified before re-download: `9174697344`, `9174699121`
+- Original SHA-1: `a7b54a5de87fecd125a17d54f73c446199e72a64` (verified by the workflow)
+- Original SHA256: `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f` (verified by the workflow)
+- Part Count: `3`
+- Created At: `2026-10-16T15:06:28Z` to `2026-10-16T15:06:36Z`
+- Expires At: `2027-01-14T15:06:12Z` (all three artifacts, verified by GitHub API)
+- Previous artifact IDs deleted and verified absent before refresh: `12053422732`, `12053417838`
+- Split verification: exactly three equally sized raw chunks; concatenated SHA256 matched the original in Actions.
 
 ### Contents
 
@@ -115,12 +117,14 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Part | Artifact ID | Artifact Name | Raw Size | Raw SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
 |---:|---:|---|---:|---|---:|---|---|---|
-| 1/2 | `12053422732` | `ndk-r28c-part-00` | `398458880` | `6e87d3bb98c2bfcdb9a703affd174b85ef00fff69b9aa0056372f79046308fa1` | `398459026` | `sha256:f231c2010ffec2824a6da2f5f6181f2a7b5f208446c8456774e28611dbb44d36` | `2026-10-16T14:52:06Z` | `2027-01-14T14:51:48Z` |
-| 2/2 | `12053417838` | `ndk-r28c-part-01` | `323802454` | `bf9baef30047e4a7e1040034619728cce0b291d76e4d67b44a0d5d0554c0197c` | `323802600` | `sha256:38bb7dcb10224b07186244efb1dd47388df1e12d3387c0d8b3f2c5e53a98b537` | `2026-10-16T14:52:11Z` | `2027-01-14T14:51:48Z` |
+| 1/3 | `12053444812` | `ndk-r28c-part-00` | `240753778` | `e487b472b81d478714bb9550575e75ddf13d7159fa6dd960e98e7ce9e0c0340d` | `240753924` | `sha256:006a5c80f627bb631d5ea71b6ffb36c4afb528b5c6bb34bd682e7846a0fffae7` | `2026-10-16T15:06:28Z` | `2027-01-14T15:06:12Z` |
+| 2/3 | `12054800876` | `ndk-r28c-part-01` | `240753778` | `02cc5d048dc3560f705c614e1782a7f1664f286f7091da8c5e419f7cf419223c` | `240753924` | `sha256:e2325d8e5b8e04424e66adc28ce0806fa6585f5cac1e09cb1ab4e291e94f9474` | `2026-10-16T15:06:32Z` | `2027-01-14T15:06:12Z` |
+| 3/3 | `12055205324` | `ndk-r28c-part-02` | `240753778` | `09aab1b4fba172ff21ee44a6ec5b6c7740ae5b52b060c4ca24f7188ce72d90c6` | `240753924` | `sha256:5b07da1d08399f30a9c1e0a511cbca150fa8ee5e7b7d8e8ecf0e3e98cdddd99c` | `2026-10-16T15:06:36Z` | `2027-01-14T15:06:12Z` |
 
 ### Restore
 
-Download each artifact with GitHub connector `download_workflow_artifact` using repository `jepede/gpt-exten` and the corresponding Artifact ID. Both Artifacts are under the 512MB transfer limit. Verify the downloaded Artifact archive SHA256 against the `Artifact Digest` values. Extract `ndk-r28c.part.00` and `ndk-r28c.part.01` from their respective outer ZIP archives, validate each raw part SHA256, concatenate in part order into `android-ndk-r28c-linux.zip`, and finally validate its SHA256 is `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f`.
+Use GitHub connector `download_workflow_artifact` for each Artifact ID (`12053444812`, `12054800876`, `12055205324`) from `jepede/gpt-exten`. Every individual artifact is less than the 512MB download limit. Verify each downloaded outer artifact ZIP SHA256 against its `Artifact Digest` in this index; extract respectively `ndk-r28c.part.00`, `ndk-r28c.part.01`, and `ndk-r28c.part.02`. Verify each raw part's `Raw SHA256` and concatenate in numerical order into `android-ndk-r28c-linux.zip`. Verify the reconstructed file size is `722261334` bytes and SHA256 is `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f`. The CI workflow has already verified that concatenating the three parts reproduces this checksum.
+
 ## USDA FoodData Central Foundation Foods CSV 2026-04-30
 
 - Workflow: `.github/workflows/fetch-fdc-foundation-2026-04.yml`
