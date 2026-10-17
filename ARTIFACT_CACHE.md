@@ -2208,3 +2208,29 @@ Check the actual artifact exists, is unexpired, and matches `Name+Version+Platfo
 | Name | Version | Platform | Architecture | File/Path | SHA256 |
 |---|---|---|---|---|---|
 | PRoot executable and local runtime libraries | 5.1.0-1.3 | Debian 12 / Linux | x86_64 | `proot-debian12-amd64.tar.gz` | `f6a7542a47d74a23954f066c3238a0c39685ef7bcc969e16e78f60b155303f92` |
+
+
+## AOSP GKI ARM64 kernels 6.6 / 6.12, 4 KB / 16 KB v1
+
+- Name: `AOSP GKI ARM64 kernels`
+- Version: `6.6-6.12-4k-16k-v1`
+- Platform: `Android / Linux`
+- Architecture: `AArch64`
+- Workflow: `.github/workflows/fetch-aosp-gki-arm64-kernels-v1.yml`
+- Run ID: `39000440004`
+- Artifact ID: `12088643253`
+- Artifact Name: `aosp-gki-arm64-kernels-6.6-6.12-4k-16k-v1`
+- File: `aosp-gki-kernels.zip`
+- Size: `59660969 bytes`
+- SHA256: `d376f7d45300e489c553f1018facb67c447d6b7a1a8e98804e2fa7d66ae9d19a`
+- Created At: `2026-10-17T03:52:48Z`
+- Expires At: `2027-01-15T03:52:30Z`
+- Storage: `SINGLE`
+- Original File: `aosp-gki-arm64-kernels-6.6-6.12-4k-16k-v1.tar.gz`
+- Original Size: `59660524 bytes`
+- Original SHA256: `dcfebd4ba27c221a743f5b879e5a65ad96ee6420ca67922cf926a8f215863a27`
+- Part Count: `1`
+- Source 6.6: `https://android.googlesource.com/kernel/prebuilts/6.6/arm64`, commit `6104d37087c872b8183f8483ba32e3bc165d3517`
+- Source 6.12: `https://android.googlesource.com/kernel/prebuilts/6.12/arm64`, commit `ba5af8825f23428021efb670c0ad025d6b1e0966`
+
+Public AOSP prebuilt kernels, embedded build configurations, source metadata and SHA256 checksums only. No user program or private target included. ZIP, original TAR.GZ and per-file hashes independently verified after restoration. Boot/runtime compatibility validation is separate from cache integrity.
