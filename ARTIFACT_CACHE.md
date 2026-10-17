@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| PRoot runtime bundle | 5.1.0-1.3 | Debian 12 / Linux | x86_64 | `38999498688` | SINGLE | `2027-01-15T03:37:28Z` |
 | ARM64 NDK C debugging validation | r28c-run38642113778 | Ubuntu 24.04 Linux / Android Bionic API 36 | x86_64 host + AArch64 guest | `38642113778` | SINGLE | `2027-01-12T21:40:57Z` |
 | Delta Force CN Android APK | 1.201.37117.67 | Android | arm64-v8a | `38596903200` | SPLIT × 4 | `2027-01-12T16:18:07Z` |
 | PUBG CTF GL APK | 4.6.0-v1.0.1 | Android | arm64-v8a | `38431125316` | SINGLE | `2027-01-11T16:30:53Z` |
@@ -2182,3 +2183,28 @@ Call `download_workflow_artifact` with repo `jepede/gpt-exten`, Artifact ID `119
 ### Restore
 
 Check the actual artifact exists, is unexpired, and matches `Name+Version+Platform+Architecture`; download existing Artifact `12024094996` through `download_workflow_artifact`. Verify the outer ZIP SHA256, extract both files and `SHA256SUMS`, verify SHA256 for both assets, and optionally verify the original concatenated payload hash. The `.deb` contains `core_ghidra.so`, r2fidb, sleighc, and embedded Sleigh files. For isolated radare2 installation, extract with `dpkg-deb -x`, symlink the plugin and Sleigh directory under the radare2 library plugin prefix, and export `SLEIGHHOME` to that real Sleigh path. Current user-mode ARM64 sample passed `pdg` and `pdgj` under radare2 6.2.2.
+
+
+## PRoot runtime bundle 5.1.0-1.3
+
+- Artifact Name: `proot-debian12-amd64-bundle-20261017`
+- Artifact ID: `12088830875`
+- Run ID: `38999498688`
+- Workflow: `.github/workflows/fetch-proot-deb12-amd64.yml`
+- Artifact File: `proot-debian12-amd64-artifact.zip`
+- Artifact Size: `169181` bytes
+- Artifact SHA256: `60b7ea6d26348f8dedfcee81ff8afc53255ee68b0adbeaf8b151f86379f168ae`
+- Original File: `proot-debian12-amd64.tar.gz`
+- Original Size: `168882` bytes
+- Original SHA256: `f6a7542a47d74a23954f066c3238a0c39685ef7bcc969e16e78f60b155303f92`
+- Created At: `2026-10-17T03:37:37Z`
+- Expires At: `2027-01-15T03:37:28Z` (actual GitHub response, requested retention-days=400)
+- Storage Mode: `SINGLE`
+- Part Count: `1`
+- Download: `download_workflow_artifact` from `jepede/gpt-exten`, Artifact ID `12088830875`; verify ZIP SHA256, extract inner archive, then verify original SHA256.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| PRoot executable and local runtime libraries | 5.1.0-1.3 | Debian 12 / Linux | x86_64 | `proot-debian12-amd64.tar.gz` | `f6a7542a47d74a23954f066c3238a0c39685ef7bcc969e16e78f60b155303f92` |
