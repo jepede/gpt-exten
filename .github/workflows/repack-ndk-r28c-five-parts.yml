@@ -1,0 +1,110 @@
+name: Repack cached Android NDK r28c into five parts
+
+on:
+  push:
+    paths:
+      - '.github/workflows/repack-ndk-r28c-five-parts.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  repack:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Restore original three-part NDK r28c cache (no upstream download)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for n in 00 01 02; do
+            mkdir -p "old/$n"
+            gh run download 38921184228 -R "$GITHUB_REPOSITORY" --name "ndk-r28c-part-$n" --dir "old/$n"
+            test -s "old/$n/ndk-r28c.part.$n"
+          done
+          echo 'e487b472b81d478714bb9550575e75ddf13d7159fa6dd960e98e7ce9e0c0340d  old/00/ndk-r28c.part.00' | sha256sum --check --status
+          echo '02cc5d048dc3560f705c614e1782a7f1664f286f7091da8c5e419f7cf419223c  old/01/ndk-r28c.part.01' | sha256sum --check --status
+          echo '09aab1b4fba172ff21ee44a6ec5b6c7740ae5b52b060c4ca24f7188ce72d90c6  old/02/ndk-r28c.part.02' | sha256sum --check --status
+          echo "Three cached fragments verified"
+
+      - name: Reassemble, verify and repartition into exactly five artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p build five
+          cat old/00/ndk-r28c.part.00 old/01/ndk-r28c.part.01 old/02/ndk-r28c.part.02 > build/android-ndk-r28c-linux.zip
+          test "$(stat -c %s build/android-ndk-r28c-linux.zip)" -eq 722261334
+          echo 'dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f  build/android-ndk-r28c-linux.zip' | sha256sum -c -
+          echo 'a7b54a5de87fecd125a17d54f73c446199e72a64  build/android-ndk-r28c-linux.zip' | sha1sum -c -
+          split -n 5 -d -a 2 build/android-ndk-r28c-linux.zip five/ndk-r28c.part.
+          test "$(find five -maxdepth 1 -type f -name 'ndk-r28c.part.*' | wc -l)" -eq 5
+          for n in 00 01 02 03 04; do
+            test -s "five/ndk-r28c.part.$n"
+            test "$(stat -c %s "five/ndk-r28c.part.$n")" -lt 512000000
+          done
+          cat five/ndk-r28c.part.{00,01,02,03,04} | sha256sum | grep -F 'dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f'
+          {
+            echo "Original File: android-ndk-r28c-linux.zip"
+            echo "Original Size: 722261334"
+            echo "Original SHA256: dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f"
+            echo "Source Cache Run: 38921184228"
+            echo "Part Count: 5"
+            echo "=== Part SHA256 and sizes ==="
+            sha256sum five/ndk-r28c.part.*
+            stat -c '%n %s bytes' five/ndk-r28c.part.*
+          } | tee five-part-manifest.txt
+
+      - name: Upload five-part NDK cache 00
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndk-r28c-five-part-00
+          path: five/ndk-r28c.part.00
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload five-part NDK cache 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndk-r28c-five-part-01
+          path: five/ndk-r28c.part.01
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload five-part NDK cache 02
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndk-r28c-five-part-02
+          path: five/ndk-r28c.part.02
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload five-part NDK cache 03
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndk-r28c-five-part-03
+          path: five/ndk-r28c.part.03
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload five-part NDK cache 04
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndk-r28c-five-part-04
+          path: five/ndk-r28c.part.04
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 400
+
+      - name: Upload tiny manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndk-r28c-five-part-manifest
+          path: five-part-manifest.txt
+          if-no-files-found: error
+          retention-days: 400
