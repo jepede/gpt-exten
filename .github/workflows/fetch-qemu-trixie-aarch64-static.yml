@@ -19,12 +19,14 @@ jobs:
           apt-get update -qq
           mkdir -p /tmp/deb /tmp/payload "$GITHUB_WORKSPACE/output"
           cd /tmp/deb
-          apt-get download qemu-user-static
-          dpkg-deb -x ./qemu-user-static*.deb /tmp/payload
-          bin=/tmp/payload/usr/bin/qemu-aarch64-static
+          apt-get download qemu-user
+          dpkg-deb -x ./qemu-user_*.deb /tmp/payload
+          bin=/tmp/payload/usr/bin/qemu-aarch64
+          if test ! -x "$bin"; then bin=/tmp/payload/usr/bin/qemu-aarch64-static; fi
+          ls -l /tmp/payload/usr/bin/qemu-aarch64*
           test -x "$bin"
           "$bin" --version | tee "$GITHUB_WORKSPACE/output/qemu-version.txt"
-          dpkg-deb -f ./qemu-user-static*.deb Package Version Architecture | tee "$GITHUB_WORKSPACE/output/package.txt"
+          dpkg-deb -f ./qemu-user_*.deb Package Version Architecture | tee "$GITHUB_WORKSPACE/output/package.txt"
           cp "$bin" "$GITHUB_WORKSPACE/output/qemu-aarch64-static"
           cd "$GITHUB_WORKSPACE/output"
           sha256sum qemu-aarch64-static > SHA256SUMS.txt
