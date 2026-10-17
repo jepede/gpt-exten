@@ -89,6 +89,32 @@ jobs:
               if partition=="system":
                   remote=prefix+"/apex"
                   if has(img,remote):rdump(img,remote,tmp/"apex-packages")
+          def split_gpt(img,default_name):
+              with open(img,"rb") as f:
+                  f.seek(512);header=f.read(92)
+                  if header[:8]!=b"EFI PART":return [(default_name,img)]
+                  entry_lba=struct.unpack_from("<Q",header,72)[0]
+                  count,entry_size=struct.unpack_from("<II",header,80)
+                  assert 0<count<=4096 and 128<=entry_size<=4096
+                  f.seek(entry_lba*512);entries=f.read(count*entry_size)
+                  selected=[]
+                  for n in range(count):
+                      entry=entries[n*entry_size:(n+1)*entry_size]
+                      if entry[:16]==b"\0"*16:continue
+                      start,last=struct.unpack_from("<QQ",entry,32)
+                      name=entry[56:128].decode("utf-16le").split("\0",1)[0]
+                      normalized=name.removesuffix("_a")
+                      print("GPT_PARTITION",name,start,last,flush=True)
+                      if normalized not in ["system","vendor","product","system_ext","odm"]:continue
+                      path=tmp/("gpt-"+normalized+".img")
+                      f.seek(start*512);remaining=(last-start+1)*512
+                      with path.open("wb") as g:
+                          while remaining:
+                              data=f.read(min(remaining,1024*1024));assert data
+                              g.write(data);remaining-=len(data)
+                      selected.append((normalized,path))
+                  assert selected,"No supported native runtime partitions in SDK GPT"
+                  return selected
           with zipfile.ZipFile(archive) as z:
               image_names=[n for n in z.namelist() if pathlib.PurePosixPath(n).name in ["system.img","vendor.img","product.img","system_ext.img"]]
               assert image_names
@@ -106,33 +132,37 @@ jobs:
                       subprocess.run(["qemu-img","convert","-O","raw",str(img),str(converted)],check=True)
                       if img!=packed:img.unlink()
                       img=converted
-                  if ext4(img):
-                      if partition=="system":
-                          prefix="/system" if has(img,"/system/bin") else ""
-                          extract_selected(img,root/"system",prefix,"system")
-                          for other in ["vendor","product","system_ext","odm"]:
-                              if has(img,"/"+other+"/lib64") or has(img,"/"+other+"/etc"):
-                                  extract_selected(img,root/other,"/"+other,other)
-                              elif has(img,prefix+"/"+other+"/etc"):
-                                  extract_selected(img,root/other,prefix+"/"+other,other)
-                      else:extract_selected(img,root/partition,"",partition)
-                  else:
-                      extracted=tmp/(partition+"-unpacked")
-                      subprocess.run(["fsck.erofs","--extract="+str(extracted),str(img)],check=True)
-                      source=extracted/"system" if partition=="system" and (extracted/"system/bin").is_dir() else extracted
-                      parent=root/partition;parent.mkdir(parents=True,exist_ok=True)
-                      for sub in ["bin","lib64","etc"]:
-                          if (source/sub).is_dir():shutil.copytree(source/sub,parent/sub,symlinks=True,dirs_exist_ok=True)
-                      if partition=="system":
-                          if (source/"apex").is_dir():
-                              shutil.copytree(source/"apex",tmp/"apex-packages/apex",symlinks=True,dirs_exist_ok=True)
-                          for other in ["vendor","product","system_ext","odm"]:
-                              other_source=next((d for d in [extracted/other,source/other] if d.is_dir() and not d.is_symlink()),None)
-                              if other_source:
-                                  for sub in ["bin","lib64","etc"]:
-                                      if (other_source/sub).is_dir():
-                                          shutil.copytree(other_source/sub,root/other/sub,symlinks=True,dirs_exist_ok=True)
-                      shutil.rmtree(extracted)
+                  whole_img=img
+                  for partition,img in split_gpt(whole_img,partition):
+                      if ext4(img):
+                          if partition=="system":
+                              prefix="/system" if has(img,"/system/bin") else ""
+                              extract_selected(img,root/"system",prefix,"system")
+                              for other in ["vendor","product","system_ext","odm"]:
+                                  if has(img,"/"+other+"/lib64") or has(img,"/"+other+"/etc"):
+                                      extract_selected(img,root/other,"/"+other,other)
+                                  elif has(img,prefix+"/"+other+"/etc"):
+                                      extract_selected(img,root/other,prefix+"/"+other,other)
+                          else:extract_selected(img,root/partition,"",partition)
+                      else:
+                          extracted=tmp/(partition+"-unpacked")
+                          subprocess.run(["fsck.erofs","--extract="+str(extracted),str(img)],check=True)
+                          source=extracted/"system" if partition=="system" and (extracted/"system/bin").is_dir() else extracted
+                          parent=root/partition;parent.mkdir(parents=True,exist_ok=True)
+                          for sub in ["bin","lib64","etc"]:
+                              if (source/sub).is_dir():shutil.copytree(source/sub,parent/sub,symlinks=True,dirs_exist_ok=True)
+                          if partition=="system":
+                              if (source/"apex").is_dir():
+                                  shutil.copytree(source/"apex",tmp/"apex-packages/apex",symlinks=True,dirs_exist_ok=True)
+                              for other in ["vendor","product","system_ext","odm"]:
+                                  other_source=next((d for d in [extracted/other,source/other] if d.is_dir() and not d.is_symlink()),None)
+                                  if other_source:
+                                      for sub in ["bin","lib64","etc"]:
+                                          if (other_source/sub).is_dir():
+                                              shutil.copytree(other_source/sub,root/other/sub,symlinks=True,dirs_exist_ok=True)
+                          shutil.rmtree(extracted)
+                      if img!=whole_img:img.unlink(missing_ok=True)
+                  if whole_img!=packed:whole_img.unlink(missing_ok=True)
                   packed.unlink(missing_ok=True)
                   if img!=packed:img.unlink(missing_ok=True)
           def varint(b,pos):
