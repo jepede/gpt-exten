@@ -1,0 +1,37 @@
+name: Fetch QEMU User Static Debian 13 amd64
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-qemu-trixie-aarch64-static.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    container:
+      image: debian:trixie
+    steps:
+      - name: Fetch Debian 13 QEMU AArch64 static emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          apt-get update -qq
+          mkdir -p /tmp/deb /tmp/payload "$GITHUB_WORKSPACE/output"
+          cd /tmp/deb
+          apt-get download qemu-user-static
+          dpkg-deb -x ./qemu-user-static*.deb /tmp/payload
+          bin=/tmp/payload/usr/bin/qemu-aarch64-static
+          test -x "$bin"
+          "$bin" --version | tee "$GITHUB_WORKSPACE/output/qemu-version.txt"
+          dpkg-deb -f ./qemu-user-static*.deb Package Version Architecture | tee "$GITHUB_WORKSPACE/output/package.txt"
+          cp "$bin" "$GITHUB_WORKSPACE/output/qemu-aarch64-static"
+          cd "$GITHUB_WORKSPACE/output"
+          sha256sum qemu-aarch64-static > SHA256SUMS.txt
+          du -h qemu-aarch64-static
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qemu-aarch64-static-debian13-20261017
+          path: output/
+          retention-days: 400
+          compression-level: 6
