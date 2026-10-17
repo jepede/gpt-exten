@@ -2495,3 +2495,41 @@ Restore: download_workflow_artifact IDs 12090878722 and 12091043204, verify ZIP 
 | 1/1 | 12091780944 | android36-arm64-i18n-icu | 12730942 | ff8e006de1fabdb98cccfcffdb3393410245d9336190ca0821d86e78f089eb49 | 12608751 | sha256:7e3592f26e217b10325ce9c34c64998840226e32fc5f48d479f9989c41cc4900 | 2026-10-17T05:54:53Z | 2027-01-15T05:54:10Z |
 
 Restore: download_workflow_artifact ID 12091780944, verify ZIP and inner archive SHA256, extract sysroot/apex/com.android.i18n. Add /apex/com.android.i18n/lib64 to the Guest LD_LIBRARY_PATH.
+
+
+## Artifact Record: Android 36 ARM64 graphics and ICU runtime 2026-10-17
+
+- Source: Official Google Android SDK default ARM64-v8a API 36 r02 system image; Source SHA256: c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1.
+- Platform: Android 36; Architecture: ARM64/AArch64 guest; Version: android36-r02-20261017; Requested Retention: 400 days (GitHub actual expires_at is authoritative).
+- Graphics Name: Android 36 ARM64 graphics Framework runtime. Workflow: .github/workflows/tmp-android36-graphics.yml; Run ID: 39007458676; Storage Mode: SPLIT (1 part + metadata); Original File: android36-arm64-graphics-sysroot.tar.gz; Original Size: 80764977 bytes; Original SHA256: 963b4123e91e5bad16463115b4ca201fa3b54907fa474feda0fb82a3fd070ee4; Part Count: 1; Created At: 2026-10-17T05:46:52Z to 2026-10-17T05:46:54Z; Expires At: 2027-01-15T05:45:59Z.
+- ICU Name: Android 36 ARM64 i18n ICU APEX. Workflow: .github/workflows/tmp-android36-i18n.yml; Run ID: 39007941479; Storage Mode: SINGLE; Original File: android36-arm64-i18n-icu.tar.gz; Original Size: 12730942 bytes; Original SHA256: ff8e006de1fabdb98cccfcffdb3393410245d9336190ca0821d86e78f089eb49; Part Count: 1; Created At: 2026-10-17T05:54:53Z; Expires At: 2027-01-15T05:54:10Z.
+- Graphics path manifest: graphics metadata artifact release/FILE_LIST.txt enumerates all 737 extracted files.
+- The Android runtime libraries are real API36 ARM64 binaries, not stubs. Display rendering, Framework ABI compatibility and SurfaceFlinger require additional services and verified graphics backend.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Android 36 Graphics Sysroot archive | android36-r02-20261017 | Android 36 | ARM64 | android36-arm64-graphics-sysroot.tar.gz | 963b4123e91e5bad16463115b4ca201fa3b54907fa474feda0fb82a3fd070ee4 |
+| Android 36 libEGL | android36-r02-20261017 | Android 36 | ARM64 | sysroot/system/lib64/libEGL.so | c967542bdb196f84deecc6a65d754a6fd6e18aa18b5039fed1b6d5dbf9016de7 |
+| Android 36 libGLESv2 | android36-r02-20261017 | Android 36 | ARM64 | sysroot/system/lib64/libGLESv2.so | b81e8b3c754ad96e7495217e55dcd7c67d3e7ba6da99d503ea4e9e1a254e2200 |
+| Android 36 libgui | android36-r02-20261017 | Android 36 | ARM64 | sysroot/system/lib64/libgui.so | 3cccdaf945764512a7f896cc8407b8c4a500713a254cb71bfcac8915c393a445 |
+| Android 36 ANGLE EGL | android36-r02-20261017 | Android 36 | ARM64 | sysroot/system/lib64/libEGL_angle.so | b96e3e57c13008203c6785689568d5b43fcb9be901c59c343af1423e93a437d5 |
+| Android 36 ANGLE GLESv2 | android36-r02-20261017 | Android 36 | ARM64 | sysroot/system/lib64/libGLESv2_angle.so | 5da7bb9ec6cf0b40d302d64559a96c4e4af5b8a9afd7d0484866d9b073bc08b6 |
+| Android 36 i18n APEX archive | android36-r02-20261017 | Android 36 | ARM64 | android36-arm64-i18n-icu.tar.gz | ff8e006de1fabdb98cccfcffdb3393410245d9336190ca0821d86e78f089eb49 |
+| Android 36 libicu | android36-r02-20261017 | Android 36 i18n | ARM64 | sysroot/apex/com.android.i18n/lib64/libicu.so | 7a6a0e8f8e55dfae5a2c789c95eda01e05dfa6ad5ae599e567e40b9ffb0c50f9 |
+| Android 36 libandroidicu | android36-r02-20261017 | Android 36 i18n | ARM64 | sysroot/apex/com.android.i18n/lib64/libandroidicu.so | 188794585b34624aead7db7e8a62859c7035108765ffef7d9e71ab28652654aa |
+
+### Artifacts
+
+| Part | Artifact ID | Artifact Name | Artifact Size | Artifact SHA256 | Created At | Expires At |
+|---|---|---|---|---|---|---|
+| Graphics metadata | 12091043204 | android36-graphics-meta | 10204 | 0baed2a10a244737b573f834b2d078a65695d5d5d4623d76997409472b2b3714 | 2026-10-17T05:46:52Z | 2027-01-15T05:45:59Z |
+| Graphics 1/1 | 12090878722 | android36-graphics-00 | 80765123 | 0a1fb9f79e6049ac29090bfefee7ddfe16a40e4c342c3ca6cfdddd403c359a93 | 2026-10-17T05:46:54Z | 2027-01-15T05:45:59Z |
+| i18n 1/1 | 12091780944 | android36-arm64-i18n-icu | 12608751 | 7e3592f26e217b10325ce9c34c64998840226e32fc5f48d479f9989c41cc4900 | 2026-10-17T05:54:53Z | 2027-01-15T05:54:10Z |
+
+### Restore
+
+Download artifacts using GitHub download_workflow_artifact. Verify each outer ZIP against the Artifact SHA256 above. Extract graphics.part.00; size must be 80764977 bytes; SHA256 must be 963b4123e91e5bad16463115b4ca201fa3b54907fa474feda0fb82a3fd070ee4; rename it to android36-arm64-graphics-sysroot.tar.gz. Verify ICU inner tar.gz SHA256 ff8e006de1fabdb98cccfcffdb3393410245d9336190ca0821d86e78f089eb49. Unpack preserving sysroot/system and sysroot/apex paths. The graphics metadata Artifact provides the complete 737-file path manifest.
+
+One-day temporary vendor probe: Workflow .github/workflows/tmp-android36-vendor.yml; Run ID 39010004799; Artifact ID 12092650991; name android36-vendor-graphics-temporary; Expires At 2026-10-18T06:28:41Z; SHA256 de4469d3889474e81a13650019b28ec531fb1df5d83dccf3134a904c54ba3038. Per temporary-download exception, it is not treated as a long-term cache.
