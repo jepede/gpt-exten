@@ -6,7 +6,8 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | Mozilla NSS TLS Root Store | release-b9bd270cfa3e-20261005 | Any | Any | `37253767754` | SINGLE | `2027-01-03T02:02:10Z` |
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
-|---|---|---|---|---:|---|---|
+|---|---|---|---|---:|---|---|---|
+| AOSP API35 full ARM64 SDK image | 35_r02-full-v1 | Android 15 / API35 | AArch64 | `39002974865` | SPLIT × 2 | `2027-01-15T04:32:52Z` |
 | QEMU AArch64 User Static | 1:10.0.13+ds-0+deb13u1 | Debian 13 / Linux | x86_64 host + AArch64 guest | `39001231108` | SINGLE | `2027-01-15T04:05:09Z` |
 | PRoot runtime bundle | 5.1.0-1.3 | Debian 12 / Linux | x86_64 | `38999498688` | SINGLE | `2027-01-15T03:37:28Z` |
 | ARM64 NDK C debugging validation | r28c-run38642113778 | Ubuntu 24.04 Linux / Android Bionic API 36 | x86_64 host + AArch64 guest | `38642113778` | SINGLE | `2027-01-12T21:40:57Z` |
@@ -2297,3 +2298,35 @@ Use GitHub connector `download_workflow_artifact` with Artifact ID `12089252099`
 - Source SHA1 (official SDK repository metadata): `2026a06409db630b56711afdbffb457c1dbaed49`
 
 Contains public AOSP native bin/lib64/etc trees, authentic build properties, and expanded APEX native runtime directories. APK/framework content and full boot images are excluded. No private user program is included. ZIP, original TAR.XZ and 2253 per-file SHA256 hashes were independently verified after restoration. Runtime validation is separate from cache integrity.
+
+
+## AOSP API35 full ARM64 SDK image 35_r02 v1
+
+- Name: `AOSP API35 full ARM64 SDK image`
+- Version: `35_r02-full-v1`
+- Platform: `Android 15 / API35`
+- Architecture: `AArch64`
+- Workflow: `.github/workflows/cache-aosp-api35-full-image-r02-v1.yml`
+- Run ID: `39002974865` (success)
+- Repository: `jepede/gpt-exten` (public)
+- Source: `https://dl.google.com/android/repository/sys-img/android/arm64-v8a-35_r02.zip`
+- Source File: `arm64-v8a-35_r02.zip`
+- Source Size: `769099654` bytes
+- Source SHA256: `1e6ae4fca6449c07278a333311f0ef29c5101d1e3e18ba48fbe9bd2dc5006926`
+- Official SDK metadata SHA1: `2026a06409db630b56711afdbffb457c1dbaed49`
+- Storage Mode: `SPLIT`
+- Part Count: `2` equal raw chunks, each `384549827` bytes
+- Part 00 SHA256: `6768eda6f66b296079146983e85d28f47d1efb9123e0653b2a60c7040fd6201d`
+- Part 01 SHA256: `0fa1f44ae8c6f148657068051c693a8ce674ec07ecc94b5420a7a0a6081e2e1b`
+- Metadata Artifact: `FULL_IMAGE_SOURCE.json`, `SHA256SUMS.txt`
+- Requested Retention: `90 days`; actual GitHub expires_at governs.
+
+| Part | Artifact ID | Artifact Name | Artifact ZIP Size | Artifact Digest | Created At | Expires At |
+|---|---:|---|---:|---|---|---|
+| metadata | `12090245193` | `aosp-api35-full-image-r02-metadata-v1` | `4841` | `sha256:8f937de317a736488e80e9d5f9e83a780417301050ef6e41dba085b2a913aeba` | `2026-10-17T04:33:09Z` | `2027-01-15T04:32:52Z` |
+| 2/2 | `12090155626` | `aosp-api35-full-image-r02-part-01-v1` | `384549977` | `sha256:a952775e21cbfcdc484436fb1863a55a8fa82681e6998945671af78459c5af62` | `2026-10-17T04:33:16Z` | `2027-01-15T04:32:52Z` |
+| 1/2 | `12090026892` | `aosp-api35-full-image-r02-part-00-v1` | `384549977` | `sha256:80ed7d62dd83de3bd9717de96219181995926f9557179667213bc49c454e117c` | `2026-10-17T04:33:13Z` | `2027-01-15T04:32:52Z` |
+
+### Restore
+
+Use the GitHub connector to download all three artifact ZIPs. Each archive is below 512 MB. Verify every outer ZIP against its Artifact Digest; extract metadata and the two raw chunks, verify each raw SHA256, concatenate `full-api35.part.00` then `full-api35.part.01`, and verify final size/SHA256 before extracting the SDK ZIP. CI verified the official SDK checksum, ZIP CRCs, equal chunk sizes and reconstructed SHA256; local restoration independently verified all outer archives, raw chunks and reconstructed image. Includes original public kernel, ramdisk, system/vendor images and SDK metadata. No private target program is included. Image integrity does not certify any user program execution result.
