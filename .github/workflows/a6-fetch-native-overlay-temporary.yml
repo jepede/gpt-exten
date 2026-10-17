@@ -1,0 +1,25 @@
+name: A6 Native Overlay Source (Temporary)
+on:
+  push:
+    branches:
+      - tmp/a6-native-overlay-source-20261017
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch pinned upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth=1 https://github.com/YiJieqwq/Android-Native-Overlay.git source
+          test "$(git -C source rev-parse HEAD)" = "67d9745670053e223f73fc3b80d071e931040261"
+          tar --exclude='.git' --exclude='template/include/ImGui/My_font' -C source -czf native-overlay-src.tar.gz .
+          sha256sum native-overlay-src.tar.gz > SHA256SUMS.txt
+      - name: Upload temporary sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: a6-root-overlay-upstream-source-temp
+          path: |
+            native-overlay-src.tar.gz
+            SHA256SUMS.txt
+          retention-days: 1
