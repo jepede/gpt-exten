@@ -1,0 +1,150 @@
+name: Android 36 ARM64 graphics userspace sysroot
+on:
+  push:
+    branches:
+      - tmp/android36-egl-20261017
+    paths:
+      - .github/workflows/tmp-android36-graphics.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  extract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install extraction utilities
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3 curl unzip e2fsprogs file erofs-utils android-sdk-libsparse-utils >/dev/null
+      - name: Build lpunpack
+        run: |
+          set -euo pipefail
+          git clone --depth=1 https://github.com/soe1hom-arch/lpunpack.git /tmp/android-lpunpack
+          (cd /tmp/android-lpunpack && go build -o /tmp/lpunpack .)
+          sudo install -m 0755 /tmp/lpunpack /usr/local/bin/lpunpack
+      - name: Download and verify official Android 36 ARM64 system image
+        run: |
+          set -euo pipefail
+          curl -fL --retry 4 --retry-all-errors --connect-timeout 40 --max-time 1500 \
+            https://dl.google.com/android/repository/sys-img/android/arm64-v8a-36_r02.zip \
+            -o android-arm64-system-image.zip
+          echo "c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1  android-arm64-system-image.zip" | sha256sum -c -
+          du -h android-arm64-system-image.zip
+      - name: Extract all relevant AArch64 Android framework and GLES libraries
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          spec=importlib.util.spec_from_file_location('extractor','compatibility/tools/extract_aosp_runtime.py')
+          module=importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          original=module.extract_system
+          def expanded(reader):
+              original(reader)
+              copied=0
+              for base in ('/system/lib64','/system/lib64/egl','/system_ext/lib64','/product/lib64'):
+                  for name in sorted(set(reader.listdir(base))):
+                      if not (name.endswith('.so') or '.so.' in name):
+                          continue
+                      path=base+'/'+name
+                      out=module.OUT/path.lstrip('/')
+                      if out.exists():
+                          continue
+                      if reader.copy(path,out):
+                          copied+=1
+                          print('ADDED',path,out.stat().st_size,flush=True)
+              print('EXTRA_LIBRARIES',copied,flush=True)
+          module.extract_system=expanded
+          module.main.__globals__['sys'].argv=['extract','android-arm64-system-image.zip']
+          module.main()
+          PY
+          python3 - <<'PY'
+          import pathlib
+          root=pathlib.Path('release/sysroot')
+          for name in ['libEGL.so','libGLESv2.so','libGLESv3.so','libgui.so','libui.so','libbinder.so','libandroid.so']:
+              found=list(root.rglob(name))
+              print('REQUIRED',name,[str(x)+':'+str(x.stat().st_size) for x in found],flush=True)
+              assert found,'missing '+name
+          PY
+          find release/sysroot -type f | sort > release/FILE_LIST.txt
+          du -sh release/sysroot
+      - name: Compress and split safely under 512 MB
+        run: |
+          set -euo pipefail
+          tar -czf android36-arm64-graphics-sysroot.tar.gz -C release .
+          sha256sum android36-arm64-graphics-sysroot.tar.gz | tee ORIGINAL.sha256
+          ls -lh android36-arm64-graphics-sysroot.tar.gz
+          mkdir -p parts
+          split -b 180M -d -a 2 android36-arm64-graphics-sysroot.tar.gz parts/graphics.part.
+          (cd parts && sha256sum graphics.part.*) > PARTS.sha256
+          cat PARTS.sha256
+          test "$(find parts -type f | wc -l)" -le 8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-graphics-meta
+          path: |
+            ORIGINAL.sha256
+            PARTS.sha256
+            release/FILE_LIST.txt
+            release/runtime_extraction.json
+          retention-days: 400
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-graphics-00
+          path: parts/graphics.part.00
+          retention-days: 400
+          if-no-files-found: ignore
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-graphics-01
+          path: parts/graphics.part.01
+          retention-days: 400
+          if-no-files-found: ignore
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-graphics-02
+          path: parts/graphics.part.02
+          retention-days: 400
+          if-no-files-found: ignore
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-graphics-03
+          path: parts/graphics.part.03
+          retention-days: 400
+          if-no-files-found: ignore
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-graphics-04
+          path: parts/graphics.part.04
+          retention-days: 400
+          if-no-files-found: ignore
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-graphics-05
+          path: parts/graphics.part.05
+          retention-days: 400
+          if-no-files-found: ignore
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-graphics-06
+          path: parts/graphics.part.06
+          retention-days: 400
+          if-no-files-found: ignore
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-graphics-07
+          path: parts/graphics.part.07
+          retention-days: 400
+          if-no-files-found: ignore
+          compression-level: 0
