@@ -1,0 +1,38 @@
+name: Build QEMU 10 TCG Plugins ARM64 Tracing
+on:
+  push:
+    paths:
+      - '.github/workflows/build-qemu10-tcg-plugins-20261017.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Compile QEMU 10.0.13 upstream TCG plugins
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends gcc libglib2.0-dev pkg-config curl
+          mkdir -p artifacts sources
+          base=https://raw.githubusercontent.com/qemu/qemu/v10.0.13
+          curl -fLsS "$base/include/qemu/qemu-plugin.h" -o sources/qemu-plugin.h
+          for name in execlog hotblocks; do
+            curl -fLsS "$base/contrib/plugins/$name.c" -o "sources/$name.c"
+            gcc -std=gnu11 -O2 -g -Wall -Wno-unused-parameter -fPIC -shared -fvisibility=hidden \
+              -I sources $(pkg-config --cflags glib-2.0) "sources/$name.c" \
+              -o "artifacts/lib$name.so" $(pkg-config --libs glib-2.0)
+            echo "[plugin $name]"; file "artifacts/lib$name.so"
+            nm -D "artifacts/lib$name.so" | grep -E 'qemu_plugin_(version|install)' 
+          done
+          cp sources/* artifacts/
+          printf 'QEMU source tag v10.0.13; API version 4\n' > artifacts/BUILD_INFO.txt
+          (cd artifacts && sha256sum * > SHA256SUMS.txt)
+          cat artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qemu10-tcg-plugins-upstream-execlog-hotblocks
+          path: artifacts/
+          retention-days: 400
