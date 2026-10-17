@@ -89,6 +89,48 @@ jobs:
               if partition=="system":
                   remote=prefix+"/apex"
                   if has(img,remote):rdump(img,remote,tmp/"apex-packages")
+          def unpack_super(img):
+              with open(img,"rb") as f:
+                  f.seek(4096);geometry=f.read(4096)
+                  assert struct.unpack_from("<I",geometry)[0]==0x616c4467,"LP geometry"
+                  geom_size=struct.unpack_from("<I",geometry,4)[0]
+                  assert hashlib.sha256(geometry[:8]+b"\0"*32+geometry[40:geom_size]).digest()==geometry[8:40],"LP geometry hash"
+                  maximum,slots,logical_block=struct.unpack_from("<III",geometry,40)
+                  assert 0<maximum<16*1024*1024 and 0<slots<=8
+                  f.seek(12288);metadata=f.read(maximum)
+                  assert struct.unpack_from("<I",metadata)[0]==0x414c5030,"LP metadata"
+                  header_size=struct.unpack_from("<I",metadata,8)[0]
+                  table_size=struct.unpack_from("<I",metadata,44)[0]
+                  header=metadata[:header_size];tables=metadata[header_size:header_size+table_size]
+                  assert hashlib.sha256(header[:12]+b"\0"*32+header[44:]).digest()==header[12:44],"LP header hash"
+                  assert hashlib.sha256(tables).digest()==header[48:80],"LP table hash"
+                  po,pn,ps=struct.unpack_from("<III",header,80)
+                  eo,en,es=struct.unpack_from("<III",header,92)
+                  selected=[];seen=set()
+                  for i in range(pn):
+                      partition=tables[po+i*ps:po+(i+1)*ps]
+                      name=partition[:36].split(b"\0",1)[0].decode()
+                      first,count=struct.unpack_from("<II",partition,40)
+                      normalized=name.removesuffix("_a").removesuffix("_b")
+                      if count==0 or normalized in seen or normalized not in ["system","vendor","product","system_ext","odm"]:continue
+                      assert first+count<=en
+                      dest=tmp/("lp-"+normalized+".img")
+                      with dest.open("wb") as g:
+                          for n in range(first,first+count):
+                              sectors,kind,data,source=struct.unpack_from("<QIQI",tables,eo+n*es)
+                              length=sectors*512
+                              if kind==1:g.seek(length,1)
+                              else:
+                                  assert kind==0 and source==0,(kind,source)
+                                  f.seek(data*512);remaining=length
+                                  while remaining:
+                                      chunk=f.read(min(remaining,1024*1024));assert chunk
+                                      g.write(chunk);remaining-=len(chunk)
+                          g.truncate()
+                      seen.add(normalized);selected.append((normalized,dest))
+                      print("LP_PARTITION",name,dest.stat().st_size,flush=True)
+                  assert selected,"No native partitions in super"
+                  return selected
           def split_gpt(img,default_name):
               with open(img,"rb") as f:
                   f.seek(512);header=f.read(92)
@@ -105,14 +147,16 @@ jobs:
                       name=entry[56:128].decode("utf-16le").split("\0",1)[0]
                       normalized=name.removesuffix("_a")
                       print("GPT_PARTITION",name,start,last,flush=True)
-                      if normalized not in ["system","vendor","product","system_ext","odm"]:continue
+                      if normalized not in ["system","vendor","product","system_ext","odm","super"]:continue
                       path=tmp/("gpt-"+normalized+".img")
                       f.seek(start*512);remaining=(last-start+1)*512
                       with path.open("wb") as g:
                           while remaining:
                               data=f.read(min(remaining,1024*1024));assert data
                               g.write(data);remaining-=len(data)
-                      selected.append((normalized,path))
+                      if normalized=="super":
+                          selected.extend(unpack_super(path));path.unlink()
+                      else:selected.append((normalized,path))
                   assert selected,"No supported native runtime partitions in SDK GPT"
                   return selected
           with zipfile.ZipFile(archive) as z:
