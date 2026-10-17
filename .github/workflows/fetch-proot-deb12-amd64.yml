@@ -1,0 +1,39 @@
+name: Fetch PRoot Debian 12 amd64 Runtime
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-proot-deb12-amd64.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    container:
+      image: debian:bookworm
+    steps:
+      - name: Download official Debian 12 PRoot deb dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          apt-get update -qq
+          mkdir -p /tmp/pr-debs /tmp/pr-root /tmp/pr-out
+          cd /tmp/pr-debs
+          apt-get download proot libtalloc2 libseccomp2
+          for f in ./*.deb; do dpkg-deb -x "$f" /tmp/pr-root; done
+          /tmp/pr-root/usr/bin/proot --version || LD_LIBRARY_PATH=/tmp/pr-root/usr/lib/x86_64-linux-gnu /tmp/pr-root/usr/bin/proot --version
+          cat /etc/debian_version > /tmp/pr-out/debian-version.txt
+          dpkg-deb -f /tmp/pr-debs/proot*.deb Package Version Architecture > /tmp/pr-out/PROOT_VERSION.txt
+          (cd /tmp/pr-root && tar -czf /tmp/pr-out/proot-debian12-amd64.tar.gz usr)
+          (cd /tmp/pr-out && sha256sum proot-debian12-amd64.tar.gz > SHA256SUMS.txt)
+          cp /tmp/pr-out/* "$GITHUB_WORKSPACE/" 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: proot-debian12-amd64-bundle-20261017
+          path: |
+            proot-debian12-amd64.tar.gz
+            PROOT_VERSION.txt
+            debian-version.txt
+            SHA256SUMS.txt
+          compression-level: 6
+          retention-days: 400
