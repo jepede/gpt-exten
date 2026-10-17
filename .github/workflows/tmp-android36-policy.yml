@@ -1,0 +1,73 @@
+name: Temporary extract Android 36 policy for Guest compatibility test
+on:
+  push:
+    branches: [tmp/android36-egl-20261017]
+    paths: [.github/workflows/tmp-android36-policy.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3 curl unzip e2fsprogs file erofs-utils android-sdk-libsparse-utils >/dev/null
+          git clone --depth=1 https://github.com/soe1hom-arch/lpunpack.git /tmp/android-lpunpack
+          (cd /tmp/android-lpunpack && go build -o /tmp/lpunpack .)
+          sudo install -m 0755 /tmp/lpunpack /usr/local/bin/lpunpack
+      - name: Verify official system image
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 --retry-all-errors --max-time 1500 \
+            https://dl.google.com/android/repository/sys-img/android/arm64-v8a-36_r02.zip \
+            -o official-android36.zip
+          echo 'c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1  official-android36.zip' | sha256sum -c -
+      - name: Extract native compiled SELinux policy from vendor filesystem
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import importlib.util, pathlib, json
+          spec=importlib.util.spec_from_file_location('a','compatibility/tools/extract_aosp_runtime.py')
+          a=importlib.util.module_from_spec(spec);spec.loader.exec_module(a)
+          a.sdk_from_zip(pathlib.Path('official-android36.zip'))
+          a.image_fs(a.IMAGE)
+          d=pathlib.Path('release');d.mkdir(exist_ok=True)
+          results={}
+          for partition in ('vendor','system','system_ext','product'):
+              p=a.ROOT/'logical'/f'{partition}.img'
+              if not p.is_file():continue
+              r=a.Reader(p)
+              for name in (
+                '/etc/selinux/precompiled_sepolicy',
+                '/etc/selinux/vendor_sepolicy.cil',
+                '/etc/selinux/vendor_file_contexts',
+                '/etc/selinux/vendor_service_contexts',
+                '/etc/selinux/vendor_property_contexts',
+                '/etc/selinux/plat_sepolicy.cil',
+                '/etc/selinux/plat_mapping_file',
+              ):
+                out=d/partition/name.lstrip('/')
+                if r.copy(name,out):
+                  results[partition+name]=out.stat().st_size
+                  print('POLICY',partition+name,out.stat().st_size,flush=True)
+          print('SUMMARY',json.dumps(results,indent=2))
+          (d/'manifest.json').write_text(json.dumps(results,indent=2))
+          if not any('precompiled_sepolicy' in x for x in results):
+              print('WARNING: no compiled sepolicy found, upload diagnostics and sources')
+          PY
+          tar -czf android36-policy.tar.gz -C release .
+          sha256sum android36-policy.tar.gz > SHA256SUMS.txt
+          ls -lh android36-policy.tar.gz
+          test "$(stat -c%s android36-policy.tar.gz)" -lt 200000000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-policy-temporary
+          path: |
+            android36-policy.tar.gz
+            SHA256SUMS.txt
+          retention-days: 1
