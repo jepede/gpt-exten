@@ -1,0 +1,187 @@
+name: Cache AOSP API35 ARM64 Native Runtime
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-aosp-api35-arm64-runtime-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Restore public SDK native runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends e2fsprogs erofs-utils
+          python3 - <<'PY'
+          import base64, hashlib, json, os, pathlib, shutil, struct, subprocess, tarfile, tempfile, urllib.request, xml.etree.ElementTree as ET, zipfile
+          base="https://dl.google.com/android/repository/sys-img/android/"
+          out=pathlib.Path("output"); root=out/"rootfs"; root.mkdir(parents=True,exist_ok=True)
+          tmp=pathlib.Path("image-work"); tmp.mkdir(exist_ok=True)
+          def fetch(url,path):
+              with urllib.request.urlopen(url,timeout=240) as r, open(path,"wb") as f:
+                  shutil.copyfileobj(r,f,1024*1024)
+          def tag(e): return e.tag.rsplit("}",1)[-1]
+          def child(e,name):
+              return next(x for x in e if tag(x)==name)
+          repo=tmp/"repository.xml"; fetch(base+"sys-img2-3.xml",repo)
+          tree=ET.parse(repo)
+          package=next(x for x in tree.iter() if tag(x)=="remotePackage" and x.attrib.get("path")=="system-images;android-35;default;arm64-v8a")
+          complete=next(x for x in package.iter() if tag(x)=="complete")
+          url=child(complete,"url").text
+          checksum=child(complete,"checksum")
+          expected=checksum.text.strip()
+          algorithm=checksum.attrib.get("type","sha1")
+          archive=tmp/"system-image.zip"; fetch(base+url,archive)
+          with archive.open("rb") as f: actual=hashlib.file_digest(f,algorithm).hexdigest()
+          assert actual==expected,(actual,expected)
+          with archive.open("rb") as f: sha256=hashlib.file_digest(f,"sha256").hexdigest()
+          (out/"SDK_SOURCE.json").write_text(json.dumps(dict(package=package.attrib["path"],url=base+url,checksum_algorithm=algorithm,checksum=actual,sha256=sha256,size=archive.stat().st_size),indent=2)+"\n")
+          print("VERIFIED_SDK_ARCHIVE",url,archive.stat().st_size,sha256,flush=True)
+          def raw_image(source,dest):
+              with open(source,"rb") as f:
+                  head=f.read(28)
+                  if len(head)<28 or struct.unpack_from("<I",head)[0]!=0xed26ff3a:
+                      return source
+                  magic,major,minor,fhs,chs,block,total,chunks,crc=struct.unpack("<IHHHHIIII",head)
+                  f.seek(fhs)
+                  with open(dest,"wb") as g:
+                      for i in range(chunks):
+                          typ,reserved,count,size=struct.unpack("<HHII",f.read(12))
+                          if chs>12:f.read(chs-12)
+                          payload=size-chs; length=count*block
+                          if typ==0xcac1:
+                              assert payload==length
+                              remaining=length
+                              while remaining:
+                                  data=f.read(min(remaining,1024*1024)); assert data
+                                  g.write(data); remaining-=len(data)
+                          elif typ==0xcac2:
+                              word=f.read(4); assert len(word)==4
+                              remaining=length; buf=word*(262144)
+                              while remaining:
+                                  n=min(remaining,len(buf));g.write(buf[:n]);remaining-=n
+                          elif typ==0xcac3:g.seek(length,1)
+                          elif typ==0xcac4:f.read(payload)
+                          else:raise RuntimeError(hex(typ))
+                      g.truncate(total*block)
+              return dest
+          def debug(cmd,img):
+              return subprocess.run(["debugfs","-R",cmd,str(img)],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True).stdout
+          def has(img,path): return "Inode:" in debug("stat "+path,img)
+          def rdump(img,path,parent):
+              parent.mkdir(parents=True,exist_ok=True)
+              log=debug('rdump '+path+' '+str(parent),img)
+              if "not found" in log or "File not found" in log: return False
+              return True
+          def ext4(img):
+              with open(img,"rb") as f:
+                  f.seek(1080);return f.read(2)==b"\x53\xef"
+          def extract_selected(img,base_parent,prefix,partition):
+              paths=[("bin","bin"),("lib64","lib64"),("etc","etc")]
+              for sub,dest in paths:
+                  remote=prefix+"/"+sub
+                  if has(img,remote): rdump(img,remote,base_parent)
+              if partition=="system":
+                  remote=prefix+"/apex"
+                  if has(img,remote):rdump(img,remote,tmp/"apex-packages")
+          with zipfile.ZipFile(archive) as z:
+              image_names=[n for n in z.namelist() if pathlib.PurePosixPath(n).name in ["system.img","vendor.img","product.img","system_ext.img"]]
+              assert image_names
+              for name in image_names:
+                  partition=pathlib.PurePosixPath(name).stem
+                  packed=tmp/(partition+".img")
+                  with z.open(name) as source, packed.open("wb") as target:shutil.copyfileobj(source,target,1024*1024)
+                  img=raw_image(packed,tmp/(partition+".raw.img"))
+                  print("EXTRACT_PARTITION",partition,img,flush=True)
+                  assert ext4(img),"Expected ext4 SDK partition: "+str(img)
+                  if partition=="system":
+                      prefix="/system" if has(img,"/system/bin") else ""
+                      extract_selected(img,root/"system",prefix,"system")
+                      for other in ["vendor","product","system_ext","odm"]:
+                          if has(img,"/"+other+"/lib64") or has(img,"/"+other+"/etc"):
+                              extract_selected(img,root/other,"/"+other,other)
+                          elif has(img,prefix+"/"+other+"/etc"):
+                              extract_selected(img,root/other,prefix+"/"+other,other)
+                  else:extract_selected(img,root/partition,"",partition)
+                  packed.unlink(missing_ok=True)
+                  if img!=packed:img.unlink(missing_ok=True)
+          def varint(b,pos):
+              value=0;shift=0
+              while True:
+                  n=b[pos];pos+=1;value|=(n&127)<<shift
+                  if not n&128:return value,pos
+                  shift+=7
+          def apex_name(z,fallback):
+              if "apex_manifest.json" in z.namelist():
+                  return json.loads(z.read("apex_manifest.json"))["name"]
+              b=z.read("apex_manifest.pb");pos=0
+              while pos<len(b):
+                  key,pos=varint(b,pos)
+                  if key&7==2:
+                      n,pos=varint(b,pos);data=b[pos:pos+n];pos+=n
+                      if key>>3==1:return data.decode()
+                  elif key&7==0:_,pos=varint(b,pos)
+                  else:break
+              return fallback
+          packages=sorted((tmp/"apex-packages").rglob("*.apex"))+sorted((tmp/"apex-packages").rglob("*.capex"))
+          assert packages,"No APEX packages extracted"
+          for package_file in packages:
+              actual_apex=package_file
+              with zipfile.ZipFile(package_file) as z:
+                  name=apex_name(z,package_file.stem)
+                  if "original_apex" in z.namelist():
+                      actual_apex=tmp/"original.apex"
+                      with z.open("original_apex") as source, actual_apex.open("wb") as target:shutil.copyfileobj(source,target)
+              dest=root/"apex"/name; dest.mkdir(parents=True,exist_ok=True)
+              with zipfile.ZipFile(actual_apex) as z:
+                  payload=tmp/"apex_payload.img"
+                  with z.open("apex_payload.img") as source, payload.open("wb") as target:shutil.copyfileobj(source,target)
+              if ext4(payload):
+                  for sub in ["bin","lib64","etc"]:
+                      if has(payload,"/"+sub):rdump(payload,"/"+sub,dest)
+              else:
+                  erofs_dir=tmp/"erofs-extract"
+                  subprocess.run(["fsck.erofs","--extract="+str(erofs_dir),str(payload)],check=True)
+                  for sub in ["bin","lib64","etc"]:
+                      if (erofs_dir/sub).exists():shutil.copytree(erofs_dir/sub,dest/sub,symlinks=True,dirs_exist_ok=True)
+                  shutil.rmtree(erofs_dir)
+              payload.unlink()
+              if actual_apex!=package_file:actual_apex.unlink()
+              print("EXPANDED_APEX",name,flush=True)
+          for link,target in [("etc","system/etc"),("bin","system/bin"),("init","system/bin/init"),("sdcard","storage/self/primary")]:
+              path=root/link
+              if not path.exists() and not path.is_symlink():path.symlink_to(target)
+          (root/"storage").mkdir(exist_ok=True)
+          for p in root.rglob("*"):
+              if p.is_symlink():
+                  target=os.readlink(p)
+                  if target.startswith("/"):
+                      p.unlink();p.symlink_to(os.path.relpath(root/target.lstrip("/"),p.parent))
+          assert (root/"apex/com.android.runtime/bin/linker64").is_file()
+          assert (root/"apex/com.android.runtime/lib64/bionic/libc.so").is_file()
+          assert (root/"apex/com.android.i18n/lib64/libicu.so").is_file()
+          assert (root/"system/bin/sh").is_file()
+          (out/"README.txt").write_text("Public AOSP Android API35 ARM64 native runtime. Expanded bin/lib64/etc trees and APEX native runtime directories only. This is not a complete phone boot image. Includes no private user program.\n")
+          files=sorted(p for p in root.rglob("*") if p.is_file() and not p.is_symlink())
+          (out/"SHA256SUMS.txt").write_text("".join(hashlib.sha256(p.read_bytes()).hexdigest()+"  "+str(p.relative_to(out))+"\n" for p in files))
+          print("RUNTIME_READY",len(files),sum(p.stat().st_size for p in files),flush=True)
+          
+          PY
+          tar -C output -cJf aosp-api35-arm64-native-runtime-v1.tar.xz .
+          test "$(stat -c %s aosp-api35-arm64-native-runtime-v1.tar.xz)" -lt 500000000
+          sha256sum aosp-api35-arm64-native-runtime-v1.tar.xz > SHA256SUMS.txt
+          stat -c '%s %n' aosp-api35-arm64-native-runtime-v1.tar.xz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api35-arm64-native-runtime-v1
+          path: |
+            aosp-api35-arm64-native-runtime-v1.tar.xz
+            SHA256SUMS.txt
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
