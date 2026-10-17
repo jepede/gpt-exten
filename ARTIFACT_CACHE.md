@@ -33,7 +33,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | Temurin JDK | 17.0.20.1+1 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |
 | Gradle | 8.10.2 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |
 | TrustAttestor UI Gradle dependency cache | agp8.7.2-kotlin2.0.21-ui-deps-v1 | Linux | x86_64 | `34697680626` | SINGLE | `2026-12-11T13:53:27Z` |
-| Android NDK | r28c | Linux | x86_64 | `38921184228` | SPLIT × 3 | `2027-01-14T15:06:12Z` |
+| Android NDK | r28c | Linux | x86_64 | `39019800471` | SPLIT × 5 | `2027-01-15T09:05:25Z` |
 | USDA FoodData Central Foundation Foods CSV | 2026-04-30 | Any | Any | `31695314247` | SINGLE | `2026-11-11T11:23:52Z` |
 | USDA FoodData Central SR Legacy CSV | 2018-04 | Any | Any | `31695560856` | SINGLE | `2026-11-11T11:27:10Z` |
 | CulinaryDB CSV bundle | 2018-03-15 | Any | Any | `31723890750` | SINGLE | `2026-11-11T17:04:36Z` |
@@ -92,7 +92,49 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 下载 Artifact `9446959149`，校验 Artifact ZIP SHA256 `6e3d247d...`；解压得到 `response.raw`，再校验其 SHA256 `0b90973c...`。该 Artifact 来自临时 PR #1；缓存复用不依赖合并该 PR。
 
-## Android NDK r28c
+## Android NDK r28c — preferred five-part cache
+
+- Workflow: `.github/workflows/repack-ndk-r28c-five-parts.yml`
+- Workflow Run ID: `39019800471`
+- Run URL: https://github.com/jepede/gpt-exten/actions/runs/39019800471
+- Run Conclusion: `success` (all 5 data artifacts and manifest uploaded successfully)
+- Source: existing verified three-part cache, Run `38921184228` (no re-download from Google)
+- Source Artifact IDs: `12053444812`, `12054800876`, `12055205324`
+- Storage Mode: `SPLIT`
+- Original File: `android-ndk-r28c-linux.zip`
+- Original Size: `722261334` bytes
+- Original SHA256: `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f`
+- Original SHA1: `a7b54a5de87fecd125a17d54f73c446199e72a64`
+- Part Count: `5`
+- Requested Retention: `400 days`
+- Effective Retention: `90 days` (GitHub actual expiration)
+- Created At: `2026-10-17T09:05:40Z` to `2026-10-17T09:05:46Z`
+- Expires At: `2027-01-15T09:05:25Z` (all five data artifacts and manifest)
+- Integrity: each old part SHA256 verified, whole file SHA1/SHA256 and size verified, all five new parts reconstructed on Actions and matching whole-file SHA256, individual part SHA256 logged.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Android NDK | r28c | Linux | x86_64 | `android-ndk-r28c-linux.zip` | `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f` |
+
+### Artifacts
+
+| Part | Artifact ID | Artifact Name | Raw File | Raw Size | Raw SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---|---:|---|---:|---|---|---|
+| 1/5 | `12096092994` | `ndk-r28c-five-part-00` | `ndk-r28c.part.00` | `144452267` | `5171e5cc785cc062e090c3edecf594ce355fa83143c6fb2e62aafdba9c70a621` | `144452413` | `sha256:a0e4865e6e3c8bf0f6f3b2e3f5f2a67122ce04c43849a0ae64b8a5fcd8638594` | `2026-10-17T09:05:40Z` | `2027-01-15T09:05:25Z` |
+| 2/5 | `12096038185` | `ndk-r28c-five-part-01` | `ndk-r28c.part.01` | `144452267` | `56983eda293816841e9c87bb90adc2a41e80f216fdb0fce3a927083c677fded7` | `144452413` | `sha256:2a6ddad52bbf7bb907df85af39de6e036b73997ac2ccb7c2320ebb4d63fda381` | `2026-10-17T09:05:41Z` | `2027-01-15T09:05:25Z` |
+| 3/5 | `12095993665` | `ndk-r28c-five-part-02` | `ndk-r28c.part.02` | `144452267` | `342c5394c75929a11ce8538997ae16a8a1213728440efcded5560c07c794faf5` | `144452413` | `sha256:3bdcf73aa23f420146f729d3ded007fff81bcb1b1235662ea4ba60d6c2fe7082` | `2026-10-17T09:05:43Z` | `2027-01-15T09:05:25Z` |
+| 4/5 | `12095869374` | `ndk-r28c-five-part-03` | `ndk-r28c.part.03` | `144452267` | `fe4905960f15b33defa09a871d5f44c18076b02f5334d6bdf6eef94ae6da7394` | `144452413` | `sha256:61a3f4a5ab88d76bb738399d096162efe348a9e83317b91f0270fd4396fe9e6e` | `2026-10-17T09:05:44Z` | `2027-01-15T09:05:25Z` |
+| 5/5 | `12096053090` | `ndk-r28c-five-part-04` | `ndk-r28c.part.04` | `144452266` | `f853ef4464dab98c084336ea80b8da9986770803e2718a01f4f0fea66e70d1d1` | `144452412` | `sha256:547ecef346b37c2c1ec204f7b841e0aa3aea4319561209261c5f8869ee4c76be` | `2026-10-17T09:05:46Z` | `2027-01-15T09:05:25Z` |
+
+- Manifest Artifact ID: `12096182768`; Name: `ndk-r28c-five-part-manifest`; File: `five-part-manifest.txt`; Artifact ZIP Size: `580` bytes; Artifact Digest: `sha256:9ca5faf7d127833a5cfd9e078b7db80f77eff5514e635d695888926e57acd6e3`; Created At: `2026-10-17T09:05:46Z`; Expires At: `2027-01-15T09:05:25Z`.
+
+### Restore
+
+First verify all five artifacts exist and are unexpired via GitHub API. Download each with GitHub connector `download_workflow_artifact` using the corresponding `Artifact ID`. Every individual artifact archive is below 512MB. Verify each downloaded outer artifact ZIP against `Artifact Digest`, extract the single raw file `ndk-r28c.part.00` through `ndk-r28c.part.04`, verify each raw part against `Raw SHA256`, then concatenate in numeric order. Verify reconstructed file size `722261334` and SHA256 `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f` before extracting NDK. Prefer this five-part cache over the older three-part backup below; no new upstream Google download is needed.
+
+## Android NDK r28c (older three-part fallback)
 
 - Workflow: `.github/workflows/download-ndk-r28c.yml`
 - Run ID: `38921184228`
