@@ -1,0 +1,70 @@
+name: Cache Official AOSP ARM64 GKI Kernels
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-aosp-gki-arm64-kernels-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Fetch public Android prebuilts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          python3 - <<'PY'
+          import base64, gzip, hashlib, json, pathlib, subprocess, time, urllib.request, zlib
+          out = pathlib.Path("output")
+          sources = []
+          def fetch(url):
+              for attempt in range(6):
+                  try:
+                      with urllib.request.urlopen(url, timeout=180) as r:
+                          return r.read()
+                  except Exception:
+                      if attempt == 5: raise
+                      time.sleep(2 ** attempt)
+          for version in ("6.6", "6.12"):
+              repo = f"https://android.googlesource.com/kernel/prebuilts/{version}/arm64"
+              commit = subprocess.check_output(["git", "ls-remote", repo, "refs/heads/main"], text=True).split()[0]
+              for pages in ("4k", "16k"):
+                  prefix = "" if pages == "4k" else "16k/"
+                  remote = f"{prefix}kernel-{version}-gz"
+                  url = f"{repo}/+/{commit}/{remote}?format=TEXT"
+                  payload = base64.b64decode(fetch(url), validate=False)
+                  image = gzip.decompress(payload)
+                  name = f"android-gki-{version}-{pages}.img"
+                  (out/name).write_bytes(image)
+                  record = dict(name=name, version=version, page_size=pages, repository=repo, commit=commit, source_path=remote, source_sha256=hashlib.sha256(payload).hexdigest(), sha256=hashlib.sha256(image).hexdigest(), size=len(image))
+                  marker = image.find(b"IKCFG_ST")
+                  if marker >= 0:
+                      config = zlib.decompress(image[marker+8:], 16+zlib.MAX_WBITS)
+                      (out/(name+".config")).write_bytes(config)
+                  for extra in ("prebuilt-info.txt",):
+                      try:
+                          (out/(name+"."+extra)).write_bytes(base64.b64decode(fetch(f"{repo}/+/{commit}/{prefix}{extra}?format=TEXT")))
+                      except Exception as e:
+                          print("optional metadata unavailable", type(e).__name__, flush=True)
+                  sources.append(record)
+                  print(json.dumps(record), flush=True)
+          (out/"SOURCES.json").write_text(json.dumps(sources, indent=2)+"\n")
+          files=sorted(p for p in out.iterdir() if p.is_file())
+          (out/"SHA256SUMS.txt").write_text("".join(hashlib.sha256(p.read_bytes()).hexdigest()+"  "+p.name+"\n" for p in files))
+          PY
+          tar -C output -czf aosp-gki-arm64-kernels-6.6-6.12-4k-16k-v1.tar.gz .
+          test "$(stat -c %s aosp-gki-arm64-kernels-6.6-6.12-4k-16k-v1.tar.gz)" -lt 500000000
+          sha256sum aosp-gki-arm64-kernels-6.6-6.12-4k-16k-v1.tar.gz > SHA256SUMS.txt
+          stat -c '%s %n' aosp-gki-arm64-kernels-6.6-6.12-4k-16k-v1.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-gki-arm64-kernels-6.6-6.12-4k-16k-v1
+          path: |
+            aosp-gki-arm64-kernels-6.6-6.12-4k-16k-v1.tar.gz
+            SHA256SUMS.txt
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
