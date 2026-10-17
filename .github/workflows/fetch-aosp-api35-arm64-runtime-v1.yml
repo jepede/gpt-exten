@@ -86,6 +86,9 @@ jobs:
               for sub,dest in paths:
                   remote=prefix+"/"+sub
                   if has(img,remote): rdump(img,remote,base_parent)
+              for filename in ["build.prop","default.prop","prop.default"]:
+                  remote=prefix+"/"+filename
+                  if has(img,remote):debug("dump -p "+remote+" "+str(base_parent/filename),img)
               if partition=="system":
                   remote=prefix+"/apex"
                   if has(img,remote):rdump(img,remote,tmp/"apex-packages")
@@ -193,6 +196,8 @@ jobs:
                           subprocess.run(["fsck.erofs","--extract="+str(extracted),str(img)],check=True)
                           source=extracted/"system" if partition=="system" and (extracted/"system/bin").is_dir() else extracted
                           parent=root/partition;parent.mkdir(parents=True,exist_ok=True)
+                          for filename in ["build.prop","default.prop","prop.default"]:
+                              if (source/filename).is_file():shutil.copy2(source/filename,parent/filename)
                           for sub in ["bin","lib64","etc"]:
                               if (source/sub).is_dir():shutil.copytree(source/sub,parent/sub,symlinks=True,dirs_exist_ok=True)
                           if partition=="system":
@@ -201,6 +206,10 @@ jobs:
                               for other in ["vendor","product","system_ext","odm"]:
                                   other_source=next((d for d in [extracted/other,source/other] if d.is_dir() and not d.is_symlink()),None)
                                   if other_source:
+                                      for filename in ["build.prop","default.prop","prop.default"]:
+                                          if (other_source/filename).is_file():
+                                              (root/other).mkdir(parents=True,exist_ok=True)
+                                              shutil.copy2(other_source/filename,root/other/filename)
                                       for sub in ["bin","lib64","etc"]:
                                           if (other_source/sub).is_dir():
                                               shutil.copytree(other_source/sub,root/other/sub,symlinks=True,dirs_exist_ok=True)
