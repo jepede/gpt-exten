@@ -2269,3 +2269,31 @@ Public AOSP prebuilt kernels, embedded build configurations, source metadata and
 ### Restore
 
 Use GitHub connector `download_workflow_artifact` with Artifact ID `12089252099` in `jepede/gpt-exten`. Verify outer ZIP SHA256, extract the included `qemu-aarch64-static` and verify original file SHA256 before installing or invoking. Do not re-download while artifact remains available and its `expires_at` is in the future.
+
+
+## AOSP API35 ARM64 native runtime 35_r02 v1
+
+- Name: `AOSP API35 ARM64 native runtime`
+- Version: `35_r02-native-v1`
+- Platform: `Android 15 / API 35`
+- Architecture: `AArch64`
+- Workflow: `.github/workflows/fetch-aosp-api35-arm64-runtime-v1.yml`
+- Run ID: `39001884393`
+- Artifact ID: `12088924872`
+- Artifact Name: `aosp-api35-arm64-native-runtime-v1`
+- File: `aosp-api35-native-runtime.zip`
+- Size: `148807332 bytes`
+- SHA256: `ba198b5de382ac74f787b0a470f8f73f91ac73536b8ed070ea7ca32a97e76b65`
+- Created At: `2026-10-17T04:16:52Z`
+- Expires At: `2027-01-15T04:15:30Z`
+- Storage: `SINGLE`
+- Original File: `aosp-api35-arm64-native-runtime-v1.tar.xz`
+- Original Size: `148806908 bytes`
+- Original SHA256: `d91c053b71f4776253d8402ecd88382e892aef907110bfa6e09f64df999f2e44`
+- Part Count: `1`
+- Source: `https://dl.google.com/android/repository/sys-img/android/arm64-v8a-35_r02.zip`
+- Source Size: `769099654 bytes`
+- Source SHA256: `1e6ae4fca6449c07278a333311f0ef29c5101d1e3e18ba48fbe9bd2dc5006926`
+- Source SHA1 (official SDK repository metadata): `2026a06409db630b56711afdbffb457c1dbaed49`
+
+Contains public AOSP native bin/lib64/etc trees, authentic build properties, and expanded APEX native runtime directories. APK/framework content and full boot images are excluded. No private user program is included. ZIP, original TAR.XZ and 2253 per-file SHA256 hashes were independently verified after restoration. Runtime validation is separate from cache integrity.
