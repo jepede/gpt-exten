@@ -7,6 +7,8 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| Android 36 ARM64 graphics/framework sysroot | android36-r02-graphics-20261017 | Android API36 | AArch64 | 39007458676 | SINGLE | 2027-01-15T05:45:59Z |
+| Android 36 ARM64 i18n ICU APEX | android36-r02-i18n-20261017 | Android API36 APEX | AArch64 | 39007941479 | SINGLE | 2027-01-15T05:54:10Z |
 | QEMU TCG Plugins: execlog/hotblocks/vmptrace | v10.0.13-plugin-api4-20261017 | Ubuntu 24.04 / Linux (QEMU Debian 13) | x86_64 host, AArch64 guest | `39003891690` | SINGLE | `2027-01-15T04:47:37Z` |
 | AOSP API36 full ARM64 SDK image | 36_r02-full-v1 | Android 16 / API36 | AArch64 | `39003325276` | SPLIT × 3 | `2027-01-15T04:38:31Z` |
 | AOSP API35 full ARM64 SDK image | 35_r02-full-v1 | Android 15 / API35 | AArch64 | `39002974865` | SPLIT × 2 | `2027-01-15T04:32:52Z` |
@@ -2404,3 +2406,92 @@ Use the GitHub connector to download all four artifact ZIPs. Every archive is be
 ### Restore
 
 Use `download_workflow_artifact` with repo `jepede/gpt-exten`, ID `12089733087`. Check outer ZIP SHA256 `698bcf2f...`; unpack files and run `sha256sum -c SHA256SUMS.txt`. The `vmptrace` source is located in repository path `tools/tcg_plugins/vmptrace.c`. This plugin is passive; any GDB register modification is a separate experiment and not a plugin feature.
+
+## Artifact Record: Android 36 ARM64 graphics/framework sysroot (2026-10-17)
+
+- Name: Android 36 ARM64 graphics/framework sysroot
+- Version: android36-r02-graphics-20261017
+- Platform: Android API36 SDK runtime
+- Architecture: AArch64 / arm64-v8a (x86_64 host)
+- Workflow: .github/workflows/tmp-android36-graphics.yml on branch tmp/android36-egl-20261017
+- Run ID: 39007458676 (success)
+- Source: https://dl.google.com/android/repository/sys-img/android/arm64-v8a-36_r02.zip
+- Source SHA256: c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1
+- Artifact Name: android36-graphics-00
+- Artifact ID: 12090878722
+- Metadata Artifact: android36-graphics-meta, ID 12091043204
+- Storage Mode: SINGLE (one original file in part 00; separate metadata artifact)
+- Original File: android36-arm64-graphics-sysroot.tar.gz
+- Original Size: 80764977 bytes
+- Original SHA256: 963b4123e91e5bad16463115b4ca201fa3b54907fa474feda0fb82a3fd070ee4
+- Part Count: 1
+- Artifact Size: 80765123 bytes
+- Artifact ZIP SHA256: 0a1fb9f79e6049ac29090bfefee7ddfe16a40e4c342c3ca6cfdddd403c359a93
+- Metadata Artifact Size: 10204 bytes
+- Metadata ZIP SHA256: 0baed2a10a244737b573f834b2d078a65695d5d5d4623d76997409472b2b3714
+- Created At: 2026-10-17T05:46:54Z
+- Expires At: 2027-01-15T05:45:59Z (actual GitHub expires_at)
+- Retention Requested: 400 days; actual expiry is authoritative
+- Validation: Outer ZIP and inner archive SHA256 checked, extracted 737 runtime files.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Graphics/framework archive | android36-r02-graphics-20261017 | Android API36 | AArch64 | android36-arm64-graphics-sysroot.tar.gz | 963b4123e91e5bad16463115b4ca201fa3b54907fa474feda0fb82a3fd070ee4 |
+| libEGL.so | Android 36 r02 | Android | AArch64 | sysroot/system/lib64/libEGL.so | c967542bdb196f84deecc6a65d754a6fd6e18aa18b5039fed1b6d5dbf9016de7 |
+| libGLESv2.so | Android 36 r02 | Android | AArch64 | sysroot/system/lib64/libGLESv2.so | b81e8b3c754ad96e7495217e55dcd7c67d3e7ba6da99d503ea4e9e1a254e2200 |
+| libGLESv3.so | Android 36 r02 | Android | AArch64 | sysroot/system/lib64/libGLESv3.so | 36de13cedc528931144a503f94b56d216b935cfcf05eebd87a29d6ee9a08c846 |
+| libgui.so | Android 36 r02 | Android | AArch64 | sysroot/system/lib64/libgui.so | 3cccdaf945764512a7f896cc8407b8c4a500713a254cb71bfcac8915c393a445 |
+| libui.so | Android 36 r02 | Android | AArch64 | sysroot/system/lib64/libui.so | c97cec2cce586bfe42c82a7a265533fe0d7e572e04e9f1074bcde38e723092c8 |
+| libbinder.so | Android 36 r02 | Android | AArch64 | sysroot/system/lib64/libbinder.so | 9b5800819be6fe3f7b66c9507cc408b9d2a8daf5dc7af63baaea940d1a43c009 |
+
+### Artifacts
+
+| Part | Artifact ID | Artifact Name | Raw Size | Raw SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | 12090878722 | android36-graphics-00 | 80764977 | 963b4123e91e5bad16463115b4ca201fa3b54907fa474feda0fb82a3fd070ee4 | 80765123 | sha256:0a1fb9f79e6049ac29090bfefee7ddfe16a40e4c342c3ca6cfdddd403c359a93 | 2026-10-17T05:46:54Z | 2027-01-15T05:45:59Z |
+| metadata | 12091043204 | android36-graphics-meta | 74025 | n/a | 10204 | sha256:0baed2a10a244737b573f834b2d078a65695d5d5d4623d76997409472b2b3714 | 2026-10-17T05:46:52Z | 2027-01-15T05:45:59Z |
+
+Restore: download_workflow_artifact IDs 12090878722 and 12091043204, verify ZIP digests, extract graphics.part.00 as the full TAR.GZ, verify inner SHA256, extract to Android sysroot.
+
+## Artifact Record: Android 36 ARM64 i18n ICU APEX (2026-10-17)
+
+- Name: Android 36 ARM64 i18n ICU APEX
+- Version: android36-r02-i18n-20261017
+- Platform: Android API36 SDK APEX
+- Architecture: AArch64 / arm64-v8a
+- Workflow: .github/workflows/tmp-android36-i18n.yml on branch tmp/android36-egl-20261017
+- Run ID: 39007941479 (success)
+- Source: https://dl.google.com/android/repository/sys-img/android/arm64-v8a-36_r02.zip
+- Source SHA256: c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1
+- Artifact Name: android36-arm64-i18n-icu
+- Artifact ID: 12091780944
+- Storage Mode: SINGLE
+- Original File: android36-arm64-i18n-icu.tar.gz
+- Original Size: 12730942 bytes
+- Original SHA256: ff8e006de1fabdb98cccfcffdb3393410245d9336190ca0821d86e78f089eb49
+- Part Count: 1
+- Artifact Size: 12608751 bytes
+- Artifact ZIP SHA256: 7e3592f26e217b10325ce9c34c64998840226e32fc5f48d479f9989c41cc4900
+- Created At: 2026-10-17T05:54:53Z
+- Expires At: 2027-01-15T05:54:10Z (actual GitHub expires_at)
+- Retention Requested: 400 days; actual expiry is authoritative
+- Validation: Outer ZIP and inner archive SHA256 checked. Android ELF test static DT_NEEDED closure becomes zero-missing (243 resolved ELF files).
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| i18n ICU APEX archive | android36-r02-i18n-20261017 | Android API36 APEX | AArch64 | android36-arm64-i18n-icu.tar.gz | ff8e006de1fabdb98cccfcffdb3393410245d9336190ca0821d86e78f089eb49 |
+| libicu.so | Android 36 r02 | Android APEX | AArch64 | sysroot/apex/com.android.i18n/lib64/libicu.so | 7a6a0e8f8e55dfae5a2c789c95eda01e05dfa6ad5ae599e567e40b9ffb0c50f9 |
+| libandroidicu.so | Android 36 r02 | Android APEX | AArch64 | sysroot/apex/com.android.i18n/lib64/libandroidicu.so | 188794585b34624aead7db7e8a62859c7035108765ffef7d9e71ab28652654aa |
+| ICU data | Android 36 r02 | Android APEX | AArch64 | sysroot/apex/com.android.i18n/etc/icu/icudt76l.dat | c5450087565eb20ca37d70af5ef53a99a4c8e2e3da17c9140582b685f06d980f |
+
+### Artifact
+
+| Part | Artifact ID | Artifact Name | Raw Size | Raw SHA256 | Artifact Size | Artifact Digest | Created At | Expires At |
+|---:|---:|---|---:|---|---:|---|---|---|
+| 1/1 | 12091780944 | android36-arm64-i18n-icu | 12730942 | ff8e006de1fabdb98cccfcffdb3393410245d9336190ca0821d86e78f089eb49 | 12608751 | sha256:7e3592f26e217b10325ce9c34c64998840226e32fc5f48d479f9989c41cc4900 | 2026-10-17T05:54:53Z | 2027-01-15T05:54:10Z |
+
+Restore: download_workflow_artifact ID 12091780944, verify ZIP and inner archive SHA256, extract sysroot/apex/com.android.i18n. Add /apex/com.android.i18n/lib64 to the Guest LD_LIBRARY_PATH.
