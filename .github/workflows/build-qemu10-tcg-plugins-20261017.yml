@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/build-qemu10-tcg-plugins-20261017.yml'
+      - 'tools/tcg_plugins/vmptrace.c'
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,6 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
+      - uses: actions/checkout@v4
       - name: Compile QEMU 10.0.13 upstream TCG plugins
         shell: bash
         run: |
@@ -27,6 +29,11 @@ jobs:
             echo "[plugin $name]"; file "artifacts/lib$name.so"
             nm -D "artifacts/lib$name.so" | grep -E 'qemu_plugin_(version|install)' 
           done
+          gcc -std=gnu11 -O2 -g -Wall -Wextra -Wno-unused-parameter -fPIC -shared -fvisibility=hidden \
+            -I sources $(pkg-config --cflags glib-2.0) tools/tcg_plugins/vmptrace.c \
+            -o artifacts/libvmptrace.so $(pkg-config --libs glib-2.0)
+          cp tools/tcg_plugins/vmptrace.c artifacts/
+          nm -D artifacts/libvmptrace.so | grep -E 'qemu_plugin_(version|install)'
           cp sources/* artifacts/
           printf 'QEMU source tag v10.0.13; API version 4\n' > artifacts/BUILD_INFO.txt
           (cd artifacts && sha256sum * > SHA256SUMS.txt)
