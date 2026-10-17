@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| QEMU AArch64 User Static | 1:10.0.13+ds-0+deb13u1 | Debian 13 / Linux | x86_64 host + AArch64 guest | `39001231108` | SINGLE | `2027-01-15T04:05:09Z` |
 | PRoot runtime bundle | 5.1.0-1.3 | Debian 12 / Linux | x86_64 | `38999498688` | SINGLE | `2027-01-15T03:37:28Z` |
 | ARM64 NDK C debugging validation | r28c-run38642113778 | Ubuntu 24.04 Linux / Android Bionic API 36 | x86_64 host + AArch64 guest | `38642113778` | SINGLE | `2027-01-12T21:40:57Z` |
 | Delta Force CN Android APK | 1.201.37117.67 | Android | arm64-v8a | `38596903200` | SPLIT × 4 | `2027-01-12T16:18:07Z` |
@@ -2234,3 +2235,37 @@ Check the actual artifact exists, is unexpired, and matches `Name+Version+Platfo
 - Source 6.12: `https://android.googlesource.com/kernel/prebuilts/6.12/arm64`, commit `ba5af8825f23428021efb670c0ad025d6b1e0966`
 
 Public AOSP prebuilt kernels, embedded build configurations, source metadata and SHA256 checksums only. No user program or private target included. ZIP, original TAR.GZ and per-file hashes independently verified after restoration. Boot/runtime compatibility validation is separate from cache integrity.
+
+
+## QEMU AArch64 User Static 10.0.13
+
+- Name: QEMU AArch64 User Static
+- Version: `1:10.0.13+ds-0+deb13u1`
+- Platform: Debian 13 / Linux
+- Architecture: x86_64 host + AArch64 guest
+- Artifact Name: `qemu-aarch64-static-debian13-20261017`
+- Artifact ID: `12089252099`
+- Run ID: `39001231108`
+- Workflow: `.github/workflows/fetch-qemu-trixie-aarch64-static.yml`
+- File: `qemu10-debian13-aarch64-artifact.zip` (outer artifact archive)
+- Size: `3706833` bytes (outer artifact archive)
+- SHA256: `01c9b8fdd33d31473abc3caec9655ebaab093e31e505363aa8b8ff8550c1dfa4` (outer artifact archive)
+- Created At: `2026-10-17T04:05:20Z`
+- Expires At: `2027-01-15T04:05:09Z` (actual GitHub result; requested 400 days)
+- Storage Mode: `SINGLE`
+- Original File: `qemu-aarch64-static`
+- Original Size: `16661520` bytes
+- Original SHA256: `73cc2584f119f9e74c85c0a8549dbb6fd104ae3897a06a7500797f9e5b4d0943`
+- Part Count: `1`
+- Repository: `jepede/gpt-exten`
+- GitHub Actions artifact status at creation: expired=false
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| QEMU AArch64 Static PIE | 1:10.0.13+ds-0+deb13u1 | Debian 13 / Linux | x86_64 | `qemu-aarch64-static` | `73cc2584f119f9e74c85c0a8549dbb6fd104ae3897a06a7500797f9e5b4d0943` |
+
+### Restore
+
+Use GitHub connector `download_workflow_artifact` with Artifact ID `12089252099` in `jepede/gpt-exten`. Verify outer ZIP SHA256, extract the included `qemu-aarch64-static` and verify original file SHA256 before installing or invoking. Do not re-download while artifact remains available and its `expires_at` is in the future.
