@@ -60,7 +60,7 @@ jobs:
               for base in ('/etc','/etc/icu','/etc/tz','/usr/icu'):
                   for n in sorted(set(ir.listdir(base))):
                       dst=m.OUT/'apex/com.android.i18n'/base.lstrip('/')/n
-                      if dst.exists():continue
+                      if n in ('.','..','icu') or dst.exists():continue
                       if ir.copy(base+'/'+n,dst):print('DATA',base,n,dst.stat().st_size,flush=True)
           pathlib.Path('release/provenance.txt').write_text('Official Google Android 36 r02 ARM64 system image i18n APEX')
           PY
