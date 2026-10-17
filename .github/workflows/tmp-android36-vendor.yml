@@ -1,0 +1,59 @@
+name: Temporary Android 36 Vendor Graphics
+on:
+  push:
+    branches: [tmp/android36-egl-20261017]
+    paths: [.github/workflows/tmp-android36-vendor.yml]
+permissions:
+  contents: read
+jobs:
+  extract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract official Google Android 36 ARM64 vendor graphics
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq curl unzip e2fsprogs file erofs-utils android-sdk-libsparse-utils >/dev/null
+          git clone --depth=1 https://github.com/soe1hom-arch/lpunpack.git /tmp/android-lpunpack
+          (cd /tmp/android-lpunpack && go build -o /tmp/lpunpack .)
+          sudo install -m 0755 /tmp/lpunpack /usr/local/bin/lpunpack
+          curl -fL --retry 4 --retry-all-errors --connect-timeout 40 --max-time 1500 https://dl.google.com/android/repository/sys-img/android/arm64-v8a-36_r02.zip -o source.zip
+          echo 'c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1  source.zip' | sha256sum -c -
+          python3 - <<'PY'
+          import importlib.util,pathlib
+          s=importlib.util.spec_from_file_location('e','compatibility/tools/extract_aosp_runtime.py')
+          m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+          m.sdk_from_zip(pathlib.Path('source.zip'))
+          m.Reader(m.IMAGE)
+          vendor=m.ROOT/'logical/vendor.img'
+          assert vendor.is_file(),vendor
+          r=m.Reader(vendor)
+          out=pathlib.Path('vendor-out/vendor')
+          found=[]
+          for base in ['/lib64','/lib64/egl','/lib64/hw','/etc/vulkan/icd.d']:
+              names=[x for x in r.listdir(base) if x not in ('.','..')]
+              print('DIR',base,names[:300],flush=True)
+              for name in names:
+                  if not name.endswith(('.so','.json','.conf','.icd')):continue
+                  path=base+'/'+name;dest=out/path.lstrip('/')
+                  if r.copy(path,dest):
+                      print('FILE',path,dest.stat().st_size,flush=True)
+                      found.append(path)
+          pathlib.Path('vendor-out/MANIFEST.txt').write_text('\n'.join(found)+'\n')
+          assert found,'no vendor files extracted'
+          PY
+          tar -czf android36-vendor-graphics.tar.gz -C vendor-out .
+          sha256sum android36-vendor-graphics.tar.gz > SHA256SUMS.txt
+          du -h android36-vendor-graphics.tar.gz
+          test "$(stat -c%s android36-vendor-graphics.tar.gz)" -lt 420000000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-vendor-graphics-temporary
+          path: |
+            android36-vendor-graphics.tar.gz
+            SHA256SUMS.txt
+          retention-days: 1
+          if-no-files-found: error
