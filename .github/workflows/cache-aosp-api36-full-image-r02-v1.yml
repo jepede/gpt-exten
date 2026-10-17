@@ -1,0 +1,97 @@
+name: Cache Full AOSP API36 ARM64 Image r02
+on:
+  push:
+    paths:
+      - '.github/workflows/cache-aosp-api36-full-image-r02-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Verify public SDK image and split into three equal parts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,urllib.request,xml.etree.ElementTree as ET,zipfile
+          out=Path("cache");out.mkdir()
+          base="https://dl.google.com/android/repository/sys-img/android/"
+          def fetch(url,path):
+              with urllib.request.urlopen(url,timeout=240) as r, path.open("wb") as f:
+                  while data:=r.read(1024*1024):f.write(data)
+          xml=out/"sys-img2-3.xml";fetch(base+"sys-img2-3.xml",xml)
+          def tag(e):return e.tag.rsplit("}",1)[-1]
+          def child(e,name):return next(x for x in e if tag(x)==name)
+          package=next(e for e in ET.parse(xml).iter() if tag(e)=="remotePackage" and e.attrib.get("path")=="system-images;android-36;default;arm64-v8a")
+          complete=next(e for e in package.iter() if tag(e)=="complete")
+          url=child(complete,"url").text
+          assert url=="arm64-v8a-36_r02.zip",url
+          expected=child(complete,"checksum").text.strip()
+          algorithm=child(complete,"checksum").attrib.get("type","sha1")
+          archive=out/url;fetch(base+url,archive)
+          def digest(p,algorithm="sha256"):
+              with p.open("rb") as f:return hashlib.file_digest(f,algorithm).hexdigest()
+          assert digest(archive,algorithm)==expected
+          full_sha=digest(archive)
+          assert archive.stat().st_size==810736863
+          assert full_sha=="c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1"
+          with zipfile.ZipFile(archive) as z:
+              files=[dict(name=i.filename,size=i.file_size,compressed_size=i.compress_size,crc32=f"{i.CRC:08x}") for i in z.infolist()]
+              assert z.testzip() is None
+          parts=[];half=archive.stat().st_size//3
+          with archive.open("rb") as f:
+              for n in range(3):
+                  part=out/f"full-api36.part.{n:02d}"
+                  remaining=half
+                  with part.open("wb") as g:
+                      while remaining:
+                          data=f.read(min(remaining,1024*1024));assert data
+                          g.write(data);remaining-=len(data)
+                  assert part.stat().st_size<500000000
+                  parts.append(dict(file=part.name,size=part.stat().st_size,sha256=digest(part)))
+              assert not f.read(1)
+          combined=hashlib.sha256()
+          for part in parts:
+              with (out/part["file"]).open("rb") as f:
+                  while data:=f.read(1024*1024):combined.update(data)
+          assert combined.hexdigest()==full_sha
+          record=dict(package=package.attrib["path"],url=base+url,size=archive.stat().st_size,sha256=full_sha,
+                      official_checksum_algorithm=algorithm,official_checksum=expected,parts=parts,files=files)
+          (out/"FULL_IMAGE_SOURCE.json").write_text(json.dumps(record,indent=2)+"\n")
+          (out/"SHA256SUMS.txt").write_text("".join(p["sha256"]+"  "+p["file"]+"\n" for p in parts)+full_sha+"  "+url+"\n")
+          print(json.dumps(record,indent=2),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-full-image-r02-metadata-v1
+          path: |
+            cache/FULL_IMAGE_SOURCE.json
+            cache/SHA256SUMS.txt
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-full-image-r02-part-00-v1
+          path: cache/full-api36.part.00
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-full-image-r02-part-01-v1
+          path: cache/full-api36.part.01
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-full-image-r02-part-02-v1
+          path: cache/full-api36.part.02
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
