@@ -1,0 +1,79 @@
+name: Android 36 ARM64 i18n ICU APEX for native graphics
+on:
+  push:
+    branches:
+      - tmp/android36-egl-20261017
+    paths:
+      - .github/workflows/tmp-android36-i18n.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  extract-i18n:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install extraction tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3 curl unzip e2fsprogs file erofs-utils android-sdk-libsparse-utils >/dev/null
+      - name: Build lpunpack
+        run: |
+          set -euo pipefail
+          git clone --depth=1 https://github.com/soe1hom-arch/lpunpack.git /tmp/android-lpunpack
+          (cd /tmp/android-lpunpack && go build -o /tmp/lpunpack .)
+          sudo install -m 0755 /tmp/lpunpack /usr/local/bin/lpunpack
+      - name: Fetch verified official image for missing i18n APEX
+        run: |
+          set -euo pipefail
+          curl -fL --retry 4 --retry-all-errors --connect-timeout 40 --max-time 1500 \
+            https://dl.google.com/android/repository/sys-img/android/arm64-v8a-36_r02.zip \
+            -o android-arm64-system-image.zip
+          echo "c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1  android-arm64-system-image.zip" | sha256sum -c -
+      - name: Extract ICU shared library and ICU data
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import importlib.util, pathlib, zipfile
+          spec=importlib.util.spec_from_file_location('m','compatibility/tools/extract_aosp_runtime.py')
+          m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+          m.sdk_from_zip(pathlib.Path('android-arm64-system-image.zip'))
+          r=m.Reader(m.IMAGE)
+          names=[]
+          for base in ('/system/apex','/apex'):
+              for n in sorted(set(r.listdir(base)+['com.android.i18n.apex','com.android.i18n.capex'])):
+                  if not n.startswith('com.android.i18n') or not n.endswith(('.apex','.capex')):continue
+                  out=m.ROOT/'apex_packages'/n
+                  if r.copy(base+'/'+n,out):
+                      names.append(base+'/'+n)
+                      print('I18N_APEX',base,n,out.stat().st_size,flush=True)
+                      m.unpack_apex(out,'com.android.i18n')
+          out=m.OUT/'apex/com.android.i18n/lib64/libicu.so'
+          print('I18N_SOURCE',names)
+          if not out.is_file():
+              raise SystemExit('missing libicu.so; no valid i18n runtime')
+          dataimg=m.ROOT/'com_android_i18n.img'
+          if dataimg.is_file():
+              ir=m.Reader(dataimg)
+              for base in ('/etc','/etc/icu','/etc/tz','/usr/icu'):
+                  for n in sorted(set(ir.listdir(base))):
+                      dst=m.OUT/'apex/com.android.i18n'/base.lstrip('/')/n
+                      if dst.exists():continue
+                      if ir.copy(base+'/'+n,dst):print('DATA',base,n,dst.stat().st_size,flush=True)
+          pathlib.Path('release/provenance.txt').write_text('Official Google Android 36 r02 ARM64 system image i18n APEX')
+          PY
+          file release/sysroot/apex/com.android.i18n/lib64/libicu.so
+          file release/sysroot/apex/com.android.i18n/lib64/libicu.so | grep -q 'ELF 64-bit.*ARM aarch64'
+          tar -czf android36-arm64-i18n-icu.tar.gz -C release .
+          sha256sum android36-arm64-i18n-icu.tar.gz > SHA256SUMS.txt
+          ls -lh android36-arm64-i18n-icu.tar.gz
+          test "$(stat -c%s android36-arm64-i18n-icu.tar.gz)" -lt 450000000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-arm64-i18n-icu
+          path: |
+            android36-arm64-i18n-icu.tar.gz
+            SHA256SUMS.txt
+          retention-days: 400
