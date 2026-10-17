@@ -1,0 +1,63 @@
+name: TShield init1 Embedded Auth Probe
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe only embedded semantic candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          python3 - <<'PY'
+          import socket, ssl, hashlib, json, os
+          host='103.217.191.153'; port=4681; device='dev_ctf_init1'
+          candidates=['CHEN_SecretRC4Key_2026_2_28','run_INIT']
+          results=[]
+          for idx,auth in enumerate(candidates):
+              req=(
+                'GET /fetch HTTP/1.1\r\n'
+                f'Host: {host}:{port}\r\n'
+                'User-Agent: Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36\r\n'
+                'Accept: */*\r\n'
+                f'X-Auth-Key: {auth}\r\n'
+                f'X-Device-Id: {device}\r\n'
+                'Connection: close\r\n\r\n').encode()
+              raw=b''; err=None
+              try:
+                  s=socket.create_connection((host,port),timeout=15); s.settimeout(10)
+                  ctx=ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE
+                  try: ctx.set_ciphers('DEFAULT:@SECLEVEL=0')
+                  except Exception: pass
+                  ss=ctx.wrap_socket(s,server_hostname=None)
+                  ss.sendall(req)
+                  chunks=[]
+                  while True:
+                      try: b=ss.recv(65536)
+                      except socket.timeout: break
+                      if not b: break
+                      chunks.append(b)
+                  raw=b''.join(chunks)
+              except Exception as e:
+                  err=repr(e)
+              head,body=(raw.split(b'\r\n\r\n',1)+[b''])[:2] if b'\r\n\r\n' in raw else (raw,b'')
+              status=head.split(b'\r\n',1)[0].decode('latin1','replace') if head else ''
+              open(f'out/response_{idx}.raw','wb').write(raw)
+              open(f'out/body_{idx}.bin','wb').write(body)
+              item={'candidate':auth,'status':status,'raw_len':len(raw),'body_len':len(body),'raw_sha256':hashlib.sha256(raw).hexdigest(),'body_sha256':hashlib.sha256(body).hexdigest(),'error':err,'body_prefix':body[:64].hex()}
+              results.append(item)
+              print(json.dumps(item,ensure_ascii=False))
+          open('out/results.json','w').write(json.dumps(results,ensure_ascii=False,indent=2))
+          PY
+      - name: Upload probe evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: tshield-init1-auth-probe
+          path: out/
+          retention-days: 90
