@@ -16,7 +16,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends e2fsprogs erofs-utils
+          sudo apt-get install -y --no-install-recommends e2fsprogs erofs-utils qemu-utils
           python3 - <<'PY'
           import base64, hashlib, json, os, pathlib, shutil, struct, subprocess, tarfile, tempfile, urllib.request, xml.etree.ElementTree as ET, zipfile
           base="https://dl.google.com/android/repository/sys-img/android/"
@@ -98,16 +98,41 @@ jobs:
                   with z.open(name) as source, packed.open("wb") as target:shutil.copyfileobj(source,target,1024*1024)
                   img=raw_image(packed,tmp/(partition+".raw.img"))
                   print("EXTRACT_PARTITION",partition,img,flush=True)
-                  assert ext4(img),"Expected ext4 SDK partition: "+str(img)
-                  if partition=="system":
-                      prefix="/system" if has(img,"/system/bin") else ""
-                      extract_selected(img,root/"system",prefix,"system")
-                      for other in ["vendor","product","system_ext","odm"]:
-                          if has(img,"/"+other+"/lib64") or has(img,"/"+other+"/etc"):
-                              extract_selected(img,root/other,"/"+other,other)
-                          elif has(img,prefix+"/"+other+"/etc"):
-                              extract_selected(img,root/other,prefix+"/"+other,other)
-                  else:extract_selected(img,root/partition,"",partition)
+                  subprocess.run(["file",str(img)],check=True)
+                  with open(img,"rb") as check:
+                      qcow=check.read(4)==b"QFI\xfb"
+                  if qcow:
+                      converted=tmp/(partition+".converted.raw")
+                      subprocess.run(["qemu-img","convert","-O","raw",str(img),str(converted)],check=True)
+                      if img!=packed:img.unlink()
+                      img=converted
+                  if ext4(img):
+                      if partition=="system":
+                          prefix="/system" if has(img,"/system/bin") else ""
+                          extract_selected(img,root/"system",prefix,"system")
+                          for other in ["vendor","product","system_ext","odm"]:
+                              if has(img,"/"+other+"/lib64") or has(img,"/"+other+"/etc"):
+                                  extract_selected(img,root/other,"/"+other,other)
+                              elif has(img,prefix+"/"+other+"/etc"):
+                                  extract_selected(img,root/other,prefix+"/"+other,other)
+                      else:extract_selected(img,root/partition,"",partition)
+                  else:
+                      extracted=tmp/(partition+"-unpacked")
+                      subprocess.run(["fsck.erofs","--extract="+str(extracted),str(img)],check=True)
+                      source=extracted/"system" if partition=="system" and (extracted/"system/bin").is_dir() else extracted
+                      parent=root/partition;parent.mkdir(parents=True,exist_ok=True)
+                      for sub in ["bin","lib64","etc"]:
+                          if (source/sub).is_dir():shutil.copytree(source/sub,parent/sub,symlinks=True,dirs_exist_ok=True)
+                      if partition=="system":
+                          if (source/"apex").is_dir():
+                              shutil.copytree(source/"apex",tmp/"apex-packages/apex",symlinks=True,dirs_exist_ok=True)
+                          for other in ["vendor","product","system_ext","odm"]:
+                              other_source=next((d for d in [extracted/other,source/other] if d.is_dir() and not d.is_symlink()),None)
+                              if other_source:
+                                  for sub in ["bin","lib64","etc"]:
+                                      if (other_source/sub).is_dir():
+                                          shutil.copytree(other_source/sub,root/other/sub,symlinks=True,dirs_exist_ok=True)
+                      shutil.rmtree(extracted)
                   packed.unlink(missing_ok=True)
                   if img!=packed:img.unlink(missing_ok=True)
           def varint(b,pos):
@@ -172,7 +197,7 @@ jobs:
           print("RUNTIME_READY",len(files),sum(p.stat().st_size for p in files),flush=True)
           
           PY
-          tar -C output -cJf aosp-api35-arm64-native-runtime-v1.tar.xz .
+          XZ_OPT='-T2 -3' tar -C output -cJf aosp-api35-arm64-native-runtime-v1.tar.xz .
           test "$(stat -c %s aosp-api35-arm64-native-runtime-v1.tar.xz)" -lt 500000000
           sha256sum aosp-api35-arm64-native-runtime-v1.tar.xz > SHA256SUMS.txt
           stat -c '%s %n' aosp-api35-arm64-native-runtime-v1.tar.xz
