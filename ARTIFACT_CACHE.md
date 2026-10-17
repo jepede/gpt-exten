@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| AOSP API36 full ARM64 SDK image | 36_r02-full-v1 | Android 16 / API36 | AArch64 | `39003325276` | SPLIT × 3 | `2027-01-15T04:38:31Z` |
 | AOSP API35 full ARM64 SDK image | 35_r02-full-v1 | Android 15 / API35 | AArch64 | `39002974865` | SPLIT × 2 | `2027-01-15T04:32:52Z` |
 | QEMU AArch64 User Static | 1:10.0.13+ds-0+deb13u1 | Debian 13 / Linux | x86_64 host + AArch64 guest | `39001231108` | SINGLE | `2027-01-15T04:05:09Z` |
 | PRoot runtime bundle | 5.1.0-1.3 | Debian 12 / Linux | x86_64 | `38999498688` | SINGLE | `2027-01-15T03:37:28Z` |
@@ -2330,3 +2331,37 @@ Contains public AOSP native bin/lib64/etc trees, authentic build properties, and
 ### Restore
 
 Use the GitHub connector to download all three artifact ZIPs. Each archive is below 512 MB. Verify every outer ZIP against its Artifact Digest; extract metadata and the two raw chunks, verify each raw SHA256, concatenate `full-api35.part.00` then `full-api35.part.01`, and verify final size/SHA256 before extracting the SDK ZIP. CI verified the official SDK checksum, ZIP CRCs, equal chunk sizes and reconstructed SHA256; local restoration independently verified all outer archives, raw chunks and reconstructed image. Includes original public kernel, ramdisk, system/vendor images and SDK metadata. No private target program is included. Image integrity does not certify any user program execution result.
+
+
+## AOSP API36 full ARM64 SDK image 36_r02 v1
+
+- Name: `AOSP API36 full ARM64 SDK image`
+- Version: `36_r02-full-v1`
+- Platform: `Android 16 / API36`
+- Architecture: `AArch64`
+- Workflow: `.github/workflows/cache-aosp-api36-full-image-r02-v1.yml`
+- Run ID: `39003325276`
+- Repository: `jepede/gpt-exten` (public)
+- Source: `https://dl.google.com/android/repository/sys-img/android/arm64-v8a-36_r02.zip`
+- Source File: `arm64-v8a-36_r02.zip`
+- Source Size: `810736863` bytes
+- Source SHA256: `c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1`
+- Official SDK metadata SHA1: `62ad6714df790f89c8a8ad32552ffe20bb16fe87`
+- Storage Mode: `SPLIT`
+- Part Count: `3` equal raw chunks, each `270245621` bytes
+- Part 00 SHA256: `017b944a5e8182f4b502c94708ec933a6d280e98f428243a451ed4a870906776`
+- Part 01 SHA256: `0385c38d8ddf768783ac4ff222bb1aae199492a44d4ab320ea2ffd20f58cde8a`
+- Part 02 SHA256: `9ffbe1506140dd355d97a321d8b70cd7a49d95eef9d7f424e536e82d62b4c5a0`
+- Metadata Artifact: `FULL_IMAGE_SOURCE.json`, `SHA256SUMS.txt`
+- Requested Retention: `90 days`; actual GitHub expires_at governs.
+
+| Part | Artifact ID | Artifact Name | Artifact ZIP Size | Artifact Digest | Created At | Expires At |
+|---|---:|---|---:|---|---|---|
+| NaN/3 | `12090325568` | `aosp-api36-full-image-r02-part-00-v1` | `270245771` | `sha256:745c47f39cd31d1385d21de0585a890b3974a88ff08f2682713cf49a389220de` | `2026-10-17T04:38:57Z` | `2027-01-15T04:38:31Z` |
+| NaN/3 | `12090186116` | `aosp-api36-full-image-r02-part-01-v1` | `270245771` | `sha256:ef23f75cf7bd10f5f79043e4a83118778886686939d45563cde2c468297c9c32` | `2026-10-17T04:39:00Z` | `2027-01-15T04:38:31Z` |
+| metadata | `12089942877` | `aosp-api36-full-image-r02-metadata-v1` | `4405` | `sha256:b51b9dc25f3c3408e39c012d6971879292979438de614dc80ed98368de76786c` | `2026-10-17T04:38:53Z` | `2027-01-15T04:38:31Z` |
+| NaN/3 | `12089883391` | `aosp-api36-full-image-r02-part-02-v1` | `270245771` | `sha256:8f91cae29adacf9b0c6f6ffc513effddf4e422e0b3cc1b93075c413e78bb3422` | `2026-10-17T04:39:04Z` | `2027-01-15T04:38:31Z` |
+
+### Restore
+
+Use the GitHub connector to download all four artifact ZIPs. Every archive is below 512 MB. Verify outer ZIPs against Artifact Digest values, extract the metadata and raw chunks, verify individual raw SHA256 values, concatenate parts 00/01/02 in order, then verify the final size/SHA256 before extracting the original SDK ZIP. CI verified the official SDK checksum, ZIP CRCs, equal chunk sizes and reconstructed SHA256. All outer archives, raw chunks and reconstructed source image were independently verified locally. Contains only the original public SDK images, kernel, ramdisk and metadata; no private user program. Image integrity does not certify successful execution of any user program.
