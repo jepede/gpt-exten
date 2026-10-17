@@ -1,0 +1,68 @@
+name: Extract official Android 36 ARM64 service executables
+on:
+  push:
+    branches: [tmp/android36-egl-20261017]
+    paths: [.github/workflows/tmp-android36-services.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  extract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install filesystem extraction tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3 curl unzip e2fsprogs file erofs-utils android-sdk-libsparse-utils >/dev/null
+      - name: Build lpunpack
+        run: |
+          set -euo pipefail
+          git clone --depth=1 https://github.com/soe1hom-arch/lpunpack.git /tmp/android-lpunpack
+          (cd /tmp/android-lpunpack && go build -o /tmp/lpunpack .)
+          sudo install -m 0755 /tmp/lpunpack /usr/local/bin/lpunpack
+      - name: Download verified Google API36 ARM64 image
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 4 --retry-all-errors --max-time 1500 https://dl.google.com/android/repository/sys-img/android/arm64-v8a-36_r02.zip -o android-arm64-system-image.zip
+          echo 'c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1  android-arm64-system-image.zip' | sha256sum -c -
+      - name: Extract native service binaries and configuration
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import importlib.util, pathlib, json
+          spec=importlib.util.spec_from_file_location('r','compatibility/tools/extract_aosp_runtime.py')
+          m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+          m.sdk_from_zip(pathlib.Path('android-arm64-system-image.zip'))
+          r=m.Reader(m.IMAGE)
+          wanted=[
+            '/system/bin/servicemanager','/system/bin/init','/system/bin/surfaceflinger',
+            '/system/bin/setprop','/system/bin/getprop','/system/bin/logd',
+            '/system/bin/hwservicemanager','/system/bin/toybox','/system/bin/service',
+            '/system/etc/selinux/plat_property_contexts','/system/etc/selinux/plat_service_contexts',
+            '/system/etc/selinux/plat_sepolicy.cil','/system/etc/prop.default',
+            '/system/build.prop','/system/etc/init/hw/init.rc'
+          ]
+          results=[]
+          for p in wanted:
+            out=pathlib.Path('release')/p.lstrip('/')
+            if r.copy(p,out):
+              print('EXTRACT_OK',p,out.stat().st_size,flush=True)
+              results.append({'path':p,'size':out.stat().st_size})
+            else: print('NOT_IN_SYSTEM',p,flush=True)
+          assert any(x['path']=='/system/bin/servicemanager' for x in results)
+          pathlib.Path('release/manifest.json').write_text(json.dumps(results,indent=2))
+          PY
+          file release/system/bin/servicemanager
+          tar -czf android36-native-service-components.tar.gz -C release .
+          sha256sum android36-native-service-components.tar.gz > SHA256SUMS.txt
+          test "$(stat -c%s android36-native-service-components.tar.gz)" -lt 400000000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android36-native-service-components-temp
+          path: |
+            android36-native-service-components.tar.gz
+            SHA256SUMS.txt
+          retention-days: 1
