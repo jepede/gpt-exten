@@ -6,7 +6,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | Mozilla NSS TLS Root Store | release-b9bd270cfa3e-20261005 | Any | Any | `37253767754` | SINGLE | `2027-01-03T02:02:10Z` |
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
-|---|---|---|---|---:|---|---|---|
+|---|---|---|---|---:|---|---|
 | AOSP API35 full ARM64 SDK image | 35_r02-full-v1 | Android 15 / API35 | AArch64 | `39002974865` | SPLIT × 2 | `2027-01-15T04:32:52Z` |
 | QEMU AArch64 User Static | 1:10.0.13+ds-0+deb13u1 | Debian 13 / Linux | x86_64 host + AArch64 guest | `39001231108` | SINGLE | `2027-01-15T04:05:09Z` |
 | PRoot runtime bundle | 5.1.0-1.3 | Debian 12 / Linux | x86_64 | `38999498688` | SINGLE | `2027-01-15T03:37:28Z` |
