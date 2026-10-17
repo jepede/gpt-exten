@@ -7,6 +7,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| QEMU TCG Plugins: execlog/hotblocks/vmptrace | v10.0.13-plugin-api4-20261017 | Ubuntu 24.04 / Linux (QEMU Debian 13) | x86_64 host, AArch64 guest | `39003891690` | SINGLE | `2027-01-15T04:47:37Z` |
 | AOSP API36 full ARM64 SDK image | 36_r02-full-v1 | Android 16 / API36 | AArch64 | `39003325276` | SPLIT × 3 | `2027-01-15T04:38:31Z` |
 | AOSP API35 full ARM64 SDK image | 35_r02-full-v1 | Android 15 / API35 | AArch64 | `39002974865` | SPLIT × 2 | `2027-01-15T04:32:52Z` |
 | QEMU AArch64 User Static | 1:10.0.13+ds-0+deb13u1 | Debian 13 / Linux | x86_64 host + AArch64 guest | `39001231108` | SINGLE | `2027-01-15T04:05:09Z` |
@@ -2365,3 +2366,41 @@ Use the GitHub connector to download all three artifact ZIPs. Each archive is be
 ### Restore
 
 Use the GitHub connector to download all four artifact ZIPs. Every archive is below 512 MB. Verify outer ZIPs against Artifact Digest values, extract the metadata and raw chunks, verify individual raw SHA256 values, concatenate parts 00/01/02 in order, then verify the final size/SHA256 before extracting the original SDK ZIP. CI verified the official SDK checksum, ZIP CRCs, equal chunk sizes and reconstructed SHA256. All outer archives, raw chunks and reconstructed source image were independently verified locally. Contains only the original public SDK images, kernel, ramdisk and metadata; no private user program. Image integrity does not certify successful execution of any user program.
+
+
+## QEMU 10.0.13 TCG plugin toolchain (2026-10-17)
+
+- **Name:** QEMU TCG Plugins: execlog/hotblocks/vmptrace
+- **Version:** v10.0.13-plugin-api4-20261017
+- **Platform:** Ubuntu 24.04 Linux / Debian 13 QEMU
+- **Architecture:** x86_64 host, AArch64 guest
+- **Repository:** `jepede/gpt-exten`
+- **Workflow:** `.github/workflows/build-qemu10-tcg-plugins-20261017.yml`
+- **Run ID:** `39003891690`
+- **Artifact ID:** `12089733087`
+- **Artifact Name:** `qemu10-tcg-plugins-upstream-execlog-hotblocks`
+- **File:** `qemu10-tcg-plugins-vmptrace.zip` (download name, archive includes plugins and source/header)
+- **Size:** `61605` bytes
+- **SHA256:** `698bcf2f2cb1c18ef1c99834c824acc8f5d32f3d4e80406c36e4007c9c4eacba`
+- **Created At:** `2026-10-17T04:47:54Z`
+- **Expires At:** `2027-01-15T04:47:37Z` (GitHub actual result, expired=false, retention-days requested 400)
+- **Storage Mode:** `SINGLE`
+- **Original File:** `qemu10-tcg-plugins-vmptrace.zip` (the original artifact ZIP payload, no extra nested TAR)
+- **Original Size:** `61605` bytes
+- **Original SHA256:** `698bcf2f2cb1c18ef1c99834c824acc8f5d32f3d4e80406c36e4007c9c4eacba`
+- **Part Count:** `1`
+- **Validation:** SHA256 of downloaded archive and inner `SHA256SUMS.txt` verified; QEMU 10.0.13 loads plugins; live ARM64 guest traced instruction execution and memory accesses without changing register state.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| QEMU libexeclog.so | 10.0.13 API4 | Linux | x86_64 | `libexeclog.so` | `87a167f4eb08a26d1b9136f6be07cdaf74977db545f13c7613a9ed528303a8e9` |
+| QEMU libhotblocks.so | 10.0.13 API4 | Linux | x86_64 | `libhotblocks.so` | `696e30377b3af26c9c017c42bb1ceae640f332246d98ff93c790ad3479ca69d7` |
+| QEMU passive VMP trace plugin | 10.0.13 API4 | Linux | x86_64 | `libvmptrace.so` | `7fb3b4eb9b7d22f9f1d6dd19b251b36254a4ab537dd6c99e4cb8bcb5080101df` |
+| QEMU plugin SDK header | 10.0.13 API4 | Any | Any | `qemu-plugin.h` | `ceca12f3ba448340b38223617b1c66d7b92e0e0d78687d1e108c42287542836e` |
+| Passive VMP plugin source | 20261017 | Any | Any | `vmptrace.c` | `6ca2778a11211f2753e7eebf2eeace469b43432ef3534bab70fde786e657f7f9` |
+
+### Restore
+
+Use `download_workflow_artifact` with repo `jepede/gpt-exten`, ID `12089733087`. Check outer ZIP SHA256 `698bcf2f...`; unpack files and run `sha256sum -c SHA256SUMS.txt`. The `vmptrace` source is located in repository path `tools/tcg_plugins/vmptrace.c`. This plugin is passive; any GDB register modification is a separate experiment and not a plugin feature.
