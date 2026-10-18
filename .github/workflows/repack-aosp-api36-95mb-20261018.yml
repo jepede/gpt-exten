@@ -1,0 +1,169 @@
+name: Repack cached API36 into 95MB chunks
+on:
+  push:
+    paths:
+      - '.github/workflows/repack-aosp-api36-95mb-20261018.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  repack:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Download existing cached artifacts from run 39003325276
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in 00 01 02; do
+            mkdir -p "source/$i"
+            gh run download 39003325276 -R "$GITHUB_REPOSITORY" -n "aosp-api36-full-image-r02-part-$i-v1" -D "source/$i"
+          done
+      - name: Independently verify and stream-repack original image
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json
+          SOURCE_RUN=39003325276
+          EXPECTED=[
+            ("00", "017b944a5e8182f4b502c94708ec933a6d280e98f428243a451ed4a870906776"),
+            ("01", "0385c38d8ddf768783ac4ff222bb1aae199492a44d4ab320ea2ffd20f58cde8a"),
+            ("02", "9ffbe1506140dd355d97a321d8b70cd7a49d95eef9d7f424e536e82d62b4c5a0"),
+          ]
+          TOTAL=810736863
+          FULL_SHA="c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1"
+          CHUNK_SIZE=95000000
+          out=Path("chunks");out.mkdir(parents=True,exist_ok=True)
+          source=[]
+          for i,sha in EXPECTED:
+              f=Path("source")/i/("full-api36.part."+i)
+              if not f.is_file(): raise SystemExit("missing source "+str(f))
+              h=hashlib.sha256()
+              with f.open("rb") as stream:
+                  while b:=stream.read(1024*1024):h.update(b)
+              got=h.hexdigest()
+              if got!=sha:raise SystemExit("source SHA256 mismatch: "+str(f)+" "+got)
+              if f.stat().st_size!=270245621:raise SystemExit("source size mismatch "+str(f))
+              source.append((f,sha))
+          allhash=hashlib.sha256()
+          chunks=[]
+          writer=None
+          used=0
+          total=0
+          chunkhash=None
+          def end_chunk():
+              global writer,used,chunkhash
+              if writer is None:return
+              writer.close()
+              p=Path(chunks[-1]["file"])
+              chunks[-1]["size"]=p.stat().st_size
+              chunks[-1]["sha256"]=chunkhash.hexdigest()
+              if p.stat().st_size>CHUNK_SIZE:raise SystemExit("chunk oversized")
+              print(p, chunks[-1]["size"], chunks[-1]["sha256"],flush=True)
+              writer=None
+              used=0
+          for src,_ in source:
+              with src.open("rb") as stream:
+                  while b:=stream.read(1024*1024):
+                      total+=len(b)
+                      allhash.update(b)
+                      offset=0
+                      while offset<len(b):
+                          if writer is None:
+                              name=f"full-api36.chunk.{len(chunks):02d}"
+                              p=out/name
+                              writer=p.open("wb")
+                              chunkhash=hashlib.sha256()
+                              chunks.append(dict(name="AOSP API36 full ARM64 SDK image",version="36_r02-full-v1-95MB",platform="Android 16 / API36",architecture="AArch64",file=str(p)))
+                          take=min(CHUNK_SIZE-used,len(b)-offset)
+                          piece=b[offset:offset+take]
+                          writer.write(piece)
+                          chunkhash.update(piece)
+                          used+=take
+                          offset+=take
+                          if used==CHUNK_SIZE:end_chunk()
+          end_chunk()
+          if total!=TOTAL or allhash.hexdigest()!=FULL_SHA:raise SystemExit("reconstructed source SHA256 or size mismatch!")
+          if len(chunks)!=9:raise SystemExit("expected 9 small parts, found "+str(len(chunks)))
+          manifest=dict(artifact_name="aosp-api36-r02-95mb",source_run_id=SOURCE_RUN,original_file="arm64-v8a-36_r02.zip",original_size=TOTAL,original_sha256=FULL_SHA,storage_mode="SPLIT",part_count=len(chunks),max_part_size=CHUNK_SIZE,source_artifacts=[dict(part=i,file=str(p),sha256=h) for (i,_),(p,h) in zip(EXPECTED,source)],parts=chunks)
+          (out/"MANIFEST.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n")
+          (out/"SHA256SUMS.txt").write_text("".join(p["sha256"]+"  "+Path(p["file"]).name+"\n" for p in chunks)+"\n")
+          print("REPACK VERIFIED",total,FULL_SHA,"PARTS",len(chunks),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-r02-95mb-part-00
+          path: chunks/full-api36.chunk.00
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-r02-95mb-part-01
+          path: chunks/full-api36.chunk.01
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-r02-95mb-part-02
+          path: chunks/full-api36.chunk.02
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-r02-95mb-part-03
+          path: chunks/full-api36.chunk.03
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-r02-95mb-part-04
+          path: chunks/full-api36.chunk.04
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-r02-95mb-part-05
+          path: chunks/full-api36.chunk.05
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-r02-95mb-part-06
+          path: chunks/full-api36.chunk.06
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-r02-95mb-part-07
+          path: chunks/full-api36.chunk.07
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-r02-95mb-part-08
+          path: chunks/full-api36.chunk.08
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aosp-api36-r02-95mb-manifest
+          path: |
+            chunks/MANIFEST.json
+            chunks/SHA256SUMS.txt
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
