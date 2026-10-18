@@ -11,6 +11,8 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | Android 36 ARM64 graphics/framework sysroot | android36-r02-graphics-20261017 | Android API36 | AArch64 | 39007458676 | SINGLE | 2027-01-15T05:45:59Z |
 | Android 36 ARM64 i18n ICU APEX | android36-r02-i18n-20261017 | Android API36 APEX | AArch64 | 39007941479 | SINGLE | 2027-01-15T05:54:10Z |
 | QEMU TCG Plugins: execlog/hotblocks/vmptrace | v10.0.13-plugin-api4-20261017 | Ubuntu 24.04 / Linux (QEMU Debian 13) | x86_64 host, AArch64 guest | `39003891690` | SINGLE | `2027-01-15T04:47:37Z` |
+| Android Emulator (Ranchu/GLES) | 37.2.12.0 | Linux | x86_64 | `39122587987` | SPLIT × 4 | 2027-01-16T11:16:44Z |
+| Android Platform-Tools ADB cached subset | 37.0.1 | Linux | x86_64 | `39123346053` | SINGLE | 2027-01-16T11:28:02Z |
 | AOSP API36 full ARM64 SDK image (~95 MB partitions) | 36_r02-full-v1-95MB | Android 16 / API36 | AArch64 | `39119724365` | SPLIT × 9 | 2027-01-16T10:33:28Z |
 | AOSP API36 full ARM64 SDK image | 36_r02-full-v1 | Android 16 / API36 | AArch64 | `39003325276` | SPLIT × 3 | `2027-01-15T04:38:31Z` |
 | AOSP API35 full ARM64 SDK image | 35_r02-full-v1 | Android 15 / API35 | AArch64 | `39002974865` | SPLIT × 2 | `2027-01-15T04:32:52Z` |
@@ -2675,3 +2677,74 @@ Check each Artifact ID against GitHub Actions `expires_at` before downloading. D
 | 01 | 12135080934 | arm64-lab-clang-r28c-95mb-01 | ndk-clang-r28c.part.01 | 72910784 | 877f9733e726b49fc50d32a01ea8186ed94d7bde67ff4dceb02bb2e9fd7dac20 | 72910942 | d2c7bcdd6d7e08d153ec92653594f3eafe6683da8fe0733e84957e1999da1949 | 2026-10-18T11:10:15Z | 2027-01-16T11:05:31Z |
 
 Restore: check actual existence and expires_at, download each artifact separately with download_workflow_artifact, verify outer ZIP and raw part SHA256, concatenate 00 then 01, verify original size/SHA256, and extract ndk-clang. Every outer ZIP is below 100 MB and 512 MB. MANIFEST.json records the full extracted path/hash list; hashes of symlink entries represent link target bytes.
+
+
+## Android Emulator 37.2.12 ARM64 TCGraphics repair (2026-10-18)
+
+- Name: Android Emulator (Ranchu/GLES)
+- Version: 37.2.12.0 (build 16428233, stable)
+- Platform: Linux
+- Architecture: x86_64 host, ARM64-v8a guest (cross-ISA TCG)
+- Workflow: `.github/workflows/cache-android-emulator-37_2_12-90mb-20261018.yml`
+- Run ID: `39122587987` ([Actions run](https://github.com/jepede/gpt-exten/actions/runs/39122587987))
+- Source: `https://dl.google.com/android/repository/emulator-linux_x64-16428233.zip`
+- Artifact Name: `android-emulator-37_2_12-x64-part-00` through `-03`, metadata `android-emulator-37_2_12-x64-metadata`
+- Artifact ID: listed below; metadata Artifact ID `12133754942`
+- File: `emulator-37.2.12.part.00` through `-03`, `MANIFEST.json`, `SHA256SUMS.txt`
+- Size: each of parts 00-02 = 90,000,000 bytes; part 03 = 79,654,171 bytes
+- SHA256: per part listed below; original source SHA256 `b08fc43d8608d2955f607f1b287beb525041e730086bdca3af152accac3af9c1`
+- Created At: `2026-10-18T11:16:56Z` (first part)
+- Expires At: `2027-01-16T11:16:44Z` (actual GitHub API expiry, not requested retention)
+- Storage Mode: SPLIT
+- Original File: `emulator-linux_x64-16428233.zip`
+- Original Size: 349654171 bytes
+- Original SHA256: `b08fc43d8608d2955f607f1b287beb525041e730086bdca3af152accac3af9c1`
+- Part Count: 4
+- Metadata outer ZIP SHA256: `sha256:26cf288fbb2212a9a9714361efd8f3f2d89b633bfd61219dbc52ae8c1c040147`; expires `2027-01-16T11:16:44Z`
+
+| Part | Artifact ID | Artifact Name | Artifact Size | Outer SHA256 | Expires At |
+|---|---:|---|---:|---|---|
+| 00 | `12135255704` | `android-emulator-37_2_12-x64-part-00` | 90000162 | `sha256:1fb562e6bd38ad1df6d9443150ccd4931495cf190e1699a26b172c87c223ff77` | `2027-01-16T11:16:44Z` |
+| 01 | `12135071739` | `android-emulator-37_2_12-x64-part-01` | 90000162 | `sha256:2a004ef603759d06f51ef47a143ed56731ec1fa0ae2136690cb7ed8be957d860` | `2027-01-16T11:16:44Z` |
+| 02 | `12135036812` | `android-emulator-37_2_12-x64-part-02` | 90000162 | `sha256:c0c4f10166fa9981e4495e8a668bb626b33652638ea7127cb94a12ecccaa0602` | `2027-01-16T11:16:44Z` |
+| 03 | `12135146417` | `android-emulator-37_2_12-x64-part-03` | 79654333 | `sha256:bb8f904323ddb22c0ad1a79bdb536878bbb25c1d769c9dbcb4f2fa969194f963` | `2027-01-16T11:16:44Z` |
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Android Emulator source chunk 00 | 37.2.12.0 | Linux | x86_64 | `emulator-37.2.12.part.00` | `c06b59081fb40c1ed3161612f6d63c870afca38f00441b828d6609d8d6bedb80` |
+| Android Emulator source chunk 01 | 37.2.12.0 | Linux | x86_64 | `emulator-37.2.12.part.01` | `f1c50cde1af94cd91778fab6a0152bbc612cbd9513df49e89299afb79e8d1345` |
+| Android Emulator source chunk 02 | 37.2.12.0 | Linux | x86_64 | `emulator-37.2.12.part.02` | `9cab730bd6d4f4eb7a69f72a7ab739d655e0d1433201c175df5897489f366489` |
+| Android Emulator source chunk 03 | 37.2.12.0 | Linux | x86_64 | `emulator-37.2.12.part.03` | `d4d9e2fe5df31da0544f6b6b4df66aeeec5802524a87d6cc0816357678c98960` |
+
+### Restore
+
+Download four part Artifacts plus metadata from GitHub, check archive SHA256, extract in part order, verify raw-part SHA256, concatenate into emulator source ZIP, then verify exact original size and SHA256. ZIP CRC tested locally, extracted to `/opt/arm64-lab/android-sdk/emulator`, executable `emulator -version` verified. Standard emulator launcher blocks ARM64 API36 on x86_64. Direct engine `qemu/linux-x86_64/qemu-system-aarch64-headless` with `ANDROID_I_WANT_MY_TCG=yes`, `-feature -VirtioSndCard`, `-qemu -machine virt` booted official Android 16 init/service-manager on TCG. This is experimental, slow, and does not certify full Android boot or app execution.
+
+## Android Platform-Tools ADB cached subset (2026-10-18)
+
+- Name: Android Platform-Tools ADB cached subset
+- Version: 37.0.1
+- Platform: Linux
+- Architecture: x86_64
+- Workflow: `.github/workflows/repack-cached-adb-20261018.yml`
+- Run ID: `39123346053`, source Run ID `34697680626` (cache reuse, no download from Google)
+- Artifact ID: `12135192496`
+- Artifact Name: `android-adb-37_0_1-cached-small`
+- File: `platform-tools-37.0.1.tar.gz`
+- Size: outer Artifact `8791019` bytes; extracted tarball `8790360` bytes
+- SHA256: outer ZIP `sha256:c80d9a38e94fd642a019a5e93acdfd450790163f81145490cc5e425a3ac534d4`, inner tar.gz `3358695e1c060ae59cfd137651a7c0ba4d7685a9cc4465e473e1982ed99dc88d`
+- Created At: `2026-10-18T11:28:20Z`
+- Expires At: `2027-01-16T11:28:02Z`
+- Storage Mode: SINGLE
+- Original File: `platform-tools-37.0.1.tar.gz`
+- Original Size: 8790360 bytes
+- Original SHA256: `3358695e1c060ae59cfd137651a7c0ba4d7685e473e1982ed99dc88d`
+- Part Count: 1
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Android ADB / Platform-Tools | 37.0.1 | Linux | x86_64 | `platform-tools-37.0.1.tar.gz` | `3358695e1c060ae59cfd137651a7c0ba4d7685a9cc4465e473e1982ed99dc88d` |
+
+### Restore
+
+Download Artifact `12135192496` via GitHub connector, verify outer ZIP SHA256, unpack tar.gz and verify inner SHA256, then extract `platform-tools/` to SDK root. Cached bundle was repacked from still-active prior SDK artifact `10299605918` and its original compressed SHA256 independently checked. Installed ADB was tested with `adb version` and `adb devices`.
