@@ -30,11 +30,9 @@ jobs:
           expected = [
             '5171e5cc785cc062e090c3edecf594ce355fa83143c6fb2e62aafdba9c70a621',
             '56983eda293816841e9c87bb90adc2a41e80f216fdb0fce3a927083c677fded7',
-            '342c5394c75929a11cece8538997ae16a8a1213728440efcded5560c07c794faf5',
+            '342c5394c75929a11ce8538997ae16a8a1213728440efcded5560c07c794faf5',
             'fe4905960f15b33defa09a871d5f44c18076b02f5334d6bdf6eef94ae6da7394',
             'f853ef4464dab98c084336ea80b8da9986770803e2718a01f4f0fea66e70d1d1']
-          # Correct source hash from the authoritative cache index.
-          expected[2] = '342c5394c75929a11ce8538997ae16a8a1213728440efcded5560c07c794faf5'
           source = Path('ndk.zip')
           with source.open('wb') as out:
             for i, digest in enumerate(expected):
@@ -69,7 +67,7 @@ jobs:
                 target.chmod(mode & 0o777 or 0o644)
               files.append({'path':rel,'sha256':hashlib.sha256(blob).hexdigest(),'bytes':len(blob),'symlink':stat.S_ISLNK(mode)})
           for name in ['clang','ld.lld']:
-            subprocess.run([str((dest/'bin'/name).resolve()), '--version'], check=True)
+            subprocess.run([str((dest/'bin'/name).absolute()), '--version'], check=True)
           output = Path('output'); output.mkdir()
           archive = output / 'ndk-clang-r28c.tar.xz'
           with tarfile.open(archive, 'w:xz', preset=6) as tar:
