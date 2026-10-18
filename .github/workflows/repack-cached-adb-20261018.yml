@@ -1,0 +1,52 @@
+name: Repack cached Android SDK Platform Tools (adb)
+on:
+  push:
+    paths:
+      - '.github/workflows/repack-cached-adb-20261018.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  repack:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Download existing verified SDK toolchain artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p cache
+          gh run download 34697680626 -R "$GITHUB_REPOSITORY" -n android-sdk-api35-bt35.0.0-linux-x86_64 -D cache
+          ls -lah cache
+          FILE=cache/android-sdk-api35-bt35.0.0-linux-x86_64.tar.zst
+          echo "d1625f8dde5ce737b376ee56e89089846056605aa3a0eb59ddf3b87c3ee24fcc  $FILE" | sha256sum -c -
+      - name: Extract cached adb and create small transport artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v zstd || (sudo apt-get update -qq && sudo apt-get install -y -qq zstd)
+          mkdir -p staging out/platform-tools
+          tar -I zstd -xf cache/android-sdk-api35-bt35.0.0-linux-x86_64.tar.zst -C staging
+          ADB="$(find staging -type f -path '*/platform-tools/adb' -print -quit)"
+          test -n "$ADB"
+          cp -a "${ADB%/adb}/." out/platform-tools/
+          test -x out/platform-tools/adb
+          out/platform-tools/adb version
+          tar -C out -czf out/platform-tools-37.0.1.tar.gz platform-tools
+          test "$(stat -c %s out/platform-tools-37.0.1.tar.gz)" -lt 100000000
+          sha256sum out/platform-tools-37.0.1.tar.gz > out/SHA256SUMS.txt
+          printf 'source_run_id=34697680626\nsource_artifact_id=10299605918\nsource_size=236498357\nsource_sha256=d1625f8dde5ce737b376ee56e89089846056605aa3a0eb59ddf3b87c3ee24fcc\n' > out/SOURCE.txt
+          ls -lh out/platform-tools-37.0.1.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-adb-37_0_1-cached-small
+          path: |
+            out/platform-tools-37.0.1.tar.gz
+            out/SHA256SUMS.txt
+            out/SOURCE.txt
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
