@@ -3,6 +3,7 @@
 GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Version + Platform + Architecture` 查询；是否仍可用以 GitHub 实际返回的 `expires_at` 为准。
 
 ## Index
+| Android NDK minimal Clang/LLD | r28c-minimal-v1 | Linux | x86_64 host + AArch64 target | 39121838147 | SPLIT × 2 (95 MB) | 2027-01-16T11:05:31Z |
 | Mozilla NSS TLS Root Store | release-b9bd270cfa3e-20261005 | Any | Any | `37253767754` | SINGLE | `2027-01-03T02:02:10Z` |
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
@@ -2629,3 +2630,48 @@ One-day temporary vendor probe: Workflow .github/workflows/tmp-android36-vendor.
 ### Restore & verified test
 
 Check each Artifact ID against GitHub Actions `expires_at` before downloading. Download the manifest and parts `00` through `08` **individually** with `download_workflow_artifact` (each outer Artifact ≤95,000,152 bytes, final one 50,737,015 bytes). Verify each outer archive SHA256 against the table, extract each raw chunk and compare SHA256 with the raw-file table, concatenate in numerical order, and check reconstructed byte count `810736863` plus SHA256 `c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1`. Prefer internal directories such as `/opt/arm64-lab/sdk-cache` for the 811 MB assembled file, avoiding durable conversation attachment uploads over 512 MB. Locally tested on 2026-10-18: all 9 outer Artifact downloads returned successfully, all raw SHA256 checks passed, assembled source matched, all 20 ZIP internal entries passed CRC, Android 36 SDK image extracted; no `ClientError` or OOM. A different generated-attachment upload error occurred when placing the assembled 811 MB ZIP under `/mnt/data` and was resolved by using the internal `/opt` path. This does not imply the Android guest or `test_elf` can run on QEMU virt without Android Emulator/Ranchu devices.
+
+## Artifact Record: Android NDK r28c minimal Clang/LLD (2026-10-18)
+
+- Name: Android NDK minimal Clang/LLD
+- Version: r28c-minimal-v1 (Clang 19.0.1; NDK r28c/r530567e)
+- Platform: Linux
+- Architecture: x86_64 host + AArch64 Android target
+- Workflow: .github/workflows/arm64-lab-clang-r28c-minimal-20261018.yml
+- Run ID: 39121838147
+- Run URL: https://github.com/jepede/gpt-exten/actions/runs/39121838147
+- Source: verified, unexpired five-part NDK r28c cache Run 39019800471; no upstream Google re-download
+- Source SHA256: dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f
+- Artifact Name: arm64-lab-clang-r28c-95mb-00, arm64-lab-clang-r28c-95mb-01
+- Artifact ID: 12135105748, 12135080934
+- File: ndk-clang-r28c.part.00, ndk-clang-r28c.part.01
+- Size: raw parts 95000000 and 72910784 bytes; ZIP sizes 95000158 and 72910942 bytes
+- SHA256: per-part raw and outer ZIP hashes in the table below
+- Created At: 2026-10-18T11:10:12Z to 2026-10-18T11:10:16Z
+- Expires At: 2027-01-16T11:05:31Z (actual GitHub expires_at; expired=false)
+- Storage Mode: SPLIT
+- Original File: ndk-clang-r28c.tar.xz
+- Original Size: 167910784 bytes
+- Original SHA256: b0d693a2b69a0bf218135e07abfed0350c3c5ab317b42fe40a16e8324ec6d81c
+- Part Count: 2
+- Requested Retention: 400 days; effective expiry is authoritative
+- Metadata Artifact Name: arm64-lab-clang-r28c-meta
+- Metadata Artifact ID: 12135105757
+- Metadata ZIP Size: 17175 bytes
+- Metadata ZIP SHA256: c6629148293e3014b2bd3f6793a82e2a3cc558a318124fb00a48014a7d5d2c2b
+- Metadata File: MANIFEST.json
+- Metadata File SHA256: e86218a7f9e1402a226114f9a5d67d3925628c894c62e653e5343f35fc3d8a37
+- Scope: minimal compiler, LLD, shared compiler libraries and Clang resource headers/runtimes. This is not the complete NDK sysroot. It supports the ARM64 lab's supplied -nostdlib C/assembly example build recipes.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Android NDK minimal compiler bundle | r28c-minimal-v1 | Linux | x86_64 host + AArch64 target | ndk-clang-r28c.tar.xz | b0d693a2b69a0bf218135e07abfed0350c3c5ab317b42fe40a16e8324ec6d81c |
+| NDK Clang native executable | 19.0.1/r530567e | Linux | x86_64 | ndk-clang/bin/clang-19 | 6156dd4e5e466333197a00b8d20bca72c292186643b749dcaaa3aa9164afb1de |
+| NDK LLD native executable | r28c/r530567e | Linux | x86_64 | ndk-clang/bin/lld | 0bb0398c038e4c8b5e01e61061f6d9349961fb495efb4cbf2552e36058acf0be |
+
+| Part | Artifact ID | Artifact Name | Raw File | Raw Size | Raw SHA256 | Artifact Size | Artifact ZIP SHA256 | Created At | Expires At |
+|---|---:|---|---|---:|---|---:|---|---|---|
+| 00 | 12135105748 | arm64-lab-clang-r28c-95mb-00 | ndk-clang-r28c.part.00 | 95000000 | a3e7ccf417f6bbfef8e50096314c5523783ce0d725d14a9b8a2e4f1b41b9ca01 | 95000158 | 9413b8cb72e65dd57da165b636af9fc50dc550b79fdf7856cfd0f141d5476718 | 2026-10-18T11:10:12Z | 2027-01-16T11:05:31Z |
+| 01 | 12135080934 | arm64-lab-clang-r28c-95mb-01 | ndk-clang-r28c.part.01 | 72910784 | 877f9733e726b49fc50d32a01ea8186ed94d7bde67ff4dceb02bb2e9fd7dac20 | 72910942 | d2c7bcdd6d7e08d153ec92653594f3eafe6683da8fe0733e84957e1999da1949 | 2026-10-18T11:10:15Z | 2027-01-16T11:05:31Z |
+
+Restore: check actual existence and expires_at, download each artifact separately with download_workflow_artifact, verify outer ZIP and raw part SHA256, concatenate 00 then 01, verify original size/SHA256, and extract ndk-clang. Every outer ZIP is below 100 MB and 512 MB. MANIFEST.json records the full extracted path/hash list; hashes of symlink entries represent link target bytes.
