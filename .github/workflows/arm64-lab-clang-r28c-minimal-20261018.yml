@@ -1,0 +1,131 @@
+name: ARM64 lab minimal NDK r28c Clang offline cache
+on:
+  push:
+    paths:
+      - '.github/workflows/arm64-lab-clang-r28c-minimal-20261018.yml'
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+jobs:
+  derive:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Reuse verified NDK cache without upstream downloads
+        uses: actions/download-artifact@v4
+        with:
+          repository: jepede/gpt-exten
+          run-id: 39019800471
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: ndk-r28c-five-part-*
+          merge-multiple: true
+          path: cached
+      - name: Verify source and extract minimal compiler
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, re, stat, subprocess, tarfile, zipfile
+          from pathlib import Path
+          expected = [
+            '5171e5cc785cc062e090c3edecf594ce355fa83143c6fb2e62aafdba9c70a621',
+            '56983eda293816841e9c87bb90adc2a41e80f216fdb0fce3a927083c677fded7',
+            '342c5394c75929a11cece8538997ae16a8a1213728440efcded5560c07c794faf5',
+            'fe4905960f15b33defa09a871d5f44c18076b02f5334d6bdf6eef94ae6da7394',
+            'f853ef4464dab98c084336ea80b8da9986770803e2718a01f4f0fea66e70d1d1']
+          # Correct source hash from the authoritative cache index.
+          expected[2] = '342c5394c75929a11ce8538997ae16a8a1213728440efcded5560c07c794faf5'
+          source = Path('ndk.zip')
+          with source.open('wb') as out:
+            for i, digest in enumerate(expected):
+              part = Path('cached') / f'ndk-r28c.part.{i:02d}'
+              blob = part.read_bytes()
+              assert hashlib.sha256(blob).hexdigest() == digest, part
+              out.write(blob)
+          assert source.stat().st_size == 722261334
+          assert hashlib.file_digest(source.open('rb'), 'sha256').hexdigest() == 'dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f'
+          prefix = 'android-ndk-r28c/toolchains/llvm/prebuilt/linux-x86_64/'
+          dest = Path('ndk-clang')
+          dest.mkdir()
+          files = []
+          with zipfile.ZipFile(source) as z:
+            for info in z.infolist():
+              if not info.filename.startswith(prefix) or info.is_dir(): continue
+              rel = info.filename[len(prefix):]
+              chosen = (bool(re.fullmatch(r'bin/(clang|clang\+\+|clang-[0-9]+|lld|ld.lld)', rel))
+                        or (rel.startswith(('lib/','lib64/')) and '.so' in Path(rel).name)
+                        or bool(re.match(r'lib/clang/[^/]+/include/', rel))
+                        or (rel.startswith('lib/clang/') and 'libclang_rt.builtins-aarch64-android.a' in rel))
+              if not chosen: continue
+              assert '..' not in Path(rel).parts
+              target = dest / rel
+              target.parent.mkdir(parents=True, exist_ok=True)
+              blob = z.read(info)
+              mode = info.external_attr >> 16
+              if stat.S_ISLNK(mode):
+                target.symlink_to(blob.decode())
+              else:
+                target.write_bytes(blob)
+                target.chmod(mode & 0o777 or 0o644)
+              files.append({'path':rel,'sha256':hashlib.sha256(blob).hexdigest(),'bytes':len(blob),'symlink':stat.S_ISLNK(mode)})
+          for name in ['clang','ld.lld']:
+            subprocess.run([str((dest/'bin'/name).resolve()), '--version'], check=True)
+          output = Path('output'); output.mkdir()
+          archive = output / 'ndk-clang-r28c.tar.xz'
+          with tarfile.open(archive, 'w:xz', preset=6) as tar:
+            tar.add(dest, arcname='ndk-clang', recursive=True)
+          sha = hashlib.file_digest(archive.open('rb'), 'sha256').hexdigest()
+          manifest = {'name':'Android NDK minimal Clang/LLD','version':'r28c-minimal-v1','platform':'Linux','architecture':'x86_64 host + AArch64 Android target','source_run_id':39019800471,'source_sha256':'dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f','file':archive.name,'size':archive.stat().st_size,'sha256':sha,'part_size':95000000,'parts':[],'contents':files}
+          with archive.open('rb') as f:
+            i=0
+            while True:
+              blob=f.read(95000000)
+              if not blob: break
+              assert i<5, 'Unexpected compiler bundle size'
+              part=output/f'ndk-clang-r28c.part.{i:02d}';part.write_bytes(blob)
+              manifest['parts'].append({'file':part.name,'size':len(blob),'sha256':hashlib.sha256(blob).hexdigest()})
+              i+=1
+          (output/'MANIFEST.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          print(json.dumps({k:v for k,v in manifest.items() if k!='contents'},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arm64-lab-clang-r28c-95mb-00
+          path: output/ndk-clang-r28c.part.00
+          retention-days: 400
+          compression-level: 0
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arm64-lab-clang-r28c-95mb-01
+          path: output/ndk-clang-r28c.part.01
+          retention-days: 400
+          compression-level: 0
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arm64-lab-clang-r28c-95mb-02
+          path: output/ndk-clang-r28c.part.02
+          retention-days: 400
+          compression-level: 0
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arm64-lab-clang-r28c-95mb-03
+          path: output/ndk-clang-r28c.part.03
+          retention-days: 400
+          compression-level: 0
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arm64-lab-clang-r28c-95mb-04
+          path: output/ndk-clang-r28c.part.04
+          retention-days: 400
+          compression-level: 0
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arm64-lab-clang-r28c-meta
+          path: output/MANIFEST.json
+          retention-days: 400
+          if-no-files-found: error
