@@ -1,0 +1,97 @@
+name: Cache Android Emulator 37.2.12 Stable (90MB parts)
+on:
+  push:
+    paths:
+      - '.github/workflows/cache-android-emulator-37_2_12-90mb-20261018.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Download and verify stable Linux x86_64 emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, urllib.request, xml.etree.ElementTree as ET, zipfile, json
+          out=Path('cache');out.mkdir(exist_ok=True)
+          url="https://dl.google.com/android/repository/emulator-linux_x64-16428233.zip"
+          name="emulator-linux_x64-16428233.zip"
+          size=349654171
+          want="b08fc43d8608d2955f607f1b287beb525041e730086bdca3af152accac3af9c1"
+          f=out/name
+          print("FETCH",url,flush=True)
+          with urllib.request.urlopen(url,timeout=240) as r,f.open("wb") as w:
+           while b:=r.read(1024*1024):w.write(b)
+          assert f.stat().st_size==size,(f.stat().st_size,size)
+          def hashfile(p):
+           h=hashlib.sha256()
+           with p.open("rb") as f:
+            while b:=f.read(1024*1024):h.update(b)
+           return h.hexdigest()
+          assert hashfile(f)==want,hashfile(f)
+          with zipfile.ZipFile(f) as z:
+           bad=z.testzip()
+           assert bad is None,bad
+           files=z.namelist()
+           assert any(n.endswith("/emulator") for n in files)
+           print("ZIP files",len(files),flush=True)
+          chunks=[]
+          with f.open('rb') as r:
+           i=0
+           while True:
+            b=r.read(90000000)
+            if not b:break
+            p=out/f"emulator-37.2.12.part.{i:02d}"
+            p.write_bytes(b)
+            chunks.append(dict(name=p.name,size=len(b),sha256=hashfile(p)))
+            print("part",i,len(b),chunks[-1]['sha256'],flush=True)
+            i+=1
+          assert len(chunks)==4
+          assert sum(x['size'] for x in chunks)==size
+          meta=dict(name="Android Emulator",version="37.2.12",platform="Linux",architecture="x86_64",file=name,original_size=size,original_sha256=want,source=url,storage_mode="SPLIT",part_count=4,parts=chunks)
+          (out/'MANIFEST.json').write_text(json.dumps(meta,indent=2)+"\n")
+          (out/'SHA256SUMS.txt').write_text("".join(x['sha256']+"  "+x['name']+"\n" for x in chunks)+want+"  "+name+"\n")
+          print('SUCCESS archive verified',want,flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-37_2_12-x64-part-00
+          path: cache/emulator-37.2.12.part.00
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-37_2_12-x64-part-01
+          path: cache/emulator-37.2.12.part.01
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-37_2_12-x64-part-02
+          path: cache/emulator-37.2.12.part.02
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-37_2_12-x64-part-03
+          path: cache/emulator-37.2.12.part.03
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-37_2_12-x64-metadata
+          path: |
+            cache/MANIFEST.json
+            cache/SHA256SUMS.txt
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
