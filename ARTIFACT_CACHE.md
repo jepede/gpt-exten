@@ -10,6 +10,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 | Android 36 ARM64 graphics/framework sysroot | android36-r02-graphics-20261017 | Android API36 | AArch64 | 39007458676 | SINGLE | 2027-01-15T05:45:59Z |
 | Android 36 ARM64 i18n ICU APEX | android36-r02-i18n-20261017 | Android API36 APEX | AArch64 | 39007941479 | SINGLE | 2027-01-15T05:54:10Z |
 | QEMU TCG Plugins: execlog/hotblocks/vmptrace | v10.0.13-plugin-api4-20261017 | Ubuntu 24.04 / Linux (QEMU Debian 13) | x86_64 host, AArch64 guest | `39003891690` | SINGLE | `2027-01-15T04:47:37Z` |
+| AOSP API36 full ARM64 SDK image (~95 MB partitions) | 36_r02-full-v1-95MB | Android 16 / API36 | AArch64 | `39119724365` | SPLIT × 9 | 2027-01-16T10:33:28Z |
 | AOSP API36 full ARM64 SDK image | 36_r02-full-v1 | Android 16 / API36 | AArch64 | `39003325276` | SPLIT × 3 | `2027-01-15T04:38:31Z` |
 | AOSP API35 full ARM64 SDK image | 35_r02-full-v1 | Android 15 / API35 | AArch64 | `39002974865` | SPLIT × 2 | `2027-01-15T04:32:52Z` |
 | QEMU AArch64 User Static | 1:10.0.13+ds-0+deb13u1 | Debian 13 / Linux | x86_64 host + AArch64 guest | `39001231108` | SINGLE | `2027-01-15T04:05:09Z` |
@@ -2575,3 +2576,56 @@ Restore: download_workflow_artifact ID 12091780944, verify ZIP and inner archive
 Download artifacts using GitHub download_workflow_artifact. Verify each outer ZIP against the Artifact SHA256 above. Extract graphics.part.00; size must be 80764977 bytes; SHA256 must be 963b4123e91e5bad16463115b4ca201fa3b54907fa474feda0fb82a3fd070ee4; rename it to android36-arm64-graphics-sysroot.tar.gz. Verify ICU inner tar.gz SHA256 ff8e006de1fabdb98cccfcffdb3393410245d9336190ca0821d86e78f089eb49. Unpack preserving sysroot/system and sysroot/apex paths. The graphics metadata Artifact provides the complete 737-file path manifest.
 
 One-day temporary vendor probe: Workflow .github/workflows/tmp-android36-vendor.yml; Run ID 39010004799; Artifact ID 12092650991; name android36-vendor-graphics-temporary; Expires At 2026-10-18T06:28:41Z; SHA256 de4469d3889474e81a13650019b28ec531fb1df5d83dccf3134a904c54ba3038. Per temporary-download exception, it is not treated as a long-term cache.
+
+
+## AOSP API36 95 MB split recovery (2026-10-18)
+
+- Name: `AOSP API36 full ARM64 SDK image (~95 MB partitions)`
+- Version: `36_r02-full-v1-95MB`
+- Platform: Android 16 / API36 SDK Runtime
+- Architecture: AArch64 (arm64-v8a), x86_64 transfer host
+- Workflow: `.github/workflows/repack-aosp-api36-95mb-20261018.yml`
+- Run ID: `39119724365` ([Actions run](https://github.com/jepede/gpt-exten/actions/runs/39119724365), conclusion success)
+- Source workflow Run ID: `39003325276`, reuse of three unexpired original artifacts; **no re-download from Google**
+- Artifact Name: `aosp-api36-r02-95mb-part-00` through `-08`, plus `aosp-api36-r02-95mb-manifest`
+- Artifact ID: individual per-part IDs below; metadata ID `12133453926`
+- File: `full-api36.chunk.00` through `full-api36.chunk.08`, `MANIFEST.json`, `SHA256SUMS.txt`
+- Size: parts 00–07 = 95,000,000 raw bytes each; part 08 = 50,736,863 raw bytes
+- SHA256: individual part hashes below; original file SHA256 `c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1`
+- Created At: `2026-10-18T10:34:17Z` (first chunk); metadata `2026-10-18T10:34:36Z`
+- Expires At: `2027-01-16T10:33:28Z` (checked against GitHub API; expires_at governs)
+- Storage Mode: `SPLIT`
+- Original File: `arm64-v8a-36_r02.zip`
+- Original Size: `810736863` bytes
+- Original SHA256: `c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1`
+- Part Count: `9` (+ 1 manifest Artifact)
+- Metadata Artifact: ID `12133453926`, size `4814` bytes, outer ZIP digest `sha256:88c84d2e020ef82b9ce7ce18eb0b7e8936c183f4a22aeb1116da80208c876424`
+- Retention: requested `400` days; GitHub reported expires_at `2027-01-16T10:33:28Z` (effectively about 90 days; honor actual expiry)
+
+| Part | Artifact ID | Artifact Name | Outer ZIP Size | Outer ZIP SHA256 | Created At | Expires At |
+|---|---:|---|---:|---|---|---|
+| 00 | `12133677845` | `aosp-api36-r02-95mb-part-00` | `95000152` | `sha256:6a3ebb139326920c86fa6ce670e62064e906ec41cc60889cbe9e8b7ffee8ff8f` | `2026-10-18T10:34:17Z` | `2027-01-16T10:33:28Z` |
+| 01 | `12133677851` | `aosp-api36-r02-95mb-part-01` | `95000152` | `sha256:1f50a12a0ca8dc535a0a90acf6f283696ead22a23644f19fe7117bf51349e90e` | `2026-10-18T10:34:19Z` | `2027-01-16T10:33:28Z` |
+| 02 | `12133533564` | `aosp-api36-r02-95mb-part-02` | `95000152` | `sha256:328c7f7b48bddcf437116804fce2e232b6d497bd6e76706ec464373fb7190b5b` | `2026-10-18T10:34:21Z` | `2027-01-16T10:33:28Z` |
+| 03 | `12133608269` | `aosp-api36-r02-95mb-part-03` | `95000152` | `sha256:5287c5710d674b5197d35cd4104c55357b30b73da9c4905b67743d170fba20f7` | `2026-10-18T10:34:24Z` | `2027-01-16T10:33:28Z` |
+| 04 | `12133309620` | `aosp-api36-r02-95mb-part-04` | `95000152` | `sha256:9a29901ba2a37f30490e56567f56d3d27721b28d43f8470070433ffddc32b1f8` | `2026-10-18T10:34:26Z` | `2027-01-16T10:33:28Z` |
+| 05 | `12133657891` | `aosp-api36-r02-95mb-part-05` | `95000152` | `sha256:7202bb6cee628b768bbbbeaafde050f2ae2f67cd1068bb8a90042c4a3dd76405` | `2026-10-18T10:34:28Z` | `2027-01-16T10:33:28Z` |
+| 06 | `12133623161` | `aosp-api36-r02-95mb-part-06` | `95000152` | `sha256:76e37042c01f22a330243ea02c4b11e69602c3f3c8cf3585116997b22d01168f` | `2026-10-18T10:34:31Z` | `2027-01-16T10:33:28Z` |
+| 07 | `12133473855` | `aosp-api36-r02-95mb-part-07` | `95000152` | `sha256:7ddfdc89656f16b5ce135530ab30dd63eb2c945dece0d7bf8b7f2766cec3deb7` | `2026-10-18T10:34:33Z` | `2027-01-16T10:33:28Z` |
+| 08 | `12133638131` | `aosp-api36-r02-95mb-part-08` | `50737015` | `sha256:8dcc55567a23d43de78e711ce2b9bf560d07c380b1b6ecb210460ebf5720d64a` | `2026-10-18T10:34:35Z` | `2027-01-16T10:33:28Z` |
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Android 36 ARM64 AOSP source chunk 00 | 36_r02-full-v1-95MB | Android 16 / API36 | AArch64 | `full-api36.chunk.00` | `5d5a7dab507283f337db1960e717016cd3acd6dd663781d7d3d6b8e6c1b0d628` |
+| Android 36 ARM64 AOSP source chunk 01 | 36_r02-full-v1-95MB | Android 16 / API36 | AArch64 | `full-api36.chunk.01` | `e99ac48ef8791d56577f7e0d1ac5119a843197c22c18a98e1b6e87273c82ab39` |
+| Android 36 ARM64 AOSP source chunk 02 | 36_r02-full-v1-95MB | Android 16 / API36 | AArch64 | `full-api36.chunk.02` | `77ee411e03586659a8d00bf0e1720784a210994c828807de0dd0f4441e3eaaed` |
+| Android 36 ARM64 AOSP source chunk 03 | 36_r02-full-v1-95MB | Android 16 / API36 | AArch64 | `full-api36.chunk.03` | `fe2695e340aae6237e8ba24a36fae9f320ede836c8848e8767aa17235ab4f272` |
+| Android 36 ARM64 AOSP source chunk 04 | 36_r02-full-v1-95MB | Android 16 / API36 | AArch64 | `full-api36.chunk.04` | `820bef5417c4f0f6eee78c68ab77bd473a66f5399419e1baac648bb609d328d8` |
+| Android 36 ARM64 AOSP source chunk 05 | 36_r02-full-v1-95MB | Android 16 / API36 | AArch64 | `full-api36.chunk.05` | `0df7f2fb170a55c63b711fe929b2a668d7fe37355b5b6278f9f96d2193301178` |
+| Android 36 ARM64 AOSP source chunk 06 | 36_r02-full-v1-95MB | Android 16 / API36 | AArch64 | `full-api36.chunk.06` | `731491c097d20ff106a301e0cae64d866129dd4a38d6fc7f625de5e0fa4c56d1` |
+| Android 36 ARM64 AOSP source chunk 07 | 36_r02-full-v1-95MB | Android 16 / API36 | AArch64 | `full-api36.chunk.07` | `30e0b86d488c778a43da0753757490ab28a57e4965bcff85e1c830e72ac174e0` |
+| Android 36 ARM64 AOSP source chunk 08 | 36_r02-full-v1-95MB | Android 16 / API36 | AArch64 | `full-api36.chunk.08` | `319f861fc28fde186e6fda0c4ddd37bbb7999b3bccb4e5602837fd6b7ff9dfc7` |
+
+### Restore & verified test
+
+Check each Artifact ID against GitHub Actions `expires_at` before downloading. Download the manifest and parts `00` through `08` **individually** with `download_workflow_artifact` (each outer Artifact ≤95,000,152 bytes, final one 50,737,015 bytes). Verify each outer archive SHA256 against the table, extract each raw chunk and compare SHA256 with the raw-file table, concatenate in numerical order, and check reconstructed byte count `810736863` plus SHA256 `c6194eb8ace128b174ea86b5fbc0c78204147123b3b5ce6d0e3d615a06ad31d1`. Prefer internal directories such as `/opt/arm64-lab/sdk-cache` for the 811 MB assembled file, avoiding durable conversation attachment uploads over 512 MB. Locally tested on 2026-10-18: all 9 outer Artifact downloads returned successfully, all raw SHA256 checks passed, assembled source matched, all 20 ZIP internal entries passed CRC, Android 36 SDK image extracted; no `ClientError` or OOM. A different generated-attachment upload error occurred when placing the assembled 811 MB ZIP under `/mnt/data` and was resolved by using the internal `/opt` path. This does not imply the Android guest or `test_elf` can run on QEMU virt without Android Emulator/Ranchu devices.
