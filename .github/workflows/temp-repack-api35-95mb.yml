@@ -1,0 +1,89 @@
+name: Repack Cached AOSP 15 Image into 95MB Artifacts
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-repack-api35-95mb.yml'
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+jobs:
+  repack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reuse existing cached artifacts, verify, split
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p input/00 input/01 outputs
+          gh run download 39002974865 --repo jepede/gpt-exten --name aosp-api35-full-image-r02-part-00-v1 --dir input/00
+          gh run download 39002974865 --repo jepede/gpt-exten --name aosp-api35-full-image-r02-part-01-v1 --dir input/01
+          echo '6768eda6f66b296079146983e85d28f47d1efb9123e0653b2a60c7040fd6201d  input/00/full-api35.part.00' | sha256sum -c -
+          echo '0fa1f44ae8c6f148657068051c693a8ce674ec07ecc94b5420a7a0a6081e2e1b  input/01/full-api35.part.01' | sha256sum -c -
+          cat input/00/full-api35.part.00 input/01/full-api35.part.01 > full-api35.zip
+          echo '1e6ae4fca6449c07278a333311f0ef29c5101d1e3e18ba48fbe9bd2dc5006926  full-api35.zip' | sha256sum -c -
+          split -b 95000000 -d -a 2 full-api35.zip outputs/api35.part.
+          sha256sum outputs/api35.part.* > outputs/SHA256SUMS.txt
+          printf 'original_name=arm64-v8a-35_r02.zip\noriginal_bytes=769099654\noriginal_sha256=1e6ae4fca6449c07278a333311f0ef29c5101d1e3e18ba48fbe9bd2dc5006926\npart_count=9\n' > outputs/METADATA.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api35-small-00
+          path: outputs/api35.part.00
+          retention-days: 90
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api35-small-01
+          path: outputs/api35.part.01
+          retention-days: 90
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api35-small-02
+          path: outputs/api35.part.02
+          retention-days: 90
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api35-small-03
+          path: outputs/api35.part.03
+          retention-days: 90
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api35-small-04
+          path: outputs/api35.part.04
+          retention-days: 90
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api35-small-05
+          path: outputs/api35.part.05
+          retention-days: 90
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api35-small-06
+          path: outputs/api35.part.06
+          retention-days: 90
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api35-small-07
+          path: outputs/api35.part.07
+          retention-days: 90
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api35-small-08
+          path: outputs/api35.part.08
+          retention-days: 90
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api35-small-metadata
+          path: |
+            outputs/SHA256SUMS.txt
+            outputs/METADATA.txt
+          retention-days: 90
