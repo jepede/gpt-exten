@@ -1,0 +1,78 @@
+name: Temporary PHP HTTP Fingerprint (No Exploit)
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/temp-php-fingerprint-20261022.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fingerprint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Check DNS and safe HTTP metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, socket, ssl, time, urllib.request, urllib.error
+          from pathlib import Path
+          
+          HOST = "www.oenb66.top"
+          PATH = "/AppEn.php"
+          SAFE_HEADERS = {"server","x-powered-by","content-type","content-length","via","x-cache","strict-transport-security","x-frame-options","x-content-type-options","allow","cf-ray"}
+          
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+          
+          opener = urllib.request.build_opener(
+              urllib.request.HTTPHandler(),
+              urllib.request.HTTPSHandler(context=ssl.create_default_context()),
+              NoRedirect(),
+          )
+          addresses = []
+          try:
+              addresses = sorted(set(p[4][0] for p in socket.getaddrinfo(HOST, None, proto=socket.IPPROTO_TCP)))[:8]
+          except Exception as e:
+              dns_error = f"{type(e).__name__}: {str(e)[:180]}"
+          else:
+              dns_error = None
+          results = []
+          for scheme in ("https", "http"):
+              for method in ("HEAD", "GET"):
+                  url = f"{scheme}://{HOST}{PATH}"
+                  record = {"url":url, "method":method, "http_status":None, "headers":{}, "has_set_cookie":False, "has_location":False, "elapsed_ms":None, "error":None}
+                  start = time.monotonic()
+                  try:
+                      req=urllib.request.Request(url, method=method, headers={"User-Agent":"gpt-exten-minimal-http-fingerprint/1.0", "Accept":"*/*"})
+                      try:
+                          resp=opener.open(req, timeout=9)
+                      except urllib.error.HTTPError as e:
+                          resp=e
+                      with resp:
+                          record["http_status"]=resp.code
+                          record["headers"]={k:v[:180] for k,v in resp.headers.items() if k.lower() in SAFE_HEADERS}
+                          record["has_set_cookie"]=bool(resp.headers.get("Set-Cookie"))
+                          record["has_location"]=bool(resp.headers.get("Location"))
+                          # Do not read, log, or store the response body.
+                  except Exception as e:
+                      record["error"]=f"{type(e).__name__}: {str(e)[:180]}"
+                  record["elapsed_ms"]=round((time.monotonic()-start)*1000)
+                  results.append(record)
+          report={"scope":"Non-invasive HTTP version/header availability checks only; no payload, login, attack, or exploit", "host":HOST, "dns_addresses":addresses, "dns_error":dns_error, "requests":results}
+          Path("php_fingerprint.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          PY
+      - name: Upload small probe report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: php-fingerprint-20261022
+          path: php_fingerprint.json
+          if-no-files-found: warn
+          retention-days: 1
