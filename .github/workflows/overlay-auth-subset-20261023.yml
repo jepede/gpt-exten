@@ -1,0 +1,65 @@
+name: Cached Android overlay build subset
+on:
+  push:
+    paths: ['.github/workflows/overlay-auth-subset-20261023.yml']
+permissions:
+  actions: read
+  contents: read
+jobs:
+  repack:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          repository: jepede/gpt-exten
+          run-id: 39019800471
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: ndk-r28c-five-part-*
+          merge-multiple: true
+          path: cached
+      - uses: actions/download-artifact@v4
+        with:
+          repository: jepede/gpt-exten
+          run-id: 34697680626
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: android-sdk-api35-bt35.0.0-linux-x86_64
+          path: sdk-cache
+      - name: Extract cached headers, ARM64 libraries and Java compiler inputs
+        run: |
+          python3 - <<'PY'
+          import hashlib,zipfile,pathlib,stat,tarfile,subprocess,json
+          P=pathlib.Path
+          b=b''.join(P('cached/ndk-r28c.part.%02d'%i).read_bytes() for i in range(5))
+          assert hashlib.sha256(b).hexdigest()=='dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f'
+          P('ndk.zip').write_bytes(b)
+          root=P('subset');root.mkdir()
+          prefix='android-ndk-r28c/toolchains/llvm/prebuilt/linux-x86_64/sysroot/'
+          with zipfile.ZipFile('ndk.zip') as z:
+            for i in z.infolist():
+              if not i.filename.startswith(prefix) or i.is_dir():continue
+              rel=i.filename[len(prefix):]
+              if not (rel.startswith('usr/include/') or rel.startswith('usr/lib/aarch64-linux-android/')):continue
+              # Keep API31 and shared C++ runtime/link libraries at ABI root.
+              if rel.startswith('usr/lib/aarch64-linux-android/'):
+                tail=rel.split('aarch64-linux-android/')[1]
+                if '/' in tail and not tail.startswith('31/'):continue
+              p=root/'sysroot'/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(z.read(i))
+          source=next(P('sdk-cache').glob('*.tar.zst'))
+          assert hashlib.sha256(source.read_bytes()).hexdigest()=='d1625f8dde5ce737b376ee56e89089846056605aa3a0eb59ddf3b87c3ee24fcc'
+          subprocess.run(['tar','--zstd','-xf',str(source),'--wildcards','--no-anchored','*/android-35/android.jar','*/35.0.0/lib/d8.jar'],check=True)
+          for name in ['android.jar','d8.jar']:
+            src=next(p for p in P('.').rglob(name) if 'subset' not in p.parts)
+            (root/name).write_bytes(src.read_bytes())
+          P('out').mkdir()
+          with tarfile.open('out/subset.tar.gz','w:gz') as t:t.add(root,arcname='subset')
+          b=P('out/subset.tar.gz').read_bytes()
+          assert len(b)<95000000
+          P('out/SHA256SUMS').write_text(hashlib.sha256(b).hexdigest()+'  subset.tar.gz\n')
+          print('Size:',len(b));print(P('out/SHA256SUMS').read_text())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: overlay-auth-android-build-subset
+          path: out/*
+          retention-days: 1
+          compression-level: 0
