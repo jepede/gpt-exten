@@ -1,0 +1,35 @@
+name: Temporary LuaJIT decompilation tools 20261023
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-luajit-decompile-tools-20261023.yml'
+  workflow_dispatch:
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Fetch public source repositories
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir sources
+          git clone --depth=1 https://github.com/Aussiemon/ljd.git sources/ljd
+          git clone --depth=1 https://github.com/marsinator358/luajit-decompiler-v2.git sources/luajit-decompiler-v2
+          git clone --depth=1 --branch=v2.1 https://github.com/LuaJIT/LuaJIT.git sources/LuaJIT
+          for d in sources/*; do
+            git -C "$d" rev-parse HEAD >> SOURCES.txt
+          done
+          tar --exclude=.git -czf luajit-decompile-sources.tar.gz sources
+          sha256sum luajit-decompile-sources.tar.gz > SHA256SUMS.txt
+          test "$(stat -c%s luajit-decompile-sources.tar.gz)" -lt 100000000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: temp-luajit-decompile-sources-20261023
+          path: |
+            luajit-decompile-sources.tar.gz
+            SHA256SUMS.txt
+            SOURCES.txt
+          retention-days: 1
+          compression-level: 0
