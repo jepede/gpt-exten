@@ -1,0 +1,37 @@
+name: Cached ARM64 unwind runtime
+on:
+  push:
+    paths: ['.github/workflows/overlay-auth-unwind-20261023.yml']
+permissions:
+  actions: read
+  contents: read
+jobs:
+  repack:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          repository: jepede/gpt-exten
+          run-id: 39019800471
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: ndk-r28c-five-part-*
+          merge-multiple: true
+          path: cached
+      - run: |
+          python3 - <<'PY'
+          import pathlib,hashlib,zipfile,io
+          P=pathlib.Path;b=b''.join(P('cached/ndk-r28c.part.%02d'%i).read_bytes() for i in range(5))
+          assert hashlib.sha256(b).hexdigest()=='dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f'
+          with zipfile.ZipFile(io.BytesIO(b)) as z:
+            names=[n for n in z.namelist() if n.endswith('/libunwind.a') and '/aarch64/' in n]
+            assert len(names)==1,names
+            b=z.read(names[0]);P('libunwind.a').write_bytes(b);P('SHA256SUMS').write_text(hashlib.sha256(b).hexdigest()+'  libunwind.a\n')
+            print(names[0]);print(P('SHA256SUMS').read_text())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: overlay-auth-arm64-unwind
+          path: |
+            libunwind.a
+            SHA256SUMS
+          retention-days: 1
