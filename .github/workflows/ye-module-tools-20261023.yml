@@ -44,14 +44,31 @@ jobs:
           sums={str(p.relative_to(out)):hashlib.sha256(p.read_bytes()).hexdigest() for p in out.rglob("*") if p.is_file()}
           (out/"MANIFEST.json").write_text(json.dumps(sums,indent=2))
           subprocess.run(["tar","-czf","ye-build-tools.tar.gz","subset"],check=True)
-          assert pathlib.Path("ye-build-tools.tar.gz").stat().st_size<100_000_000
+          assert pathlib.Path("ye-build-tools.tar.gz").stat().st_size<285_000_000
+          subprocess.run(["split","-b","95000000","-d","ye-build-tools.tar.gz","ye-tools.part."],check=True)
+          print("PARTS",json.dumps({p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in pathlib.Path(".").glob("ye-tools.part.*")}))
           print("SHA256",hashlib.sha256(pathlib.Path("ye-build-tools.tar.gz").read_bytes()).hexdigest(),flush=True)
           print(json.dumps(sums,indent=2))
           PY
           python3 /tmp/subset.py
       - uses: actions/upload-artifact@v4
         with:
-          name: ye-module-build-tools
-          path: ye-build-tools.tar.gz
+          name: ye-module-build-tools-00
+          path: ye-tools.part.00
           retention-days: 1
           compression-level: 0
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ye-module-build-tools-01
+          path: ye-tools.part.01
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ye-module-build-tools-02
+          path: ye-tools.part.02
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: ignore
