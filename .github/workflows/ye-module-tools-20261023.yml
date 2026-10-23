@@ -1,0 +1,57 @@
+name: Temporary cached APK build subset
+on:
+  push:
+    branches: [codex/ye-module-tools-20261023]
+    paths: [.github/workflows/ye-module-tools-20261023.yml]
+permissions:
+  actions: read
+  contents: read
+jobs:
+  tools:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reuse verified cached SDK and Kotlin compiler
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > /tmp/subset.py <<'PY'
+          import os,requests,hashlib,zipfile,pathlib,subprocess,tarfile,json
+          out=pathlib.Path("subset");out.mkdir()
+          headers={"Authorization":"Bearer "+os.environ["GH_TOKEN"],"Accept":"application/vnd.github+json"}
+          for aid,digest,inner in [(10299605918,"7ee54463a9abebf335d22e04533098ac4da3ec35e876108a6c81940675f3ca7c","d1625f8dde5ce737b376ee56e89089846056605aa3a0eb59ddf3b87c3ee24fcc"),(10299263954,"ab02f8ec568e6aa8985eb1d7afe770642a26ba2ed20d76d342fa51fea2c89434","b561966039c37b7bc2368a5895a1752523c150d3dd2c673c2162f8fb83fcd3b4")]:
+              meta=requests.get(f"https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/{aid}",headers=headers);meta.raise_for_status();assert not meta.json()["expired"]
+              r=requests.get(f"https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/{aid}/zip",headers=headers);r.raise_for_status();assert hashlib.sha256(r.content).hexdigest()==digest
+              p=pathlib.Path(str(aid)+".zip");p.write_bytes(r.content)
+              with zipfile.ZipFile(p) as z:
+                  name=next(n for n in z.namelist() if n.endswith(".tar.zst"));data=z.read(name);assert hashlib.sha256(data).hexdigest()==inner
+              packed=pathlib.Path(str(aid)+".tar.zst");packed.write_bytes(data)
+              tarpath=pathlib.Path(str(aid)+".tar")
+              with tarpath.open("wb") as f:subprocess.run(["zstd","-d","-c",str(packed)],stdout=f,check=True)
+              with tarfile.open(tarpath) as t:
+                  for m in t:
+                      if not m.isfile():continue
+                      base=pathlib.Path(m.name).name
+                      if aid==10299605918:
+                          keep=(m.name.endswith("platforms/android-35/android.jar") or ("/build-tools/35.0.0/" in "/"+m.name and (base in ["aapt2","zipalign","d8.jar","apksigner.jar"] or "/lib64/" in m.name)))
+                          dest=out/"sdk"/base
+                      else:
+                          keep=base.endswith(".jar") and not base.endswith(("-sources.jar","-javadoc.jar")) and any(base.startswith(p+"-") for p in ["kotlin-compiler-embeddable","kotlin-stdlib","kotlin-script-runtime","kotlin-reflect","kotlin-daemon-embeddable","trove4j","kotlinx-coroutines-core-jvm","annotations"])
+                          dest=out/"kotlin"/base
+                      if keep:
+                          dest.parent.mkdir(exist_ok=True);dest.write_bytes(t.extractfile(m).read());dest.chmod(0o755 if base in ["aapt2","zipalign"] else 0o644)
+              tarpath.unlink();packed.unlink();p.unlink()
+          r=requests.get("https://api.xposed.info/de/robv/android/xposed/api/82/api-82.jar");r.raise_for_status();(out/"xposed-api-82.jar").write_bytes(r.content)
+          sums={str(p.relative_to(out)):hashlib.sha256(p.read_bytes()).hexdigest() for p in out.rglob("*") if p.is_file()}
+          (out/"MANIFEST.json").write_text(json.dumps(sums,indent=2))
+          subprocess.run(["tar","-czf","ye-build-tools.tar.gz","subset"],check=True)
+          assert pathlib.Path("ye-build-tools.tar.gz").stat().st_size<100_000_000
+          print("SHA256",hashlib.sha256(pathlib.Path("ye-build-tools.tar.gz").read_bytes()).hexdigest(),flush=True)
+          print(json.dumps(sums,indent=2))
+          PY
+          python3 /tmp/subset.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ye-module-build-tools
+          path: ye-build-tools.tar.gz
+          retention-days: 1
+          compression-level: 0
