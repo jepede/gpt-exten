@@ -1,0 +1,38 @@
+name: Cache clang-format 19.1.7
+on:
+  push:
+    paths:
+      - '.github/workflows/cache-clang-format-20261024.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  download:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download pinned formatter wheel
+        run: |
+          mkdir -p wheels tools/bin package
+          python3 -m pip download --only-binary=:all: --no-deps --dest wheels clang-format==19.1.7
+          python3 - <<'PY'
+          import pathlib, zipfile
+          p=next(pathlib.Path('wheels').glob('*.whl'))
+          with zipfile.ZipFile(p) as z:
+              names=[n for n in z.namelist() if n.endswith('/data/bin/clang-format')]
+              assert len(names)==1,names
+              out=pathlib.Path('tools/bin/clang-format')
+              out.write_bytes(z.read(names[0]))
+              out.chmod(0o755)
+          PY
+          tools/bin/clang-format --version | tee tools/VERSION.txt
+          ldd tools/bin/clang-format | tee tools/DEPENDENCIES.txt
+          (cd tools && sha256sum bin/clang-format VERSION.txt DEPENDENCIES.txt > SHA256SUMS.txt)
+          tar czf package/clang-format-19.1.7-linux-x86_64.tar.gz tools
+          (cd package && sha256sum *.tar.gz > SHA256SUMS.txt)
+          cp wheels/*.whl package/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: clang-format-19_1_7-linux-x86_64
+          path: package/*
+          retention-days: 400
