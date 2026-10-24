@@ -2,7 +2,9 @@ name: Analyze more Tencent Android ACE SO via HTTP Range
 on:
   push:
     branches: [main]
-    paths: [.github/workflows/analyze-more-tencent-android-games-20261024.yml]
+    paths:
+      - .github/workflows/analyze-more-tencent-android-games-20261024.yml
+      - .github/scripts/ace_range_from_tencent_apks.py
   workflow_dispatch:
 permissions:
   contents: read
