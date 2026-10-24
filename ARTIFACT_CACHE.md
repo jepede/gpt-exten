@@ -2777,3 +2777,29 @@ Download Artifact `12135192496` via GitHub connector, verify outer ZIP SHA256, u
 | ruff | 0.14.3 | Linux | x86_64 | bin/ruff | fe1e096f493c1fc66f23914dd4c6ac79c580f5ebff959690efafa9184dfdd186 |
 
 Restore: check Artifact existence and actual expires_at, download Artifact 12550289662, verify ZIP and inner archive SHA256, extract the TAR.GZ and validate MANIFEST.json. Set LD_LIBRARY_PATH to tools/lib and LUA_PATH to tools/share/?.lua when running the bundled LuaJIT. The Artifact is below 100 MB and the 512 MB single-download limit.
+
+
+## Artifact Record: clang-format 19.1.7 Linux x86_64 (2026-10-24)
+
+- Artifact Name: `clang-format-19_1_7-linux-x86_64`
+- Artifact ID: `12553130239`
+- Run ID: `40074754345`
+- Workflow: `.github/workflows/cache-clang-format-20261024.yml`
+- File: `clang-format-19.1.7-linux-x86_64.tar.gz`
+- Size: `3454899` bytes (Artifact ZIP)
+- SHA256: `475b18624be86b3ad47d30d4b62e78753cdee26b401595a730b6b99375abdefb` (Artifact ZIP)
+- Created At: `2026-10-24T07:35:47Z`
+- Expires At: `2027-01-22T07:35:41Z` (GitHub actual expiry)
+- Storage Mode: `SINGLE`
+- Original File: `clang-format-19.1.7-linux-x86_64.tar.gz`
+- Original Size: `1727754` bytes
+- Original SHA256: `0f0fcf5c623dd67fd0fbec294cd4b59321b0d473e54d055027778f07f83282d9`
+- Part Count: `1`
+- Requested retention-days: `400`; actual expiry above governs.
+- Locally verified: outer ZIP SHA256/CRC, inner TAR.GZ SHA256, formatter version, executed to format C++17 sources.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| clang-format | 19.1.7 | Linux | x86_64 | tools/bin/clang-format | 70966c7d32d605aaccd043dd59bd3ee2173531043918a9714b78ebf8eb8e4028 |
+
+Restore: verify Artifact 12553130239 still exists and is unexpired, download with download_workflow_artifact, check ZIP and inner TAR SHA256, extract tools/, and verify tools/bin/clang-format --version. Original pinned PyPI wheel is also included for provenance. Archive is below 100 MB.
