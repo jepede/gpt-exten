@@ -2,7 +2,8 @@
 """Tencent APK HTTP Range ZIP extraction: only ACE focused SO, no whole APK download.
 ZIP member CRC32 is verified, plus independent extracted-file SHA256.
 """
-import argparse, collections, hashlib, io, json, re, shutil, tempfile, zipfile
+import argparse, collections, hashlib, io, json, re, shutil, tempfile, zipfile, os
+os.environ.setdefault('GH_TOKEN', '')  # Reuse static ELF helpers only; no artifact token needed here.
 from pathlib import Path
 import requests
 import ace_extract_cached_game_apks as core
@@ -147,7 +148,7 @@ def main():
     rawbytes+=p.stat().st_size
    if package:package.close()
    assert all(x.stat().st_size<95*1024*1024 for x in packages)
-   result["packs"]=[{"file":x.name,"bytes":x.stat().st_size,"sha256":core.sha256(x)} for x in packages]
+   result["packs"]=[{"file":x.name,"bytes":x.stat().st_size,"sha256":core.digest(x)} for x in packages]
   result["http_range_calls"]=remote.calls
   result["http_bytes_downloaded"]=remote.received
   print("COMPLETE",a.game,"SO",len(allso),"focus",len(result["focus"]),"ranges",remote.calls,"transferred",remote.received,flush=True)
