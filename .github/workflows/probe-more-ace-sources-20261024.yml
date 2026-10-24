@@ -1,0 +1,21 @@
+name: Probe additional official Tencent game APK sources
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/probe-more-ace-sources-20261024.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe MyApp official APK metadata (no full downloads)
+        run: python3 .github/scripts/probe_more_ace_sources.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: more-ace-official-source-list
+          path: game_sources_ace_20261024.json
+          retention-days: 1
