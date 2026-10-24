@@ -1,0 +1,38 @@
+name: Temp probe MD5 Tencent official APK range links
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/probe-myapp-md5-ranges-20261024.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          import requests,json,concurrent.futures
+          data=[{"name":"peace_myapp_md5","url":"http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/B227F9B32D308CB8B25EE43F137FF242.apk?fsname=com.tencent.tmgp.pubgmhd_1.38.12.apk"},{"name":"peace_myapp_md5_https","url":"https://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/B227F9B32D308CB8B25EE43F137FF242.apk?fsname=com.tencent.tmgp.pubgmhd_1.38.12.apk"},{"name":"hok_md5_a","url":"http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/F6D69A6721FA1A3257526E3AA87B8656.apk?fsname=com.tencent.tmgp.sgame_11.4.1.36.apk"},{"name":"hok_md5_b","url":"http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/A09AB77021FFDC5067911B8F8E084247.apk?fsname=com.tencent.tmgp.sgame_11.4.1.36.apk"},{"name":"hok_md5_c","url":"http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/18AD7C1BA42942F3729C06A9551D0B5D.apk?fsname=com.tencent.tmgp.sgame_11.4.1.36.apk"}]
+          def check(d):
+           s=requests.Session()
+           s.headers.update({"User-Agent":"Mozilla/5.0 (Linux; Android 16; Pixel 8 Pro) AppleWebKit/537.36 Chrome/132 Mobile Safari/537.36","Range":"bytes=0-63","Accept-Encoding":"identity"})
+           out={"name":d["name"],"url":d["url"]}
+           try:
+            r=s.get(d["url"],timeout=(9,18),stream=True,allow_redirects=True)
+            out.update({"status":r.status_code,"final":r.url[:400],"size":r.headers.get("Content-Length"),"content_range":r.headers.get("Content-Range"),"accept_ranges":r.headers.get("Accept-Ranges"),"content_type":r.headers.get("Content-Type"),"firstbytes":r.raw.read(24).hex()})
+            r.close()
+           except Exception as e:out["error"]=str(e)[:400]
+           return out
+          with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
+           rows=list(pool.map(check,data))
+          for row in rows:print(json.dumps(row,ensure_ascii=False),flush=True)
+          open("test_myapp_links.json","w").write(json.dumps(rows,ensure_ascii=False,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: myapp-md5-range-probe
+          path: test_myapp_links.json
+          retention-days: 1
