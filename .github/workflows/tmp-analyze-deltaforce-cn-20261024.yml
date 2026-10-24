@@ -1,0 +1,352 @@
+name: Temp analyze cached Delta Force Android APK 2026-10-24
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/tmp-analyze-deltaforce-cn-20261024.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  unpack-and-analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify cached APK, extract ARM64 libs, and statically analyze
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, sys, json, hashlib, pathlib, subprocess, zipfile, io, re, mmap, tarfile, shutil, struct, time
+          
+          REPO=os.environ["GITHUB_REPOSITORY"]
+          TOKEN=os.environ["GH_TOKEN"]
+          WD=pathlib.Path.cwd()
+          WORK=WD/"dfm_work"
+          APK=WORK/"DeltaForce-CN-Android-v1.201.37117.67.apk"
+          LIBDIR=WORK/"libs"
+          OUT=WD/"out"
+          for p in (WORK, LIBDIR, OUT, OUT/"chunks"): p.mkdir(parents=True,exist_ok=True)
+          
+          expected=[
+            ("00",11912605268,419430400,"ff89045d63daf2101f83357729c6fd501c2623d6db87fb3dd973c6e48fdb03be","c6ffaca827e09cecf5a07f77724a28e3688998b61f00c271321257e76a5ab039"),
+            ("01",11912625263,419430400,"727fc9db85ce8e9df1d612d536b2c2919f05f94ae93f44141716d1f1a52655ef","97d7f9fbb177b4f4841c4752516a0aa99d39202656da9bb04e731ad2050f179f"),
+            ("02",11913085103,419430400,"1be7e7ef8ca01bdd6677095fb6e5c20b297d0c2386a9269e58a9f3cc59773639","80d92f97ebabc0f97cc6e69ee2fba6e27cac8b702b874626fff4035ebf4b6b17"),
+            ("03",11912650314,260924738,"ac3582fae315b8cc283df13dd1216df3f07245791f50cb90feecfc2ff74cb169","cb685ddaf4a10e0ca73a9503dae30b6143295f3cc2a9248952ba6738bd020db0")
+          ]
+          
+          def sha256(path):
+              h=hashlib.sha256()
+              with open(path,"rb") as f:
+                  for chunk in iter(lambda:f.read(8*1024*1024),b""): h.update(chunk)
+              return h.hexdigest()
+          
+          def fetch_artifact(num,aid,zsha):
+              dest=WORK/f"artifact-{num}.zip"
+              url=f"https://api.github.com/repos/{REPO}/actions/artifacts/{aid}/zip"
+              print("Fetching persisted GitHub Artifact",aid,flush=True)
+              subprocess.run(["curl","-fLSs","--retry","6","--retry-all-errors","--retry-delay","3",
+                "--connect-timeout","30","--max-time","1100",
+                "-H",f"Authorization: Bearer {TOKEN}","-H","Accept: application/vnd.github+json",
+                "-o",str(dest),url],check=True)
+              got=sha256(dest)
+              assert got==zsha,(num,"artifact zip sha mismatch",got,zsha)
+              return dest
+          
+          acc=hashlib.sha256()
+          md5=hashlib.md5()
+          rawsz=0
+          with APK.open("wb") as out:
+              for num,aid,sz,rawhash,ziphash in expected:
+                  zpath=fetch_artifact(num,aid,ziphash)
+                  with zipfile.ZipFile(zpath) as z:
+                      matches=[n for n in z.namelist() if n.endswith(f".apk.part.{num}")]
+                      assert len(matches)==1,(num,matches)
+                      hs=hashlib.sha256()
+                      size=0
+                      with z.open(matches[0]) as src:
+                          for chunk in iter(lambda:src.read(8*1024*1024),b""):
+                              out.write(chunk);acc.update(chunk);md5.update(chunk);hs.update(chunk)
+                              size+=len(chunk)
+                      assert size==sz and hs.hexdigest()==rawhash,(num,"bad raw part")
+                      rawsz+=size
+                  zpath.unlink()
+                  print(f"VALIDATED part {num} {size} bytes",flush=True)
+          assert rawsz==1519215938,(rawsz,"bad APK length")
+          assert acc.hexdigest()=="af03179c62ac57f05e4e6d425b2471bdf651b46c2f5a636f5a9e3fa94c78337d",acc.hexdigest()
+          assert md5.hexdigest()=="546f3d60b114ddd80e45a708d2d6e130",md5.hexdigest()
+          print("APK integrity verified SHA256",acc.hexdigest(),flush=True)
+          
+          PAT=re.compile(r"(?:anogs|anort|tersafe|tprt|anticheat|(^|[^a-z])ace($|[^a-z])|libtss|turing)",re.I)
+          PATTERNS=["mrpcs","vmrpcs","anogs","anort","tersafe","tprt","tsssdk","tp2sdk","shellcode","mprotect","memfd_create","dlopen","dlsym","dl_iterate_phdr"]
+          results={"version":"1.201.37117.67","package":"com.tencent.tmgp.dfm",
+          "source":"Tencent MyApp stored artifact 2026-10-14",
+          "apk_sha256":acc.hexdigest(),"apk_md5":md5.hexdigest(),"apk_size":rawsz,
+          "libs":[],"other_abis":[],"possible_security_asset_paths":[],"patterns":PATTERNS,
+          "notes":["Static ELF and APK analysis only; no execution, injection, or claims of cloud-source attribution."]}
+          all_libs=[]
+          focus_libs=[]
+          with zipfile.ZipFile(APK) as zipf:
+              candidates=[i for i in zipf.infolist() if i.filename.startswith("lib/") and i.filename.lower().endswith(".so")]
+              results["other_abis"]=sorted(set(i.filename.split("/")[1] for i in candidates if i.filename.count("/")>=2))
+              results["total_apk_members"]=len(zipf.infolist())
+              for info in zipf.infolist():
+                  if re.search(r"mrpcs|vmrpcs|tersafe|shell_db|anogs|tprt|anticheat",info.filename,re.I):
+                      results["possible_security_asset_paths"].append({"name":info.filename,"bytes":info.file_size})
+              results["possible_security_asset_paths"]=results["possible_security_asset_paths"][:100]
+              for z in candidates:
+                  if not z.filename.startswith("lib/arm64-v8a/"): continue
+                  base=pathlib.Path(z.filename).name
+                  assert not (LIBDIR/base).exists(),("duplicate basename",base)
+                  dest=LIBDIR/base
+                  with zipf.open(z) as src, dest.open("wb") as dst: shutil.copyfileobj(src,dst,8*1024*1024)
+                  info={"file":base,"apk_path":z.filename,"bytes":dest.stat().st_size,
+                        "apk_compressed_bytes":z.compress_size,"sha256":sha256(dest)}
+                  try:
+                      hdr=dest.open("rb").read(64)
+                      info["elf64_aarch64"]=len(hdr)>=64 and hdr[:4]==b"\x7fELF" and hdr[4]==2 and int.from_bytes(hdr[18:20],"little")==183
+                      info["elf_type"]=int.from_bytes(hdr[16:18],"little") if info["elf64_aarch64"] else None
+                  except Exception as exc: info["elf_error"]=str(exc)
+                  found={}
+                  with dest.open("rb") as f:
+                      if dest.stat().st_size:
+                          with mmap.mmap(f.fileno(),0,access=mmap.ACCESS_READ) as mm:
+                              for pat in PATTERNS:
+                                  matches=[]
+                                  rr=re.compile(re.escape(pat.encode("ascii")),re.IGNORECASE)
+                                  for m in rr.finditer(mm):
+                                      i=m.start()
+                                      context=bytes(mm[max(0,i-38):min(len(mm),i+80)])
+                                      text="".join(chr(c) if 32<=c<=126 else "." for c in context)
+                                      matches.append({"file_offset":hex(i),"context":text})
+                                      if len(matches)>=12:break
+                                  if matches:found[pat]=matches
+                  info["string_hits"]=found
+                  # Inspect ELF structure and dependencies with the native GNU readelf.
+                  if info.get("elf64_aarch64"):
+                      try:
+                          ph=subprocess.run(["readelf","-dW",str(dest)],capture_output=True,text=True,timeout=75)
+                          info["needed"] = re.findall(r"\(NEEDED\).*?\[(.*?)\]",ph.stdout)
+                          info["soname"] = re.findall(r"\(SONAME\).*?\[(.*?)\]",ph.stdout)
+                          info["dynamic_table_preview"]=[x.strip() for x in ph.stdout.splitlines() if any(y in x for y in ["(INIT)","(INIT_ARRAY)","(FLAGS)","(FLAGS_1)","(TEXTREL)"])][:12]
+                          se=subprocess.run(["readelf","-hW",str(dest)],capture_output=True,text=True,timeout=75)
+                          info["entry_point"]=(re.findall(r"Entry point address:\s*(\S+)",se.stdout)or[""])[0]
+                      except Exception as exc:info["readelf_error"]=str(exc)
+                  results["libs"].append(info)
+                  all_libs.append(dest)
+                  if PAT.search(base):
+                      focus_libs.append(dest)
+                  print("LIB:",base,"size",info["bytes"],"SECURITY" if PAT.search(base) else "","hits",list(found),flush=True)
+          results["libs"].sort(key=lambda x:x["file"])
+          results["focus_libs"]=[p.name for p in focus_libs]
+          results["arm64_count"]=len(all_libs)
+          results["total_arm64_bytes"]=sum(p.stat().st_size for p in all_libs)
+          results["format"]="aarch64 ELF64"
+          (OUT/"analysis.json").write_text(json.dumps(results,indent=2,ensure_ascii=False)+"\n")
+          lines=["# Delta Force CN Android SO static analysis",
+           f"APK version: {results['version']}",
+           f"APK SHA256: {results['apk_sha256']}",
+           f"ARM64 SO count: {len(all_libs)}",
+           f"Focus security SO: {', '.join(results['focus_libs']) or '(none by filename)'}",
+           "","## SO catalog","| SO | bytes | SHA256 | NEEDED | relevant strings |",
+           "|---|---:|---|---|---|"]
+          for f in results["libs"]:
+              line=f"| {f['file']} | {f['bytes']} | \`{f['sha256']}\` | {', '.join(f.get('needed',[]))} | {', '.join(f['string_hits'])} |"
+              lines.append(line)
+          lines += ["","## Notes","File name and plaintext string matches alone cannot prove MRPCS loader ownership or remote shellcode delivery.","Read analysis.json for evidence offsets."]
+          (OUT/"REPORT.md").write_text("\n".join(lines)+"\n")
+          (OUT/"apk_lib_names.txt").write_text("\n".join(f"{f['file']}\t{f['bytes']}\t{f['sha256']}" for f in results["libs"])+"\n")
+          
+          # Make a local-friendly bundle of all security-named SO libraries and the report.
+          with tarfile.open(OUT/"security_libs.tar.gz","w:gz",compresslevel=6) as tar:
+              for p in focus_libs:tar.add(p,arcname=f"lib/arm64-v8a/{p.name}")
+              for n in ("analysis.json","REPORT.md","apk_lib_names.txt"):
+                  tar.add(OUT/n,arcname=n)
+          print("SECURITY PACKAGE BYTES", (OUT/"security_libs.tar.gz").stat().st_size,flush=True)
+          # Split entire ARM64 lib set into transport chunks; each raw artifact well under 100MiB.
+          with tarfile.open(OUT/"all_arm64_libs.tar.gz","w:gz",compresslevel=3) as tar:
+              for p in all_libs: tar.add(p,arcname=f"lib/arm64-v8a/{p.name}")
+              for n in ("analysis.json","REPORT.md","apk_lib_names.txt"):tar.add(OUT/n,arcname=n)
+          pack=OUT/"all_arm64_libs.tar.gz"
+          partsz=95*1024*1024
+          partinfo=[]
+          with pack.open("rb") as f:
+              j=0
+              while True:
+                  chunk=f.read(partsz)
+                  if not chunk:break
+                  assert j<18,"More parts than allocated static uploader slots"
+                  suffix=f"{j:02d}"
+                  p=OUT/"chunks"/f"arm64_libs.part.{suffix}"
+                  p.write_bytes(chunk)
+                  partinfo.append({"filename":p.name,"size":len(chunk),"sha256":hashlib.sha256(chunk).hexdigest()})
+                  j+=1
+          results["package"]={"filename":pack.name,"bytes":pack.stat().st_size,
+          "sha256":sha256(pack),"part_size":partsz,"part_count":len(partinfo),"parts":partinfo}
+          (OUT/"MANIFEST.json").write_text(json.dumps({k:results[k] for k in ["version","package","apk_sha256","apk_size","focus_libs"]},indent=2,ensure_ascii=False)+"\n")
+          print("ALL LIBS PACKAGE",json.dumps(results["package"],indent=2),flush=True)
+          print("ANALYSIS COMPLETE",flush=True)
+          # APK itself is never uploaded; existing cache must remain authoritative.
+          
+          PY
+      - name: Upload compact analysis and focused security libraries
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-security-libs-and-analysis
+          path: |
+            out/security_libs.tar.gz
+            out/analysis.json
+            out/REPORT.md
+            out/apk_lib_names.txt
+            out/MANIFEST.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 00
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-00
+          path: out/chunks/arm64_libs.part.00
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-01
+          path: out/chunks/arm64_libs.part.01
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 02
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-02
+          path: out/chunks/arm64_libs.part.02
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 03
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-03
+          path: out/chunks/arm64_libs.part.03
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 04
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-04
+          path: out/chunks/arm64_libs.part.04
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 05
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-05
+          path: out/chunks/arm64_libs.part.05
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 06
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-06
+          path: out/chunks/arm64_libs.part.06
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 07
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-07
+          path: out/chunks/arm64_libs.part.07
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 08
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-08
+          path: out/chunks/arm64_libs.part.08
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 09
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-09
+          path: out/chunks/arm64_libs.part.09
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 10
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-10
+          path: out/chunks/arm64_libs.part.10
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 11
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-11
+          path: out/chunks/arm64_libs.part.11
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 12
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-12
+          path: out/chunks/arm64_libs.part.12
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 13
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-13
+          path: out/chunks/arm64_libs.part.13
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 14
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-14
+          path: out/chunks/arm64_libs.part.14
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 15
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-15
+          path: out/chunks/arm64_libs.part.15
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 16
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-16
+          path: out/chunks/arm64_libs.part.16
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
+      - name: Upload arm64 libs part 17
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-arm64-libs-part-17
+          path: out/chunks/arm64_libs.part.17
+          if-no-files-found: ignore
+          compression-level: 0
+          retention-days: 1
