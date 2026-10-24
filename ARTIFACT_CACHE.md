@@ -2748,3 +2748,32 @@ Download four part Artifacts plus metadata from GitHub, check archive SHA256, ex
 ### Restore
 
 Download Artifact `12135192496` via GitHub connector, verify outer ZIP SHA256, unpack tar.gz and verify inner SHA256, then extract `platform-tools/` to SDK root. Cached bundle was repacked from still-active prior SDK artifact `10299605918` and its original compressed SHA256 independently checked. Installed ADB was tested with `adb version` and `adb devices`.
+
+## Artifact Record: Lua recovery tools (2026-10-24)
+
+- Artifact Name: `lua-recovery-tools-x86_64-v1`
+- Artifact ID: `12550289662`
+- Run ID: `40069691962`
+- Workflow: `.github/workflows/lua-recovery-tools-20261024.yml`
+- File: `lua-recovery-tools-v1.tar.gz` (plus SHA256SUMS.txt inside Artifact ZIP)
+- Size: `17307390` bytes (Artifact ZIP)
+- SHA256: `d2681339cd0cd6f1194c64e8d7404c8a1d0a468d5b147e58856d1317ca614849` (Artifact ZIP)
+- Created At: `2026-10-24T06:19:00Z`
+- Expires At: `2027-01-22T06:18:37Z` (actual GitHub expires_at)
+- Storage Mode: `SINGLE`
+- Original File: `lua-recovery-tools-v1.tar.gz`
+- Original Size: `17307005` bytes
+- Original SHA256: `9bebb43bee2e903b6837d008585b7470208b0d2b899db1191ac0cc0b44a2e459`
+- Part Count: `1`
+- Requested retention-days: `400`; actual expiry above governs.
+- Verified locally: outer ZIP SHA256, inner TAR.GZ SHA256, and all 24 manifest file hashes.
+- Version: `luajit-ubuntu24-stylua2.6.0-ruff0.14.3-v1`
+- Platform: `Linux`; Architecture: `x86_64`
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| LuaJIT | 2.1.0+git20231223.c525bcb+dfsg-1ubuntu0.1 | Linux | x86_64 | bin/luajit | 0a700d653c9f38b8bfbc732707815b2833eb65b2c9af5d4f7eb706278f0859ed |
+| StyLua | 2.6.0 | Linux | x86_64 | bin/stylua | 58f2f3056700c3a3c34b50da1c1e6316a24dc5713ecef436f01e77364e561270 |
+| ruff | 0.14.3 | Linux | x86_64 | bin/ruff | fe1e096f493c1fc66f23914dd4c6ac79c580f5ebff959690efafa9184dfdd186 |
+
+Restore: check Artifact existence and actual expires_at, download Artifact 12550289662, verify ZIP and inner archive SHA256, extract the TAR.GZ and validate MANIFEST.json. Set LD_LIBRARY_PATH to tools/lib and LUA_PATH to tools/share/?.lua when running the bundled LuaJIT. The Artifact is below 100 MB and the 512 MB single-download limit.
