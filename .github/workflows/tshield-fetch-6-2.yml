@@ -1,0 +1,40 @@
+name: TShield 6.2 Live W Bridge
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send exact raw request
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import base64, socket, hashlib
+          req = base64.b64decode('R0VUIC8yODhFMDYyM0ZBNzU2QzgwP3NhZmVfY29kZT1VaVltSVcybmROMHdZWm1yZllrOXQvcW1rSC9rRHR3ZGpMTWhaWWsvWWJ5U01sb3lDbDNrZGMzV0hRdWpFZjFTRGgzZHNWM3V1M1JOZFFteUdSalk2cm9td2VJTVk4N0p0aXoxeUhGOEszTUNBRFhNOUpjSlVlOVJ0OGtpeml5Ylc5b0dlZGdQd0JDZWU1YVpOTE5RZUJQbGEyZ2Joc0Jja2dZdFAvK1Y3ZGs9JnQ9Ry9INUhLVVRKeW96NytDSjA1SkxOZ29Za1M3SFZhejl0TmxoMTAyNHRqSlBhem1oN01CdlAvcWdZM3Q2UVozUUtGVlhOaDdRektwNEdMUGN2TGI0YVdNdFd5UWRReEk1bmc3dHFmdFBBL2Z5KzZZbXFobmczL1JtUmVpZG5FN2s3UUpIUkZYVDR4d2w2a21jT3puRzYyRnRXeXYvY1AzT0JTaG9INXp5NEZnPSZzPVl3QkNZRXRzNkIrTnRFS0Mva1lWMU5JWXB5UFVEajE2bjdUNXc4Nkk4YXBybkpMVitJUnlLSm1JRUFHQWNzaFlKZUZEbk9vbG5YOUM3SjJrb0huK3lSaGs1QjVmVEUxZ2NSOUlKa1hVUUEyS2ZiaTZpbldLckI0NUxxSFlVUitHYzNQL3pLYm5HcGo0TFZJMlVKTmtvcmtZRkQ4MUlWYVJtVndNV2kvd3plST0gSFRUUC8xLjENCkhvc3Q6IHcudDN5YW56aGVuZy5jb20NCkFjY2VwdDogKi8qDQpBY2NlcHQtTGFuZ3VhZ2U6IHpoLUNODQpDb25uZWN0aW9uOiBLZWVwLUFsaXZlDQpVc2VyLUFnZW50OiBTREsgQysrIGh0dHAgY2xpZW50DQoNCg==')
+          print('REQ_LEN',len(req),'REQ_SHA256',hashlib.sha256(req).hexdigest())
+          s=socket.create_connection(('w.t3yanzheng.com',80),15)
+          s.settimeout(3)
+          s.sendall(req)
+          chunks=[]
+          while True:
+              try:
+                  b=s.recv(65536)
+                  if not b: break
+                  chunks.append(b)
+              except socket.timeout:
+                  break
+          raw=b''.join(chunks)
+          open('response.raw','wb').write(raw)
+          print('RESP_LEN',len(raw),'RESP_SHA256',hashlib.sha256(raw).hexdigest())
+          print(raw[:4096])
+          PY
+      - name: Upload response
+        uses: actions/upload-artifact@v4
+        with:
+          name: tshield-live-w-response
+          path: response.raw
+          retention-days: 90
