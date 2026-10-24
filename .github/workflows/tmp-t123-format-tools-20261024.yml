@@ -1,0 +1,29 @@
+name: Temporary Python formatter for T123 delivery
+on:
+  push:
+    branches: [work/t123-format-tools-20261024]
+    paths: [.github/workflows/tmp-t123-format-tools-20261024.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  formatter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download pinned formatter and offline dependencies
+        run: |
+          mkdir -p output/wheels
+          python -m pip download --only-binary=:all: --dest output/wheels black==25.1.0
+          (cd output/wheels && sha256sum *.whl) > output/SHA256SUMS.txt
+          tar -czf output/python-black-25.1.0-cp312-linux-x86_64.tar.gz -C output wheels SHA256SUMS.txt
+          sha256sum output/python-black-25.1.0-cp312-linux-x86_64.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: t123-python-black-25_1_0-cp312-x86_64-temporary
+          path: output/python-black-25.1.0-cp312-linux-x86_64.tar.gz
+          retention-days: 1
+          compression-level: 0
