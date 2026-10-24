@@ -27,7 +27,7 @@ jobs:
           import glob,zipfile,pathlib
           p=glob.glob('downloads/ruff*.whl')[0]
           with zipfile.ZipFile(p) as z:
-              n=next(n for n in z.namelist() if n.endswith('/bin/ruff'))
+              n=next(n for n in z.namelist() if n.endswith('/ruff'))
               pathlib.Path('bundle/bin/ruff').write_bytes(z.read(n))
           PY
           chmod +x bundle/bin/*
