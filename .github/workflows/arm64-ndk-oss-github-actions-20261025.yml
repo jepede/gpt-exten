@@ -59,7 +59,7 @@ jobs:
           mkdir -p release/lib release/bin release/src release/reports
           common='-O2 -fPIC -Wl,-z,now -Wl,-z,relro -Wl,--hash-style=both'
           "$CC" $common -shared -Wl,-soname,liboss_cjson.so -I source/cJSON source/cJSON/cJSON.c -lm -o release/lib/liboss_cjson.so
-          "$CC" $common -shared -Wl,-soname,liboss_zlib.so -I source/zlib \
+          "$CC" $common -shared -Wl,-soname,liboss_zlib.so -I source/zlib -include unistd.h \
              source/zlib/adler32.c source/zlib/compress.c source/zlib/crc32.c source/zlib/deflate.c \
              source/zlib/gzclose.c source/zlib/gzlib.c source/zlib/gzread.c source/zlib/gzwrite.c \
              source/zlib/infback.c source/zlib/inffast.c source/zlib/inflate.c source/zlib/inftrees.c \
