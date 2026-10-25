@@ -28,4 +28,5 @@ jobs:
           name: oss-ndk-r28c-upstream-sources-20261025
           path: release/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 400
