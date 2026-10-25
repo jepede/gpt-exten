@@ -3,6 +3,7 @@
 GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Version + Platform + Architecture` 查询；是否仍可用以 GitHub 实际返回的 `expires_at` 为准。
 
 ## Index
+| OSS Android ARM64 NDK r28c cJSON+zlib+xxHash | cJSON 1.7.19 + zlib 1.3.1 + xxHash 0.8.3 | Android API35 / Linux | arm64-v8a target, x86_64 host | `40162461240` | SINGLE | `2027-01-23T04:35:49Z` |
 | Android NDK minimal Clang/LLD | r28c-minimal-v1 | Linux | x86_64 host + AArch64 target | 39121838147 | SPLIT × 2 (95 MB) | 2027-01-16T11:05:31Z |
 | Mozilla NSS TLS Root Store | release-b9bd270cfa3e-20261005 | Any | Any | `37253767754` | SINGLE | `2027-01-03T02:02:10Z` |
 
@@ -2852,3 +2853,39 @@ Restore: verify Artifact 12553130239 still exists and is unexpired, download wit
 | strace | 6.13+ds-1 | Linux / Debian 13 | arm64 | guest/strace_6.13+ds-1_arm64.deb | d793af70a104eb0bd5be466c3043b512f549e7cb27971320a7c9b8f4c6165e55 |
 
 Restore: verify current existence and expires_at, download each Artifact separately with download_workflow_artifact, verify outer ZIP and raw-part hashes, concatenate part 00 then 01, verify the original TAR, and extract the DEBs. No individual Artifact exceeds 100 MB or the 512 MB tool limit. This is the same verified source bundle as the older SINGLE cache, repacked for safer transfers.
+
+
+## Artifact Record: OSS NDK r28c AArch64 cJSON / zlib / xxHash (2026-10-25)
+
+- Name: OSS Android ARM64 NDK r28c cJSON+zlib+xxHash
+- Version: cJSON 1.7.19 + zlib 1.3.1 + xxHash 0.8.3
+- Platform: Android API35 (Bionic) / Linux x86_64 Actions host
+- Architecture: arm64-v8a
+- Workflow: `.github/workflows/arm64-ndk-oss-github-actions-20261025.yml`
+- Run ID: `40162461240`
+- Run Conclusion: success
+- Build NDK: r28c, Clang 19.0.1; reused valid verified NDK cache run `39019800471` (no new upstream NDK download)
+- Artifact Name: `oss-ndk-r28c-arm64-api35-20261025`
+- Artifact ID: `12587265634`
+- File: `oss-ndk-r28c-arm64-api35-20261025-actions.zip`
+- Size: `206346` bytes
+- SHA256: `7362bb7209be4ee272d17a00cb4488b8121af3676ce837310fb7cfceab997a48` (actual downloaded Artifact ZIP digest)
+- Created At: 2026-10-25T04:35:49Z
+- Expires At: 2027-01-23T04:35:49Z (actual GitHub result, expired=false)
+- Storage Mode: SINGLE
+- Original File: `release/` (19 files; GitHub Actions artifact payload)
+- Original Size: `612727` bytes (uncompressed entries)
+- Original SHA256: `3c727b2567050a1fac5a3bf352c2c453c9872ca5dde9d9b6b6dfa40c8843be0d` (SHA256 of payload's `SHA256SUMS.txt` manifest; original is a directory, so this is **not** an overall directory hash)
+- Part Count: 1
+- Source revisions: cJSON `c859b25da02955fef659d658b8f324b5cde87be3`, zlib `51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf`, xxHash `e626a72bc2321cd320e953a0ccf1584cad60f363`
+- Verified in local QEMU System 10.0.13 TCG + ARM64 kernel 6.12.111 + Android 15 Bionic linker64: `smoke_link` real JSON parse, compression/decompression, XXH64/XXH3 checks; `smoke_dlopen` loads and executes exported functions from all three SO; both Guest target exit codes = 0, QEMU host RC = 0; `-nic none`.
+- Upstream sources are obtained by Actions from their public repositories at the immutable release tags. Build task first failed on missing `unistd.h` declaration for zlib, then rebuilt successfully with `-include unistd.h`; no upstream source modification.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| cJSON | 1.7.19 | Android API35 | arm64-v8a | `lib/liboss_cjson.so` | `bd6adf9af21f3b717cbf9fd0548595b7525fe63c17734d5b85692d7f5b0ed75d` |
+| zlib | 1.3.1 | Android API35 | arm64-v8a | `lib/liboss_zlib.so` | `779583a3584cf49fda8729b8526b8c8ab9f59a084ab9c610350d4c06060b4bf1` |
+| xxHash | 0.8.3 | Android API35 | arm64-v8a | `lib/liboss_xxhash.so` | `c6233adf8c8abdcfc7ffb0b1168e6a5f9206200491bd2202358da63ad65341dc` |
+| Linked ELF test | v1 | Android API35 | arm64-v8a | `bin/smoke_link` | `3833d58e367d3422f58dc8578f54ce4970b320ed6ecec17c8bc6ec09e8c4becb` |
+| dlopen/dlsym ELF test | v1 | Android API35 | arm64-v8a | `bin/smoke_dlopen` | `5c2f751e3b55c96b5dc4523d56f67afc1031b5292778e6912ecc756a5da099a9` |
+
