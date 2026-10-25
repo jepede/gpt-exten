@@ -1,0 +1,31 @@
+name: Android NDK OSS pinned upstream source bundle
+on:
+  push:
+    paths:
+      - '.github/workflows/arm64-ndk-oss-full-source-20261025.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout reproducible upstream source commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release/upstream
+          git clone -q --depth 1 --branch v1.7.19 https://github.com/DaveGamble/cJSON.git release/upstream/cJSON
+          git clone -q --depth 1 --branch v1.3.1 https://github.com/madler/zlib.git release/upstream/zlib
+          git clone -q --depth 1 --branch v0.8.3 https://github.com/Cyan4973/xxHash.git release/upstream/xxHash
+          for d in cJSON zlib xxHash; do printf '%s ' "$d"; git -C "release/upstream/$d" rev-parse HEAD; rm -rf "release/upstream/$d/.git"; done > release/UPSTREAM_COMMITS.txt
+          (cd release && find . -type f ! -name SOURCES_SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SOURCES_SHA256SUMS.txt)
+          (cd release && sha256sum -c SOURCES_SHA256SUMS.txt)
+      - name: Upload complete pinned upstream sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: oss-ndk-r28c-upstream-sources-20261025
+          path: release/
+          if-no-files-found: error
+          retention-days: 400
