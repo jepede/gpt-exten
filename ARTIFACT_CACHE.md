@@ -2803,3 +2803,52 @@ Restore: check Artifact existence and actual expires_at, download Artifact 12550
 | clang-format | 19.1.7 | Linux | x86_64 | tools/bin/clang-format | 70966c7d32d605aaccd043dd59bd3ee2173531043918a9714b78ebf8eb8e4028 |
 
 Restore: verify Artifact 12553130239 still exists and is unexpired, download with download_workflow_artifact, check ZIP and inner TAR SHA256, extract tools/, and verify tools/bin/clang-format --version. Original pinned PyPI wheel is also included for provenance. Archive is below 100 MB.
+
+
+## Artifact Record: ARM64 system lab 95 MB cache reuse (2026-10-25)
+
+- Name: ARM64 system lab
+- Version: debian13-v1-qemu10.0.13-linux6.12.111-95MB
+- Platform: Linux / Debian 13
+- Architecture: x86_64 host + AArch64 guest
+- Workflow: `.github/workflows/reuse-arm64-system-lab-95mb-20261025.yml`
+- Run ID: `40152956031`
+- Source: verified, unexpired Artifact `11032351529`, Run `36566866696`; no upstream re-download
+- Source Artifact ZIP SHA256: `64fdcf5d1843bedfe0012cb19667f4b2865f81b835033d6f296a01e3dce7599a`
+- Artifact Name: `arm64-system-lab-reuse-95mb-00`, `arm64-system-lab-reuse-95mb-01`
+- Artifact ID: `12582993616`, `12582729069`
+- File: `arm64-system.part.00`, `arm64-system.part.01`
+- Size: raw parts `95000000` and `27163200` bytes; outer ZIP sizes `95000154` and `27163354` bytes
+- SHA256: per-part hashes below
+- Created At: `2026-10-25T02:03:01Z` through `2026-10-25T02:03:04Z`
+- Expires At: `2027-01-23T02:02:53Z` (actual GitHub expires_at, expired=false)
+- Storage Mode: SPLIT
+- Original File: `arm64-system-lab-debian13-v1.tar`
+- Original Size: `122163200` bytes
+- Original SHA256: `1819458934fb118d7b11bf9564aa8fb4c6882a932d6fada0dc76ac58dcf44ca1`
+- Part Count: 2 (+ 1 manifest Artifact)
+- Requested retention-days: 400; actual expiry above governs
+- Metadata Artifact Name: `arm64-system-lab-reuse-95mb-manifest`
+- Metadata Artifact ID: `12582978637`
+- Metadata File: `MANIFEST.json`
+- Metadata ZIP Size: `494` bytes
+- Metadata ZIP SHA256: `48f77e90db0ca0d8bba7bc0493b987db8d271f6535f3629fa5f4f625f005cdc2`
+- Verified locally: all three outer ZIP hashes, both raw part sizes/SHA256, reconstructed TAR size/SHA256, and every packaged DEB against meta/SHA256SUMS.txt.
+
+| Part | Artifact ID | Artifact Name | Raw File | Raw Size | Raw SHA256 | ZIP Size | ZIP SHA256 | Created At | Expires At |
+|---|---:|---|---|---:|---|---:|---|---|---|
+| 00 | 12582993616 | arm64-system-lab-reuse-95mb-00 | arm64-system.part.00 | 95000000 | 415fa9a67382e5bcf029496d81d19e688d9e6a52423b0c003ce6c325f484383c | 95000154 | 950b75e67aacfce9f27e6d79f4a1a61f4c65002a0b3e426b2f4d0bf9d29fbe2e | 2026-10-25T02:03:01Z | 2027-01-23T02:02:53Z |
+| 01 | 12582729069 | arm64-system-lab-reuse-95mb-01 | arm64-system.part.01 | 27163200 | 57d1039dd4c499c41348217464809e406ad9e9ee8dffb9d3a63717d84f306377 | 27163354 | 4cedb32efe7021d949e55dcdc6ea4743f4efec5131137d7d52cd26fc78b46cf8 | 2026-10-25T02:03:03Z | 2027-01-23T02:02:53Z |
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| e2fsprogs | 1.47.2-3+b12 | Linux / Debian 13 | amd64 | host/e2fsprogs_1.47.2-3+b12_amd64.deb | e9e638eb3e22b5f14d01ce0b28aa512a5a22fcc0e70d1c733444579b67ea236b |
+| qemu-system-arm | 1:10.0.13+ds-0+deb13u1 | Linux / Debian 13 | amd64 | host/qemu-system-arm_1%3a10.0.13+ds-0+deb13u1_amd64.deb | babb8ab3c9f5f045184bd8c20604237d28c1b5e6a578d7f400566b9f257b59e7 |
+| qemu-system-common | 1:10.0.13+ds-0+deb13u1 | Linux / Debian 13 | amd64 | host/qemu-system-common_1%3a10.0.13+ds-0+deb13u1_amd64.deb | 3a99dc23c42c66bb7e96dc1f2ba12b1797d154a472fbdb1cfcd822d9fb69e85b |
+| qemu-system-data | 1:10.0.13+ds-0+deb13u1 | Linux / Debian 13 | all | host/qemu-system-data_1%3a10.0.13+ds-0+deb13u1_all.deb | a0e03c526cc09d4c2ab20aa19a8c12e916cdc49a170acb16a6563c28f70eafd3 |
+| busybox-static | 1:1.37.0-6+b9 | Linux / Debian 13 | arm64 | guest/busybox-static_1%3a1.37.0-6+b9_arm64.deb | c833be48abfa16bc19c4966ec93e289ff1ce5d2f1476cad3a57bd105378cd15c |
+| gdbserver | 16.3-1 | Linux / Debian 13 | arm64 | guest/gdbserver_16.3-1_arm64.deb | b749a29afca991a43f82b04b42f8dedc2ad3182a020cd776a327568a3660e1bb |
+| linux-image-6.12.111+deb13-arm64 | 6.12.111-1 | Linux / Debian 13 | arm64 | guest/linux-image-6.12.111+deb13-arm64_6.12.111-1_arm64.deb | 981370389cb9f6241b41f66ea5c8a0e7bdd28b9e959cec4d3bac97b1eb1248bf |
+| strace | 6.13+ds-1 | Linux / Debian 13 | arm64 | guest/strace_6.13+ds-1_arm64.deb | d793af70a104eb0bd5be466c3043b512f549e7cb27971320a7c9b8f4c6165e55 |
+
+Restore: verify current existence and expires_at, download each Artifact separately with download_workflow_artifact, verify outer ZIP and raw-part hashes, concatenate part 00 then 01, verify the original TAR, and extract the DEBs. No individual Artifact exceeds 100 MB or the 512 MB tool limit. This is the same verified source bundle as the older SINGLE cache, repacked for safer transfers.
