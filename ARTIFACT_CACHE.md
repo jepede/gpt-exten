@@ -3,6 +3,7 @@
 GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Version + Platform + Architecture` 查询；是否仍可用以 GitHub 实际返回的 `expires_at` 为准。
 
 ## Index
+| OSS NDK r28c pinned source snapshot | cJSON 1.7.19 + zlib 1.3.1 + xxHash 0.8.3 | GitHub source / Any | Portable C source | `40162823267` | SINGLE | `2027-01-23T04:41:50Z` |
 | OSS Android ARM64 NDK r28c cJSON+zlib+xxHash | cJSON 1.7.19 + zlib 1.3.1 + xxHash 0.8.3 | Android API35 / Linux | arm64-v8a target, x86_64 host | `40162461240` | SINGLE | `2027-01-23T04:35:49Z` |
 | Android NDK minimal Clang/LLD | r28c-minimal-v1 | Linux | x86_64 host + AArch64 target | 39121838147 | SPLIT × 2 (95 MB) | 2027-01-16T11:05:31Z |
 | Mozilla NSS TLS Root Store | release-b9bd270cfa3e-20261005 | Any | Any | `37253767754` | SINGLE | `2027-01-03T02:02:10Z` |
@@ -2888,4 +2889,35 @@ Restore: verify current existence and expires_at, download each Artifact separat
 | xxHash | 0.8.3 | Android API35 | arm64-v8a | `lib/liboss_xxhash.so` | `c6233adf8c8abdcfc7ffb0b1168e6a5f9206200491bd2202358da63ad65341dc` |
 | Linked ELF test | v1 | Android API35 | arm64-v8a | `bin/smoke_link` | `3833d58e367d3422f58dc8578f54ce4970b320ed6ecec17c8bc6ec09e8c4becb` |
 | dlopen/dlsym ELF test | v1 | Android API35 | arm64-v8a | `bin/smoke_dlopen` | `5c2f751e3b55c96b5dc4523d56f67afc1031b5292778e6912ecc756a5da099a9` |
+
+
+
+## Artifact Record: OSS ARM64 NDK build pinned upstream source snapshot (2026-10-25)
+
+- Artifact Name: `oss-ndk-r28c-upstream-sources-20261025`
+- Artifact ID: `12586738612`
+- Run ID: `40162823267`
+- Workflow: `.github/workflows/arm64-ndk-oss-full-source-20261025.yml`
+- Name: OSS NDK r28c pinned source snapshot
+- Version: cJSON 1.7.19 + zlib 1.3.1 + xxHash 0.8.3
+- Platform: Portable C sources / GitHub Actions Linux
+- Architecture: Any (used to build Android arm64-v8a)
+- File: `oss-ndk-r28c-upstream-sources-complete-20261025.zip`
+- Size: `3330692` bytes
+- SHA256: `ed5edfd5dd622e0069db2b254591071e5474c3557b79911c4dfb147ba3d0996e` (GitHub artifact archive)
+- Created At: `2026-10-25T04:41:50Z`
+- Expires At: `2027-01-23T04:41:50Z` (actual GitHub result; expired=false)
+- Storage Mode: SINGLE
+- Original File: `release/upstream/` directory with `UPSTREAM_COMMITS.txt` + `SOURCES_SHA256SUMS.txt`
+- Original Size: `11184297` bytes (uncompressed ZIP contents)
+- Original SHA256: `a22401a39d6d89b56a760f678f5ac611712dc70bbf4c61264b4cd621927877de` (SHA256 of source manifest `SOURCES_SHA256SUMS.txt`, not a directory aggregate hash)
+- Part Count: 1
+- Source file count: 573 upstream files + two metadata files.
+- Verification: downloaded GitHub artifact ZIP SHA256 matched, ZIP CRC passed, all 574 manifest entries passed `sha256sum -c`. The first source run `40162740958` omitted 30 hidden files because `actions/upload-artifact@v4` defaults; corrected with `include-hidden-files: true` in run `40162823267`. Use the corrected artifact.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| cJSON source snapshot | 1.7.19 | Portable source | Any | `upstream/cJSON/` | `a22401a39d6d89b56a760f678f5ac611712dc70bbf4c61264b4cd621927877de` (combined manifest hash, not individual directory hash) |
+| zlib source snapshot | 1.3.1 | Portable source | Any | `upstream/zlib/` | `a22401a39d6d89b56a760f678f5ac611712dc70bbf4c61264b4cd621927877de` (combined manifest hash) |
+| xxHash source snapshot | 0.8.3 | Portable source | Any | `upstream/xxHash/` | `a22401a39d6d89b56a760f678f5ac611712dc70bbf4c61264b4cd621927877de` (combined manifest hash) |
 
