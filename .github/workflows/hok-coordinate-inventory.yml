@@ -1,0 +1,72 @@
+name: HOK native engine inventory
+on:
+  push:
+    branches: [work/hok-coordinate-analysis-20261026]
+    paths: [.github/workflows/hok-coordinate-inventory.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect authenticated official APK source using HTTP Range
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import sys, os, json, zipfile, hashlib, re
+          from pathlib import Path
+          sys.path.insert(0, str(Path('.github/scripts').resolve()))
+          import ace_range_from_tencent_apks as ace
+          title,pkg,version,source_md5,source_size=ace.SOURCES['hok']
+          source=f"http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/{source_md5}.apk?fsname={pkg}_{version}.apk"
+          reader=ace.RangeFile(source)
+          try:
+              if reader.size!=source_size: raise RuntimeError(f"Source size changed: {reader.size} != {source_size}")
+              with zipfile.ZipFile(reader) as z:
+                  infos=z.infolist()
+                  sos=[i for i in infos if i.filename.startswith('lib/') and i.filename.lower().endswith('.so')]
+                  assets=[i for i in infos if re.search('metadata|global|il2cpp|gamecore|unity|assembly|ace|\.pak$|\.obb$',i.filename,re.I)]
+                  out={
+                      'game':title,'package':pkg,'version':version,'source_size':reader.size,
+                      'source_md5_claim_only':source_md5,
+                      'source_verified':'HTTP 206 Range ZIP central-directory only; full APK MD5/SHA256 not verified',
+                      'zip_entry_count':len(infos),'so_count':len(sos),
+                      'abis':sorted(set(i.filename.split('/')[1] for i in sos)),
+                      'sos':[{'path':i.filename,'size':i.file_size,'compressed':i.compress_size,'method':i.compress_type,'crc32':format(i.CRC,'08x')} for i in sos],
+                      'related_assets':[{'path':i.filename,'size':i.file_size,'compressed':i.compress_size} for i in assets[:140]],
+                      'network_range_requests':reader.calls,'network_bytes':reader.received
+                  }
+              rep=Path('reports/hok');rep.mkdir(parents=True,exist_ok=True)
+              (rep/'native_inventory.json').write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n')
+              lines=['# 王者荣耀 '+version+' APK 原生引擎清单','',
+                     '本结果只通过官方腾讯 APK HTTP Range 读取 central directory；尚未校验完整 APK MD5。','',
+                     '| SO | Uncompressed bytes | Compressed bytes | CRC32 |','|---|---:|---:|---|']
+              for x in sorted(out['sos'],key=lambda k:k['size'],reverse=True):
+                  lines.append(f"| {x['path']} | {x['size']} | {x['compressed']} | {x['crc32']} |")
+              lines+=['','## 相关资源','']
+              for x in out['related_assets'][:100]:lines.append(f"- {x['path']} ({x['size']} bytes)")
+              (rep/'native_inventory.md').write_text('\n'.join(lines)+'\n')
+              print('HOK APK ID',pkg,version,reader.size,flush=True)
+              print('HOK NATIVE SO COUNT',len(sos),flush=True)
+              print('HOK TOP LIBS',json.dumps(sorted(out['sos'],key=lambda k:k['size'],reverse=True)[:35],ensure_ascii=False),flush=True)
+              print('HOK ASSETS',json.dumps(out['related_assets'][:50],ensure_ascii=False),flush=True)
+          finally:reader.close()
+          PY
+      - name: Commit compact analysis evidence to temporary research branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add reports/hok/native_inventory.json reports/hok/native_inventory.md
+          git commit -m 'Add checked HOK APK native library central directory inventory'
+          git push origin HEAD:work/hok-coordinate-analysis-20261026
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hok-source-inventory
+          path: reports/hok/native_inventory.*
+          retention-days: 1
+          if-no-files-found: warn
