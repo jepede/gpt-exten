@@ -1,0 +1,39 @@
+name: HoK Coordinate Binary Inventory
+on:
+  push:
+    branches:
+      - work/hok-coordinate-study-20261026
+    paths:
+      - .github/workflows/hok-coordinate-inventory.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect official HoK remote APK ZIP catalog and engine SO names
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/hok_coordinate_inventory.py
+          sed -n '1,160p' reports/hok_20261026/inventory.md
+      - name: Save source evidence to temporary research branch
+        if: success()
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/hok_20261026/inventory.md reports/hok_20261026/apk_native_inventory.json
+          git diff --cached --quiet || git commit -m "Record HoK v12.1.1.1 original APK native library inventory"
+          git push origin HEAD:work/hok-coordinate-study-20261026
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hok-coordinate-native-inventory
+          path: reports/hok_20261026/
+          retention-days: 1
+          if-no-files-found: warn
