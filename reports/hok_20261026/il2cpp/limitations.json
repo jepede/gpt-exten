@@ -1,0 +1,6 @@
+{
+  "warnings": [
+    "Il2CppDumper dump.cs missing: binary code registration may be protected."
+  ],
+  "full_dump_present": false
+}
