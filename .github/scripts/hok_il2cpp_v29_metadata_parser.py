@@ -51,8 +51,8 @@ I=table("images","<IiiIiIiIiI",["nameIndex","assemblyIndex","typeStart",
 print("METADATA_29_COUNTS",json.dumps({"types":len(T),"methods":len(M),"fields":len(F),"images":len(I)}),flush=True)
 for x in T:
  x["name"]=text(x["nameIndex"]);x["namespace"]=text(x["namespaceIndex"])
- assert 0<=x["fieldStart"]<=len(F) and x["fieldStart"]+x["field_count"]<=len(F)
- assert 0<=x["methodStart"]<=len(M) and x["methodStart"]+x["method_count"]<=len(M)
+ assert x["field_count"]==0 or (0<=x["fieldStart"]<=len(F) and x["fieldStart"]+x["field_count"]<=len(F)),x
+ assert x["method_count"]==0 or (0<=x["methodStart"]<=len(M) and x["methodStart"]+x["method_count"]<=len(M)),x
 for x in F:x["name"]=text(x["nameIndex"])
 for x in M:x["name"]=text(x["nameIndex"])
 for x in I:x["name"]=text(x["nameIndex"])
@@ -63,9 +63,9 @@ members=[]
 for i,t in enumerate(T):
  if not narrow.search(t["name"]+" "+t["namespace"]):continue
  fs=[{"name":f["name"],"field_index":t["fieldStart"]+j,"type_index":f["typeIndex"],
-      "token":hex(f["token"])} for j,f in enumerate(F[t["fieldStart"]:t["fieldStart"]+t["field_count"]])]
+      "token":hex(f["token"])} for j,f in enumerate((F[t["fieldStart"]:t["fieldStart"]+t["field_count"]] if t["field_count"] else []))]
  ms=[{"name":m["name"],"method_index":t["methodStart"]+j,"token":hex(m["token"]),
-      "parameter_count":m["parameterCount"]} for j,m in enumerate(M[t["methodStart"]:t["methodStart"]+t["method_count"]])]
+      "parameter_count":m["parameterCount"]} for j,m in enumerate((M[t["methodStart"]:t["methodStart"]+t["method_count"]] if t["method_count"] else []))]
  row={"type_index":i,"type":t["name"],"namespace":t["namespace"],
       "is_value_type":bool(t["bitfield"]&1),"fields":fs,"methods":ms}
  rows.append(row)
