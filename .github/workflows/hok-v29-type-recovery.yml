@@ -1,0 +1,45 @@
+name: HoK IL2CPP v29 Coordinate Type Recovery
+on:
+  push:
+    branches:
+      - work/hok-coordinate-study-20261026
+    paths:
+      - .github/workflows/hok-v29-type-recovery.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  parse:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore verified original global-metadata file only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/hok_il2cpp_cache_recover_and_report.py download metadata
+      - name: Parse Unity IL2CPP v29 declared types methods and fields
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/hok_il2cpp_v29_metadata_parser.py
+          sed -n '1,185p' reports/hok_20261026/metadata_v29/coordinate_types.md
+      - name: Save evidence on research branch
+        if: success()
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/hok_20261026/metadata_v29/
+          git diff --cached --quiet || git commit -m "Decode HoK Unity IL2CPP v29 coordinate type and method metadata"
+          git push origin HEAD:work/hok-coordinate-study-20261026
+      - name: Preserve metadata report as Actions Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-12.1.1.1-v29-position-types
+          path: reports/hok_20261026/metadata_v29/
+          retention-days: 90
+          if-no-files-found: warn
