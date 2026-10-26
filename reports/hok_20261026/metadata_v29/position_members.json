@@ -1,0 +1,6945 @@
+{
+  "total": 694,
+  "members": [
+    {
+      "class": ".HeroSelectDataModule",
+      "kind": "field",
+      "member": {
+        "name": "m_multBeginChoosePositionnInfo",
+        "field_index": 1472,
+        "type_index": 96042,
+        "token": "0x40005c1"
+      }
+    },
+    {
+      "class": "UnityKit.UKMapViewMethod_setMarkerPosition",
+      "kind": "field",
+      "member": {
+        "name": "<position>k__BackingField",
+        "field_index": 3378,
+        "type_index": 102545,
+        "token": "0x4000d33"
+      }
+    },
+    {
+      "class": "UnityKit.UKMapViewMethod_setMarkerPosition",
+      "kind": "method",
+      "member": {
+        "name": "get_position",
+        "method_index": 4400,
+        "token": "0x6001131",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityKit.UKMapViewMethod_setMarkerPosition",
+      "kind": "method",
+      "member": {
+        "name": "set_position",
+        "method_index": 4401,
+        "token": "0x6001132",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CHeroRecentAdjustView",
+      "kind": "field",
+      "member": {
+        "name": "m_curVideoPositionTrans",
+        "field_index": 10435,
+        "type_index": 101486,
+        "token": "0x40028c4"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CHeroSelectSkinAvatarView",
+      "kind": "method",
+      "member": {
+        "name": "RefreshButtonPosition",
+        "method_index": 8788,
+        "token": "0x6002255",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CHeroSelectSkinAvatarView",
+      "kind": "method",
+      "member": {
+        "name": "RefreshWearListNormalizePosition",
+        "method_index": 8789,
+        "token": "0x6002256",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CHeroSelectSkinAvatarView",
+      "kind": "method",
+      "member": {
+        "name": "RefreshSuitListNormalizePosition",
+        "method_index": 8791,
+        "token": "0x6002258",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".enUIComponentWidgets_PartView_HeroSkinNameDescriptor_Horizontal",
+      "kind": "field",
+      "member": {
+        "name": "EN_InfoGroup_21",
+        "field_index": 13620,
+        "type_index": 116762,
+        "token": "0x4003535"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CMallHeroSkinNameDescriptorPartView",
+      "kind": "field",
+      "member": {
+        "name": "m_infoGroupVerticalLayoutGroup",
+        "field_index": 13587,
+        "type_index": 103970,
+        "token": "0x4003514"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CMallHeroSkinNameDescriptorPartView",
+      "kind": "field",
+      "member": {
+        "name": "m_horizontal_InfoGroup_VerticalLayoutGroup",
+        "field_index": 13588,
+        "type_index": 103971,
+        "token": "0x4003515"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CMallHeroSkinNameDescriptorPartView",
+      "kind": "field",
+      "member": {
+        "name": "m_vertical_InfoGroup_VerticalLayoutGroup",
+        "field_index": 13589,
+        "type_index": 103971,
+        "token": "0x4003516"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CMallHeroSkinNameDescriptorPartView",
+      "kind": "field",
+      "member": {
+        "name": "m_infoGroupRectTransform",
+        "field_index": 13593,
+        "type_index": 90993,
+        "token": "0x400351a"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CMallHeroSkinNameDescriptorPartView",
+      "kind": "field",
+      "member": {
+        "name": "m_showVerticalLabel_InfoGroup_RectTransform",
+        "field_index": 13594,
+        "type_index": 90995,
+        "token": "0x400351b"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CMallHeroSkinNameDescriptorPartView",
+      "kind": "field",
+      "member": {
+        "name": "m_hideVerticalLabel_InfoGroup_RectTransform",
+        "field_index": 13595,
+        "type_index": 90995,
+        "token": "0x400351c"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CSelectHeroSkinEnvelopePartViewData",
+      "kind": "field",
+      "member": {
+        "name": "m_teamPlayerPositionList",
+        "field_index": 29254,
+        "type_index": 29453,
+        "token": "0x4007247"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroScoreUpGuideMaskGraphic",
+      "kind": "field",
+      "member": {
+        "name": "originPosition",
+        "field_index": 34880,
+        "type_index": 103782,
+        "token": "0x4008841"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroScoreUpGuideMaskGraphic",
+      "kind": "method",
+      "member": {
+        "name": "CalculatePosition",
+        "method_index": 23341,
+        "token": "0x6005b2e",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBanPickSystem",
+      "kind": "field",
+      "member": {
+        "name": "m_isSelectPositionNoChange",
+        "field_index": 41910,
+        "type_index": 42553,
+        "token": "0x400a3b7"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBanPickSystem",
+      "kind": "field",
+      "member": {
+        "name": "m_isSelectPositionInChooseBranch",
+        "field_index": 41911,
+        "type_index": 42553,
+        "token": "0x400a3b8"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBanPickSystem",
+      "kind": "method",
+      "member": {
+        "name": "SetSwapPanelAnchoredPosition",
+        "method_index": 36407,
+        "token": "0x6008e38",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBanPickSystem",
+      "kind": "method",
+      "member": {
+        "name": "CheckAndSavePunishShowInfoGuild",
+        "method_index": 36554,
+        "token": "0x6008ecb",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBanPickSystem",
+      "kind": "method",
+      "member": {
+        "name": "SetOpenSelectPosition",
+        "method_index": 36645,
+        "token": "0x6008f26",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "GetHeroHistoryInfoGameType",
+        "method_index": 37014,
+        "token": "0x6009097",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "ImpCalc9SlotHeroStandingPosition",
+        "method_index": 37051,
+        "token": "0x60090bc",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "HasPositionHero",
+        "method_index": 37087,
+        "token": "0x60090e0",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "Mirroring10v10PositionType",
+        "method_index": 37206,
+        "token": "0x6009157",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "Select10v10Position",
+        "method_index": 37208,
+        "token": "0x6009159",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "OnSelect10v10PositionNtf",
+        "method_index": 37209,
+        "token": "0x600915a",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "SendSwap10V10PositionReq",
+        "method_index": 37210,
+        "token": "0x600915b",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "SendCancelSwap10V10PositionReq",
+        "method_index": 37211,
+        "token": "0x600915c",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "SendSwap10V10PositionChoiceReq",
+        "method_index": 37212,
+        "token": "0x600915d",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "OnSwap10V10PositionRsp",
+        "method_index": 37213,
+        "token": "0x600915e",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "OnCancelSwap10V10PositionRsp",
+        "method_index": 37214,
+        "token": "0x600915f",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "OnSwap10V10PositionChoiceRsp",
+        "method_index": 37215,
+        "token": "0x6009160",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSelectBaseSystem",
+      "kind": "method",
+      "member": {
+        "name": "OnSwap10V10PositionNTF",
+        "method_index": 37216,
+        "token": "0x6009161",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroSwapControl",
+      "kind": "method",
+      "member": {
+        "name": "SetPanelAnchoredPosition",
+        "method_index": 38096,
+        "token": "0x60094d1",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CMallDiscoverBattleEffectDetailPartLogic",
+      "kind": "method",
+      "member": {
+        "name": "get_IsUsingLegacyPositionFit",
+        "method_index": 43041,
+        "token": "0x600a822",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CMallDiscoverHeroSkinInGiftDetailPartLogic",
+      "kind": "method",
+      "member": {
+        "name": "get_IsUsingLegacyPositionFit",
+        "method_index": 43052,
+        "token": "0x600a82d",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CMallBattleEffectDetailPartLogic",
+      "kind": "method",
+      "member": {
+        "name": "get_IsUsingLegacyPositionFit",
+        "method_index": 44060,
+        "token": "0x600ac1d",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CMallHeroSkinInGiftDetailPartLogic",
+      "kind": "method",
+      "member": {
+        "name": "get_IsUsingLegacyPositionFit",
+        "method_index": 44233,
+        "token": "0x600acca",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "CoreDef.EBattleCheatType",
+      "kind": "field",
+      "member": {
+        "name": "EBC_PuppetAutoResetPosition",
+        "field_index": 69030,
+        "type_index": 71890,
+        "token": "0x40002ac"
+      }
+    },
+    {
+      "class": "CSProtocolWrapper.CSDT_CMD_USEPOSITIONSKILL",
+      "kind": "field",
+      "member": {
+        "name": "stPosition",
+        "field_index": 75682,
+        "type_index": 62029,
+        "token": "0x4001ca8"
+      }
+    },
+    {
+      "class": "CSProtocolWrapper.FRAMEPKG_CMD_ADD_ACTOR",
+      "kind": "field",
+      "member": {
+        "name": "stDestPosition",
+        "field_index": 76077,
+        "type_index": 73326,
+        "token": "0x4001e33"
+      }
+    },
+    {
+      "class": "CSProtocol.FRAMEPKG_CMD_ADD_ACTOR",
+      "kind": "field",
+      "member": {
+        "name": "stDestPosition",
+        "field_index": 77375,
+        "type_index": 73324,
+        "token": "0x4002345"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_APPOINT_POSITION_TRANS_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_APPOINT_POSITION_TRANS_TYPE_APPOINT",
+        "field_index": 105585,
+        "type_index": 56632,
+        "token": "0x4009177"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_APPOINT_POSITION_TRANS_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_APPOINT_POSITION_TRANS_TYPE_DEAL_SELF_RECOMMEND",
+        "field_index": 105586,
+        "type_index": 56632,
+        "token": "0x4009178"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_APPOINT_POSITION_TRANS_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_APPOINT_POSITION_TRANS_TYPE_SELF_RECOMMEND_TIMEOUT",
+        "field_index": 105587,
+        "type_index": 56632,
+        "token": "0x4009179"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_APPOINT_POSITION_TRANS_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_APPOINT_POSITION_TRANS_TYPE_IMPEACH_CHAIRMAN",
+        "field_index": 105588,
+        "type_index": 56632,
+        "token": "0x400917a"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_APPOINT_POSITION_TRANS_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_APPOINT_POSITION_TRANS_TYPE_IDIPCHG_CHAIRMAN",
+        "field_index": 105589,
+        "type_index": 56632,
+        "token": "0x400917b"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_NEWBIE_DESTINY_HERO_TEAM_FIGHT_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_NEWBIE_DESTINY_HERO_TEAM_FIGHT_POSITION_TYPE_NULL",
+        "field_index": 107797,
+        "type_index": 58217,
+        "token": "0x4009a1b"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_NEWBIE_DESTINY_HERO_TEAM_FIGHT_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_NEWBIE_DESTINY_HERO_TEAM_FIGHT_POSITION_TYPE_FRONT",
+        "field_index": 107798,
+        "type_index": 58217,
+        "token": "0x4009a1c"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_NEWBIE_DESTINY_HERO_TEAM_FIGHT_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_NEWBIE_DESTINY_HERO_TEAM_FIGHT_POSITION_TYPE_FLEXIBLE",
+        "field_index": 107799,
+        "type_index": 58217,
+        "token": "0x4009a1d"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_NEWBIE_DESTINY_HERO_TEAM_FIGHT_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_NEWBIE_DESTINY_HERO_TEAM_FIGHT_POSITION_TYPE_BACK",
+        "field_index": 107800,
+        "type_index": 58217,
+        "token": "0x4009a1e"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_NEWBIE_DESTINY_HERO_TEAM_FIGHT_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_NEWBIE_DESTINY_HERO_TEAM_FIGHT_POSITION_TYPE_MAX",
+        "field_index": 107801,
+        "type_index": 58217,
+        "token": "0x4009a1f"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SELECT_POSITION_SRC_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SELECT_POSITION_SRC_TYPE_NULL",
+        "field_index": 108071,
+        "type_index": 58646,
+        "token": "0x4009b2d"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SELECT_POSITION_SRC_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SELECT_POSITION_SRC_TYPE_DESK_STATE",
+        "field_index": 108072,
+        "type_index": 58646,
+        "token": "0x4009b2e"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SELECT_POSITION_SRC_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SELECT_POSITION_SRC_TYPE_SMALL_MAP",
+        "field_index": 108073,
+        "type_index": 58646,
+        "token": "0x4009b2f"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SELECT_POSITION_SRC_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SELECT_POSITION_SRC_TYPE_SELECT_HERO",
+        "field_index": 108074,
+        "type_index": 58646,
+        "token": "0x4009b30"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SELECT_POSITION_SRC_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SELECT_POSITION_SRC_TYPE_TIME_OUT",
+        "field_index": 108075,
+        "type_index": 58646,
+        "token": "0x4009b31"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SELECT_POSITION_SRC_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SELECT_POSITION_SRC_TYPE_MAX",
+        "field_index": 108076,
+        "type_index": 58646,
+        "token": "0x4009b32"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_BATTLE_STAT_SHORTDETAIL_ACNT_BEHAVIOR_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_BATTLE_STAT_SHORTDETAIL_ACNT_BEHAVIOR_TYPE_START_POSITION_X",
+        "field_index": 108317,
+        "type_index": 56799,
+        "token": "0x4009c23"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_BATTLE_STAT_SHORTDETAIL_ACNT_BEHAVIOR_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_BATTLE_STAT_SHORTDETAIL_ACNT_BEHAVIOR_TYPE_START_POSITION_Z",
+        "field_index": 108318,
+        "type_index": 56799,
+        "token": "0x4009c24"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_BATTLE_STAT_SHORTDETAIL_ACNT_BEHAVIOR_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_BATTLE_STAT_SHORTDETAIL_ACNT_BEHAVIOR_TYPE_END_POSITION_X",
+        "field_index": 108319,
+        "type_index": 56799,
+        "token": "0x4009c25"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_BATTLE_STAT_SHORTDETAIL_ACNT_BEHAVIOR_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_BATTLE_STAT_SHORTDETAIL_ACNT_BEHAVIOR_TYPE_END_POSITION_Z",
+        "field_index": 108320,
+        "type_index": 56799,
+        "token": "0x4009c26"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SWAP_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SWAP_HERO_10V10_POSITION_TYPE_NULL",
+        "field_index": 108509,
+        "type_index": 58779,
+        "token": "0x4009ce3"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SWAP_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SWAP_HERO_10V10_POSITION_TYPE_INIT",
+        "field_index": 108510,
+        "type_index": 58779,
+        "token": "0x4009ce4"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SWAP_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SWAP_HERO_10V10_POSITION_TYPE_DST_ACCEPT",
+        "field_index": 108511,
+        "type_index": 58779,
+        "token": "0x4009ce5"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SWAP_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SWAP_HERO_10V10_POSITION_TYPE_DST_REFUSE",
+        "field_index": 108512,
+        "type_index": 58779,
+        "token": "0x4009ce6"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SWAP_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SWAP_HERO_10V10_POSITION_TYPE_SRC_CANCEL",
+        "field_index": 108513,
+        "type_index": 58779,
+        "token": "0x4009ce7"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SWAP_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SWAP_HERO_10V10_POSITION_TYPE_TIMEOUT",
+        "field_index": 108514,
+        "type_index": 58779,
+        "token": "0x4009ce8"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SWAP_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SWAP_HERO_10V10_POSITION_TYPE_SRC_SELECT_CANCEL",
+        "field_index": 108515,
+        "type_index": 58779,
+        "token": "0x4009ce9"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SWAP_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SWAP_HERO_10V10_POSITION_TYPE_DST_SELECT_ACCEPT",
+        "field_index": 108516,
+        "type_index": 58779,
+        "token": "0x4009cea"
+      }
+    },
+    {
+      "class": "CSProtocol.COM_SWAP_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "COM_SWAP_HERO_10V10_POSITION_TYPE_MAX",
+        "field_index": 108517,
+        "type_index": 58779,
+        "token": "0x4009ceb"
+      }
+    },
+    {
+      "class": "CSProtocol.COMDT_MEMBER_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "bPosition",
+        "field_index": 115668,
+        "type_index": 42911,
+        "token": "0x400b8da"
+      }
+    },
+    {
+      "class": "CSProtocol.COMDT_DIMENSION_MAP_TRANSFORM",
+      "kind": "field",
+      "member": {
+        "name": "stCoordinate",
+        "field_index": 122970,
+        "type_index": 50863,
+        "token": "0x400d560"
+      }
+    },
+    {
+      "class": "CSProtocol.COMDT_DIMENSION_MAP_MOVEABLE_PARENT_INFO",
+      "kind": "field",
+      "member": {
+        "name": "stPosition",
+        "field_index": 122981,
+        "type_index": 50863,
+        "token": "0x400d56b"
+      }
+    },
+    {
+      "class": "CSProtocol.COMDT_NEWBIE_DESTINY_HERO_RECOMMEND_ITEM",
+      "kind": "field",
+      "member": {
+        "name": "iTeamFightPosition",
+        "field_index": 126183,
+        "type_index": 79278,
+        "token": "0x400e1ed"
+      }
+    },
+    {
+      "class": "CSProtocol.COMDT_NEWBIE_DESTINY_HERO_RECOMMEND_ITEM",
+      "kind": "field",
+      "member": {
+        "name": "VERSION_iTeamFightPosition",
+        "field_index": 126189,
+        "type_index": 102482,
+        "token": "0x400e1f3"
+      }
+    },
+    {
+      "class": "CSProtocol.COMDT_BATTLE_SPECIAL_INSTRUCT",
+      "kind": "field",
+      "member": {
+        "name": "dwPositionX",
+        "field_index": 126919,
+        "type_index": 102472,
+        "token": "0x400e4cd"
+      }
+    },
+    {
+      "class": "CSProtocol.COMDT_BATTLE_SPECIAL_INSTRUCT",
+      "kind": "field",
+      "member": {
+        "name": "dwPositionY",
+        "field_index": 126920,
+        "type_index": 102472,
+        "token": "0x400e4ce"
+      }
+    },
+    {
+      "class": "CSProtocol.COMDT_BATTLE_SPECIAL_INSTRUCT",
+      "kind": "field",
+      "member": {
+        "name": "dwPositionZ",
+        "field_index": 126921,
+        "type_index": 102472,
+        "token": "0x400e4cf"
+      }
+    },
+    {
+      "class": "CSProtocol.COMDT_DIMENSION_MAP_ACTOR_MOVE_INFO",
+      "kind": "field",
+      "member": {
+        "name": "stPosition",
+        "field_index": 132976,
+        "type_index": 50863,
+        "token": "0x400fc76"
+      }
+    },
+    {
+      "class": "CSProtocol.CS_HOK_MEDAL_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "CS_HOK_MEDAL_POSITION_THEATER_PERCENT_50",
+        "field_index": 144977,
+        "type_index": 63600,
+        "token": "0x4012b57"
+      }
+    },
+    {
+      "class": "CSProtocol.CS_HOK_MEDAL_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "CS_HOK_MEDAL_POSITION_THEATER_PERCENT_30",
+        "field_index": 144978,
+        "type_index": 63600,
+        "token": "0x4012b58"
+      }
+    },
+    {
+      "class": "CSProtocol.CS_HOK_MEDAL_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "CS_HOK_MEDAL_POSITION_THEATER_PERCENT_15",
+        "field_index": 144979,
+        "type_index": 63600,
+        "token": "0x4012b59"
+      }
+    },
+    {
+      "class": "CSProtocol.CS_HOK_MEDAL_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "CS_HOK_MEDAL_POSITION_THEATER_PERCENT_5",
+        "field_index": 144980,
+        "type_index": 63600,
+        "token": "0x4012b5a"
+      }
+    },
+    {
+      "class": "CSProtocol.CS_HOK_MEDAL_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "CS_HOK_MEDAL_POSITION_THEATER_TOP_100",
+        "field_index": 144981,
+        "type_index": 63600,
+        "token": "0x4012b5b"
+      }
+    },
+    {
+      "class": "CSProtocol.CS_HOK_MEDAL_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "CS_HOK_MEDAL_POSITION_THEATER_TOP_10",
+        "field_index": 144982,
+        "type_index": 63600,
+        "token": "0x4012b5c"
+      }
+    },
+    {
+      "class": "CSProtocol.CS_MULPOSITION_OP_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "CS_MULPOSITION_OP_TYPE_NULL",
+        "field_index": 145013,
+        "type_index": 63650,
+        "token": "0x4012b7b"
+      }
+    },
+    {
+      "class": "CSProtocol.CS_MULPOSITION_OP_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "CS_MULPOSITION_OP_TYPE_SELECT",
+        "field_index": 145014,
+        "type_index": 63650,
+        "token": "0x4012b7c"
+      }
+    },
+    {
+      "class": "CSProtocol.CS_MULPOSITION_OP_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "CS_MULPOSITION_OP_TYPE_CLOSE",
+        "field_index": 145015,
+        "type_index": 63650,
+        "token": "0x4012b7d"
+      }
+    },
+    {
+      "class": "CSProtocol.CS_MULPOSITION_OP_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "CS_MULPOSITION_OP_TYPE_TIMEOUT",
+        "field_index": 145016,
+        "type_index": 63650,
+        "token": "0x4012b7e"
+      }
+    },
+    {
+      "class": "CSProtocol.CSPKG_MULPOSITION_OP_REPORT_REQ",
+      "kind": "field",
+      "member": {
+        "name": "bHeroPosition",
+        "field_index": 146245,
+        "type_index": 42911,
+        "token": "0x401304b"
+      }
+    },
+    {
+      "class": "CSProtocol.SCPKG_OPER_HERO_NTF",
+      "kind": "field",
+      "member": {
+        "name": "bHero10V10Position",
+        "field_index": 150955,
+        "type_index": 42911,
+        "token": "0x40142b1"
+      }
+    },
+    {
+      "class": "CSProtocol.CSPKG_APPOINT_POSITION_REQ",
+      "kind": "field",
+      "member": {
+        "name": "bPosition",
+        "field_index": 152359,
+        "type_index": 42911,
+        "token": "0x401482d"
+      }
+    },
+    {
+      "class": "CSProtocol.CSPKG_SELECT_HERO_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "bHeroPosition",
+        "field_index": 156401,
+        "type_index": 42911,
+        "token": "0x40157f7"
+      }
+    },
+    {
+      "class": "CSProtocol.SCPKG_HERO_POSITION_NTF",
+      "kind": "field",
+      "member": {
+        "name": "bHeroPosition",
+        "field_index": 156409,
+        "type_index": 42911,
+        "token": "0x40157ff"
+      }
+    },
+    {
+      "class": "CSProtocol.CSPKG_SELECT_HERO_10V10_POSITION_REQ",
+      "kind": "field",
+      "member": {
+        "name": "bHero10V10Position",
+        "field_index": 156422,
+        "type_index": 42911,
+        "token": "0x401580c"
+      }
+    },
+    {
+      "class": "CSProtocol.SCPKG_HERO_10V10_POSITION_NTF",
+      "kind": "field",
+      "member": {
+        "name": "bHero10V10Position",
+        "field_index": 156429,
+        "type_index": 42911,
+        "token": "0x4015813"
+      }
+    },
+    {
+      "class": "CSProtocol.CSDT_DIMENSION_MAP_MOVE_CHECK_DATA",
+      "kind": "field",
+      "member": {
+        "name": "stInvalidPosition",
+        "field_index": 162721,
+        "type_index": 50863,
+        "token": "0x40170a7"
+      }
+    },
+    {
+      "class": "CSProtocol.CSDT_DIMENSION_MAP_MOVE_CHECK_DATA",
+      "kind": "field",
+      "member": {
+        "name": "stFixedPosition",
+        "field_index": 162723,
+        "type_index": 50863,
+        "token": "0x40170a9"
+      }
+    },
+    {
+      "class": "CSProtocol.CSDT_CMD_USEPOSITIONSKILL",
+      "kind": "field",
+      "member": {
+        "name": "stPosition",
+        "field_index": 167482,
+        "type_index": 62027,
+        "token": "0x4018340"
+      }
+    },
+    {
+      "class": "CSProtocol.CSDT_RECONN_SELECTPOSITIONINFO",
+      "kind": "field",
+      "member": {
+        "name": "stBeginSelectPosition",
+        "field_index": 171925,
+        "type_index": 96042,
+        "token": "0x401949b"
+      }
+    },
+    {
+      "class": "ResData.ResDT_TransformParam",
+      "kind": "field",
+      "member": {
+        "name": "iPositionX",
+        "field_index": 182336,
+        "type_index": 79278,
+        "token": "0x401bd46"
+      }
+    },
+    {
+      "class": "ResData.ResDT_TransformParam",
+      "kind": "field",
+      "member": {
+        "name": "iPositionY",
+        "field_index": 182337,
+        "type_index": 79278,
+        "token": "0x401bd47"
+      }
+    },
+    {
+      "class": "ResData.ResDT_TransformParam",
+      "kind": "field",
+      "member": {
+        "name": "iPositionZ",
+        "field_index": 182338,
+        "type_index": 79278,
+        "token": "0x401bd48"
+      }
+    },
+    {
+      "class": "ResData.ResHeroNewFeatureUIShow",
+      "kind": "field",
+      "member": {
+        "name": "dwCoordinateStyle",
+        "field_index": 182663,
+        "type_index": 102472,
+        "token": "0x401be8d"
+      }
+    },
+    {
+      "class": "ResData.ResHeroNewFeatureUIShow",
+      "kind": "field",
+      "member": {
+        "name": "dwBGCoordinateStyle",
+        "field_index": 182664,
+        "type_index": 102472,
+        "token": "0x401be8e"
+      }
+    },
+    {
+      "class": "ResData.ResSkillMoveDestInfo",
+      "kind": "field",
+      "member": {
+        "name": "bPositionMove",
+        "field_index": 183923,
+        "type_index": 42911,
+        "token": "0x401c379"
+      }
+    },
+    {
+      "class": "ResData.ResHeroCfgInfo",
+      "kind": "field",
+      "member": {
+        "name": "iRecommendPosition",
+        "field_index": 188046,
+        "type_index": 79278,
+        "token": "0x401d394"
+      }
+    },
+    {
+      "class": "ResData.ResHeroCfgInfo",
+      "kind": "field",
+      "member": {
+        "name": "bTeamFightPosition",
+        "field_index": 188054,
+        "type_index": 42911,
+        "token": "0x401d39c"
+      }
+    },
+    {
+      "class": "ResData.ResHeroCfgInfo",
+      "kind": "field",
+      "member": {
+        "name": "bJueWuAssistantAiShowPosition",
+        "field_index": 188182,
+        "type_index": 42911,
+        "token": "0x401d41c"
+      }
+    },
+    {
+      "class": "ResData.ResHeroCfgInfo",
+      "kind": "field",
+      "member": {
+        "name": "bJueWuAssistantAiInstructionPosition",
+        "field_index": 188183,
+        "type_index": 42911,
+        "token": "0x401d41d"
+      }
+    },
+    {
+      "class": "ResData.ResHeroSkin",
+      "kind": "field",
+      "member": {
+        "name": "bSkinTagPosition",
+        "field_index": 188447,
+        "type_index": 42911,
+        "token": "0x401d525"
+      }
+    },
+    {
+      "class": "ResData.ResChessTalentPosition",
+      "kind": "field",
+      "member": {
+        "name": "PositionX_length",
+        "field_index": 190979,
+        "type_index": 79304,
+        "token": "0x401df09"
+      }
+    },
+    {
+      "class": "ResData.ResChessTalentPosition",
+      "kind": "field",
+      "member": {
+        "name": "PositionY_length",
+        "field_index": 190980,
+        "type_index": 79304,
+        "token": "0x401df0a"
+      }
+    },
+    {
+      "class": "ResData.ResChessTalentPosition",
+      "kind": "field",
+      "member": {
+        "name": "dwPositionType",
+        "field_index": 190982,
+        "type_index": 102472,
+        "token": "0x401df0c"
+      }
+    },
+    {
+      "class": "ResData.ResChessTalentPosition",
+      "kind": "field",
+      "member": {
+        "name": "PositionX_bytes",
+        "field_index": 190985,
+        "type_index": 131379,
+        "token": "0x401df0f"
+      }
+    },
+    {
+      "class": "ResData.ResChessTalentPosition",
+      "kind": "field",
+      "member": {
+        "name": "PositionY_bytes",
+        "field_index": 190986,
+        "type_index": 131381,
+        "token": "0x401df10"
+      }
+    },
+    {
+      "class": "ResData.ResChessTalentPosition",
+      "kind": "method",
+      "member": {
+        "name": "PositionX",
+        "method_index": 159782,
+        "token": "0x601235a",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "ResData.ResChessTalentPosition",
+      "kind": "method",
+      "member": {
+        "name": "PositionY",
+        "method_index": 159783,
+        "token": "0x601235b",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "ResData.ResNewHeroPracticeTargetInfo",
+      "kind": "field",
+      "member": {
+        "name": "iPlayerCoordinateX",
+        "field_index": 196415,
+        "type_index": 79278,
+        "token": "0x401f445"
+      }
+    },
+    {
+      "class": "ResData.ResNewHeroPracticeTargetInfo",
+      "kind": "field",
+      "member": {
+        "name": "iPlayerCoordinateZ",
+        "field_index": 196416,
+        "type_index": 79278,
+        "token": "0x401f446"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_RECOMMEND_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_RECOMMEND_POSITION_T_FRONT",
+        "field_index": 232065,
+        "type_index": 88817,
+        "token": "0x4027f87"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_RECOMMEND_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_RECOMMEND_POSITION_T_CENTER",
+        "field_index": 232066,
+        "type_index": 88817,
+        "token": "0x4027f88"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_RECOMMEND_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_RECOMMEND_POSITION_T_TAIL",
+        "field_index": 232067,
+        "type_index": 88817,
+        "token": "0x4027f89"
+      }
+    },
+    {
+      "class": "ResData.RES_BANNER_IMAGE_DISPLAY_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_BANNER_DISPLAY_POSITION_LOBBY",
+        "field_index": 233598,
+        "type_index": 87418,
+        "token": "0x4028584"
+      }
+    },
+    {
+      "class": "ResData.RES_BANNER_IMAGE_DISPLAY_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_BANNER_DISPLAY_POSITION_MALL",
+        "field_index": 233599,
+        "type_index": 87418,
+        "token": "0x4028585"
+      }
+    },
+    {
+      "class": "ResData.RES_BANNER_IMAGE_DISPLAY_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_BANNER_DISPLAY_POSITION_AVATAR_SHOP",
+        "field_index": 233600,
+        "type_index": 87418,
+        "token": "0x4028586"
+      }
+    },
+    {
+      "class": "ResData.RES_BANNER_IMAGE_DISPLAY_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_BANNER_DISPLAY_POSITION_PROJECT8_LOBBY",
+        "field_index": 233601,
+        "type_index": 87418,
+        "token": "0x4028587"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_NULL",
+        "field_index": 234608,
+        "type_index": 88756,
+        "token": "0x4028976"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_UP_FRONT",
+        "field_index": 234609,
+        "type_index": 88756,
+        "token": "0x4028977"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_UP_BACK",
+        "field_index": 234610,
+        "type_index": 88756,
+        "token": "0x4028978"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_WILD_FRONT",
+        "field_index": 234611,
+        "type_index": 88756,
+        "token": "0x4028979"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_WILD_BACK",
+        "field_index": 234612,
+        "type_index": 88756,
+        "token": "0x402897a"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_MIDUP_FRONT",
+        "field_index": 234613,
+        "type_index": 88756,
+        "token": "0x402897b"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_MIDUP_BACK",
+        "field_index": 234614,
+        "type_index": 88756,
+        "token": "0x402897c"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_MIDDOWN_FRONT",
+        "field_index": 234615,
+        "type_index": 88756,
+        "token": "0x402897d"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_MIDDOWN_BACK",
+        "field_index": 234616,
+        "type_index": 88756,
+        "token": "0x402897e"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_DOWN_FRONT",
+        "field_index": 234617,
+        "type_index": 88756,
+        "token": "0x402897f"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_DOWN_BACK",
+        "field_index": 234618,
+        "type_index": 88756,
+        "token": "0x4028980"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_10V10_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_10V10_POSITION_TYPE_MAX",
+        "field_index": 234619,
+        "type_index": 88756,
+        "token": "0x4028981"
+      }
+    },
+    {
+      "class": "ResData.RES_PVP_TEAM_FIGHT_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_PVP_TEAM_FIGHT_POSITION_TYPE_NULL",
+        "field_index": 234621,
+        "type_index": 89724,
+        "token": "0x4028983"
+      }
+    },
+    {
+      "class": "ResData.RES_PVP_TEAM_FIGHT_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_PVP_TEAM_FIGHT_POSITION_TYPE_FRONT",
+        "field_index": 234622,
+        "type_index": 89724,
+        "token": "0x4028984"
+      }
+    },
+    {
+      "class": "ResData.RES_PVP_TEAM_FIGHT_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_PVP_TEAM_FIGHT_POSITION_TYPE_BACK",
+        "field_index": 234623,
+        "type_index": 89724,
+        "token": "0x4028985"
+      }
+    },
+    {
+      "class": "ResData.RES_PVP_TEAM_FIGHT_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_PVP_TEAM_FIGHT_POSITION_TYPE_SIDE",
+        "field_index": 234624,
+        "type_index": 89724,
+        "token": "0x4028986"
+      }
+    },
+    {
+      "class": "ResData.RES_HERO_TRICK_TRAIN_STEP_CONDITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_HERO_TRICK_TRAIN_STEP_CONDITION_TYPE_CHECK_ACTOR_CURRENT_POSITION",
+        "field_index": 237668,
+        "type_index": 88856,
+        "token": "0x402956a"
+      }
+    },
+    {
+      "class": "ResData.RES_DIMENSION_DANCE_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_DIMENSION_DANCE_POSITION_TYPE_NONE",
+        "field_index": 240550,
+        "type_index": 87922,
+        "token": "0x402a0ac"
+      }
+    },
+    {
+      "class": "ResData.RES_DIMENSION_DANCE_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_DIMENSION_DANCE_POSITION_TYPE_LEAD",
+        "field_index": 240551,
+        "type_index": 87922,
+        "token": "0x402a0ad"
+      }
+    },
+    {
+      "class": "ResData.RES_DIMENSION_DANCE_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_DIMENSION_DANCE_POSITION_TYPE_FOLLOW",
+        "field_index": 240552,
+        "type_index": 87922,
+        "token": "0x402a0ae"
+      }
+    },
+    {
+      "class": "ResData.RES_DIMENSION_DANCE_POSITION_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "RES_DIMENSION_DANCE_POSITION_TYPE_MAX",
+        "field_index": 240553,
+        "type_index": 87922,
+        "token": "0x402a0af"
+      }
+    },
+    {
+      "class": "ResData.RES_COMMANDER_COMMAND_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_COMMANDER_COMMAND_POSITION_DEFAULT",
+        "field_index": 241218,
+        "type_index": 87668,
+        "token": "0x402a348"
+      }
+    },
+    {
+      "class": "ResData.RES_COMMANDER_COMMAND_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_COMMANDER_COMMAND_POSITION_NEAREST_FRIENDLY_TOWER",
+        "field_index": 241219,
+        "type_index": 87668,
+        "token": "0x402a349"
+      }
+    },
+    {
+      "class": "ResData.RES_COMMANDER_COMMAND_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_COMMANDER_COMMAND_POSITION_SIGNAL_PLAYER",
+        "field_index": 241220,
+        "type_index": 87668,
+        "token": "0x402a34a"
+      }
+    },
+    {
+      "class": "ResData.RES_COMMANDER_COMMAND_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_COMMANDER_COMMAND_POSITION_NEAREST_FRIENDLY_UNIT",
+        "field_index": 241221,
+        "type_index": 87668,
+        "token": "0x402a34b"
+      }
+    },
+    {
+      "class": "ResData.RES_COMMANDER_COMMAND_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_COMMANDER_COMMAND_POSITION_NEAREST_ENEMY_UNIT",
+        "field_index": 241222,
+        "type_index": 87668,
+        "token": "0x402a34c"
+      }
+    },
+    {
+      "class": "ResData.RES_COMMANDER_COMMAND_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_COMMANDER_COMMAND_POSITION_NEAREST_ENEMY_TOWER",
+        "field_index": 241223,
+        "type_index": 87668,
+        "token": "0x402a34d"
+      }
+    },
+    {
+      "class": "ResData.RES_COMMANDER_COMMAND_POSITION",
+      "kind": "field",
+      "member": {
+        "name": "RES_COMMANDER_COMMAND_POSITION_NONE",
+        "field_index": 241224,
+        "type_index": 87668,
+        "token": "0x402a34e"
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "get_anchoredPosition",
+        "method_index": 163731,
+        "token": "0x6000995",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "set_anchoredPosition",
+        "method_index": 163732,
+        "token": "0x6000996",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "get_anchoredPosition3D",
+        "method_index": 163737,
+        "token": "0x600099b",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "set_anchoredPosition3D",
+        "method_index": 163738,
+        "token": "0x600099c",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionOpt",
+        "method_index": 163837,
+        "token": "0x60009ff",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionOpt",
+        "method_index": 163838,
+        "token": "0x6000a00",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionAndRotation",
+        "method_index": 163841,
+        "token": "0x6000a03",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionAndRotation",
+        "method_index": 163842,
+        "token": "0x6000a04",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_Transform",
+      "kind": "method",
+      "member": {
+        "name": "GetPositionAndRotation",
+        "method_index": 163843,
+        "token": "0x6000a05",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_Transform",
+      "kind": "method",
+      "member": {
+        "name": "GetLocalPositionAndRotation",
+        "method_index": 163844,
+        "token": "0x6000a06",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_Transform",
+      "kind": "method",
+      "member": {
+        "name": "get_position",
+        "method_index": 163860,
+        "token": "0x6000a16",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_Transform",
+      "kind": "method",
+      "member": {
+        "name": "set_position",
+        "method_index": 163861,
+        "token": "0x6000a17",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_Transform",
+      "kind": "method",
+      "member": {
+        "name": "get_localPosition",
+        "method_index": 163862,
+        "token": "0x6000a18",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_UnityEngine_Transform",
+      "kind": "method",
+      "member": {
+        "name": "set_localPosition",
+        "method_index": 163863,
+        "token": "0x6000a19",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".CameraHeroClip",
+      "kind": "field",
+      "member": {
+        "name": "m_cachedCameraPosition",
+        "field_index": 250442,
+        "type_index": 103779,
+        "token": "0x4001211"
+      }
+    },
+    {
+      "class": ".CameraHeroClip",
+      "kind": "field",
+      "member": {
+        "name": "m_cachedCameraRootPosition",
+        "field_index": 250443,
+        "type_index": 103779,
+        "token": "0x4001212"
+      }
+    },
+    {
+      "class": ".CameraHeroClip",
+      "kind": "method",
+      "member": {
+        "name": "ChangeHeroPosition",
+        "method_index": 164825,
+        "token": "0x6000ddb",
+        "parameter_count": 4
+      }
+    },
+    {
+      "class": ".CameraHeroClip",
+      "kind": "method",
+      "member": {
+        "name": "UpdateCameraPosition",
+        "method_index": 164829,
+        "token": "0x6000ddf",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".CameraHeroClip",
+      "kind": "method",
+      "member": {
+        "name": "UpdateCameraRootPosition",
+        "method_index": 164830,
+        "token": "0x6000de0",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".CameraHeroClip",
+      "kind": "method",
+      "member": {
+        "name": "<ChangeHeroPosition>b__64_0",
+        "method_index": 164836,
+        "token": "0x6000de6",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".enActorMoveType",
+      "kind": "field",
+      "member": {
+        "name": "Position",
+        "field_index": 251009,
+        "type_index": 122068,
+        "token": "0x4001448"
+      }
+    },
+    {
+      "class": ".CameraOffset_Smoother_Move",
+      "kind": "field",
+      "member": {
+        "name": "lastTargetPosition",
+        "field_index": 250993,
+        "type_index": 103779,
+        "token": "0x4001438"
+      }
+    },
+    {
+      "class": ".TransformHolder",
+      "kind": "field",
+      "member": {
+        "name": "m_position",
+        "field_index": 251088,
+        "type_index": 103779,
+        "token": "0x4001497"
+      }
+    },
+    {
+      "class": ".TransformHolder",
+      "kind": "method",
+      "member": {
+        "name": "get_position",
+        "method_index": 165358,
+        "token": "0x6000ff0",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".TransformHolder",
+      "kind": "method",
+      "member": {
+        "name": "set_position",
+        "method_index": 165359,
+        "token": "0x6000ff1",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".TransformExtension",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionXY",
+        "method_index": 165530,
+        "token": "0x600109c",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": ".TransformExtension",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionXY",
+        "method_index": 165531,
+        "token": "0x600109d",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": ".TransformExtension",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionX",
+        "method_index": 165532,
+        "token": "0x600109e",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": ".TransformExtension",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionZ",
+        "method_index": 165533,
+        "token": "0x600109f",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": ".TransformExtension",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionZAccurately",
+        "method_index": 165534,
+        "token": "0x60010a0",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": ".TransformExtension",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionZ",
+        "method_index": 165535,
+        "token": "0x60010a1",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": ".MoveBeamDurationInfo",
+      "kind": "field",
+      "member": {
+        "name": "srcPosition",
+        "field_index": 253696,
+        "type_index": 103605,
+        "token": "0x4001ec7"
+      }
+    },
+    {
+      "class": ".MoveBeamDurationInfo",
+      "kind": "field",
+      "member": {
+        "name": "endPosition",
+        "field_index": 253697,
+        "type_index": 103605,
+        "token": "0x4001ec8"
+      }
+    },
+    {
+      "class": ".MoveBeamDurationInfo",
+      "kind": "field",
+      "member": {
+        "name": "bTargetPosition_bool",
+        "field_index": 253715,
+        "type_index": 42908,
+        "token": "0x4001eda"
+      }
+    },
+    {
+      "class": ".MoveBeamDurationInfo",
+      "kind": "field",
+      "member": {
+        "name": "bHideWhenTargetInvisible_bool",
+        "field_index": 253716,
+        "type_index": 42908,
+        "token": "0x4001edb"
+      }
+    },
+    {
+      "class": ".MoveBeamDurationInfo",
+      "kind": "field",
+      "member": {
+        "name": "bHideWhenSrcInvisible_bool",
+        "field_index": 253717,
+        "type_index": 42908,
+        "token": "0x4001edc"
+      }
+    },
+    {
+      "class": ".MoveBeamDurationInfo",
+      "kind": "method",
+      "member": {
+        "name": "get_bTargetPosition",
+        "method_index": 167873,
+        "token": "0x60019c3",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".MoveBeamDurationInfo",
+      "kind": "method",
+      "member": {
+        "name": "set_bTargetPosition",
+        "method_index": 167874,
+        "token": "0x60019c4",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".MoveBeamDurationInfo",
+      "kind": "method",
+      "member": {
+        "name": "get_bHideWhenTargetInvisible",
+        "method_index": 167875,
+        "token": "0x60019c5",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".MoveBeamDurationInfo",
+      "kind": "method",
+      "member": {
+        "name": "set_bHideWhenTargetInvisible",
+        "method_index": 167876,
+        "token": "0x60019c6",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".MoveBeamDurationInfo",
+      "kind": "method",
+      "member": {
+        "name": "get_bHideWhenSrcInvisible",
+        "method_index": 167877,
+        "token": "0x60019c7",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".MoveBeamDurationInfo",
+      "kind": "method",
+      "member": {
+        "name": "set_bHideWhenSrcInvisible",
+        "method_index": 167878,
+        "token": "0x60019c8",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".ActorSnapshotParam",
+      "kind": "field",
+      "member": {
+        "name": "targetPosition",
+        "field_index": 253975,
+        "type_index": 103605,
+        "token": "0x4001fde"
+      }
+    },
+    {
+      "class": ".ActorSnapshotParam",
+      "kind": "field",
+      "member": {
+        "name": "bUseXYZCoordinateMove_bool",
+        "field_index": 253978,
+        "type_index": 42908,
+        "token": "0x4001fe1"
+      }
+    },
+    {
+      "class": ".ActorSnapshotParam",
+      "kind": "method",
+      "member": {
+        "name": "get_bUseXYZCoordinateMove",
+        "method_index": 168099,
+        "token": "0x6001aa5",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".ActorSnapshotParam",
+      "kind": "method",
+      "member": {
+        "name": "set_bUseXYZCoordinateMove",
+        "method_index": 168100,
+        "token": "0x6001aa6",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".ModifyObjectTransformParam",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 254118,
+        "type_index": 103605,
+        "token": "0x400206d"
+      }
+    },
+    {
+      "class": ".ModifyObjectTransformParam",
+      "kind": "field",
+      "member": {
+        "name": "bModifyPosition_bool",
+        "field_index": 254121,
+        "type_index": 42908,
+        "token": "0x4002070"
+      }
+    },
+    {
+      "class": ".ModifyObjectTransformParam",
+      "kind": "method",
+      "member": {
+        "name": "get_bModifyPosition",
+        "method_index": 168201,
+        "token": "0x6001b0b",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".ModifyObjectTransformParam",
+      "kind": "method",
+      "member": {
+        "name": "set_bModifyPosition",
+        "method_index": 168202,
+        "token": "0x6001b0c",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".stAIVoiceHeroProfile",
+      "kind": "field",
+      "member": {
+        "name": "heroGuidePositions",
+        "field_index": 254832,
+        "type_index": 36784,
+        "token": "0x4002337"
+      }
+    },
+    {
+      "class": ".stAIVoiceHero",
+      "kind": "field",
+      "member": {
+        "name": "hero_position",
+        "field_index": 254936,
+        "type_index": 79278,
+        "token": "0x400239f"
+      }
+    },
+    {
+      "class": ".stAIVoiceHeroUpdateV2",
+      "kind": "field",
+      "member": {
+        "name": "hero_position",
+        "field_index": 255068,
+        "type_index": 79278,
+        "token": "0x4002423"
+      }
+    },
+    {
+      "class": ".PrmSetSkillPosition",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 255531,
+        "type_index": 103605,
+        "token": "0x40025f2"
+      }
+    },
+    {
+      "class": ".SpawnActorData",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 255734,
+        "type_index": 103782,
+        "token": "0x40026bd"
+      }
+    },
+    {
+      "class": ".PartitionedFog",
+      "kind": "field",
+      "member": {
+        "name": "PartitionedFogTextureId",
+        "field_index": 259900,
+        "type_index": 79287,
+        "token": "0x4003703"
+      }
+    },
+    {
+      "class": ".PartitionedFog",
+      "kind": "field",
+      "member": {
+        "name": "PartitionedFogWorldPositionParamsId",
+        "field_index": 259901,
+        "type_index": 79287,
+        "token": "0x4003704"
+      }
+    },
+    {
+      "class": ".PartitionedFog",
+      "kind": "field",
+      "member": {
+        "name": "PartitionedFogKeyword",
+        "field_index": 259902,
+        "type_index": 99596,
+        "token": "0x4003705"
+      }
+    },
+    {
+      "class": ".PartitionedFog",
+      "kind": "field",
+      "member": {
+        "name": "fogPartitionTexture",
+        "field_index": 259904,
+        "type_index": 100892,
+        "token": "0x4003707"
+      }
+    },
+    {
+      "class": ".PartitionedFog",
+      "kind": "method",
+      "member": {
+        "name": "get_WorldPositionParams",
+        "method_index": 170203,
+        "token": "0x60022dd",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".PartitionedFog",
+      "kind": "method",
+      "member": {
+        "name": "SetFogState",
+        "method_index": 170204,
+        "token": "0x60022de",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".PartitionedFog",
+      "kind": "method",
+      "member": {
+        "name": "CheckGlobalFogState",
+        "method_index": 170208,
+        "token": "0x60022e2",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".PartitionedFog",
+      "kind": "method",
+      "member": {
+        "name": "UpdateFogState",
+        "method_index": 170209,
+        "token": "0x60022e3",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".WeatherEffectWorldSpaceParticle",
+      "kind": "field",
+      "member": {
+        "name": "lastCameraPosition_",
+        "field_index": 260073,
+        "type_index": 103779,
+        "token": "0x40037b0"
+      }
+    },
+    {
+      "class": ".WorldPartitionCellData",
+      "kind": "field",
+      "member": {
+        "name": "cellPosition",
+        "field_index": 261198,
+        "type_index": 103747,
+        "token": "0x4003c15"
+      }
+    },
+    {
+      "class": ".WorldPartitionData",
+      "kind": "field",
+      "member": {
+        "name": "worldStartPosition",
+        "field_index": 261205,
+        "type_index": 103747,
+        "token": "0x4003c1c"
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "field",
+      "member": {
+        "name": "m_anchoredPosition",
+        "field_index": 263820,
+        "type_index": 103739,
+        "token": "0x4004653"
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "field",
+      "member": {
+        "name": "m_globalPosition",
+        "field_index": 263821,
+        "type_index": 103742,
+        "token": "0x4004654"
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "GetAnchoredPosition",
+        "method_index": 175547,
+        "token": "0x60037bd",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "SetAnchoredPosition",
+        "method_index": 175548,
+        "token": "0x60037be",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "SetAnchoredPosition",
+        "method_index": 175549,
+        "token": "0x60037bf",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "SetAnchoredPositionX",
+        "method_index": 175550,
+        "token": "0x60037c0",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "SetAnchoredPositionY",
+        "method_index": 175551,
+        "token": "0x60037c1",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "SetGlobalPosition",
+        "method_index": 175552,
+        "token": "0x60037c2",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "GetGlobalPosition",
+        "method_index": 175553,
+        "token": "0x60037c3",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "SetSizeAndGlobalPosition",
+        "method_index": 175568,
+        "token": "0x60037d2",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "CalculateFixedAnchoredPositionX",
+        "method_index": 175591,
+        "token": "0x60037e9",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "BluePrint.UGC.UI.Core.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "CalculateFixedAnchoredPositionY",
+        "method_index": 175592,
+        "token": "0x60037ea",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "RootMotion.FinalIK.ConstraintPosition",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 264579,
+        "type_index": 103782,
+        "token": "0x400494a"
+      }
+    },
+    {
+      "class": "RootMotion.FinalIK.ConstraintPositionOffset",
+      "kind": "field",
+      "member": {
+        "name": "defaultLocalPosition",
+        "field_index": 264581,
+        "type_index": 103779,
+        "token": "0x400494c"
+      }
+    },
+    {
+      "class": "RootMotion.FinalIK.ConstraintPositionOffset",
+      "kind": "field",
+      "member": {
+        "name": "lastLocalPosition",
+        "field_index": 264582,
+        "type_index": 103779,
+        "token": "0x400494d"
+      }
+    },
+    {
+      "class": "RootMotion.FinalIK.ConstraintPositionOffset",
+      "kind": "method",
+      "member": {
+        "name": "get_positionChanged",
+        "method_index": 175947,
+        "token": "0x600394d",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "com.tencent.pandora.MoveHandler",
+      "kind": "field",
+      "member": {
+        "name": "_startPosition",
+        "field_index": 266181,
+        "type_index": 103779,
+        "token": "0x4004f8c"
+      }
+    },
+    {
+      "class": "com.tencent.pandora.MoveHandler",
+      "kind": "field",
+      "member": {
+        "name": "_endPosition",
+        "field_index": 266182,
+        "type_index": 103779,
+        "token": "0x4004f8d"
+      }
+    },
+    {
+      "class": "com.tencent.pandora.MoveHistory",
+      "kind": "field",
+      "member": {
+        "name": "_startPosition",
+        "field_index": 266224,
+        "type_index": 103779,
+        "token": "0x4004fb7"
+      }
+    },
+    {
+      "class": "com.tencent.pandora.MoveHistory",
+      "kind": "field",
+      "member": {
+        "name": "_endPosition",
+        "field_index": 266225,
+        "type_index": 103779,
+        "token": "0x4004fb8"
+      }
+    },
+    {
+      "class": "livelink_cs.AesEncryptionECB",
+      "kind": "method",
+      "member": {
+        "name": "EncryptString",
+        "method_index": 180639,
+        "token": "0x6004ba1",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "livelink_cs.AesEncryptionECB",
+      "kind": "method",
+      "member": {
+        "name": "DecryptString",
+        "method_index": 180640,
+        "token": "0x6004ba2",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.OperatorMonitor.enPredictPositionStateDef",
+      "kind": "field",
+      "member": {
+        "name": "PREDICT_POSITION_NULL",
+        "field_index": 268598,
+        "type_index": 107673,
+        "token": "0x40058fd"
+      }
+    },
+    {
+      "class": "Assets.Scripts.OperatorMonitor.enPredictPositionStateDef",
+      "kind": "field",
+      "member": {
+        "name": "PREDICT_POSITION_NORMAL",
+        "field_index": 268599,
+        "type_index": 107673,
+        "token": "0x40058fe"
+      }
+    },
+    {
+      "class": "Assets.Scripts.OperatorMonitor.enPredictPositionStateDef",
+      "kind": "field",
+      "member": {
+        "name": "PREDICT_POSITION_LINE_LERP_TO_LOGIC",
+        "field_index": 268600,
+        "type_index": 107673,
+        "token": "0x40058ff"
+      }
+    },
+    {
+      "class": "Assets.Scripts.OperatorMonitor.enPredictPositionStateDef",
+      "kind": "field",
+      "member": {
+        "name": "PREDICT_POSITION_AGE_FILTER_REFINE",
+        "field_index": 268601,
+        "type_index": 107673,
+        "token": "0x4005900"
+      }
+    },
+    {
+      "class": "Assets.Scripts.ArtTools.HeroAnimationFrame",
+      "kind": "field",
+      "member": {
+        "name": "xPosition",
+        "field_index": 269658,
+        "type_index": 98253,
+        "token": "0x4005d21"
+      }
+    },
+    {
+      "class": "Assets.Scripts.ArtTools.HeroAnimationFrame",
+      "kind": "field",
+      "member": {
+        "name": "yPosition",
+        "field_index": 269659,
+        "type_index": 98253,
+        "token": "0x4005d22"
+      }
+    },
+    {
+      "class": "Assets.Scripts.UI.Vint3Value",
+      "kind": "field",
+      "member": {
+        "name": "vint3Value",
+        "field_index": 289769,
+        "type_index": 103605,
+        "token": "0x400abb0"
+      }
+    },
+    {
+      "class": ".CWidgetTargetPosition",
+      "kind": "field",
+      "member": {
+        "name": "m_worldPosition",
+        "field_index": 290961,
+        "type_index": 103782,
+        "token": "0x400b058"
+      }
+    },
+    {
+      "class": "Assets.Scripts.UI.RectTransformSnapshotData",
+      "kind": "field",
+      "member": {
+        "name": "anchoredPosition",
+        "field_index": 291613,
+        "type_index": 103747,
+        "token": "0x400b2e4"
+      }
+    },
+    {
+      "class": "Assets.Scripts.UI.CUICoordinateSystem",
+      "kind": "field",
+      "member": {
+        "name": "originPosition",
+        "field_index": 292445,
+        "type_index": 121153,
+        "token": "0x400b624"
+      }
+    },
+    {
+      "class": "Assets.Scripts.UI.CUICoordinateSystem",
+      "kind": "method",
+      "member": {
+        "name": "GetCoordinateWorldPosition",
+        "method_index": 189663,
+        "token": "0x6006ee1",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.UI.CUICoordinateSystem",
+      "kind": "method",
+      "member": {
+        "name": "GetCoordinateLocalPosition",
+        "method_index": 189664,
+        "token": "0x6006ee2",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.UI.CUICoordinateSystem",
+      "kind": "method",
+      "member": {
+        "name": "GetCoordinateFromLocalPosition",
+        "method_index": 189665,
+        "token": "0x6006ee3",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.UI.CUICoordinateSystem",
+      "kind": "method",
+      "member": {
+        "name": "GetAxisTickWorldPosition",
+        "method_index": 189666,
+        "token": "0x6006ee4",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CActorDisplayUIPartView",
+      "kind": "field",
+      "member": {
+        "name": "m_AnchoredPosition",
+        "field_index": 293382,
+        "type_index": 103744,
+        "token": "0x400b9cd"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CActorDisplayUIPartView",
+      "kind": "method",
+      "member": {
+        "name": "InitAnchoredPosition",
+        "method_index": 190889,
+        "token": "0x60073ab",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CActorDisplayVideoPartView",
+      "kind": "field",
+      "member": {
+        "name": "m_AnchoredPosition",
+        "field_index": 293409,
+        "type_index": 103744,
+        "token": "0x400b9e8"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CActorDisplayVideoPartView",
+      "kind": "field",
+      "member": {
+        "name": "m_VideoLoadingBgAnchoredPosition",
+        "field_index": 293413,
+        "type_index": 103744,
+        "token": "0x400b9ec"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CActorDisplayVideoPartView",
+      "kind": "method",
+      "member": {
+        "name": "UpdateAnchoredPosition",
+        "method_index": 190917,
+        "token": "0x60073c7",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorInfoParser",
+      "kind": "method",
+      "member": {
+        "name": "ParseVInt3",
+        "method_index": 193667,
+        "token": "0x6007e85",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ResHeroCfgInfoProxy",
+      "kind": "method",
+      "member": {
+        "name": "get_iRecommendPosition",
+        "method_index": 193938,
+        "token": "0x6007f94",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ResHeroCfgInfoProxy",
+      "kind": "method",
+      "member": {
+        "name": "get_bTeamFightPosition",
+        "method_index": 193939,
+        "token": "0x6007f95",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ResHeroCfgInfoWrapper",
+      "kind": "method",
+      "member": {
+        "name": "get_iRecommendPosition",
+        "method_index": 194087,
+        "token": "0x6008029",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ResHeroCfgInfoWrapper",
+      "kind": "method",
+      "member": {
+        "name": "get_bTeamFightPosition",
+        "method_index": 194088,
+        "token": "0x600802a",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ResChessHeroCfgInfoWrapper",
+      "kind": "method",
+      "member": {
+        "name": "get_iRecommendPosition",
+        "method_index": 194236,
+        "token": "0x60080be",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ResChessHeroCfgInfoWrapper",
+      "kind": "method",
+      "member": {
+        "name": "get_bTeamFightPosition",
+        "method_index": 194237,
+        "token": "0x60080bf",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.IBattleLogic",
+      "kind": "method",
+      "member": {
+        "name": "get_ForceUpdateFogOfWar",
+        "method_index": 195023,
+        "token": "0x60083d1",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.IBattleLogic",
+      "kind": "method",
+      "member": {
+        "name": "set_ForceUpdateFogOfWar",
+        "method_index": 195024,
+        "token": "0x60083d2",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.IActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "get_Position",
+        "method_index": 195139,
+        "token": "0x6008445",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.IActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "UpdatePosition",
+        "method_index": 195159,
+        "token": "0x6008459",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.IActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "SetInvisibleSpecialComponentsDirty",
+        "method_index": 195176,
+        "token": "0x600846a",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.IActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "AddOrRemoveInvisibleComponent",
+        "method_index": 195185,
+        "token": "0x6008473",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.IActorManager",
+      "kind": "method",
+      "member": {
+        "name": "GetHeroActorCount",
+        "method_index": 195651,
+        "token": "0x6008645",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.IActorManager",
+      "kind": "method",
+      "member": {
+        "name": "GetHeroActorByIndex",
+        "method_index": 195658,
+        "token": "0x600864c",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.SkillCamera.CameraOffset_ContainPointMove",
+      "kind": "method",
+      "member": {
+        "name": "GetNearestPosition",
+        "method_index": 196290,
+        "token": "0x60088c4",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.SkillCamera.CameraOffset_ContainPointMove",
+      "kind": "method",
+      "member": {
+        "name": "GetNearestPositionInRect",
+        "method_index": 196297,
+        "token": "0x60088cb",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.SkillCamera.CameraOffset_ContainPointMove",
+      "kind": "method",
+      "member": {
+        "name": "GetNearestPositionInFxiedEllipse",
+        "method_index": 196298,
+        "token": "0x60088cc",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.SkillCamera.CameraOffset_ContainPointMove",
+      "kind": "method",
+      "member": {
+        "name": "GetNearestPositionInAdaptiveEllipse",
+        "method_index": 196299,
+        "token": "0x60088cd",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.SkillCamera.CameraOffset_ContainPointMove",
+      "kind": "method",
+      "member": {
+        "name": "GetWorldPositionFromScreen",
+        "method_index": 196301,
+        "token": "0x60088cf",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.enBattleFormWidget",
+      "kind": "field",
+      "member": {
+        "name": "SkillButton4FixedPosition",
+        "field_index": 300338,
+        "type_index": 106036,
+        "token": "0x400d4f9"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHeroInfoCommon",
+      "kind": "field",
+      "member": {
+        "name": "s_HeroInfoGuideID",
+        "field_index": 305860,
+        "type_index": 102476,
+        "token": "0x400ea8b"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CActorDisplayData",
+      "kind": "field",
+      "member": {
+        "name": "m_positionType",
+        "field_index": 305935,
+        "type_index": 106326,
+        "token": "0x400ead6"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CActorDisplayPartController",
+      "kind": "field",
+      "member": {
+        "name": "m_originOpenFog",
+        "field_index": 306012,
+        "type_index": 42549,
+        "token": "0x400eb23"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CActorDisplayPartController",
+      "kind": "field",
+      "member": {
+        "name": "m_lastPositionType",
+        "field_index": 306052,
+        "type_index": 106325,
+        "token": "0x400eb4b"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CActorDisplayPartController",
+      "kind": "method",
+      "member": {
+        "name": "SetDimensionPositionType",
+        "method_index": 204965,
+        "token": "0x600aaa7",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CActorDisplayPartController",
+      "kind": "method",
+      "member": {
+        "name": "GetDimensionPositionType",
+        "method_index": 204966,
+        "token": "0x600aaa8",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CActorDisplayUtility",
+      "kind": "method",
+      "member": {
+        "name": "ResetBonePosition",
+        "method_index": 205028,
+        "token": "0x600aae6",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.enWidgets_Form_BattleStateView_Competition",
+      "kind": "field",
+      "member": {
+        "name": "EN_IRPositionView",
+        "field_index": 314833,
+        "type_index": 109422,
+        "token": "0x4010d98"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.BalloonMovement",
+      "kind": "field",
+      "member": {
+        "name": "m_startPosition",
+        "field_index": 318228,
+        "type_index": 103786,
+        "token": "0x4011adb"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.LinearMovement",
+      "kind": "field",
+      "member": {
+        "name": "m_startPosition",
+        "field_index": 318237,
+        "type_index": 103779,
+        "token": "0x4011ae4"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.SkyLanternMovement",
+      "kind": "field",
+      "member": {
+        "name": "m_startPosition",
+        "field_index": 318253,
+        "type_index": 103779,
+        "token": "0x4011af4"
+      }
+    },
+    {
+      "class": ".FogOfWar",
+      "kind": "field",
+      "member": {
+        "name": "FOG_DELAY_FRAME",
+        "field_index": 322181,
+        "type_index": 42917,
+        "token": "0x4000a45"
+      }
+    },
+    {
+      "class": ".FogOfWar",
+      "kind": "method",
+      "member": {
+        "name": "CreateDefaultFogOfWarRt",
+        "method_index": 222555,
+        "token": "0x6001620",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": ".FogOfWar",
+      "kind": "method",
+      "member": {
+        "name": "ClearAllFog",
+        "method_index": 222558,
+        "token": "0x6001623",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".FogOfWar",
+      "kind": "method",
+      "member": {
+        "name": "EnableShaderFogFunction",
+        "method_index": 222575,
+        "token": "0x6001634",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".FogOfWar",
+      "kind": "method",
+      "member": {
+        "name": "DisableShaderFogFunction",
+        "method_index": 222576,
+        "token": "0x6001635",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".FogOfWar",
+      "kind": "method",
+      "member": {
+        "name": "OnBeginLevelFogRenderProcess",
+        "method_index": 222587,
+        "token": "0x6001640",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".FogOfWar",
+      "kind": "method",
+      "member": {
+        "name": "CheckPositionInGrass",
+        "method_index": 222599,
+        "token": "0x600164c",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": ".Lua_LuaCallCs_Battle",
+      "kind": "method",
+      "member": {
+        "name": "SetCameraBoundaryPosition_s",
+        "method_index": 223645,
+        "token": "0x6001a62",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Lua_LuaCallCs_Battle",
+      "kind": "method",
+      "member": {
+        "name": "SetCameraBoundaryPositionByName_s",
+        "method_index": 223646,
+        "token": "0x6001a63",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".LuaCallCs_Battle",
+      "kind": "method",
+      "member": {
+        "name": "SetCameraBoundaryPosition",
+        "method_index": 224770,
+        "token": "0x6001ec7",
+        "parameter_count": 4
+      }
+    },
+    {
+      "class": ".LuaCallCs_Battle",
+      "kind": "method",
+      "member": {
+        "name": "SetCameraBoundaryPositionByName",
+        "method_index": 224771,
+        "token": "0x6001ec8",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "USG.UI.URectTransform",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 322913,
+        "type_index": 103747,
+        "token": "0x4000d21"
+      }
+    },
+    {
+      "class": "USG.UI.UTransform",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 322977,
+        "type_index": 103782,
+        "token": "0x4000d61"
+      }
+    },
+    {
+      "class": "USG.UI.UTransform",
+      "kind": "method",
+      "member": {
+        "name": "SetPosition",
+        "method_index": 225562,
+        "token": "0x60021df",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "USG.UI.UTransform",
+      "kind": "method",
+      "member": {
+        "name": "SetPosition",
+        "method_index": 225563,
+        "token": "0x60021e0",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "GameScripts.GameCoreScripts.Shared.GameLogic.GamePlay.GameMode.Danmaku.DanmakuFensiPlatformDynamicMoveScript",
+      "kind": "field",
+      "member": {
+        "name": "originPosition",
+        "field_index": 324219,
+        "type_index": 103779,
+        "token": "0x400123b"
+      }
+    },
+    {
+      "class": "Assets.Scripts.LZM.HeroControlTestTool",
+      "kind": "method",
+      "member": {
+        "name": "CalcDirectionByTouchPosition",
+        "method_index": 227309,
+        "token": "0x60028b2",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.Tests.FrameSkillTool.FSTHeroInitializeSettings",
+      "kind": "field",
+      "member": {
+        "name": "Position",
+        "field_index": 324870,
+        "type_index": 103782,
+        "token": "0x40014c6"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CBattleSacredAnimalUIShowViewData",
+      "kind": "field",
+      "member": {
+        "name": "m_localPosition",
+        "field_index": 325446,
+        "type_index": 103782,
+        "token": "0x4001706"
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CBattleSacredAnimalUIShowViewData",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPosition",
+        "method_index": 228416,
+        "token": "0x6002d05",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CBattleSacredAnimalUIShowView",
+      "kind": "method",
+      "member": {
+        "name": "RefreshModelPosition",
+        "method_index": 228425,
+        "token": "0x6002d0e",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CBattleRadialMenuView",
+      "kind": "method",
+      "member": {
+        "name": "SetPosition",
+        "method_index": 228750,
+        "token": "0x6002e53",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.BusinessComponent.CBattleRadialMenuView",
+      "kind": "method",
+      "member": {
+        "name": "GetButtonIndexAtPosition",
+        "method_index": 228754,
+        "token": "0x6002e57",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CBattleAIVoiceObjectPool",
+      "kind": "method",
+      "member": {
+        "name": "ResetVInt3",
+        "method_index": 229028,
+        "token": "0x6002f69",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CBattleAIVoiceObjectPool",
+      "kind": "method",
+      "member": {
+        "name": "ResetVInt3V2",
+        "method_index": 229051,
+        "token": "0x6002f80",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.BattleStatView",
+      "kind": "method",
+      "member": {
+        "name": "RefreshMutePanelPosition",
+        "method_index": 230318,
+        "token": "0x6003473",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.BattleStatViewNormal",
+      "kind": "method",
+      "member": {
+        "name": "GetHostHeroActor",
+        "method_index": 230495,
+        "token": "0x6003524",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.BattleStatViewNormal",
+      "kind": "method",
+      "member": {
+        "name": "RefreshMutePanelPosition",
+        "method_index": 230566,
+        "token": "0x600356b",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.BattleStatViewNormal",
+      "kind": "method",
+      "member": {
+        "name": "CalMutePanelPosition",
+        "method_index": 230567,
+        "token": "0x600356c",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CAIInstrcutionEvaluatorPosition",
+      "kind": "field",
+      "member": {
+        "name": "m_PositionToCheck",
+        "field_index": 327905,
+        "type_index": 103779,
+        "token": "0x40020a1"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CAIInstrcutionEvaluatorPosition",
+      "kind": "method",
+      "member": {
+        "name": "OnCheckPosition",
+        "method_index": 230722,
+        "token": "0x6003607",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.InBattleArrowChoosePartLogic",
+      "kind": "method",
+      "member": {
+        "name": "OnKeepPositionClick",
+        "method_index": 231821,
+        "token": "0x6003a52",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CBattleSacredAnimalUIModelInfo",
+      "kind": "method",
+      "member": {
+        "name": "SetModelPosition",
+        "method_index": 233905,
+        "token": "0x6004276",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CBattleSacredAnimalUIShowPartLogic",
+      "kind": "method",
+      "member": {
+        "name": "SetModelPosition",
+        "method_index": 233929,
+        "token": "0x600428e",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CCameraControlCommandFree_Position",
+      "kind": "field",
+      "member": {
+        "name": "camera_position_x",
+        "field_index": 330406,
+        "type_index": 98256,
+        "token": "0x4002a66"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CCameraControlCommandFree_Position",
+      "kind": "field",
+      "member": {
+        "name": "camera_position_y",
+        "field_index": 330407,
+        "type_index": 98256,
+        "token": "0x4002a67"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CCameraControlCommandFree_Position",
+      "kind": "field",
+      "member": {
+        "name": "camera_position_z",
+        "field_index": 330408,
+        "type_index": 98256,
+        "token": "0x4002a68"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CBattleNormalEquipSystem",
+      "kind": "field",
+      "member": {
+        "name": "m_halfScreenItemHoldStartPosition",
+        "field_index": 332159,
+        "type_index": 103744,
+        "token": "0x400313f"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHalfScreenRectTransform",
+      "kind": "field",
+      "member": {
+        "name": "m_anchoredPosition",
+        "field_index": 332200,
+        "type_index": 103747,
+        "token": "0x4003168"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CHalfScreenRectTransform",
+      "kind": "field",
+      "member": {
+        "name": "m_anchoredPosition3D",
+        "field_index": 332201,
+        "type_index": 103782,
+        "token": "0x4003169"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.FloatTextWithFixedWorldPosParam",
+      "kind": "field",
+      "member": {
+        "name": "scenePosition",
+        "field_index": 333052,
+        "type_index": 103782,
+        "token": "0x40034bc"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CBattleFloatDigitManager",
+      "kind": "method",
+      "member": {
+        "name": "IsPositionInSight",
+        "method_index": 237532,
+        "token": "0x60050a1",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CBattleFloatDigitManager",
+      "kind": "method",
+      "member": {
+        "name": "GetPositionWithCameraDrag",
+        "method_index": 237533,
+        "token": "0x60050a2",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CBattleShowBuffDesc",
+      "kind": "field",
+      "member": {
+        "name": "m_showPosition",
+        "field_index": 333200,
+        "type_index": 103779,
+        "token": "0x4003550"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CBattleShowBuffDesc",
+      "kind": "field",
+      "member": {
+        "name": "m_customBuffDetailAnchorPosition",
+        "field_index": 333235,
+        "type_index": 103779,
+        "token": "0x4003573"
+      }
+    },
+    {
+      "class": ".ENM_ENEMY_HERO_STATE",
+      "kind": "field",
+      "member": {
+        "name": "ENM_ENEMY_HERO_STATE_INVISIBLE",
+        "field_index": 333399,
+        "type_index": 114652,
+        "token": "0x4003617"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CEnemyHeroAtkBtn",
+      "kind": "method",
+      "member": {
+        "name": "ResetBtnPosition",
+        "method_index": 237847,
+        "token": "0x60051dc",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.stBottomSkillButtonTransformData",
+      "kind": "field",
+      "member": {
+        "name": "m_buttonPosition",
+        "field_index": 333659,
+        "type_index": 103782,
+        "token": "0x400371b"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.stBottomSkillButtonTransformData",
+      "kind": "field",
+      "member": {
+        "name": "m_skillIndicatorFixedPosition",
+        "field_index": 333660,
+        "type_index": 103782,
+        "token": "0x400371c"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.ActorGraveScript",
+      "kind": "field",
+      "member": {
+        "name": "actorOriginPosition",
+        "field_index": 333936,
+        "type_index": 103779,
+        "token": "0x4003830"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CBattleBaseEquipSystem",
+      "kind": "method",
+      "member": {
+        "name": "OnRefreshChooseSkillPosition",
+        "method_index": 238669,
+        "token": "0x6005512",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.BattleMisc",
+      "kind": "field",
+      "member": {
+        "name": "bossActorRoot",
+        "field_index": 335530,
+        "type_index": 24142,
+        "token": "0x4003e6a"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.PlatformAutoMoveBackScript",
+      "kind": "field",
+      "member": {
+        "name": "originPosition",
+        "field_index": 336003,
+        "type_index": 103782,
+        "token": "0x4004043"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.DimensionHeroControl",
+      "kind": "method",
+      "member": {
+        "name": "ResetCustomPositions",
+        "method_index": 241254,
+        "token": "0x6005f2b",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.DimensionHeroJobButton",
+      "kind": "field",
+      "member": {
+        "name": "m_originPosition",
+        "field_index": 336188,
+        "type_index": 103744,
+        "token": "0x40040fc"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.DimensionHeroJobButton",
+      "kind": "method",
+      "member": {
+        "name": "ResetPosition",
+        "method_index": 241276,
+        "token": "0x6005f41",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.CWatchSkillCameraMovement",
+      "kind": "field",
+      "member": {
+        "name": "BulletPositionFix",
+        "field_index": 336765,
+        "type_index": 103783,
+        "token": "0x400433d"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.Danmaku.NamedActorUpdateRule",
+      "kind": "method",
+      "member": {
+        "name": "GetPosition",
+        "method_index": 242457,
+        "token": "0x60063de",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.BattleLogic",
+      "kind": "field",
+      "member": {
+        "name": "PositionCamp1Records",
+        "field_index": 337220,
+        "type_index": 21842,
+        "token": "0x4004504"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.BattleLogic",
+      "kind": "field",
+      "member": {
+        "name": "PositionCamp2Records",
+        "field_index": 337221,
+        "type_index": 21842,
+        "token": "0x4004505"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.BattleLogic",
+      "kind": "field",
+      "member": {
+        "name": "PositionCampTotalRecords",
+        "field_index": 337222,
+        "type_index": 21842,
+        "token": "0x4004506"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.BattleLogic",
+      "kind": "field",
+      "member": {
+        "name": "<ForceUpdateFogOfWar>k__BackingField",
+        "field_index": 337269,
+        "type_index": 42549,
+        "token": "0x4004535"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.BattleLogic",
+      "kind": "method",
+      "member": {
+        "name": "get_ForceUpdateFogOfWar",
+        "method_index": 242611,
+        "token": "0x6006478",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.BattleLogic",
+      "kind": "method",
+      "member": {
+        "name": "set_ForceUpdateFogOfWar",
+        "method_index": 242612,
+        "token": "0x6006479",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.DimensionHeroPartLoadInfo",
+      "kind": "method",
+      "member": {
+        "name": "IsNeedAddInvisibleScript",
+        "method_index": 243087,
+        "token": "0x6006654",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.BattleLoader",
+      "kind": "method",
+      "member": {
+        "name": "FogOfWarBeginLevel",
+        "method_index": 244763,
+        "token": "0x6006ce0",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.MoveToPosCommand",
+      "kind": "field",
+      "member": {
+        "name": "destPosition",
+        "field_index": 339262,
+        "type_index": 103605,
+        "token": "0x4004cfe"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.UsePositionSkillCommand",
+      "kind": "field",
+      "member": {
+        "name": "Position",
+        "field_index": 339279,
+        "type_index": 103599,
+        "token": "0x4004d0f"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.MoveComponent",
+      "kind": "field",
+      "member": {
+        "name": "curPosition",
+        "field_index": 339752,
+        "type_index": 103779,
+        "token": "0x4004ee8"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.MoveComponent",
+      "kind": "field",
+      "member": {
+        "name": "remotePosition",
+        "field_index": 339753,
+        "type_index": 103779,
+        "token": "0x4004ee9"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.MoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "set_RemotePosition",
+        "method_index": 247330,
+        "token": "0x60076e7",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.MoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "get_RemotePosition",
+        "method_index": 247331,
+        "token": "0x60076e8",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.MoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "set_CurPosition",
+        "method_index": 247332,
+        "token": "0x60076e9",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.MoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "get_CurPosition",
+        "method_index": 247333,
+        "token": "0x60076ea",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.PathMoveCmd",
+      "kind": "field",
+      "member": {
+        "name": "lastFoundWaypointPosition",
+        "field_index": 339764,
+        "type_index": 103603,
+        "token": "0x4004ef4"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "field",
+      "member": {
+        "name": "PositionRecords",
+        "field_index": 341051,
+        "type_index": 21842,
+        "token": "0x40053fb"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "field",
+      "member": {
+        "name": "K_PositionRecordsTimeGap",
+        "field_index": 341052,
+        "type_index": 98274,
+        "token": "0x40053fc"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 341062,
+        "type_index": 103782,
+        "token": "0x4005406"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "field",
+      "member": {
+        "name": "lastPositionXZChangedFrameNum",
+        "field_index": 341064,
+        "type_index": 79278,
+        "token": "0x4005408"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "field",
+      "member": {
+        "name": "_positionInCamera",
+        "field_index": 341078,
+        "type_index": 42549,
+        "token": "0x4005416"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "field",
+      "member": {
+        "name": "_checkPositionInCamera",
+        "field_index": 341079,
+        "type_index": 42549,
+        "token": "0x4005417"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "field",
+      "member": {
+        "name": "invisibleSpecialComponents",
+        "field_index": 341138,
+        "type_index": 21158,
+        "token": "0x4005452"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "field",
+      "member": {
+        "name": "isInvisibleSpecialComponentStateDirty",
+        "field_index": 341139,
+        "type_index": 42549,
+        "token": "0x4005453"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "get_Position",
+        "method_index": 249139,
+        "token": "0x6007df8",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "AddOrRemoveInvisibleComponent",
+        "method_index": 249217,
+        "token": "0x6007e46",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "InitInVisibleSpecialComponents",
+        "method_index": 249218,
+        "token": "0x6007e47",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "SetInvisibleSpecialComponentsEnable",
+        "method_index": 249219,
+        "token": "0x6007e48",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "SetInvisibleSpecialComponentsDirty",
+        "method_index": 249220,
+        "token": "0x6007e49",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "RefreshInvisibleSpecialComponentsShowLayer",
+        "method_index": 249221,
+        "token": "0x6007e4a",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "get_PositionInCamera",
+        "method_index": 249235,
+        "token": "0x6007e58",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "set_PositionInCamera",
+        "method_index": 249236,
+        "token": "0x6007e59",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "get_CheckPositionInCamera",
+        "method_index": 249237,
+        "token": "0x6007e5a",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "set_CheckPositionInCamera",
+        "method_index": 249238,
+        "token": "0x6007e5b",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "UpdatePosition",
+        "method_index": 249256,
+        "token": "0x6007e6d",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "UpdatePosition",
+        "method_index": 249258,
+        "token": "0x6007e6f",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "UpdatePosition",
+        "method_index": 249259,
+        "token": "0x6007e70",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "IsPositionVisibleInMainCamera",
+        "method_index": 249262,
+        "token": "0x6007e73",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "IsPositionVisibleInOtherCamera",
+        "method_index": 249263,
+        "token": "0x6007e74",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorLinker",
+      "kind": "method",
+      "member": {
+        "name": "IsPositionXZChangedInLastFrame",
+        "method_index": 249342,
+        "token": "0x6007ec3",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorManager",
+      "kind": "field",
+      "member": {
+        "name": "HeroActors",
+        "field_index": 341171,
+        "type_index": 29083,
+        "token": "0x4005473"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorManager",
+      "kind": "method",
+      "member": {
+        "name": "RefreshAllActorPositionByMovementDataCache",
+        "method_index": 249383,
+        "token": "0x6007eec",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorManager",
+      "kind": "method",
+      "member": {
+        "name": "GetHeroActorCount",
+        "method_index": 249403,
+        "token": "0x6007f00",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorManager",
+      "kind": "method",
+      "member": {
+        "name": "GetHeroActorByIndex",
+        "method_index": 249409,
+        "token": "0x6007f06",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.ActorHelper",
+      "kind": "method",
+      "member": {
+        "name": "IsHostHeroActor",
+        "method_index": 252190,
+        "token": "0x60089e3",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.PositionSkillCmd",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 343745,
+        "type_index": 103598,
+        "token": "0x4005e81"
+      }
+    },
+    {
+      "class": "AGE.AGEWrapActorSnapshotDuration",
+      "kind": "field",
+      "member": {
+        "name": "bUpdatePosition",
+        "field_index": 343927,
+        "type_index": 42549,
+        "token": "0x4005f37"
+      }
+    },
+    {
+      "class": "AGE.AGEWrapActorSnapshotDuration",
+      "kind": "field",
+      "member": {
+        "name": "bUseXYZCoordinateMove",
+        "field_index": 343928,
+        "type_index": 42549,
+        "token": "0x4005f38"
+      }
+    },
+    {
+      "class": "AGE.AGEWrapActorSnapshotDuration",
+      "kind": "field",
+      "member": {
+        "name": "m_SnapshotsActorPosition",
+        "field_index": 343934,
+        "type_index": 103779,
+        "token": "0x4005f3e"
+      }
+    },
+    {
+      "class": "AGE.AGEWrapModifyObjectTransformDuration",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 344238,
+        "type_index": 103779,
+        "token": "0x400606e"
+      }
+    },
+    {
+      "class": "AGE.AGEWrapModifyObjectTransformDuration",
+      "kind": "field",
+      "member": {
+        "name": "bModifyPosition",
+        "field_index": 344243,
+        "type_index": 42549,
+        "token": "0x4006073"
+      }
+    },
+    {
+      "class": ".WaypointActorInfo",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 344320,
+        "type_index": 103782,
+        "token": "0x40060c0"
+      }
+    },
+    {
+      "class": "AGE.AGEWrapMoveBeamDuration",
+      "kind": "method",
+      "member": {
+        "name": "GetPosition",
+        "method_index": 254643,
+        "token": "0x6009378",
+        "parameter_count": 5
+      }
+    },
+    {
+      "class": "AGE.AGEWrapMoveBeamDuration",
+      "kind": "method",
+      "member": {
+        "name": "CalcParabolaPosition",
+        "method_index": 254647,
+        "token": "0x600937c",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "AGE.AGEWrapMoveBeamDuration",
+      "kind": "method",
+      "member": {
+        "name": "CalcParabolaPosition",
+        "method_index": 254648,
+        "token": "0x600937d",
+        "parameter_count": 5
+      }
+    },
+    {
+      "class": "AGE.AGEWrapPlaySoundWhenVisibleDuration",
+      "kind": "field",
+      "member": {
+        "name": "IsIncreasePositionUpdateRate",
+        "field_index": 344452,
+        "type_index": 42549,
+        "token": "0x4006144"
+      }
+    },
+    {
+      "class": ".AntiEncryptResult",
+      "kind": "field",
+      "member": {
+        "name": "ANTI_ENCRYPT_OK",
+        "field_index": 349027,
+        "type_index": 135932,
+        "token": "0x4001072"
+      }
+    },
+    {
+      "class": ".AntiEncryptResult",
+      "kind": "field",
+      "member": {
+        "name": "ANTI_NOT_NEED_ENCRYPT",
+        "field_index": 349028,
+        "type_index": 135932,
+        "token": "0x4001073"
+      }
+    },
+    {
+      "class": ".AntiDecryptResult",
+      "kind": "field",
+      "member": {
+        "name": "ANTI_DECRYPT_OK",
+        "field_index": 349030,
+        "type_index": 135930,
+        "token": "0x4001075"
+      }
+    },
+    {
+      "class": ".AntiDecryptResult",
+      "kind": "field",
+      "member": {
+        "name": "ANTI_DECRYPT_FAIL",
+        "field_index": 349031,
+        "type_index": 135930,
+        "token": "0x4001076"
+      }
+    },
+    {
+      "class": ".EncryptPkgInfo",
+      "kind": "field",
+      "member": {
+        "name": "encrypt_data_len_",
+        "field_index": 349041,
+        "type_index": 102472,
+        "token": "0x4001080"
+      }
+    },
+    {
+      "class": ".DecryptPkgInfo",
+      "kind": "field",
+      "member": {
+        "name": "encrypt_data_",
+        "field_index": 349042,
+        "type_index": 79347,
+        "token": "0x4001081"
+      }
+    },
+    {
+      "class": ".DecryptPkgInfo",
+      "kind": "field",
+      "member": {
+        "name": "encrypt_data_len",
+        "field_index": 349043,
+        "type_index": 102472,
+        "token": "0x4001082"
+      }
+    },
+    {
+      "class": ".PositionRecord",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 349539,
+        "type_index": 103782,
+        "token": "0x4001272"
+      }
+    },
+    {
+      "class": ".CEncryption",
+      "kind": "method",
+      "member": {
+        "name": "DeEncryptFile",
+        "method_index": 260140,
+        "token": "0x60013a3",
+        "parameter_count": 6
+      }
+    },
+    {
+      "class": ".CEncryption",
+      "kind": "method",
+      "member": {
+        "name": "EncryptFile",
+        "method_index": 260141,
+        "token": "0x60013a4",
+        "parameter_count": 6
+      }
+    },
+    {
+      "class": ".CEncryption",
+      "kind": "method",
+      "member": {
+        "name": "DeEncryptFileXOR",
+        "method_index": 260143,
+        "token": "0x60013a6",
+        "parameter_count": 6
+      }
+    },
+    {
+      "class": ".CEncryption",
+      "kind": "method",
+      "member": {
+        "name": "EncryptFileXOR",
+        "method_index": 260144,
+        "token": "0x60013a7",
+        "parameter_count": 6
+      }
+    },
+    {
+      "class": ".OptHeroPositionOneofCase",
+      "kind": "field",
+      "member": {
+        "name": "HeroPosition",
+        "field_index": 362664,
+        "type_index": 126710,
+        "token": "0x40045b7"
+      }
+    },
+    {
+      "class": "AivoiceV2.HeroUpdate",
+      "kind": "field",
+      "member": {
+        "name": "HeroPositionFieldNumber",
+        "field_index": 362498,
+        "type_index": 79304,
+        "token": "0x4004511"
+      }
+    },
+    {
+      "class": "AivoiceV2.HeroUpdate",
+      "kind": "field",
+      "member": {
+        "name": "optHeroPosition_",
+        "field_index": 362559,
+        "type_index": 84186,
+        "token": "0x400454e"
+      }
+    },
+    {
+      "class": "AivoiceV2.HeroUpdate",
+      "kind": "field",
+      "member": {
+        "name": "optHeroPositionCase_",
+        "field_index": 362560,
+        "type_index": 126709,
+        "token": "0x400454f"
+      }
+    },
+    {
+      "class": "AivoiceV2.HeroUpdate",
+      "kind": "method",
+      "member": {
+        "name": "get_HeroPosition",
+        "method_index": 276991,
+        "token": "0x6005576",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "AivoiceV2.HeroUpdate",
+      "kind": "method",
+      "member": {
+        "name": "set_HeroPosition",
+        "method_index": 276992,
+        "token": "0x6005577",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "AivoiceV2.HeroUpdate",
+      "kind": "method",
+      "member": {
+        "name": "get_HasHeroPosition",
+        "method_index": 276993,
+        "token": "0x6005578",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "AivoiceV2.HeroUpdate",
+      "kind": "method",
+      "member": {
+        "name": "ClearHeroPosition",
+        "method_index": 276994,
+        "token": "0x6005579",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "AivoiceV2.HeroUpdate",
+      "kind": "method",
+      "member": {
+        "name": "get_OptHeroPositionCase",
+        "method_index": 277136,
+        "token": "0x6005607",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "AivoiceV2.HeroUpdate",
+      "kind": "method",
+      "member": {
+        "name": "ClearOptHeroPosition",
+        "method_index": 277137,
+        "token": "0x6005608",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "AivoiceV2.Hero",
+      "kind": "field",
+      "member": {
+        "name": "HeroPositionFieldNumber",
+        "field_index": 363074,
+        "type_index": 79304,
+        "token": "0x4004751"
+      }
+    },
+    {
+      "class": "AivoiceV2.Hero",
+      "kind": "field",
+      "member": {
+        "name": "heroPosition_",
+        "field_index": 363075,
+        "type_index": 79274,
+        "token": "0x4004752"
+      }
+    },
+    {
+      "class": "AivoiceV2.Hero",
+      "kind": "method",
+      "member": {
+        "name": "get_HeroPosition",
+        "method_index": 277738,
+        "token": "0x6005861",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "AivoiceV2.Hero",
+      "kind": "method",
+      "member": {
+        "name": "set_HeroPosition",
+        "method_index": 277739,
+        "token": "0x6005862",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Aivoice.Hero",
+      "kind": "field",
+      "member": {
+        "name": "HeroPositionFieldNumber",
+        "field_index": 364459,
+        "type_index": 79304,
+        "token": "0x4004cba"
+      }
+    },
+    {
+      "class": "Aivoice.Hero",
+      "kind": "field",
+      "member": {
+        "name": "heroPosition_",
+        "field_index": 364460,
+        "type_index": 79274,
+        "token": "0x4004cbb"
+      }
+    },
+    {
+      "class": "Aivoice.Hero",
+      "kind": "method",
+      "member": {
+        "name": "get_HeroPosition",
+        "method_index": 279521,
+        "token": "0x6005f58",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Aivoice.Hero",
+      "kind": "method",
+      "member": {
+        "name": "set_HeroPosition",
+        "method_index": 279522,
+        "token": "0x6005f59",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".HeroUpdateMask",
+      "kind": "field",
+      "member": {
+        "name": "HeroPosition",
+        "field_index": 365393,
+        "type_index": 111739,
+        "token": "0x4005060"
+      }
+    },
+    {
+      "class": "Mono.Security.Cryptography.SymmetricTransform",
+      "kind": "field",
+      "member": {
+        "name": "encrypt",
+        "field_index": 365917,
+        "type_index": 42551,
+        "token": "0x4000195"
+      }
+    },
+    {
+      "class": "Mono.Security.Cryptography.SymmetricTransform",
+      "kind": "method",
+      "member": {
+        "name": "FinalEncrypt",
+        "method_index": 281430,
+        "token": "0x60001e7",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "Mono.Security.Cryptography.SymmetricTransform",
+      "kind": "method",
+      "member": {
+        "name": "FinalDecrypt",
+        "method_index": 281431,
+        "token": "0x60001e8",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "System.Security.Cryptography.RijndaelManagedTransformMode",
+      "kind": "field",
+      "member": {
+        "name": "Encrypt",
+        "field_index": 368923,
+        "type_index": 94008,
+        "token": "0x4000d53"
+      }
+    },
+    {
+      "class": "System.Security.Cryptography.RijndaelManagedTransformMode",
+      "kind": "field",
+      "member": {
+        "name": "Decrypt",
+        "field_index": 368924,
+        "type_index": 94008,
+        "token": "0x4000d54"
+      }
+    },
+    {
+      "class": "System.Security.Cryptography.RijndaelManagedTransform",
+      "kind": "field",
+      "member": {
+        "name": "m_encryptKeyExpansion",
+        "field_index": 368932,
+        "type_index": 37462,
+        "token": "0x4000d5c"
+      }
+    },
+    {
+      "class": "System.Security.Cryptography.RijndaelManagedTransform",
+      "kind": "field",
+      "member": {
+        "name": "m_decryptKeyExpansion",
+        "field_index": 368933,
+        "type_index": 37462,
+        "token": "0x4000d5d"
+      }
+    },
+    {
+      "class": "System.Security.Cryptography.RijndaelManagedTransform",
+      "kind": "field",
+      "member": {
+        "name": "m_encryptindex",
+        "field_index": 368937,
+        "type_index": 37462,
+        "token": "0x4000d61"
+      }
+    },
+    {
+      "class": "System.Security.Cryptography.RijndaelManagedTransform",
+      "kind": "field",
+      "member": {
+        "name": "m_decryptindex",
+        "field_index": 368938,
+        "type_index": 37462,
+        "token": "0x4000d62"
+      }
+    },
+    {
+      "class": "System.Security.Cryptography.RijndaelManagedTransform",
+      "kind": "method",
+      "member": {
+        "name": "EncryptData",
+        "method_index": 287628,
+        "token": "0x6001a1d",
+        "parameter_count": 7
+      }
+    },
+    {
+      "class": "System.Security.Cryptography.RijndaelManagedTransform",
+      "kind": "method",
+      "member": {
+        "name": "DecryptData",
+        "method_index": 287629,
+        "token": "0x6001a1e",
+        "parameter_count": 7
+      }
+    },
+    {
+      "class": "System.Net.Security.EncryptionPolicy",
+      "kind": "field",
+      "member": {
+        "name": "RequireEncryption",
+        "field_index": 378338,
+        "type_index": 72656,
+        "token": "0x4001486"
+      }
+    },
+    {
+      "class": "System.Net.Security.EncryptionPolicy",
+      "kind": "field",
+      "member": {
+        "name": "AllowNoEncryption",
+        "field_index": 378339,
+        "type_index": 72656,
+        "token": "0x4001487"
+      }
+    },
+    {
+      "class": "System.Net.Security.EncryptionPolicy",
+      "kind": "field",
+      "member": {
+        "name": "NoEncryption",
+        "field_index": 378340,
+        "type_index": 72656,
+        "token": "0x4001488"
+      }
+    },
+    {
+      "class": "System.Net.Mime.ContentDisposition",
+      "kind": "field",
+      "member": {
+        "name": "_disposition",
+        "field_index": 378405,
+        "type_index": 99573,
+        "token": "0x40014c9"
+      }
+    },
+    {
+      "class": "System.Net.Mime.ContentDisposition",
+      "kind": "field",
+      "member": {
+        "name": "_dispositionType",
+        "field_index": 378406,
+        "type_index": 99573,
+        "token": "0x40014ca"
+      }
+    },
+    {
+      "class": "System.Net.Mime.ContentDisposition",
+      "kind": "method",
+      "member": {
+        "name": "get_DispositionType",
+        "method_index": 302026,
+        "token": "0x6001bdf",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "System.Net.Mime.ContentDisposition",
+      "kind": "method",
+      "member": {
+        "name": "set_DispositionType",
+        "method_index": 302027,
+        "token": "0x6001be0",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Yarp.FogSettingAnimator",
+      "kind": "field",
+      "member": {
+        "name": "FogEnable",
+        "field_index": 383886,
+        "type_index": 42553,
+        "token": "0x40011d1"
+      }
+    },
+    {
+      "class": "Yarp.FogSettingAnimator",
+      "kind": "field",
+      "member": {
+        "name": "FogColor",
+        "field_index": 383887,
+        "type_index": 68360,
+        "token": "0x40011d2"
+      }
+    },
+    {
+      "class": "Yarp.FogSettingAnimator",
+      "kind": "field",
+      "member": {
+        "name": "FogColorIntensity",
+        "field_index": 383888,
+        "type_index": 98256,
+        "token": "0x40011d3"
+      }
+    },
+    {
+      "class": "Yarp.FogSettingAnimator",
+      "kind": "field",
+      "member": {
+        "name": "FogNear",
+        "field_index": 383889,
+        "type_index": 98256,
+        "token": "0x40011d4"
+      }
+    },
+    {
+      "class": "Yarp.FogSettingAnimator",
+      "kind": "field",
+      "member": {
+        "name": "FogFar",
+        "field_index": 383890,
+        "type_index": 98256,
+        "token": "0x40011d5"
+      }
+    },
+    {
+      "class": "Yarp.FogSettingAnimator",
+      "kind": "field",
+      "member": {
+        "name": "FogHeight",
+        "field_index": 383891,
+        "type_index": 98256,
+        "token": "0x40011d6"
+      }
+    },
+    {
+      "class": "Yarp.FogSettingAnimator",
+      "kind": "field",
+      "member": {
+        "name": "FogBottom",
+        "field_index": 383892,
+        "type_index": 98256,
+        "token": "0x40011d7"
+      }
+    },
+    {
+      "class": "Yarp.FogSetting",
+      "kind": "field",
+      "member": {
+        "name": "FogColor",
+        "field_index": 384387,
+        "type_index": 68360,
+        "token": "0x40013c6"
+      }
+    },
+    {
+      "class": "Yarp.FogSetting",
+      "kind": "field",
+      "member": {
+        "name": "FogColorIntensity",
+        "field_index": 384388,
+        "type_index": 98256,
+        "token": "0x40013c7"
+      }
+    },
+    {
+      "class": "Yarp.FogSetting",
+      "kind": "field",
+      "member": {
+        "name": "FogNear",
+        "field_index": 384389,
+        "type_index": 98256,
+        "token": "0x40013c8"
+      }
+    },
+    {
+      "class": "Yarp.FogSetting",
+      "kind": "field",
+      "member": {
+        "name": "FogFar",
+        "field_index": 384390,
+        "type_index": 98256,
+        "token": "0x40013c9"
+      }
+    },
+    {
+      "class": "Yarp.FogSetting",
+      "kind": "field",
+      "member": {
+        "name": "FogHeight",
+        "field_index": 384391,
+        "type_index": 98256,
+        "token": "0x40013ca"
+      }
+    },
+    {
+      "class": "Yarp.FogSetting",
+      "kind": "field",
+      "member": {
+        "name": "FogBottom",
+        "field_index": 384392,
+        "type_index": 98256,
+        "token": "0x40013cb"
+      }
+    },
+    {
+      "class": "Yarp.MotionVectorRuntimeDetector",
+      "kind": "field",
+      "member": {
+        "name": "k_positionSqrEpsilon",
+        "field_index": 384992,
+        "type_index": 98271,
+        "token": "0x4001623"
+      }
+    },
+    {
+      "class": "Yarp.StaticShadowCasterMoveDetector",
+      "kind": "field",
+      "member": {
+        "name": "c_kPositionSqrEpsilon",
+        "field_index": 385019,
+        "type_index": 98271,
+        "token": "0x400163e"
+      }
+    },
+    {
+      "class": "Yarp.RuntimeTool.RuntimeDebugProbeZOffsetMover",
+      "kind": "field",
+      "member": {
+        "name": "m_BasePosition",
+        "field_index": 385368,
+        "type_index": 103779,
+        "token": "0x400179b"
+      }
+    },
+    {
+      "class": "Yarp.RuntimeTool.RuntimeDebugProbeZOffsetMover",
+      "kind": "field",
+      "member": {
+        "name": "m_StartPosition",
+        "field_index": 385369,
+        "type_index": 103779,
+        "token": "0x400179c"
+      }
+    },
+    {
+      "class": "Yarp.RuntimeTool.RuntimeDebugProbeZOffsetMover",
+      "kind": "field",
+      "member": {
+        "name": "m_TargetPosition",
+        "field_index": 385370,
+        "type_index": 103779,
+        "token": "0x400179d"
+      }
+    },
+    {
+      "class": ".Project8HeroGrid",
+      "kind": "field",
+      "member": {
+        "name": "_position",
+        "field_index": 385813,
+        "type_index": 103791,
+        "token": "0x400007c"
+      }
+    },
+    {
+      "class": ".Project8HeroGrid",
+      "kind": "field",
+      "member": {
+        "name": "_pointerPosition",
+        "field_index": 385814,
+        "type_index": 103791,
+        "token": "0x400007d"
+      }
+    },
+    {
+      "class": ".Project8HeroGrid",
+      "kind": "method",
+      "member": {
+        "name": "SetArrowLineEndPosition",
+        "method_index": 310434,
+        "token": "0x60000da",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Project8HeroGrid",
+      "kind": "method",
+      "member": {
+        "name": "SetExchangeLineEndPosition",
+        "method_index": 310435,
+        "token": "0x60000db",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".Project8NewbieGuideHeroDragEffect",
+      "kind": "method",
+      "member": {
+        "name": "RefreshPosition",
+        "method_index": 310487,
+        "token": "0x600010f",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".Project8NewbieGuideHeroDragEffect",
+      "kind": "method",
+      "member": {
+        "name": "CalcArrowLinePosition",
+        "method_index": 310488,
+        "token": "0x6000110",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".PositionRecord",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 386127,
+        "type_index": 103782,
+        "token": "0x40001b6"
+      }
+    },
+    {
+      "class": ".GuishiFogVolume",
+      "kind": "field",
+      "member": {
+        "name": "targetFogParameters",
+        "field_index": 386161,
+        "type_index": 75858,
+        "token": "0x40001d8"
+      }
+    },
+    {
+      "class": ".GuishiFogVolume",
+      "kind": "field",
+      "member": {
+        "name": "overrideDistanceFogRange",
+        "field_index": 386167,
+        "type_index": 42553,
+        "token": "0x40001de"
+      }
+    },
+    {
+      "class": ".GuishiFogVolume",
+      "kind": "field",
+      "member": {
+        "name": "overrideDistanceFogRangeSoft",
+        "field_index": 386168,
+        "type_index": 42553,
+        "token": "0x40001df"
+      }
+    },
+    {
+      "class": ".GuishiFogVolume",
+      "kind": "field",
+      "member": {
+        "name": "overrideDepthFogRange",
+        "field_index": 386169,
+        "type_index": 42553,
+        "token": "0x40001e0"
+      }
+    },
+    {
+      "class": ".GuishiFogVolume",
+      "kind": "field",
+      "member": {
+        "name": "overrideDepthFogRangeSoft",
+        "field_index": 386170,
+        "type_index": 42553,
+        "token": "0x40001e1"
+      }
+    },
+    {
+      "class": ".GuishiFogVolume",
+      "kind": "field",
+      "member": {
+        "name": "overrideFogColor1",
+        "field_index": 386171,
+        "type_index": 42553,
+        "token": "0x40001e2"
+      }
+    },
+    {
+      "class": ".GuishiFogVolume",
+      "kind": "field",
+      "member": {
+        "name": "overrideFogColor2",
+        "field_index": 386172,
+        "type_index": 42553,
+        "token": "0x40001e3"
+      }
+    },
+    {
+      "class": ".GuishiFogVolumeManager",
+      "kind": "method",
+      "member": {
+        "name": "GetCurrentShaderFogParameters",
+        "method_index": 310956,
+        "token": "0x60002e4",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".GuishiFogParameters",
+      "kind": "field",
+      "member": {
+        "name": "distanceFogRange",
+        "field_index": 386202,
+        "type_index": 98256,
+        "token": "0x4000201"
+      }
+    },
+    {
+      "class": ".GuishiFogParameters",
+      "kind": "field",
+      "member": {
+        "name": "distanceFogRangeSoft",
+        "field_index": 386203,
+        "type_index": 98256,
+        "token": "0x4000202"
+      }
+    },
+    {
+      "class": ".GuishiFogParameters",
+      "kind": "field",
+      "member": {
+        "name": "depthFogRange",
+        "field_index": 386204,
+        "type_index": 98256,
+        "token": "0x4000203"
+      }
+    },
+    {
+      "class": ".GuishiFogParameters",
+      "kind": "field",
+      "member": {
+        "name": "depthFogRangeSoft",
+        "field_index": 386205,
+        "type_index": 98256,
+        "token": "0x4000204"
+      }
+    },
+    {
+      "class": ".GuishiFogParameters",
+      "kind": "field",
+      "member": {
+        "name": "fogColor1",
+        "field_index": 386206,
+        "type_index": 68360,
+        "token": "0x4000205"
+      }
+    },
+    {
+      "class": ".GuishiFogParameters",
+      "kind": "field",
+      "member": {
+        "name": "fogColor2",
+        "field_index": 386207,
+        "type_index": 68360,
+        "token": "0x4000206"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Project8NumenMoveToTargetCmd",
+      "kind": "field",
+      "member": {
+        "name": "DestPosition",
+        "field_index": 387025,
+        "type_index": 103605,
+        "token": "0x4000538"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.BattleStatViewMoba10V10",
+      "kind": "method",
+      "member": {
+        "name": "RefreshMutePanelPosition",
+        "method_index": 314087,
+        "token": "0x6000f1f",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.Project8BattleHeroModelControl",
+      "kind": "method",
+      "member": {
+        "name": "SetPosition",
+        "method_index": 314737,
+        "token": "0x60011a9",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameSystem.Project8BattleHeroModelControl",
+      "kind": "method",
+      "member": {
+        "name": "GetPosition",
+        "method_index": 314743,
+        "token": "0x60011af",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.MoveDSData",
+      "kind": "field",
+      "member": {
+        "name": "Position",
+        "field_index": 390495,
+        "type_index": 103605,
+        "token": "0x400020c"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.MoveDSData",
+      "kind": "field",
+      "member": {
+        "name": "LocalPosition",
+        "field_index": 390504,
+        "type_index": 103782,
+        "token": "0x4000215"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.stMoveData",
+      "kind": "field",
+      "member": {
+        "name": "Position",
+        "field_index": 390512,
+        "type_index": 103605,
+        "token": "0x400021d"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.stMoveData",
+      "kind": "field",
+      "member": {
+        "name": "LocalPosition",
+        "field_index": 390521,
+        "type_index": 103782,
+        "token": "0x4000226"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionSerializeMoveComponentData",
+      "kind": "field",
+      "member": {
+        "name": "Position",
+        "field_index": 390540,
+        "type_index": 103782,
+        "token": "0x4000239"
+      }
+    },
+    {
+      "class": ".ENUM_MOVE_TYPE",
+      "kind": "field",
+      "member": {
+        "name": "POSITION",
+        "field_index": 391596,
+        "type_index": 123243,
+        "token": "0x4000659"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "get_Position",
+        "method_index": 317887,
+        "token": "0x6000603",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "get_UnityPosition",
+        "method_index": 317888,
+        "token": "0x6000604",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "get_PetFollowPosition",
+        "method_index": 317892,
+        "token": "0x6000608",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "SetPetTargetPosition",
+        "method_index": 317915,
+        "token": "0x600061f",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionAndRotation",
+        "method_index": 317950,
+        "token": "0x6000642",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "ResetActorPosition",
+        "method_index": 318044,
+        "token": "0x60006a0",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "get_LocalPosition",
+        "method_index": 318052,
+        "token": "0x60006a8",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "GetFollowingTargetPosition",
+        "method_index": 318095,
+        "token": "0x60006d3",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "LerpFollowingTargetPositionWorldSpace",
+        "method_index": 318098,
+        "token": "0x60006d6",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveComponent",
+      "kind": "method",
+      "member": {
+        "name": "SetProxyLogicPosition",
+        "method_index": 318099,
+        "token": "0x60006d7",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.stDimensionRemoteMoveIntent",
+      "kind": "field",
+      "member": {
+        "name": "Position",
+        "field_index": 392170,
+        "type_index": 103605,
+        "token": "0x4000897"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.stDimensionRemoteMoveIntent",
+      "kind": "field",
+      "member": {
+        "name": "LocalPosition",
+        "field_index": 392178,
+        "type_index": 103782,
+        "token": "0x400089f"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.stDimensionPetMoveIntent",
+      "kind": "field",
+      "member": {
+        "name": "TargetPosition",
+        "field_index": 392188,
+        "type_index": 103605,
+        "token": "0x40008a9"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveIntent",
+      "kind": "field",
+      "member": {
+        "name": "Position",
+        "field_index": 392193,
+        "type_index": 103605,
+        "token": "0x40008ae"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveContext",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 392204,
+        "type_index": 103779,
+        "token": "0x40008b9"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveContext",
+      "kind": "field",
+      "member": {
+        "name": "LastPhysicalPosition",
+        "field_index": 392256,
+        "type_index": 103782,
+        "token": "0x40008ed"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveContext",
+      "kind": "field",
+      "member": {
+        "name": "LocalPosition",
+        "field_index": 392260,
+        "type_index": 103782,
+        "token": "0x40008f1"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveContext",
+      "kind": "method",
+      "member": {
+        "name": "get_Position",
+        "method_index": 318878,
+        "token": "0x60009e2",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveContext",
+      "kind": "method",
+      "member": {
+        "name": "set_Position",
+        "method_index": 318879,
+        "token": "0x60009e3",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.stDimensionMoveFloor",
+      "kind": "field",
+      "member": {
+        "name": "ExpectPosition",
+        "field_index": 392855,
+        "type_index": 103782,
+        "token": "0x4000b44"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.stDimensionPhysicalMoveResult",
+      "kind": "field",
+      "member": {
+        "name": "UpdatedPosition",
+        "field_index": 392867,
+        "type_index": 103782,
+        "token": "0x4000b50"
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.DimensionMoveMeshDebug",
+      "kind": "method",
+      "member": {
+        "name": "CheckFixedPosition",
+        "method_index": 322031,
+        "token": "0x6001633",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.ConvexDecompositionHelper",
+      "kind": "method",
+      "member": {
+        "name": "ConvexDecomposition",
+        "method_index": 322061,
+        "token": "0x6001651",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.ConvexDecompositionHelper",
+      "kind": "method",
+      "member": {
+        "name": "AsyncCallVHACDConvexDecomposition",
+        "method_index": 322062,
+        "token": "0x6001652",
+        "parameter_count": 6
+      }
+    },
+    {
+      "class": "Assets.Scripts.GameLogic.Dimension.ConvexDecompositionHelper",
+      "kind": "method",
+      "member": {
+        "name": "VHACDConvexDecompositionTask",
+        "method_index": 322063,
+        "token": "0x6001653",
+        "parameter_count": 5
+      }
+    },
+    {
+      "class": ".DragPosition",
+      "kind": "field",
+      "member": {
+        "name": "dropPosition",
+        "field_index": 396767,
+        "type_index": 71620,
+        "token": "0x4000521"
+      }
+    },
+    {
+      "class": "UnityEngine.UIElements.ITransform",
+      "kind": "method",
+      "member": {
+        "name": "get_position",
+        "method_index": 325880,
+        "token": "0x6000d98",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityEngine.UIElements.ITransform",
+      "kind": "method",
+      "member": {
+        "name": "set_position",
+        "method_index": 325881,
+        "token": "0x6000d99",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.UIElements.VectorImageVertex",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 398451,
+        "type_index": 103782,
+        "token": "0x4000bb5"
+      }
+    },
+    {
+      "class": "UnityEngine.UIElements.Internal.ColumnMover",
+      "kind": "method",
+      "member": {
+        "name": "UpdatePreviewPosition",
+        "method_index": 329654,
+        "token": "0x6001c56",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "System.Xml.PositionInfo",
+      "kind": "method",
+      "member": {
+        "name": "get_LinePosition",
+        "method_index": 332471,
+        "token": "0x6000a8e",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "System.Xml.PositionInfo",
+      "kind": "method",
+      "member": {
+        "name": "GetPositionInfo",
+        "method_index": 332472,
+        "token": "0x6000a8f",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "System.Xml.ReaderPositionInfo",
+      "kind": "method",
+      "member": {
+        "name": "get_LinePosition",
+        "method_index": 332477,
+        "token": "0x6000a94",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "System.Xml.Schema.Positions",
+      "kind": "field",
+      "member": {
+        "name": "positions",
+        "field_index": 401569,
+        "type_index": 40945,
+        "token": "0x400077b"
+      }
+    },
+    {
+      "class": "MS.Internal.Xml.XPath.ReversePositionQuery",
+      "kind": "method",
+      "member": {
+        "name": "get_CurrentPosition",
+        "method_index": 336897,
+        "token": "0x6001bd8",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityEngine.TransformDispatchData",
+      "kind": "field",
+      "member": {
+        "name": "positions",
+        "field_index": 405148,
+        "type_index": 23410,
+        "token": "0x4000637"
+      }
+    },
+    {
+      "class": "UnityEngine.DrivenTransformProperties",
+      "kind": "field",
+      "member": {
+        "name": "AnchoredPositionX",
+        "field_index": 405400,
+        "type_index": 71684,
+        "token": "0x4000733"
+      }
+    },
+    {
+      "class": "UnityEngine.DrivenTransformProperties",
+      "kind": "field",
+      "member": {
+        "name": "AnchoredPositionY",
+        "field_index": 405401,
+        "type_index": 71684,
+        "token": "0x4000734"
+      }
+    },
+    {
+      "class": "UnityEngine.DrivenTransformProperties",
+      "kind": "field",
+      "member": {
+        "name": "AnchoredPositionZ",
+        "field_index": 405402,
+        "type_index": 71684,
+        "token": "0x4000735"
+      }
+    },
+    {
+      "class": "UnityEngine.DrivenTransformProperties",
+      "kind": "field",
+      "member": {
+        "name": "AnchoredPosition",
+        "field_index": 405415,
+        "type_index": 71684,
+        "token": "0x4000742"
+      }
+    },
+    {
+      "class": "UnityEngine.DrivenTransformProperties",
+      "kind": "field",
+      "member": {
+        "name": "AnchoredPosition3D",
+        "field_index": 405416,
+        "type_index": 71684,
+        "token": "0x4000743"
+      }
+    },
+    {
+      "class": "UnityEngine.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "get_anchoredPosition",
+        "method_index": 341849,
+        "token": "0x600122f",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityEngine.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "set_anchoredPosition",
+        "method_index": 341850,
+        "token": "0x6001230",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "get_anchoredPosition3D",
+        "method_index": 341855,
+        "token": "0x6001235",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityEngine.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "set_anchoredPosition3D",
+        "method_index": 341856,
+        "token": "0x6001236",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "get_anchoredPosition_Injected",
+        "method_index": 341879,
+        "token": "0x600124d",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.RectTransform",
+      "kind": "method",
+      "member": {
+        "name": "set_anchoredPosition_Injected",
+        "method_index": 341880,
+        "token": "0x600124e",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "get_position",
+        "method_index": 341888,
+        "token": "0x6001256",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "set_position",
+        "method_index": 341889,
+        "token": "0x6001257",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionOpt",
+        "method_index": 341890,
+        "token": "0x6001258",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "get_localPosition",
+        "method_index": 341891,
+        "token": "0x6001259",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "set_localPosition",
+        "method_index": 341892,
+        "token": "0x600125a",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionOpt",
+        "method_index": 341893,
+        "token": "0x600125b",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionAndRotation",
+        "method_index": 341927,
+        "token": "0x600127d",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionAndRotation",
+        "method_index": 341928,
+        "token": "0x600127e",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "GetPositionAndRotation",
+        "method_index": 341929,
+        "token": "0x600127f",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "GetLocalPositionAndRotation",
+        "method_index": 341930,
+        "token": "0x6001280",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "GetLocalPositionInThread",
+        "method_index": 342013,
+        "token": "0x60012d3",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionInThread",
+        "method_index": 342014,
+        "token": "0x60012d4",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "GetPositionInThread",
+        "method_index": 342017,
+        "token": "0x60012d7",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionInThread",
+        "method_index": 342018,
+        "token": "0x60012d8",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "get_position_Injected",
+        "method_index": 342024,
+        "token": "0x60012de",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "set_position_Injected",
+        "method_index": 342025,
+        "token": "0x60012df",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionOpt_Injected",
+        "method_index": 342026,
+        "token": "0x60012e0",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "get_localPosition_Injected",
+        "method_index": 342027,
+        "token": "0x60012e1",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "set_localPosition_Injected",
+        "method_index": 342028,
+        "token": "0x60012e2",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionOpt_Injected",
+        "method_index": 342029,
+        "token": "0x60012e3",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionAndRotation_Injected",
+        "method_index": 342041,
+        "token": "0x60012ef",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionAndRotation_Injected",
+        "method_index": 342042,
+        "token": "0x60012f0",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "GetLocalPositionInThread_Injected",
+        "method_index": 342054,
+        "token": "0x60012fc",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionInThread_Injected",
+        "method_index": 342055,
+        "token": "0x60012fd",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "GetPositionInThread_Injected",
+        "method_index": 342058,
+        "token": "0x6001300",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Transform",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionInThread_Injected",
+        "method_index": 342059,
+        "token": "0x6001301",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Jobs.TransformAccess",
+      "kind": "method",
+      "member": {
+        "name": "get_position",
+        "method_index": 342283,
+        "token": "0x60013e1",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityEngine.Jobs.TransformAccess",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionAndRotation",
+        "method_index": 342285,
+        "token": "0x60013e3",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Jobs.TransformAccess",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionAndRotation_Internal",
+        "method_index": 342286,
+        "token": "0x60013e4",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "UnityEngine.Jobs.TransformAccess",
+      "kind": "method",
+      "member": {
+        "name": "GetPosition",
+        "method_index": 342287,
+        "token": "0x60013e5",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Newtonsoft.Json.JsonPosition",
+      "kind": "field",
+      "member": {
+        "name": "Position",
+        "field_index": 407626,
+        "type_index": 79275,
+        "token": "0x400004e"
+      }
+    },
+    {
+      "class": ".FogType",
+      "kind": "field",
+      "member": {
+        "name": "Fog",
+        "field_index": 411178,
+        "type_index": 74268,
+        "token": "0x4000109"
+      }
+    },
+    {
+      "class": ".FogType",
+      "kind": "field",
+      "member": {
+        "name": "FogOfWar",
+        "field_index": 411179,
+        "type_index": 74268,
+        "token": "0x400010a"
+      }
+    },
+    {
+      "class": "UnityService.TimeOfDayFog",
+      "kind": "field",
+      "member": {
+        "name": "fogColor",
+        "field_index": 411395,
+        "type_index": 68391,
+        "token": "0x40001e2"
+      }
+    },
+    {
+      "class": "UnityService.TimeOfDayFog",
+      "kind": "field",
+      "member": {
+        "name": "fogColorIntensity",
+        "field_index": 411396,
+        "type_index": 98282,
+        "token": "0x40001e3"
+      }
+    },
+    {
+      "class": "UnityService.TimeOfDayFog",
+      "kind": "field",
+      "member": {
+        "name": "fogParam",
+        "field_index": 411397,
+        "type_index": 103842,
+        "token": "0x40001e4"
+      }
+    },
+    {
+      "class": "UnityService.TimeOfDayFog",
+      "kind": "field",
+      "member": {
+        "name": "fogOfWarColor",
+        "field_index": 411398,
+        "type_index": 68391,
+        "token": "0x40001e5"
+      }
+    },
+    {
+      "class": "UnityService.TimeOfDayFog",
+      "kind": "field",
+      "member": {
+        "name": "fogOfWarFactor",
+        "field_index": 411399,
+        "type_index": 98282,
+        "token": "0x40001e6"
+      }
+    },
+    {
+      "class": "UnityService.Resources.CustomResource.CustomPrefab.CustomTransform",
+      "kind": "field",
+      "member": {
+        "name": "LocalPosition",
+        "field_index": 411717,
+        "type_index": 69638,
+        "token": "0x4000324"
+      }
+    },
+    {
+      "class": "UnityService.Resources.CustomResource.CustomPrefab.CustomRectTransform",
+      "kind": "field",
+      "member": {
+        "name": "anchoredPosition",
+        "field_index": 411722,
+        "type_index": 69636,
+        "token": "0x4000329"
+      }
+    },
+    {
+      "class": "UnityService.Resources.CustomResource.CustomModel.TransformNode",
+      "kind": "field",
+      "member": {
+        "name": "Position",
+        "field_index": 412109,
+        "type_index": 103782,
+        "token": "0x40004ac"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.AtmosphericFog",
+      "kind": "method",
+      "member": {
+        "name": "OnUpdateAtFog",
+        "method_index": 361765,
+        "token": "0x6000472",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.AtmosphericFog",
+      "kind": "method",
+      "member": {
+        "name": "UpdateAtFogParameters",
+        "method_index": 361766,
+        "token": "0x6000473",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.FogShaderIDs",
+      "kind": "field",
+      "member": {
+        "name": "c_UGC_NEW_FOG",
+        "field_index": 412318,
+        "type_index": 99599,
+        "token": "0x400057d"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.FogShaderIDs",
+      "kind": "field",
+      "member": {
+        "name": "s_HeightFogColorMinOpacity",
+        "field_index": 412319,
+        "type_index": 79282,
+        "token": "0x400057e"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.FogShaderIDs",
+      "kind": "field",
+      "member": {
+        "name": "s_HeightFogParams",
+        "field_index": 412320,
+        "type_index": 79282,
+        "token": "0x400057f"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.FogShaderIDs",
+      "kind": "field",
+      "member": {
+        "name": "s_HeightFogInscatterParams",
+        "field_index": 412321,
+        "type_index": 79282,
+        "token": "0x4000580"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.FogShaderIDs",
+      "kind": "field",
+      "member": {
+        "name": "s_AtFogRayleightColor",
+        "field_index": 412322,
+        "type_index": 79282,
+        "token": "0x4000581"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.FogShaderIDs",
+      "kind": "field",
+      "member": {
+        "name": "s_AtFogMieColor",
+        "field_index": 412323,
+        "type_index": 79282,
+        "token": "0x4000582"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.FogShaderIDs",
+      "kind": "field",
+      "member": {
+        "name": "s_AtFogParamesters",
+        "field_index": 412324,
+        "type_index": 79282,
+        "token": "0x4000583"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.FogShaderIDs",
+      "kind": "field",
+      "member": {
+        "name": "s_AtFogColorIntensity",
+        "field_index": 412325,
+        "type_index": 79282,
+        "token": "0x4000584"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.FogShaderIDs",
+      "kind": "field",
+      "member": {
+        "name": "s_HeightFogColorIntensity",
+        "field_index": 412326,
+        "type_index": 79282,
+        "token": "0x4000585"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.FogShaderIDs",
+      "kind": "field",
+      "member": {
+        "name": "s_FogEnableInfo",
+        "field_index": 412328,
+        "type_index": 79282,
+        "token": "0x4000587"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.ExponentialHeightFog",
+      "kind": "field",
+      "member": {
+        "name": "HeightFogColor",
+        "field_index": 412329,
+        "type_index": 68360,
+        "token": "0x4000588"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.ExponentialHeightFog",
+      "kind": "field",
+      "member": {
+        "name": "HeightFogBaseY",
+        "field_index": 412330,
+        "type_index": 98256,
+        "token": "0x4000589"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.ExponentialHeightFog",
+      "kind": "field",
+      "member": {
+        "name": "HeightFogDensity",
+        "field_index": 412331,
+        "type_index": 98256,
+        "token": "0x400058a"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.ExponentialHeightFog",
+      "kind": "field",
+      "member": {
+        "name": "HeightFogScaleHeight",
+        "field_index": 412332,
+        "type_index": 98256,
+        "token": "0x400058b"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.ExponentialHeightFog",
+      "kind": "field",
+      "member": {
+        "name": "HeightFogStartDistance",
+        "field_index": 412333,
+        "type_index": 98256,
+        "token": "0x400058c"
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.ExponentialHeightFog",
+      "kind": "method",
+      "member": {
+        "name": "OnUpdateHeightFog",
+        "method_index": 361770,
+        "token": "0x6000477",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.ExponentialHeightFog",
+      "kind": "method",
+      "member": {
+        "name": "UpdateHeightFogParams",
+        "method_index": 361771,
+        "token": "0x6000478",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.Fog.IFog",
+      "kind": "method",
+      "member": {
+        "name": "OnInitFog",
+        "method_index": 361785,
+        "token": "0x6000486",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.Fog.IFog",
+      "kind": "method",
+      "member": {
+        "name": "OnUpdateFog",
+        "method_index": 361786,
+        "token": "0x6000487",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityService.Rendering.Sky.Fog.IFog",
+      "kind": "method",
+      "member": {
+        "name": "OnDestroyFog",
+        "method_index": 361787,
+        "token": "0x6000488",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityService.LevelManagement.TileLevels.Utils.TransformData",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 412957,
+        "type_index": 103782,
+        "token": "0x40007fc"
+      }
+    },
+    {
+      "class": "UnityService.LevelManagement.TileLevels.Utils.TransformsData",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionDelta",
+        "method_index": 362317,
+        "token": "0x600069a",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityService.LevelManagement.TileLevels.Utils.TransformsData",
+      "kind": "method",
+      "member": {
+        "name": "GetCurrentPosition",
+        "method_index": 362320,
+        "token": "0x600069d",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "System.Security.Cryptography.AesTransform",
+      "kind": "method",
+      "member": {
+        "name": "Encrypt128",
+        "method_index": 366617,
+        "token": "0x600004f",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "System.Security.Cryptography.AesTransform",
+      "kind": "method",
+      "member": {
+        "name": "Decrypt128",
+        "method_index": 366618,
+        "token": "0x6000050",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": ".IModifiablePositionDamping",
+      "kind": "method",
+      "member": {
+        "name": "get_PositionDamping",
+        "method_index": 379855,
+        "token": "0x60000b7",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".IModifiablePositionDamping",
+      "kind": "method",
+      "member": {
+        "name": "set_PositionDamping",
+        "method_index": 379856,
+        "token": "0x60000b8",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".IModifiableComposition",
+      "kind": "method",
+      "member": {
+        "name": "get_Composition",
+        "method_index": 379857,
+        "token": "0x60000b9",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".IModifiableComposition",
+      "kind": "method",
+      "member": {
+        "name": "set_Composition",
+        "method_index": 379858,
+        "token": "0x60000ba",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".CompositionModifier",
+      "kind": "field",
+      "member": {
+        "name": "Composition",
+        "field_index": 422893,
+        "type_index": 29629,
+        "token": "0x40000aa"
+      }
+    },
+    {
+      "class": ".CompositionModifier",
+      "kind": "field",
+      "member": {
+        "name": "m_SavedComposition",
+        "field_index": 422894,
+        "type_index": 97370,
+        "token": "0x40000ab"
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.CinemachinePositionComposer",
+      "kind": "field",
+      "member": {
+        "name": "Composition",
+        "field_index": 423135,
+        "type_index": 97371,
+        "token": "0x400019c"
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.CinemachinePositionComposer",
+      "kind": "field",
+      "member": {
+        "name": "m_PreviousCameraPosition",
+        "field_index": 423141,
+        "type_index": 103779,
+        "token": "0x40001a2"
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.CinemachinePositionComposer",
+      "kind": "field",
+      "member": {
+        "name": "m_InheritingPosition",
+        "field_index": 423144,
+        "type_index": 42549,
+        "token": "0x40001a5"
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.CinemachinePositionComposer",
+      "kind": "method",
+      "member": {
+        "name": "Unity.Cinemachine.CinemachineFreeLookModifier.IModifiableComposition.get_Composition",
+        "method_index": 380145,
+        "token": "0x60001d9",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.CinemachinePositionComposer",
+      "kind": "method",
+      "member": {
+        "name": "Unity.Cinemachine.CinemachineFreeLookModifier.IModifiableComposition.set_Composition",
+        "method_index": 380146,
+        "token": "0x60001da",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.CinemachinePositionComposer",
+      "kind": "method",
+      "member": {
+        "name": "Unity.Cinemachine.CinemachineFreeLookModifier.IModifiablePositionDamping.get_PositionDamping",
+        "method_index": 380147,
+        "token": "0x60001db",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.CinemachinePositionComposer",
+      "kind": "method",
+      "member": {
+        "name": "Unity.Cinemachine.CinemachineFreeLookModifier.IModifiablePositionDamping.set_PositionDamping",
+        "method_index": 380148,
+        "token": "0x60001dc",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.CinemachinePositionComposer",
+      "kind": "method",
+      "member": {
+        "name": "ForceCameraPosition",
+        "method_index": 380157,
+        "token": "0x60001e5",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.PositionPredictor",
+      "kind": "method",
+      "member": {
+        "name": "get_CurrentPosition",
+        "method_index": 380662,
+        "token": "0x60003de",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.PositionPredictor",
+      "kind": "method",
+      "member": {
+        "name": "AddPosition",
+        "method_index": 380665,
+        "token": "0x60003e1",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.PositionPredictor",
+      "kind": "method",
+      "member": {
+        "name": "PredictPositionDelta",
+        "method_index": 380666,
+        "token": "0x60003e2",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.TargetPositionCache",
+      "kind": "method",
+      "member": {
+        "name": "GetTargetPosition",
+        "method_index": 380764,
+        "token": "0x6000444",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "Unity.Cinemachine.UnityVectorExtensions",
+      "kind": "method",
+      "member": {
+        "name": "ConservativeSetPositionAndRotation",
+        "method_index": 380794,
+        "token": "0x6000462",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": ".Ak3DPositionType",
+      "kind": "field",
+      "member": {
+        "name": "AK_3DPositionType_Emitter",
+        "field_index": 424343,
+        "type_index": 39898,
+        "token": "0x4000169"
+      }
+    },
+    {
+      "class": ".Ak3DPositionType",
+      "kind": "field",
+      "member": {
+        "name": "AK_3DPositionType_EmitterWithAutomation",
+        "field_index": 424344,
+        "type_index": 39898,
+        "token": "0x400016a"
+      }
+    },
+    {
+      "class": ".Ak3DPositionType",
+      "kind": "field",
+      "member": {
+        "name": "AK_3DPositionType_ListenerWithAutomation",
+        "field_index": 424345,
+        "type_index": 39898,
+        "token": "0x400016b"
+      }
+    },
+    {
+      "class": ".AkMultiPositionType",
+      "kind": "field",
+      "member": {
+        "name": "MultiPositionType_SingleSource",
+        "field_index": 424736,
+        "type_index": 40056,
+        "token": "0x40002f2"
+      }
+    },
+    {
+      "class": ".AkMultiPositionType",
+      "kind": "field",
+      "member": {
+        "name": "MultiPositionType_MultiSources",
+        "field_index": 424737,
+        "type_index": 40056,
+        "token": "0x40002f3"
+      }
+    },
+    {
+      "class": ".AkMultiPositionType",
+      "kind": "field",
+      "member": {
+        "name": "MultiPositionType_MultiDirections",
+        "field_index": 424738,
+        "type_index": 40056,
+        "token": "0x40002f4"
+      }
+    },
+    {
+      "class": ".AkPositioningInfo",
+      "kind": "method",
+      "member": {
+        "name": "set_e3dPositioningType",
+        "method_index": 383598,
+        "token": "0x60008bc",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".AkPositioningInfo",
+      "kind": "method",
+      "member": {
+        "name": "get_e3dPositioningType",
+        "method_index": 383599,
+        "token": "0x60008bd",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".AkTransform",
+      "kind": "method",
+      "member": {
+        "name": "Position",
+        "method_index": 383808,
+        "token": "0x600098e",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".AkTransform",
+      "kind": "method",
+      "member": {
+        "name": "SetPosition",
+        "method_index": 383813,
+        "token": "0x6000993",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": ".AkTransform",
+      "kind": "method",
+      "member": {
+        "name": "SetPosition",
+        "method_index": 383814,
+        "token": "0x6000994",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": ".MultiPositionTypeLabel",
+      "kind": "field",
+      "member": {
+        "name": "MultiPosition_Mode",
+        "field_index": 425222,
+        "type_index": 83242,
+        "token": "0x40004d8"
+      }
+    },
+    {
+      "class": ".AkAmbientLargeModePositioner",
+      "kind": "method",
+      "member": {
+        "name": "get_Position",
+        "method_index": 384318,
+        "token": "0x6000b8c",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".AkGameObjPositionData",
+      "kind": "field",
+      "member": {
+        "name": "position",
+        "field_index": 425312,
+        "type_index": 103782,
+        "token": "0x4000532"
+      }
+    },
+    {
+      "class": ".AkGameObjPositionOffsetData",
+      "kind": "field",
+      "member": {
+        "name": "positionOffset",
+        "field_index": 425315,
+        "type_index": 103782,
+        "token": "0x4000535"
+      }
+    },
+    {
+      "class": "UnityExtensions.Tween.TweenTransform",
+      "kind": "field",
+      "member": {
+        "name": "togglePosition",
+        "field_index": 432597,
+        "type_index": 42553,
+        "token": "0x400011d"
+      }
+    },
+    {
+      "class": "UnityExtensions.Tween.TweenTransform",
+      "kind": "method",
+      "member": {
+        "name": "get_currentPosition",
+        "method_index": 400396,
+        "token": "0x60003c9",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityExtensions.Tween.TweenTransform",
+      "kind": "method",
+      "member": {
+        "name": "set_currentPosition",
+        "method_index": 400397,
+        "token": "0x60003ca",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "ICSharpCode.SharpZipLib.Encryption.ZipAESTransform",
+      "kind": "field",
+      "member": {
+        "name": "ENCRYPT_BLOCK",
+        "field_index": 434055,
+        "type_index": 79300,
+        "token": "0x4000205"
+      }
+    },
+    {
+      "class": "ICSharpCode.SharpZipLib.Encryption.ZipAESTransform",
+      "kind": "field",
+      "member": {
+        "name": "_encryptor",
+        "field_index": 434057,
+        "type_index": 77135,
+        "token": "0x4000207"
+      }
+    },
+    {
+      "class": "ICSharpCode.SharpZipLib.Encryption.ZipAESTransform",
+      "kind": "field",
+      "member": {
+        "name": "_encryptBuffer",
+        "field_index": 434059,
+        "type_index": 36780,
+        "token": "0x4000209"
+      }
+    },
+    {
+      "class": "ICSharpCode.SharpZipLib.Encryption.PkzipClassicManaged",
+      "kind": "method",
+      "member": {
+        "name": "CreateEncryptor",
+        "method_index": 403252,
+        "token": "0x6000330",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "ICSharpCode.SharpZipLib.Encryption.PkzipClassicManaged",
+      "kind": "method",
+      "member": {
+        "name": "CreateDecryptor",
+        "method_index": 403253,
+        "token": "0x6000331",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Splines.GetPosition",
+      "kind": "field",
+      "member": {
+        "name": "Positions",
+        "field_index": 434969,
+        "type_index": 23422,
+        "token": "0x4000102"
+      }
+    },
+    {
+      "class": "UnityEngine.Splines.GetPositionTangentNormal",
+      "kind": "field",
+      "member": {
+        "name": "Positions",
+        "field_index": 434971,
+        "type_index": 23422,
+        "token": "0x4000104"
+      }
+    },
+    {
+      "class": ".EncryptedData",
+      "kind": "field",
+      "member": {
+        "name": "_encryptionAlgorithm",
+        "field_index": 435372,
+        "type_index": 129584,
+        "token": "0x4000008"
+      }
+    },
+    {
+      "class": ".EncryptedData",
+      "kind": "field",
+      "member": {
+        "name": "_encrypted",
+        "field_index": 435373,
+        "type_index": 36780,
+        "token": "0x4000009"
+      }
+    },
+    {
+      "class": ".EncryptedData",
+      "kind": "method",
+      "member": {
+        "name": "get_EncryptionAlgorithm",
+        "method_index": 407641,
+        "token": "0x600002f",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".EncryptedData",
+      "kind": "method",
+      "member": {
+        "name": "get_EncryptedContent",
+        "method_index": 407642,
+        "token": "0x6000030",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": ".EncryptedPrivateKeyInfo",
+      "kind": "method",
+      "member": {
+        "name": "get_EncryptedData",
+        "method_index": 408019,
+        "token": "0x60001a9",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "GetPosition",
+        "method_index": 410031,
+        "token": "0x60002c3",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "SetPosition",
+        "method_index": 410032,
+        "token": "0x60002c4",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "GetLocalPosition",
+        "method_index": 410035,
+        "token": "0x60002c7",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPosition",
+        "method_index": 410036,
+        "token": "0x60002c8",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "GetPositionInternal",
+        "method_index": 410042,
+        "token": "0x60002ce",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionInternal",
+        "method_index": 410043,
+        "token": "0x60002cf",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "GetLocalPositionInternal",
+        "method_index": 410046,
+        "token": "0x60002d2",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionInternal",
+        "method_index": 410047,
+        "token": "0x60002d3",
+        "parameter_count": 2
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "GetPositionInternal_Injected",
+        "method_index": 410053,
+        "token": "0x60002d9",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "SetPositionInternal_Injected",
+        "method_index": 410054,
+        "token": "0x60002da",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "GetLocalPositionInternal_Injected",
+        "method_index": 410057,
+        "token": "0x60002dd",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "UnityEngine.Animations.TransformStreamHandle",
+      "kind": "method",
+      "member": {
+        "name": "SetLocalPositionInternal_Injected",
+        "method_index": 410058,
+        "token": "0x60002de",
+        "parameter_count": 3
+      }
+    },
+    {
+      "class": "System.IO.Compression.PositionPreservingWriteOnlyStreamWrapper",
+      "kind": "field",
+      "member": {
+        "name": "_position",
+        "field_index": 439357,
+        "type_index": 79312,
+        "token": "0x4000098"
+      }
+    },
+    {
+      "class": "System.IO.Compression.PositionPreservingWriteOnlyStreamWrapper",
+      "kind": "method",
+      "member": {
+        "name": "get_Position",
+        "method_index": 411065,
+        "token": "0x60000a4",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "System.IO.Compression.PositionPreservingWriteOnlyStreamWrapper",
+      "kind": "method",
+      "member": {
+        "name": "set_Position",
+        "method_index": 411066,
+        "token": "0x60000a5",
+        "parameter_count": 1
+      }
+    },
+    {
+      "class": "UnityEngine.TextCore.LowLevel.MarkPositionAdjustment",
+      "kind": "field",
+      "member": {
+        "name": "m_XPositionAdjustment",
+        "field_index": 441531,
+        "type_index": 98253,
+        "token": "0x400007e"
+      }
+    },
+    {
+      "class": "UnityEngine.TextCore.LowLevel.MarkPositionAdjustment",
+      "kind": "field",
+      "member": {
+        "name": "m_YPositionAdjustment",
+        "field_index": 441532,
+        "type_index": 98253,
+        "token": "0x400007f"
+      }
+    },
+    {
+      "class": "UnityEngine.TextCore.LowLevel.MarkPositionAdjustment",
+      "kind": "method",
+      "member": {
+        "name": "get_xPositionAdjustment",
+        "method_index": 414844,
+        "token": "0x600008e",
+        "parameter_count": 0
+      }
+    },
+    {
+      "class": "UnityEngine.TextCore.LowLevel.MarkPositionAdjustment",
+      "kind": "method",
+      "member": {
+        "name": "get_yPositionAdjustment",
+        "method_index": 414845,
+        "token": "0x600008f",
+        "parameter_count": 0
+      }
+    }
+  ]
+}
