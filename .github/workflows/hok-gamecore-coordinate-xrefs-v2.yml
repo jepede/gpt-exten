@@ -1,0 +1,51 @@
+name: HoK GameCore Coordinate Reverse Analysis v2
+on:
+  push:
+    branches:
+      - work/hok-coordinate-study-20261026
+    paths:
+      - .github/workflows/hok-gamecore-coordinate-xrefs-v2.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Capstone instruction disassembler
+        run: |
+          set -euo pipefail
+          python3 -m venv work/venv
+          work/venv/bin/pip install capstone==5.0.6
+          work/venv/bin/python -c 'import capstone;print("CAPSTONE_VERSION",capstone.__version__)'
+      - name: Restore verified GameCore only (no Tencent re-download)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          work/venv/bin/python .github/scripts/hok_il2cpp_cache_recover_and_report.py download gamecore
+      - name: Search executable ARM64 code for precise position/string XREF
+        run: |
+          set -euo pipefail
+          work/venv/bin/python .github/scripts/hok_gamecore_coordinate_xrefs.py
+          sed -n '1,180p' reports/hok_20261026/gamecore/gamecore_coordinate_xrefs.md
+      - name: Upload native code and coordinate XREF research report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-12.1.1.1-gamecore-coordinate-function-xrefs
+          path: reports/hok_20261026/gamecore/
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Keep report in persistent research branch
+        if: success()
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/hok_20261026/gamecore
+          git diff --cached --quiet || git commit -m "Recover HoK native GameCore coordinate and fog-of-war ARM64 function references"
+          git push origin HEAD:work/hok-coordinate-study-20261026
