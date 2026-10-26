@@ -1,0 +1,49 @@
+name: HoK Persist IL2CPP v29 Recovered Metadata
+on:
+  push:
+    branches:
+      - work/hok-coordinate-study-20261026
+    paths:
+      - .github/workflows/hok-v29-artifact-persist.yml
+permissions:
+  contents: write
+  actions: read
+jobs:
+  save:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore verified prior parsed type report, no repeated native analysis
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p reports/hok_20261026/metadata_v29
+          gh run download 40313985452 -R "$GITHUB_REPOSITORY" \
+            -n hok-12.1.1.1-v29-position-types \
+            -D reports/hok_20261026/metadata_v29
+          test -s reports/hok_20261026/metadata_v29/types.json
+          test -s reports/hok_20261026/metadata_v29/coordinate_types.md
+          python3 - <<'PY'
+          import json,pathlib
+          p=pathlib.Path('reports/hok_20261026/metadata_v29/types.json')
+          x=json.loads(p.read_text())
+          print("PREVIOUS_PARSED_METADATA_VALID",x["metadata_version"],x["total_types"],x["total_methods"],x["total_fields"],len(x["types"]))
+          PY
+      - name: Commit report with concurrent updates rebased
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/hok_20261026/metadata_v29/
+          git diff --cached --quiet && exit 0
+          git commit -m "Persist HoK 12.1.1.1 IL2CPP coordinate metadata from verified workflow artifact"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin work/hok-coordinate-study-20261026
+            git rebase origin/work/hok-coordinate-study-20261026
+            if git push origin HEAD:work/hok-coordinate-study-20261026; then
+              echo "RESEARCH_METADATA_PERSISTED"; exit 0
+            fi
+            sleep 3
+          done
+          exit 1
