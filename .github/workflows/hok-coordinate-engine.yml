@@ -1,0 +1,99 @@
+name: HoK Coordinate Engine Static Analysis
+on:
+  push:
+    branches:
+      - work/hok-coordinate-study-20261026
+    paths:
+      - .github/workflows/hok-coordinate-engine.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover core engine and IL2CPP metadata over verified remote APK Range
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/hok_coordinate_engine_extract.py
+          sed -n '1,170p' reports/hok_20261026/coordinate_engine_analysis.md
+      - name: Upload IL2CPP native library in compact one-file cache
+        id: upload_il2cpp
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-coordinate-v12.1.1.1-il2cpp-arm64
+          path: out/hok_coord/packs/hok-12.1.1.1-il2cpp.zip
+          retention-days: 400
+          compression-level: 0
+          if-no-files-found: error
+      - name: Upload native GameCore cache
+        id: upload_gamecore
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-coordinate-v12.1.1.1-gamecore-arm64
+          path: out/hok_coord/packs/hok-12.1.1.1-gamecore.zip
+          retention-days: 400
+          compression-level: 0
+          if-no-files-found: error
+      - name: Upload Unity core cache
+        id: upload_unity
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-coordinate-v12.1.1.1-unity-arm64
+          path: out/hok_coord/packs/hok-12.1.1.1-unity.zip
+          retention-days: 400
+          compression-level: 0
+          if-no-files-found: error
+      - name: Upload IL2CPP global metadata cache
+        id: upload_metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-coordinate-v12.1.1.1-global-metadata
+          path: out/hok_coord/packs/hok-12.1.1.1-metadata.zip
+          retention-days: 400
+          compression-level: 0
+          if-no-files-found: error
+      - name: Upload coordinate triage and evidence report
+        id: upload_report
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-coordinate-v12.1.1.1-analysis-report
+          path: reports/hok_20261026/
+          retention-days: 400
+          if-no-files-found: error
+      - name: Record actual GitHub Artifacts expiry and manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          A_ID: ${{ steps.upload_il2cpp.outputs.artifact-id }}
+          B_ID: ${{ steps.upload_gamecore.outputs.artifact-id }}
+          C_ID: ${{ steps.upload_unity.outputs.artifact-id }}
+          D_ID: ${{ steps.upload_metadata.outputs.artifact-id }}
+          E_ID: ${{ steps.upload_report.outputs.artifact-id }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,subprocess,os,pathlib
+          records={}
+          for name,aid in [('il2cpp',os.environ['A_ID']),('gamecore',os.environ['B_ID']),('unity',os.environ['C_ID']),('metadata',os.environ['D_ID']),('report',os.environ['E_ID'])]:
+            p=subprocess.run(['gh','api',f"/repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts/{aid}"],
+                 capture_output=True,text=True,check=True)
+            x=json.loads(p.stdout)
+            records[name]={k:x.get(k) for k in ['id','name','size_in_bytes','digest','created_at','expires_at','expired']}
+            records[name]['run_id']=int(os.environ['GITHUB_RUN_ID'])
+            print("ARTIFACT_VALIDITY",name,json.dumps(records[name]),flush=True)
+          out=pathlib.Path('reports/hok_20261026')
+          (out/'artifact_cache_index.json').write_text(json.dumps(records,ensure_ascii=False,indent=2)+'\n')
+          PY
+      - name: Persist reports on temporary research branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/hok_20261026/
+          git diff --cached --quiet || git commit -m "Record HoK IL2CPP native coordinate analysis and verified binary cache"
+          git push origin HEAD:work/hok-coordinate-study-20261026
