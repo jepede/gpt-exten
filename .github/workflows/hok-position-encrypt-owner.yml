@@ -1,0 +1,27 @@
+name: HOK hero position encryption config owner analysis
+on:
+  push:
+    branches: [work/hok-coordinate-re-20261026]
+    paths:
+      - .github/workflows/hok-position-encrypt-owner.yml
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe official cached URL and inspect remote native directory
+        run: |
+          set -euo pipefail
+          python3 tools/hok_position_encrypt_owner.py
+          head -c 9000 out/hok_coord_owner/owner.json
+      - name: Preserve report for this investigation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-position-encryption-owner
+          path: out/hok_coord_owner/
+          if-no-files-found: warn
+          retention-days: 1
