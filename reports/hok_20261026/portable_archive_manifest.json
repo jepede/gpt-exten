@@ -1,0 +1,44 @@
+{
+  "name": "HoK coordinate static ELF and IL2CPP metadata",
+  "version": "12.1.1.1",
+  "platform": "Android",
+  "architecture": "arm64-v8a",
+  "files": [
+    {
+      "path": "lib/arm64-v8a/libil2cpp.so",
+      "size": 227661664,
+      "sha256": "6e00c3ac8ac129d7b6dd5bdd5c8c72777d70a91a317d193bf5f422505d9bafd5",
+      "portable_archive": "hok-12.1.1.1-il2cpp.zip",
+      "archive_bytes": 77648131,
+      "archive_sha256": "845d5feb4bc47ded89f14fb470f4f77884cf03f4bb1bf6bb204ba8cc9aa53025",
+      "crc32": "1db09c16"
+    },
+    {
+      "path": "lib/arm64-v8a/libGameCore.so",
+      "size": 86426392,
+      "sha256": "dc034883ea2fc5c6be42d2e3b068652a7e1829f73450bb732fceebbd8f75d4c8",
+      "portable_archive": "hok-12.1.1.1-gamecore.zip",
+      "archive_bytes": 21200454,
+      "archive_sha256": "dd05d8e699ee7ae65a30a17a2775331fa17d91c50eac2b5993928664f4d35932",
+      "crc32": "5f33985c"
+    },
+    {
+      "path": "lib/arm64-v8a/libunity.so",
+      "size": 30220440,
+      "sha256": "6f862b245e048e8062b71c747d817bbb942276039bf6991adea60046b19b68a8",
+      "portable_archive": "hok-12.1.1.1-unity.zip",
+      "archive_bytes": 13956734,
+      "archive_sha256": "261640892445e7245ffcbf1d9a909887b940c409ab8ed0d9bf2f5c0ad5531a75",
+      "crc32": "dfde5479"
+    },
+    {
+      "path": "assets/bin/Data/Managed/Metadata/global-metadata.dat",
+      "size": 60322264,
+      "sha256": "5e66b7a0597679b6ef0383755eee4adb60a71f15a87a6fab91582eaa7f85a3a7",
+      "portable_archive": "hok-12.1.1.1-metadata.zip",
+      "archive_bytes": 17342950,
+      "archive_sha256": "b833a226b96158d262766a1c2a4192a700d60a04f2c25424e8c264d5f7748b27",
+      "crc32": "913a53e7"
+    }
+  ]
+}

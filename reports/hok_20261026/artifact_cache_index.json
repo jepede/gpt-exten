@@ -1,0 +1,52 @@
+{
+  "il2cpp": {
+    "id": 12644338989,
+    "name": "hok-coordinate-v12.1.1.1-il2cpp-arm64",
+    "size_in_bytes": 77648291,
+    "digest": "sha256:7fb40761b492dd94d98687b42aa415b0a230dad9cc2d8bebb10dec854a0904fa",
+    "created_at": "2026-10-26T11:00:17Z",
+    "expires_at": "2027-01-24T10:59:21Z",
+    "expired": false,
+    "run_id": 40311637215
+  },
+  "gamecore": {
+    "id": 12644064463,
+    "name": "hok-coordinate-v12.1.1.1-gamecore-arm64",
+    "size_in_bytes": 21200618,
+    "digest": "sha256:867d29d1b57fb7b2fb2d670a1670dd89adc11a5a69592aee45779ec81590f708",
+    "created_at": "2026-10-26T11:00:19Z",
+    "expires_at": "2027-01-24T10:59:21Z",
+    "expired": false,
+    "run_id": 40311637215
+  },
+  "unity": {
+    "id": 12644788311,
+    "name": "hok-coordinate-v12.1.1.1-unity-arm64",
+    "size_in_bytes": 13956892,
+    "digest": "sha256:e3005dff66484e8f3aa591e19730345b94bae1e302f4050ff91a07a3c41fb3e5",
+    "created_at": "2026-10-26T11:00:21Z",
+    "expires_at": "2027-01-24T10:59:21Z",
+    "expired": false,
+    "run_id": 40311637215
+  },
+  "metadata": {
+    "id": 12644384544,
+    "name": "hok-coordinate-v12.1.1.1-global-metadata",
+    "size_in_bytes": 17343114,
+    "digest": "sha256:7d820c83f0715afe5e5a18b102c6f876b6ab86ea00cf6aa79301e7a081724b1a",
+    "created_at": "2026-10-26T11:00:23Z",
+    "expires_at": "2027-01-24T10:59:21Z",
+    "expired": false,
+    "run_id": 40311637215
+  },
+  "report": {
+    "id": 12644489347,
+    "name": "hok-coordinate-v12.1.1.1-analysis-report",
+    "size_in_bytes": 104266,
+    "digest": "sha256:e6d2b0ea4119a455c57503be161ff06507c4c96ce29156ca45d93a885565ae79",
+    "created_at": "2026-10-26T11:00:24Z",
+    "expires_at": "2027-01-24T10:59:21Z",
+    "expired": false,
+    "run_id": 40311637215
+  }
+}
