@@ -1,0 +1,66 @@
+name: HOK verified coordinate owners and movement methods
+on:
+  push:
+    branches: [work/hok-coordinate-re-20261026]
+    paths:
+      - .github/workflows/hok-coordinate-verified-recheck.yml
+permissions:
+  contents: read
+  actions: read
+jobs:
+  metadata-inspection:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore existing SHA256-pinned Honor of Kings metadata Artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/hok_download work/hok_cached
+          gh run download 40311637215 -R "$GITHUB_REPOSITORY" -n hok-coordinate-v12.1.1.1-global-metadata -D work/hok_download
+          python3 - <<'PY'
+          import hashlib, zipfile
+          from pathlib import Path
+          expected_inner="b833a226b96158d262766a1c2a4192a700d60a04f2c25424e8c264d5f7748b27"
+          expect_data="5e66b7a0597679b6ef0383755eee4adb60a71f15a87a6fab91582eaa7f85a3a7"
+          files=list(Path("work/hok_download").rglob("hok-12.1.1.1-metadata.zip"))
+          assert len(files)==1,[str(x) for x in Path("work/hok_download").rglob("*")]
+          p=files[0]
+          assert hashlib.sha256(p.read_bytes()).hexdigest()==expected_inner,"Cached metadata ZIP SHA mismatch"
+          with zipfile.ZipFile(p) as z:
+            members=[x for x in z.namelist() if x.endswith("global-metadata.dat")]
+            assert len(members)==1,members
+            with z.open(members[0]) as src,open("work/hok_cached/global-metadata.dat","wb") as out:
+              for b in iter(lambda:src.read(8<<20),b""):out.write(b)
+          f=Path("work/hok_cached/global-metadata.dat")
+          assert f.stat().st_size==60322264
+          assert hashlib.sha256(f.read_bytes()).hexdigest()==expect_data
+          print("VERIFIED_REUSED_CACHED_METADATA",f.stat().st_size,expect_data,flush=True)
+          PY
+      - name: Reconstruct precise encryption field owner and movement component class
+        run: |
+          set -euo pipefail
+          python3 tools/hok_position_encrypt_owner.py
+          python3 tools/hok_movement_method_schema.py
+          python3 - <<'PY'
+          import json
+          a=json.load(open("out/hok_coord_owner/owner.json"))
+          b=json.load(open("out/hok_move_members/members.json"))
+          print("FIELD_OWNERS",json.dumps(a["owners"],ensure_ascii=False)[:17000],flush=True)
+          for x in b["types"]:
+            if x["name"] in ("MoveComponent","VInt3","FrameSynchr","DimensionMoveComponent"):
+              print("TYPE",json.dumps(x,ensure_ascii=False)[:8500],flush=True)
+          PY
+      - name: Preserve validated evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-coordinate-verified-field-and-method-analysis
+          path: |
+            out/hok_coord_owner/
+            out/hok_move_members/
+          if-no-files-found: warn
+          retention-days: 1
