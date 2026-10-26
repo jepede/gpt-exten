@@ -1,0 +1,27 @@
+name: HOK IL2CPP GameCore coordinate ELF inspection
+on:
+  push:
+    branches: [work/hok-coordinate-re-20261026]
+    paths:
+      - .github/workflows/hok-coordinate-elf.yml
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe official cached URL and inspect remote native directory
+        run: |
+          set -euo pipefail
+          python3 tools/hok_coordinate_elf_probe.py
+          head -c 18000 out/hok_coordinate_elf/engine_elf_evidence.json
+      - name: Preserve report for this investigation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-coordinate-elf-report
+          path: out/hok_coordinate_elf/
+          if-no-files-found: warn
+          retention-days: 1
