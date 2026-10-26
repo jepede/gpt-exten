@@ -1,0 +1,1112 @@
+{
+  "game": "王者荣耀",
+  "version": "12.1.1.1",
+  "package": "com.tencent.tmgp.sgame",
+  "apk_expected_size": 1748020376,
+  "url_md5_from_source_unverified": "23516462ae86013bec0f3e902b8cd638",
+  "source": "http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/23516462AE86013BEC0F3E902B8CD638.apk?fsname=com.tencent.tmgp.sgame_12.1.1.1.apk",
+  "apk_zip_entries": 1567,
+  "so_entries": 144,
+  "abis": [
+    "arm64-v8a",
+    "armeabi-v7a"
+  ],
+  "libs": [
+    {
+      "name": "lib/arm64-v8a/libil2cpp.so",
+      "size": 227661664,
+      "packed": 77540550,
+      "crc32": "1db09c16",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libGameCore.so",
+      "size": 86426392,
+      "packed": 21211051,
+      "crc32": "5f33985c",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libunity.so",
+      "size": 30220440,
+      "packed": 13943189,
+      "crc32": "dfde5479",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libpuerts.so",
+      "size": 14882768,
+      "packed": 5426394,
+      "crc32": "79b82121",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libhippy.so",
+      "size": 14450824,
+      "packed": 4978284,
+      "crc32": "0abf389c",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libDownloadProxy.so",
+      "size": 11306888,
+      "packed": 4289182,
+      "crc32": "1484c44f",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libGLiveTP.so",
+      "size": 10661016,
+      "packed": 3775185,
+      "crc32": "be86d9e7",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libilink_network.so",
+      "size": 8661384,
+      "packed": 3520449,
+      "crc32": "71fa6ba6",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libapollo.so",
+      "size": 7848664,
+      "packed": 3148349,
+      "crc32": "e4592a26",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libDWT.so",
+      "size": 7048000,
+      "packed": 2598584,
+      "crc32": "51bfdcf3",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libTPCore-master.so",
+      "size": 6729808,
+      "packed": 2554764,
+      "crc32": "09c0aeff",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/liblibpag.so",
+      "size": 6238504,
+      "packed": 2498275,
+      "crc32": "7909277e",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libGCloudVoice.so",
+      "size": 5809376,
+      "packed": 2657946,
+      "crc32": "f071ec06",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libVideoEditUtil.so",
+      "size": 5701608,
+      "packed": 2631898,
+      "crc32": "52820639",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtersafe.so",
+      "size": 5598144,
+      "packed": 2254424,
+      "crc32": "4160049c",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPcdnTegTransSdk.so",
+      "size": 5527080,
+      "packed": 2064646,
+      "crc32": "80cc462b",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMSDKPIXCore.so",
+      "size": 5212872,
+      "packed": 1681654,
+      "crc32": "33b23fc6",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPixUI_Unity.so",
+      "size": 5074112,
+      "packed": 2017895,
+      "crc32": "558d0316",
+      "compression": 8
+    },
+    {
+      "name": "lib/armeabi-v7a/libapollo.so",
+      "size": 4748300,
+      "packed": 2617264,
+      "crc32": "33e7eb7f",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libliteavsdk.so",
+      "size": 4676304,
+      "packed": 1981880,
+      "crc32": "7cf9d68c",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtxffmpeg.so",
+      "size": 4497152,
+      "packed": 1888680,
+      "crc32": "a0007584",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPixFFmpeg.so",
+      "size": 4479664,
+      "packed": 1895925,
+      "crc32": "1836b3ff",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libAkSoundEngine.so",
+      "size": 4206424,
+      "packed": 1698862,
+      "crc32": "e8314bee",
+      "compression": 8
+    },
+    {
+      "name": "lib/armeabi-v7a/libPcdnTegTransSdk.so",
+      "size": 4148812,
+      "packed": 1917827,
+      "crc32": "6e5e0e7b",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libTDataMaster.so",
+      "size": 4082392,
+      "packed": 1318065,
+      "crc32": "c2512ff5",
+      "compression": 8
+    },
+    {
+      "name": "lib/armeabi-v7a/libtersafe.so",
+      "size": 4012552,
+      "packed": 2025709,
+      "crc32": "bd59fee7",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libQtsVFS.so",
+      "size": 3988208,
+      "packed": 1567417,
+      "crc32": "46705c5b",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libilink_live_game.so",
+      "size": 3496232,
+      "packed": 1543912,
+      "crc32": "5e8cf2af",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtraeimp-rtmp.so",
+      "size": 3429824,
+      "packed": 1519921,
+      "crc32": "bfe21707",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libcrosCurl.so",
+      "size": 3097288,
+      "packed": 1373073,
+      "crc32": "aa66eaa0",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtts.so",
+      "size": 2751512,
+      "packed": 949897,
+      "crc32": "4b5d6b27",
+      "compression": 8
+    },
+    {
+      "name": "lib/armeabi-v7a/libTDataMaster.so",
+      "size": 2561152,
+      "packed": 1141050,
+      "crc32": "3936d06e",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libavbase.so",
+      "size": 2455768,
+      "packed": 1026670,
+      "crc32": "523d7a83",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libRoosterNN.so",
+      "size": 2249624,
+      "packed": 893312,
+      "crc32": "18486252",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libmerge.so",
+      "size": 2209696,
+      "packed": 278702,
+      "crc32": "45263149",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libsnapdragon_services_qape.qti.so",
+      "size": 2144480,
+      "packed": 505695,
+      "crc32": "2bfbc6c1",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libnative-mvd-render.so",
+      "size": 2080104,
+      "packed": 603268,
+      "crc32": "2bd884db",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtprt.so",
+      "size": 1829288,
+      "packed": 644318,
+      "crc32": "55b97b90",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtav.so",
+      "size": 1808024,
+      "packed": 806445,
+      "crc32": "feec778a",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libsaf.so",
+      "size": 1805128,
+      "packed": 679564,
+      "crc32": "3f89cab8",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtgpa.so",
+      "size": 1700792,
+      "packed": 670522,
+      "crc32": "fb9b33ae",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libilink2.so",
+      "size": 1678048,
+      "packed": 459627,
+      "crc32": "b3b5f553",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMsdkAdapter.so",
+      "size": 1488816,
+      "packed": 441575,
+      "crc32": "a9da2167",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libCrashSight.so",
+      "size": 1478192,
+      "packed": 534659,
+      "crc32": "133b6fa5",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libcimgui.so",
+      "size": 1456912,
+      "packed": 610523,
+      "crc32": "8944a49b",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libgcloudcore.so",
+      "size": 1411952,
+      "packed": 492638,
+      "crc32": "08485bce",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libInsight.so",
+      "size": 1329072,
+      "packed": 376875,
+      "crc32": "1cd566f3",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtxplayer.so",
+      "size": 1325848,
+      "packed": 655662,
+      "crc32": "fe44b207",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libQtskDB.so",
+      "size": 1311712,
+      "packed": 399202,
+      "crc32": "483f525f",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libgsdk.so",
+      "size": 1252328,
+      "packed": 474170,
+      "crc32": "00b76c36",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libfinder.so",
+      "size": 1214832,
+      "packed": 374031,
+      "crc32": "f2a38406",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libapm.so",
+      "size": 1133968,
+      "packed": 396194,
+      "crc32": "bea25e3c",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMFRCLayer_eco.so",
+      "size": 1133544,
+      "packed": 396299,
+      "crc32": "a03f98fc",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libpxauth.so",
+      "size": 1083744,
+      "packed": 502802,
+      "crc32": "701bc9db",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libpixuiCurl.so",
+      "size": 1074584,
+      "packed": 478435,
+      "crc32": "f567bc97",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libsnapdragon_services_adk.qti.so",
+      "size": 1071808,
+      "packed": 287205,
+      "crc32": "e26caafd",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libowl.so",
+      "size": 1059528,
+      "packed": 357359,
+      "crc32": "3f8764b7",
+      "compression": 8
+    },
+    {
+      "name": "lib/armeabi-v7a/libtprt.so",
+      "size": 1040992,
+      "packed": 517073,
+      "crc32": "200a806c",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/liblinkid.so",
+      "size": 1015640,
+      "packed": 410329,
+      "crc32": "59c9a75c",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libc++_shared.so",
+      "size": 936368,
+      "packed": 274291,
+      "crc32": "1c2e94af",
+      "compression": 8
+    },
+    {
+      "name": "lib/armeabi-v7a/libCrashSight.so",
+      "size": 919924,
+      "packed": 451703,
+      "crc32": "dd4489ae",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMSDKUnityAdapter.so",
+      "size": 903424,
+      "packed": 281137,
+      "crc32": "b4c86644",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libcgsdk-loader.so",
+      "size": 863120,
+      "packed": 257172,
+      "crc32": "dce287fc",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libdolphin4tgpa.so",
+      "size": 838776,
+      "packed": 293446,
+      "crc32": "3bfef1d2",
+      "compression": 8
+    },
+    {
+      "name": "lib/armeabi-v7a/libgcloudcore.so",
+      "size": 804912,
+      "packed": 403154,
+      "crc32": "db3b8ae3",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPixVideoCore.so",
+      "size": 740896,
+      "packed": 280409,
+      "crc32": "90612539",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libsgameoodle.so",
+      "size": 714528,
+      "packed": 335441,
+      "crc32": "7581d81d",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libgamemaster.so",
+      "size": 713936,
+      "packed": 385141,
+      "crc32": "a1bf4b2f",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libpandoragamecore.so",
+      "size": 665688,
+      "packed": 197601,
+      "crc32": "5ff21d48",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libQtsResourcesVolumePlugin.so",
+      "size": 613448,
+      "packed": 226188,
+      "crc32": "984e7556",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPxExtJava.so",
+      "size": 592392,
+      "packed": 179608,
+      "crc32": "9a9bd93d",
+      "compression": 8
+    },
+    {
+      "name": "lib/armeabi-v7a/libsgameoodle.so",
+      "size": 587492,
+      "packed": 332372,
+      "crc32": "0df4a957",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libQtsFileSystemPlugin.so",
+      "size": 580488,
+      "packed": 210183,
+      "crc32": "29600251",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPxExtFFi.so",
+      "size": 575872,
+      "packed": 187091,
+      "crc32": "26082073",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libWDSDKCore.so",
+      "size": 563176,
+      "packed": 184891,
+      "crc32": "336a10b7",
+      "compression": 8
+    },
+    {
+      "name": "lib/armeabi-v7a/libc++_shared.so",
+      "size": 558988,
+      "packed": 210747,
+      "crc32": "533d9209",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libqimei.so",
+      "size": 539416,
+      "packed": 253726,
+      "crc32": "dba6e7a9",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libmagtsdk.so",
+      "size": 527088,
+      "packed": 178068,
+      "crc32": "4e9bc334",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtxsdl.so",
+      "size": 489544,
+      "packed": 195241,
+      "crc32": "32b56df2",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMSDKPIXWechat.so",
+      "size": 466504,
+      "packed": 115037,
+      "crc32": "2a342ecd",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libFLVMuxer.so",
+      "size": 415864,
+      "packed": 158862,
+      "crc32": "c7f924a3",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libWKSDKCore.so",
+      "size": 411784,
+      "packed": 137531,
+      "crc32": "9129e02e",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMFRC_SDK.so",
+      "size": 404992,
+      "packed": 131813,
+      "crc32": "0e65c4c1",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libilink_protobuf.so",
+      "size": 404360,
+      "packed": 106569,
+      "crc32": "43c53ce0",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libGVoicePlugin.so",
+      "size": 388720,
+      "packed": 128901,
+      "crc32": "c40f6cea",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libckeygeneratorV2.so",
+      "size": 374712,
+      "packed": 139691,
+      "crc32": "564b3fc0",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPGameLiveSdk.so",
+      "size": 354520,
+      "packed": 134708,
+      "crc32": "a165e5e1",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libmarsxlog.so",
+      "size": 337728,
+      "packed": 133416,
+      "crc32": "9f42a4fd",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libpandora.so",
+      "size": 335432,
+      "packed": 146403,
+      "crc32": "4cec0256",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libflexbox.so",
+      "size": 334784,
+      "packed": 107036,
+      "crc32": "120d427a",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libLightProfiler.so",
+      "size": 324992,
+      "packed": 121976,
+      "crc32": "2b373914",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtransceiver.so",
+      "size": 321576,
+      "packed": 101609,
+      "crc32": "1ca60fd5",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtxsoundtouch.so",
+      "size": 300928,
+      "packed": 113576,
+      "crc32": "98f6af3e",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libWGRecorder.so",
+      "size": 297088,
+      "packed": 111536,
+      "crc32": "c3cc388f",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMMCodecSdk.so",
+      "size": 297016,
+      "packed": 107419,
+      "crc32": "022c9101",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPxlwCheckIris.so",
+      "size": 293424,
+      "packed": 92295,
+      "crc32": "21835bf2",
+      "compression": 8
+    },
+    {
+      "name": "lib/armeabi-v7a/libmagtsdk.so",
+      "size": 285696,
+      "packed": 139777,
+      "crc32": "92078ab6",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libTASpectrum.so",
+      "size": 284544,
+      "packed": 112415,
+      "crc32": "f325eaba",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libitophttpdns.so",
+      "size": 283928,
+      "packed": 106477,
+      "crc32": "8785c416",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPGameLiveAudio.so",
+      "size": 280680,
+      "packed": 105649,
+      "crc32": "9be20418",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPxAuthAPI.so",
+      "size": 268368,
+      "packed": 97098,
+      "crc32": "e08c5188",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libGameJoyRecorderAuthApi.so",
+      "size": 260200,
+      "packed": 96264,
+      "crc32": "d664708f",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libAkDelayPLive.so",
+      "size": 260088,
+      "packed": 97585,
+      "crc32": "185a72d8",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libhttpdns.so",
+      "size": 251232,
+      "packed": 87842,
+      "crc32": "bf62f946",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtgpalink.so",
+      "size": 248816,
+      "packed": 77029,
+      "crc32": "ed24b53b",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libturinggame.so",
+      "size": 240944,
+      "packed": 115630,
+      "crc32": "b35e4161",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libQAPECSharp.qti.so",
+      "size": 238824,
+      "packed": 75931,
+      "crc32": "31cc12c0",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libpxtv.so",
+      "size": 227464,
+      "packed": 77037,
+      "crc32": "ecb48192",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libpxpicker.so",
+      "size": 223368,
+      "packed": 74072,
+      "crc32": "b5726547",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libVkLayer_mfrc.so",
+      "size": 220024,
+      "packed": 74611,
+      "crc32": "2b74baa6",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libWsEditVideoPlayer.so",
+      "size": 219200,
+      "packed": 73432,
+      "crc32": "e174d0cd",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libnbsdk.so",
+      "size": 211000,
+      "packed": 70882,
+      "crc32": "6d5335c9",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libAkDelayWG.so",
+      "size": 207016,
+      "packed": 69720,
+      "crc32": "9afa273f",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMFRCConfig.so",
+      "size": 187720,
+      "packed": 62717,
+      "crc32": "46bcd348",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMSDKPIXQQ.so",
+      "size": 183568,
+      "packed": 50379,
+      "crc32": "ae1bbe96",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libentryexpro.so",
+      "size": 177624,
+      "packed": 78680,
+      "crc32": "2ab000e6",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libqmp.so",
+      "size": 170888,
+      "packed": 80986,
+      "crc32": "fe467f4c",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMSDKPIXXG.so",
+      "size": 167512,
+      "packed": 46904,
+      "crc32": "7f923050",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMSDKPIXWebView.so",
+      "size": 166872,
+      "packed": 43776,
+      "crc32": "29421e49",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMSDKPIXBeacon.so",
+      "size": 150856,
+      "packed": 39896,
+      "crc32": "236ded8a",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPixVideo.so",
+      "size": 149632,
+      "packed": 57433,
+      "crc32": "ffc0c192",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtdmbeaconid.so",
+      "size": 98712,
+      "packed": 47383,
+      "crc32": "c8b36238",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libfinderbindsdknativelib.so",
+      "size": 59760,
+      "packed": 20981,
+      "crc32": "4303bac9",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMSDKPIXLBS.so",
+      "size": 51584,
+      "packed": 12756,
+      "crc32": "abde6a3f",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libxgVipSecurity.so",
+      "size": 47168,
+      "packed": 22427,
+      "crc32": "e71f3148",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libtencentloc.so",
+      "size": 45160,
+      "packed": 24076,
+      "crc32": "b2595aa9",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libnpps-jni.so",
+      "size": 31480,
+      "packed": 10448,
+      "crc32": "bdccdfe6",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libgpps-jni.so",
+      "size": 26552,
+      "packed": 9014,
+      "crc32": "456c66cc",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMSDKPIXSystem.so",
+      "size": 18352,
+      "packed": 4628,
+      "crc32": "56bf197d",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libgrobot.so",
+      "size": 18272,
+      "packed": 5142,
+      "crc32": "6c0f623f",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPluginCrosCurl.so",
+      "size": 18264,
+      "packed": 5218,
+      "crc32": "e14bb68e",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libzeusflipped.so",
+      "size": 18256,
+      "packed": 3068,
+      "crc32": "2695e406",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libvideotexture.so",
+      "size": 18104,
+      "packed": 5012,
+      "crc32": "e239e103",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libckguard.so",
+      "size": 18080,
+      "packed": 6510,
+      "crc32": "d69cee44",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libzeus_direct_dex.so",
+      "size": 10472,
+      "packed": 4283,
+      "crc32": "276e7e84",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libest-cpu.so",
+      "size": 10064,
+      "packed": 3402,
+      "crc32": "4023e476",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libWGRecorderApi.so",
+      "size": 9944,
+      "packed": 2322,
+      "crc32": "d79318d6",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libencrypt.so",
+      "size": 9920,
+      "packed": 3781,
+      "crc32": "aecd2835",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libCrashAdapter.so",
+      "size": 9688,
+      "packed": 2752,
+      "crc32": "b8d11273",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libMapUIService.so",
+      "size": 9608,
+      "packed": 2332,
+      "crc32": "484a068e",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libmain.so",
+      "size": 6600,
+      "packed": 2448,
+      "crc32": "07100d3e",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libgetjvm.so",
+      "size": 5968,
+      "packed": 1955,
+      "crc32": "a33eb546",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libTCUpload.so",
+      "size": 5912,
+      "packed": 1611,
+      "crc32": "e34b153d",
+      "compression": 8
+    },
+    {
+      "name": "lib/arm64-v8a/libPGameLiveMisc.so",
+      "size": 5752,
+      "packed": 1485,
+      "crc32": "603410e7",
+      "compression": 8
+    }
+  ],
+  "relevant_asset_names": [
+    {
+      "name": "assets/bin/Data/Managed/Metadata/global-metadata.dat",
+      "size": 60322264
+    },
+    {
+      "name": "assets/bin/Data/Resources/unity_builtin_extra",
+      "size": 540144
+    },
+    {
+      "name": "assets/bin/Data/ScriptingAssemblies.json",
+      "size": 4869
+    },
+    {
+      "name": "assets/bin/Data/unity default resources",
+      "size": 912312
+    },
+    {
+      "name": "assets/bin/Data/unity_app_guid",
+      "size": 36
+    },
+    {
+      "name": "google/protobuf/descriptor.proto",
+      "size": 37986
+    },
+    {
+      "name": "lib/arm64-v8a/libAkSoundEngine.so",
+      "size": 4206424
+    },
+    {
+      "name": "lib/arm64-v8a/libGameCore.so",
+      "size": 86426392
+    },
+    {
+      "name": "lib/arm64-v8a/libil2cpp.so",
+      "size": 227661664
+    },
+    {
+      "name": "lib/arm64-v8a/libMSDKUnityAdapter.so",
+      "size": 903424
+    },
+    {
+      "name": "lib/arm64-v8a/libpandoragamecore.so",
+      "size": 665688
+    },
+    {
+      "name": "lib/arm64-v8a/libPixUI_Unity.so",
+      "size": 5074112
+    },
+    {
+      "name": "lib/arm64-v8a/libunity.so",
+      "size": 30220440
+    },
+    {
+      "name": "META-INF/androidx.coordinatorlayout_coordinatorlayout.version",
+      "size": 6
+    },
+    {
+      "name": "META-INF/androidx.sqlite_sqlite-framework.version",
+      "size": 6
+    },
+    {
+      "name": "META-INF/com.android.games.engine.build_fingerprint",
+      "size": 75
+    },
+    {
+      "name": "META-INF/services/kotlinx.coroutines.internal.MainDispatcherFactory",
+      "size": 52
+    },
+    {
+      "name": "network-framework-compat.properties",
+      "size": 48
+    },
+    {
+      "name": "res/drawable-hdpi-v4/widget_hero_preview.png",
+      "size": 787441
+    },
+    {
+      "name": "res/drawable/unity_static_splash.png",
+      "size": 24609
+    }
+  ],
+  "remote_bytes": 1092764,
+  "range_calls": 2,
+  "notes": [
+    "Remote ZIP members enumerated over HTTP Range; original full-APK MD5 not verified.",
+    "The listing alone cannot prove game coordinate encryption or concrete field layout."
+  ]
+}
