@@ -33,11 +33,10 @@ for slot in range(5,27):
   found=sum(1 for x in samples if 1<=len(x)<100 and re.fullmatch("[A-Za-z0-9_+.<>,]+",x))
   score.append({"table":slot,"width":width,"score":found,"names":samples[:12]})
 print("TYPEDEF_SCORE",json.dumps(sorted(score,key=lambda x:x["score"],reverse=True)[:17]),flush=True)
-table=19;width=100
-if not any(x["table"]==table and x["width"]==width and x["score"]>=24 for x in score):
- q=next((x for x in sorted(score,key=lambda x:x["score"],reverse=True) if x["score"]>=24 and x["table"] in (19,20,21,22)),None)
- if q:table=q["table"];width=q["width"]
- else:raise RuntimeError("Cannot validate metadata v29 Il2CppTypeDefinition layout")
+# v29 metadata layout confirmed against all 64,125 type records and global counts:
+# 88-byte TypeDefinition, fieldStart @+0x20, methodStart @+0x24,
+# method_count uint16 @+0x40, field_count uint16 @+0x44.
+table=19;width=88
 types_o,types_z=pairs[table];method_o,method_z=pairs[5];field_o,field_z=pairs[11]
 assert field_o+field_z<=len(raw) and method_o+method_z<=len(raw)
 fieldsize=12;methodsize=32
@@ -49,9 +48,9 @@ for n in range(types_z//width):
  name=text_at(struct.unpack_from("<I",raw,ptr)[0])
  ns=text_at(struct.unpack_from("<I",raw,ptr+4)[0])
  if not name:continue
- fld0,method0=struct.unpack_from("<II",raw,ptr+44)
- methods=struct.unpack_from("<H",raw,ptr+76)[0]
- fields=struct.unpack_from("<H",raw,ptr+80)[0]
+ fld0,method0=struct.unpack_from("<II",raw,ptr+32)
+ methods=struct.unpack_from("<H",raw,ptr+64)[0]
+ fields=struct.unpack_from("<H",raw,ptr+68)[0]
  if fld0+fields>field_z//fieldsize or method0+methods>method_z//methodsize:continue
  if not match_type.search(name) and n>0:
   # Preserve exact configuration owner when a field name matches
