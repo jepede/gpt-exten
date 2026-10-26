@@ -30,7 +30,8 @@ for i in range(typelen//88):
  off=typeo+i*88
  nameidx,nsidx=struct.unpack_from("<II",data,off)
  fstart,mstart=struct.unpack_from("<II",data,off+32)
- mcount,fcount=struct.unpack_from("<HH",data,off+64)
+ mcount=struct.unpack_from("<H",data,off+64)[0]
+ fcount=struct.unpack_from("<H",data,off+68)[0]
  types.append({"type_index":i,"name":getstr(nameidx),"namespace":getstr(nsidx),
                "field_start":fstart,"field_count":fcount,"method_start":mstart,"method_count":mcount})
 by_name={q["name"]:q for q in types if q["name"]}
