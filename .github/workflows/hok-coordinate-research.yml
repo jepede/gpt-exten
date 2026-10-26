@@ -1,0 +1,74 @@
+name: HOK coordinate engine static study
+on:
+  push:
+    branches: [work/hok-coordinate-analysis-20261026]
+    paths: [.github/workflows/hok-coordinate-research.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover only required official APK members without publishing binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import sys,shutil,zipfile
+          from pathlib import Path
+          sys.path.insert(0,str(Path('.github/scripts').resolve()))
+          from ace_range_from_tencent_apks import SOURCES,RangeFile
+          title,pkg,version,md5,size=SOURCES['hok']
+          src=f"http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/{md5}.apk?fsname={pkg}_{version}.apk"
+          reader=RangeFile(src)
+          assert reader.size==size
+          out=Path('/tmp/hok');out.mkdir(parents=True,exist_ok=True)
+          members={'libGameCore.so':'lib/arm64-v8a/libGameCore.so',
+                   'global-metadata.dat':'assets/bin/Data/Managed/Metadata/global-metadata.dat'}
+          with zipfile.ZipFile(reader) as z:
+              for fn,member in members.items():
+                  entry=z.getinfo(member)
+                  with z.open(entry) as i,(out/fn).open('wb') as o:
+                      shutil.copyfileobj(i,o,4<<20)
+                  assert (out/fn).stat().st_size==entry.file_size
+                  print('ZIP_MEMBER_CRC_VERIFIED',fn,entry.file_size,format(entry.CRC,'08x'),flush=True)
+          print('APK_CDN_BYTES',reader.received,'RANGES',reader.calls,flush=True)
+          reader.close()
+          PY
+      - name: Analyze game simulation ELF and IL2CPP metadata naming
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/hok_coordinate_elf_inspect.py /tmp/hok/libGameCore.so
+          python3 - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          path=Path('/tmp/hok/global-metadata.dat')
+          buf=path.read_bytes()
+          keys=['Position','Move','Hero','Actor','Vector3','VInt3','Encrypt','Decrypt',
+                'Fog','Fow','Transform','Frame','Sync','Location','Coordinate']
+          data={'bytes':len(buf),'sha256':hashlib.sha256(buf).hexdigest(),
+                'magic_hex':buf[:32].hex(),
+                'literal_counts':{k:buf.count(k.encode()) for k in keys}}
+          out=Path('reports/hok/metadata_names.json')
+          out.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+          print('IL2CPP_METADATA',json.dumps(data,ensure_ascii=False),flush=True)
+          PY
+      - name: Commit only inspectable textual evidence
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add reports/hok/coordinate_static.json reports/hok/metadata_names.json
+          git commit -m 'Record HOK 12.1.1.1 GameCore static coordinate data evidence'
+          git push origin HEAD:work/hok-coordinate-analysis-20261026
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hok-coordinate-static-evidence
+          path: |
+            reports/hok/coordinate_static.json
+            reports/hok/metadata_names.json
+          retention-days: 1
