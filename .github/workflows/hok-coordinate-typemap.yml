@@ -1,0 +1,27 @@
+name: HOK IL2CPP class coordinate schema reverse analysis
+on:
+  push:
+    branches: [work/hok-coordinate-re-20261026]
+    paths:
+      - .github/workflows/hok-coordinate-typemap.yml
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe official cached URL and inspect remote native directory
+        run: |
+          set -euo pipefail
+          python3 tools/hok_metadata_typedef_probe.py
+          head -c 14000 out/hok_type_map/type_map.json
+      - name: Preserve report for this investigation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-coordinate-il2cpp-type-map
+          path: out/hok_type_map/
+          if-no-files-found: warn
+          retention-days: 1
