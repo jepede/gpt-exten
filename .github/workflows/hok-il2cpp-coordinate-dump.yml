@@ -1,0 +1,89 @@
+name: HoK IL2CPP Coordinate Metadata Recovery
+on:
+  push:
+    branches:
+      - work/hok-coordinate-study-20261026
+    paths:
+      - .github/workflows/hok-il2cpp-coordinate-dump.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+      - name: Restore SHA256-verified existing native artifacts from GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/hok_il2cpp_cache_recover_and_report.py download
+      - name: Fetch audited upstream Il2CppDumper and inspect native code registrations
+        run: |
+          set -euo pipefail
+          mkdir -p work/tools work/il2cppdump
+          curl -fL --retry 4 --connect-timeout 30 --max-time 300 \
+            -o work/tools/il2cppdumper-net6-v6.7.46.zip \
+            https://github.com/Perfare/Il2CppDumper/releases/download/v6.7.46/Il2CppDumper-net6-v6.7.46.zip
+          test "$(stat -c %s work/tools/il2cppdumper-net6-v6.7.46.zip)" -eq 406027
+          unzip -tq work/tools/il2cppdumper-net6-v6.7.46.zip
+          unzip -oq work/tools/il2cppdumper-net6-v6.7.46.zip -d work/tools/il2cppdumper
+          find work/tools/il2cppdumper -maxdepth 3 -type f | head -30
+          python3 - <<'PY'
+          import json,pathlib
+          for p in pathlib.Path('work/tools/il2cppdumper').rglob('config.json'):
+            d=json.loads(p.read_text())
+            d.update(RequireAnyKey=False,GenerateDummyDll=False,GenerateStruct=True)
+            p.write_text(json.dumps(d,indent=2))
+            print('UPDATED_CONFIG',p)
+          PY
+          APP="$(find "$PWD/work/tools/il2cppdumper" -name 'Il2CppDumper.dll' -print -quit)"
+          test -n "$APP"
+          echo "Running $(dotnet --version) Il2CppDumper at $APP"
+          set +e
+          printf '0\n0\n0\n' | timeout 1100s dotnet "$APP" \
+            "$PWD/work/hok_native/lib/arm64-v8a/libil2cpp.so" \
+            "$PWD/work/hok_native/assets/bin/Data/Managed/Metadata/global-metadata.dat" \
+            "$PWD/work/il2cppdump" > work/il2cppdump/run.log 2>&1
+          rc=$?
+          set -e
+          echo "DUMPER_EXIT_CODE $rc"
+          tail -100 work/il2cppdump/run.log
+          echo "$rc" > work/il2cppdump/exit_code.txt
+      - name: Recover coordinate types/methods and summarize metadata evidence
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/hok_il2cpp_cache_recover_and_report.py report
+          ls -lh reports/hok_20261026/il2cpp/ work/il2cppdump/ | head -60
+      - name: Store recovered coordinate research report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-12.1.1.1-il2cpp-coordinate-types
+          path: reports/hok_20261026/il2cpp/
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Store full metadata/method mapping, if available
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-12.1.1.1-il2cpp-full-dump-compact
+          path: out/hok_coord/il2cpp_reconstructed.zip
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: ignore
+      - name: Commit compact coordinate analysis evidence
+        if: success()
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/hok_20261026/il2cpp
+          git diff --cached --quiet || git commit -m "Recover HoK 12.1.1.1 IL2CPP coordinate type and method evidence"
+          git push origin HEAD:work/hok-coordinate-study-20261026
