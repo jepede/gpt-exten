@@ -83,41 +83,44 @@ with SO.open("rb") as f:
  refs=[]
  mnems=collections.Counter()
  total=0; skipped=0
- for ins in cap.disasm(mm[text["off"]:text["off"]+text["size"]],text["va"]):
-  total+=1
-  pc=ins.address;mn=ins.mnemonic
-  if mn.startswith("."):
-   skipped+=1;active.clear();continue
-  ops=ins.operands
-  if mn=="adrp" and len(ops)>=2 and ops[0].type==CS_OP_REG and ops[1].type==CS_OP_IMM:
-   dest=ops[0].reg
-   page=ops[1].imm
-   if (page&~0xfff) in pages:
-    active[dest].append((pc,page&~0xfff))
-  if mn=="adr" and len(ops)>=2 and ops[1].type==CS_OP_IMM:
-   a=ops[1].imm
-   if a in target:refs.append({"pc":hex(pc),"adrp":hex(pc),"target":hex(a),"label":target[a]["name"],"kind":"ADR"})
-  if mn in ("add","ldr","ldrsw","str") and len(ops)>=2:
-   if mn=="add" and len(ops)>=3 and ops[1].type==CS_OP_REG and ops[2].type==CS_OP_IMM:
-    base_reg=ops[1].reg; disp=ops[2].imm
-   elif ops[1].type==CS_OP_MEM:
-    base_reg=ops[1].mem.base;disp=ops[1].mem.disp
-   else:base_reg=-1;disp=0
-   for start,page in active.get(base_reg,[]):
-    if 0<=pc-start<=64:
-     tgt=page+disp
-     if tgt in target:
-      fs,fe=fn(pc)
-      refs.append({"pc":hex(pc),"adrp":hex(start),"target":hex(tgt),
-                   "label":target[tgt]["name"],"keywords":target[tgt]["keywords"],
-                   "fde_start":hex(fs),"fde_end":hex(fe),"kind":mn,
-                   "reg":cap.reg_name(base_reg)})
-  for r in list(active):
-   active[r]=[(addr,pg) for addr,pg in active[r] if pc-addr<=64 and pc>=addr]
-   if not active[r]:del active[r]
-  if mn in ("bl","blr","br","ret","b"):
-   active.clear()
-  if total%2500000==0:print("ARM64_SCANNED",total,"XREF",len(refs),flush=True)
+ for off in range(0,text["size"],512*1024):
+  length=min(512*1024,text["size"]-off)
+  chunk=mm[text["off"]+off:text["off"]+off+length]
+  for ins in cap.disasm(chunk,text["va"]+off):
+   total+=1
+   pc=ins.address;mn=ins.mnemonic
+   if mn.startswith("."):
+    skipped+=1;active.clear();continue
+   ops=ins.operands
+   if mn=="adrp" and len(ops)>=2 and ops[0].type==CS_OP_REG and ops[1].type==CS_OP_IMM:
+    dest=ops[0].reg
+    page=ops[1].imm
+    if (page&~0xfff) in pages:
+     active[dest].append((pc,page&~0xfff))
+   if mn=="adr" and len(ops)>=2 and ops[1].type==CS_OP_IMM:
+    a=ops[1].imm
+    if a in target:refs.append({"pc":hex(pc),"adrp":hex(pc),"target":hex(a),"label":target[a]["name"],"kind":"ADR"})
+   if mn in ("add","ldr","ldrsw","str") and len(ops)>=2:
+    if mn=="add" and len(ops)>=3 and ops[1].type==CS_OP_REG and ops[2].type==CS_OP_IMM:
+     base_reg=ops[1].reg; disp=ops[2].imm
+    elif ops[1].type==CS_OP_MEM:
+     base_reg=ops[1].mem.base;disp=ops[1].mem.disp
+    else:base_reg=-1;disp=0
+    for start,page in active.get(base_reg,[]):
+     if 0<=pc-start<=64:
+      tgt=page+disp
+      if tgt in target:
+       fs,fe=fn(pc)
+       refs.append({"pc":hex(pc),"adrp":hex(start),"target":hex(tgt),
+                    "label":target[tgt]["name"],"keywords":target[tgt]["keywords"],
+                    "fde_start":hex(fs),"fde_end":hex(fe),"kind":mn,
+                    "reg":cap.reg_name(base_reg)})
+   for r in list(active):
+    active[r]=[(addr,pg) for addr,pg in active[r] if pc-addr<=64 and pc>=addr]
+    if not active[r]:del active[r]
+   if mn in ("bl","blr","br","ret","b"):
+    active.clear()
+   if total%2500000==0:print("ARM64_SCANNED",total,"XREF",len(refs),flush=True)
  print("ARM64_SCAN_DONE",total,"SKIPDATA",skipped,"XREF",len(refs),"FDE",len(FDE),"RELOC_REF",len(reloc_refs),flush=True)
  # Strict grouping by function (FDE) and label; keep only validated string address calculations.
  groups=collections.defaultdict(list)
