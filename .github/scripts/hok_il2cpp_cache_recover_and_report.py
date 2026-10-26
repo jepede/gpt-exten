@@ -13,9 +13,9 @@ def digest(path):
  with open(path,"rb") as f:
   for b in iter(lambda:f.read(8<<20),b""):h.update(b)
  return h.hexdigest()
-def download_cached():
+def download_cached(selected=None):
  for key,record in REC.items():
-  if key=="report":continue
+  if key=="report" or (selected is not None and key not in selected):continue
   member=next(x for x in MAN["files"] if x["portable_archive"].endswith("-"+key+".zip"))
   orig=ROOT/member["path"]
   if orig.is_file() and orig.stat().st_size==member["size"] and digest(orig)==member["sha256"]:
@@ -121,6 +121,6 @@ def plain_metadata_summary():
  print("METADATA_CANDIDATES",json.dumps({k:sum(k.lower() in x.lower() for x in unique) for k in keys2}),flush=True)
 if __name__=="__main__":
  mode=sys.argv[1]
- if mode=="download":download_cached()
+ if mode=="download":download_cached(set(sys.argv[2:]) if len(sys.argv)>2 else None)
  elif mode=="report":report_dumper();plain_metadata_summary()
  else:raise SystemExit("expected download|report")
