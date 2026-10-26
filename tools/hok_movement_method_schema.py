@@ -38,7 +38,8 @@ for i in range(tl//88):
  name=S(struct.unpack_from("<I",data,p)[0])
  ns=S(struct.unpack_from("<I",data,p+4)[0])
  fieldstart,methodstart=struct.unpack_from("<II",data,p+32)
- methodcount,fieldcount=struct.unpack_from("<HH",data,p+64)
+ methodcount=struct.unpack_from("<H",data,p+64)[0]
+ fieldcount=struct.unpack_from("<H",data,p+68)[0]
  if (ns,name) not in interest:continue
  rows={"index":i,"namespace":ns,"name":name,"method_start":methodstart,"field_start":fieldstart,
        "method_count":methodcount,"field_count":fieldcount,
