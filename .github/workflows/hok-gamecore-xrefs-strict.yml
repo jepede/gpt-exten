@@ -1,0 +1,61 @@
+name: HOK GameCore precise coordinate function xrefs
+on:
+  push:
+    branches: [work/hok-coordinate-re-20261026]
+    paths:
+      - .github/workflows/hok-gamecore-xrefs-strict.yml
+permissions:
+  contents: read
+  actions: read
+jobs:
+  xrefs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse existing cached HOK GameCore (do not download original game again)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p work/hok_gamesec work/hok_cached
+          gh run download 40311637215 -R "$GITHUB_REPOSITORY" -n hok-coordinate-v12.1.1.1-gamecore-arm64 -D work/hok_gamesec
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,zipfile
+          paths=list(Path("work/hok_gamesec").rglob("hok-12.1.1.1-gamecore.zip"))
+          assert len(paths)==1
+          assert hashlib.sha256(paths[0].read_bytes()).hexdigest()=="dd05d8e699ee7ae65a30a17a2775331fa17d91c50eac2b5993928664f4d35932"
+          with zipfile.ZipFile(paths[0]) as z:
+            name=next(x for x in z.namelist() if x.endswith("libGameCore.so"))
+            with z.open(name) as src,open("work/hok_cached/libGameCore.so","wb") as out:
+              for b in iter(lambda:src.read(8<<20),b""):out.write(b)
+          p=Path("work/hok_cached/libGameCore.so")
+          assert p.stat().st_size==86426392
+          assert hashlib.sha256(p.read_bytes()).hexdigest()=="dc034883ea2fc5c6be42d2e3b068652a7e1829f73450bb732fceebbd8f75d4c8"
+          print("GAMECORE_CACHED_VERIFIED",flush=True)
+          PY
+      - name: Restore existing radare2 pinned cache
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p work/r2
+          gh run download 36873712969 -R "$GITHUB_REPOSITORY" -n radare2-6.2.2-linux-x86_64 -D work/r2
+          deb="$(find work/r2 -name 'radare2_6.2.2_amd64.deb' -print -quit)"
+          test -n "$deb"
+          echo '09234e4139bf8dfcbb7fc1fdb2519859ad516e63c19d3c27d92aaecdf463b1ad  '"$deb" | sha256sum -c -
+          sudo dpkg -i "$deb"
+          r2 -v
+      - name: Scan whole GameCore ARM64 instruction segments
+        run: |
+          set -euo pipefail
+          python3 tools/hok_gamecore_xref_strict.py
+      - name: Preserve candidate mapping
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-gamecore-coordinate-strict-xref-analysis
+          path: out/hok_gamecore_xref/
+          if-no-files-found: warn
+          retention-days: 1
