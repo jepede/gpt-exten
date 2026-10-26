@@ -1,0 +1,27 @@
+name: HOK IL2CPP metadata record layout validation
+on:
+  push:
+    branches: [work/hok-coordinate-re-20261026]
+    paths:
+      - .github/workflows/hok-coordinate-layout.yml
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe official cached URL and inspect remote native directory
+        run: |
+          set -euo pipefail
+          python3 tools/hok_typedef_layout_validation.py
+          head -c 14000 out/hok_layout/layout.json
+      - name: Preserve report for this investigation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-metadata-layout-evidence
+          path: out/hok_layout/
+          if-no-files-found: warn
+          retention-days: 1
