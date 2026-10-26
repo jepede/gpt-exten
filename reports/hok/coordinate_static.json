@@ -1,0 +1,2558 @@
+{
+  "filename": "libGameCore.so",
+  "sha256": "dc034883ea2fc5c6be42d2e3b068652a7e1829f73450bb732fceebbd8f75d4c8",
+  "size": 86426392,
+  "ELF_machine": 183,
+  "segments": [
+    {
+      "va": 0,
+      "off": 0,
+      "filesz": 35145580,
+      "memsz": 35145580,
+      "flags": 4
+    },
+    {
+      "va": 35149680,
+      "off": 35145584,
+      "filesz": 43764672,
+      "memsz": 43764672,
+      "flags": 5
+    },
+    {
+      "va": 78918448,
+      "off": 78910256,
+      "filesz": 4932960,
+      "memsz": 4932960,
+      "flags": 6
+    },
+    {
+      "va": 83855504,
+      "off": 83843216,
+      "filesz": 2581256,
+      "memsz": 4541416,
+      "flags": 6
+    }
+  ],
+  "sections": [
+    {
+      "name": "",
+      "va": "0x0",
+      "size": 0,
+      "flags": 0
+    },
+    {
+      "name": ".note.android.ident",
+      "va": "0x270",
+      "size": 152,
+      "flags": 2
+    },
+    {
+      "name": ".note.gnu.build-id",
+      "va": "0x308",
+      "size": 24,
+      "flags": 2
+    },
+    {
+      "name": ".dynsym",
+      "va": "0x320",
+      "size": 59976,
+      "flags": 2
+    },
+    {
+      "name": ".gnu.version",
+      "va": "0xed68",
+      "size": 4998,
+      "flags": 2
+    },
+    {
+      "name": ".gnu.version_r",
+      "va": "0x100f0",
+      "size": 96,
+      "flags": 2
+    },
+    {
+      "name": ".gnu.hash",
+      "va": "0x10150",
+      "size": 14736,
+      "flags": 2
+    },
+    {
+      "name": ".hash",
+      "va": "0x13ae0",
+      "size": 20000,
+      "flags": 2
+    },
+    {
+      "name": ".dynstr",
+      "va": "0x18900",
+      "size": 106657,
+      "flags": 2
+    },
+    {
+      "name": ".rela.dyn",
+      "va": "0x329a8",
+      "size": 16284408,
+      "flags": 2
+    },
+    {
+      "name": ".rela.plt",
+      "va": "0xfba4a0",
+      "size": 16128,
+      "flags": 66
+    },
+    {
+      "name": ".rodata",
+      "va": "0xfbe3a0",
+      "size": 2481708,
+      "flags": 50
+    },
+    {
+      "name": ".gcc_except_table",
+      "va": "0x121c1cc",
+      "size": 3253108,
+      "flags": 2
+    },
+    {
+      "name": ".eh_frame_hdr",
+      "va": "0x1536540",
+      "size": 2740564,
+      "flags": 2
+    },
+    {
+      "name": ".eh_frame",
+      "va": "0x17d3698",
+      "size": 10162388,
+      "flags": 2
+    },
+    {
+      "name": ".text",
+      "va": "0x2185770",
+      "size": 43753884,
+      "flags": 6
+    },
+    {
+      "name": ".plt",
+      "va": "0x4b3f910",
+      "size": 10784,
+      "flags": 6
+    },
+    {
+      "name": ".data.rel.ro",
+      "va": "0x4b43330",
+      "size": 4913984,
+      "flags": 3
+    },
+    {
+      "name": ".fini_array",
+      "va": "0x4ff2e70",
+      "size": 16,
+      "flags": 3
+    },
+    {
+      "name": ".init_array",
+      "va": "0x4ff2e80",
+      "size": 32,
+      "flags": 3
+    },
+    {
+      "name": ".dynamic",
+      "va": "0x4ff2ea0",
+      "size": 512,
+      "flags": 3
+    },
+    {
+      "name": ".got",
+      "va": "0x4ff30a0",
+      "size": 13016,
+      "flags": 3
+    },
+    {
+      "name": ".got.plt",
+      "va": "0x4ff6378",
+      "size": 5400,
+      "flags": 3
+    },
+    {
+      "name": ".data",
+      "va": "0x4ff8890",
+      "size": 2581256,
+      "flags": 3
+    },
+    {
+      "name": ".bss",
+      "va": "0x526f000",
+      "size": 1959032,
+      "flags": 3
+    },
+    {
+      "name": ".shstrtab",
+      "va": "0x0",
+      "size": 251,
+      "flags": 0
+    }
+  ],
+  "candidate_literals": {
+    "Position": {
+      "ascii": [
+        {
+          "off": "0x11407a0",
+          "va": "0x11407a0",
+          "context": "tNavMeshEnable|ConnectTransform|SyncPositionMoveCmd|Physics::PushDynamicCircleLimitAreaCmd|HeroSwitchCmd|GMSw"
+        },
+        {
+          "off": "0x1141a69",
+          "va": "0x1141a69",
+          "context": "on|AGE::AddRVOAgentDuration|SGCore::PositionRecorderUnit|AccumulateDamageCondition|ActorCritCondition|Continu"
+        },
+        {
+          "off": "0x11420c0",
+          "va": "0x11420c0",
+          "context": "tfCopyHeroFeatureTimerNode|SetCameraPositionNode|changeDelimiter|RefreshTime|deltaTime|AttackRouteID|Forward|"
+        },
+        {
+          "off": "0x114217e",
+          "va": "0x114217e",
+          "context": "ceneFogParamNode|OnTimeUpEvent|startPosition|selfPos|mirrorIdealPos|GetSlotSkillTypeNode|GetNearestShenfuNode"
+        },
+        {
+          "off": "0x114378c",
+          "va": "0x114378c",
+          "context": "tV3iName|transValue|displayType|lerpPositionSpeed|ArrayOp|OpValueType|buffSrcId|CheckType|materialFloatParamN"
+        },
+        {
+          "off": "0x1148070",
+          "va": "0x1148070",
+          "context": "e|bContinuoust|isEnd|Project8GetBackPositionWithDisNode|Project8GetEnemyLowestHPPositionNode|Project8GetEnemy"
+        },
+        {
+          "off": "0x114809c",
+          "va": "0x114809c",
+          "context": "WithDisNode|Project8GetEnemyLowestHPPositionNode|Project8GetEnemyCareerPositionNode|PlayerActor|activeSkillLv"
+        },
+        {
+          "off": "0x11480bf",
+          "va": "0x11480bf",
+          "context": "PPositionNode|Project8GetEnemyCareerPositionNode|PlayerActor|activeSkillLvl|param2|TriggerPathIndicator|cpuJu"
+        },
+        {
+          "off": "0x114de29",
+          "va": "0x114de29",
+          "context": "ion|Project8SetHeroCmd|SignalMiniMapPositionCmd|PlayerReqQuitFrameExtendStateCmd|PlayerPickUpShenfuEquipCmd|S"
+        },
+        {
+          "off": "0x114e26e",
+          "va": "0x114e26e",
+          "context": "RmvLuaEventListener|DropItemTouch|OnPositionChange|SLOT_SKILL_3|enStopCustomSoundEventType|sclass|Framework/s"
+        },
+        {
+          "off": "0x114f362",
+          "va": "0x114f362",
+          "context": "ineupReasonableAccordingToActorGuidePositionNode|displayHp|ignoreBlockDeductValue|GetActorInRangeCheckIngoreB"
+        },
+        {
+          "off": "0x114f5ba",
+          "va": "0x114f5ba",
+          "context": "NewHeroLevelStartEventNode|useRandomPosition|TriggerParticleTickNode|aimHitTimes|ActorDamageEventNode|Per|isN"
+        },
+        {
+          "off": "0x115220c",
+          "va": "0x115220c",
+          "context": "crFrame::InitSSGScrFrameChangeContraPositionAILevelCtrPara4Player|ssg::SSGScrFrame::GetSSGScrFrameChangeAILev"
+        },
+        {
+          "off": "0x11554f5",
+          "va": "0x11554f5",
+          "context": "ual|Project8GetObliqueEnemyUncrowdedPositionNode|maxInterestPerRound|GetLowerHpChessFriendlyNode|OnProject8Bu"
+        },
+        {
+          "off": "0x1155c91",
+          "va": "0x1155c91",
+          "context": "reDeath|AddDynamicGrassObj|rushGrassPosition|EnableSceneLayerNode|lerpId|resultsActors|HasAidEquipWithLowestE"
+        },
+        {
+          "off": "0x1156db7",
+          "va": "0x1156db7",
+          "context": "|bExposeBullet|bSetHurtColor|bTargetPosition|bRemoveWhenControlled|decelerateDuration|recoverAccerlerateDurat"
+        },
+        {
+          "off": "0x1156ea7",
+          "va": "0x1156ea7",
+          "context": "UseRecordEnterPosDir|bStopOnRebouncePosition|reverseLimitCamp|bUsePresetAxis|attackMoveType|backControlYInMov"
+        },
+        {
+          "off": "0x1157087",
+          "va": "0x1157087",
+          "context": "orId|heroConfigID|bUseSpwanObjRecordPosition|collisionCheckDistanceOffset|bResumeMoveAfterLimitMoveEnd|bRotat"
+        },
+        {
+          "off": "0x115b0a4",
+          "va": "0x115b0a4",
+          "context": "EventClientNodeRuntime|SignalMiniMapPositionCmdEventClientNodeRuntime|ActorAssistEventClientNodeRuntime|Watch"
+        },
+        {
+          "off": "0x115ba60",
+          "va": "0x115ba60",
+          "context": "CrossSpecialBlockDuration|AGE::CheckPositionLimitDuration|AGE::CheckActorEquipStolenDuration|AGE::PredictMove"
+        },
+        {
+          "off": "0x115be19",
+          "va": "0x115be19",
+          "context": "IsEnemyNode|Project8GetHookEnemyBackPositionNode|Project8GetEnemyCrowdedDirectionNode|ExcludeSelfPos|SkillRan"
+        },
+        {
+          "off": "0x115c56a",
+          "va": "0x115c56a",
+          "context": "FaceTarget|GetHeroMinorJobNode|GrassPosition|LoadChunkNode|results|LevelRankDataControlerGetFirstCampNode|Sec"
+        },
+        {
+          "off": "0x115ca15",
+          "va": "0x115ca15",
+          "context": "gyNode|GetActorEnergyTypeNode|RandomPosition|SyncAbortSkill|headPt|OutBinderTarget|ActorNavRegionChangeEventN"
+        },
+        {
+          "off": "0x115d0cf",
+          "va": "0x115d0cf",
+          "context": "veCmd|forceInput|moveInput|Physics::PositionMoveCmd|Physics::LookAtTargetRotateMoveCmd|VCollisionArcTrapezoid"
+        }
+      ],
+      "utf16": []
+    },
+    "PosInfo": {
+      "ascii": [
+        {
+          "off": "0x114925c",
+          "va": "0x114925c",
+          "context": "USGEvent_FromAgeEvent|ScriptId|grassPosInfos|movableNavMeshes_|rotateBodyRadius|Point|showName|LevelConfigDa"
+        }
+      ],
+      "utf16": []
+    },
+    "PosRecord": {
+      "ascii": [],
+      "utf16": []
+    },
+    "Move": {
+      "ascii": [
+        {
+          "off": "0x1b564",
+          "va": "0x1b564",
+          "context": "NC_LoadRes|INC_UnLoadRes|CopyMemory|MoveMemory|SGameSleep|FlushCsImmediatePackBuffer|PushCsBuffer|CommitC"
+        },
+        {
+          "off": "0x113e8af",
+          "va": "0x113e8af",
+          "context": "lotValue|isWorld|NavLoc|MPathFindingMoveInfo|square|div|share_layer|get main_hero_info fail, frame_no:%d,"
+        },
+        {
+          "off": "0x113f378",
+          "va": "0x113f378",
+          "context": "jiangziya fengshen not usable|[ParseMoveLabel] start top1_cmd_idx %d |main_hero_location = (%d,%d), neare"
+        },
+        {
+          "off": "0x113f485",
+          "va": "0x113f485",
+          "context": "wer_linger_move_dir_rate = %d|[ParseMoveStop] fix stay in spring|[ParseSkillType] multi_task_vec_model_re"
+        },
+        {
+          "off": "0x113fb19",
+          "va": "0x113fb19",
+          "context": "] UseZhiliao main_hero|[YadiannaDeadMove] target_pos:%d,%d,%d|NotSafePortalTargetBreak|ai_rule::RuleTacti"
+        },
+        {
+          "off": "0x113fb86",
+          "va": "0x113fb86",
+          "context": "IsStuckWall()|ai_rule::RuleTactics::MovePosWhenStayLongInSpecialPlace|longtime_only_atk|retreat pos set t"
+        },
+        {
+          "off": "0x11407a8",
+          "va": "0x11407a8",
+          "context": "Enable|ConnectTransform|SyncPositionMoveCmd|Physics::PushDynamicCircleLimitAreaCmd|HeroSwitchCmd|GMSwitch"
+        },
+        {
+          "off": "0x1140909",
+          "va": "0x1140909",
+          "context": "re::enPriceComparisonType|AGE::ActorMoveType|AGE::HitTriggerPriorityMode|OrganBranch|RES_SKILLFUNC_TYPE_A"
+        },
+        {
+          "off": "0x1140ed9",
+          "va": "0x1140ed9",
+          "context": "|WaitActionFinishNodeRuntime|WaitRVOMoveToPosStopNodeRuntime|MoveToSkillTargetWithRangeNodeRuntime|Change"
+        },
+        {
+          "off": "0x1140ef2",
+          "va": "0x1140ef2",
+          "context": "ime|WaitRVOMoveToPosStopNodeRuntime|MoveToSkillTargetWithRangeNodeRuntime|ChangeDirectionForCurUseSkillNo"
+        },
+        {
+          "off": "0x1140fff",
+          "va": "0x1140fff",
+          "context": "tickAngleDuration|AGETemplate::LimitMoveAreaPairDuration|AGETemplate::ChangeRenderOffsetDuration|AGETempl"
+        },
+        {
+          "off": "0x11410e3",
+          "va": "0x11410e3",
+          "context": "lMarkUsingDuration|AGETemplate::JustMoveDuration|AGETemplate::MoveToActorNearby|AGETemplate::SetSpecialHu"
+        },
+        {
+          "off": "0x11410fd",
+          "va": "0x11410fd",
+          "context": "late::JustMoveDuration|AGETemplate::MoveToActorNearby|AGETemplate::SetSpecialHurtTargetDuration|AGETempla"
+        },
+        {
+          "off": "0x11411be",
+          "va": "0x11411be",
+          "context": "ndEventDuration|AGETemplate::ProtectMoveDuration|AGETemplate::ShowImageDuration|AGETemplate::MinimapEffec"
+        },
+        {
+          "off": "0x1141596",
+          "va": "0x1141596",
+          "context": "GE::VariableScopeBuffTick|AGE::ActorMoveBackSave|AGE::CheckBuffMarkCountTick|AGE::NewVariableIntCompareTi"
+        },
+        {
+          "off": "0x1141b4f",
+          "va": "0x1141b4f",
+          "context": "eMonsterSkillInitBuilder|CancleLimitMoveEventParam|EnvEntityBuffHolder|UL_Surender|stActorMoveCmdChangePa"
+        },
+        {
+          "off": "0x1141b85",
+          "va": "0x1141b85",
+          "context": "EntityBuffHolder|UL_Surender|stActorMoveCmdChangeParam|stForceMoveActorEndParam|stSimpleHurtEventResultIn"
+        },
+        {
+          "off": "0x1141b9f",
+          "va": "0x1141b9f",
+          "context": "er|stActorMoveCmdChangeParam|stForceMoveActorEndParam|stSimpleHurtEventResultInfo|FieldName|TargetOffset|"
+        },
+        {
+          "off": "0x1142222",
+          "va": "0x1142222",
+          "context": "e|WaitActorDyingStateChangeNode|RealMoveToActorRightNode|GetHeroWhoAttackSelfNode|GetCurRouteIndex|GetCur"
+        },
+        {
+          "off": "0x11422ed",
+          "va": "0x11422ed",
+          "context": "esetSkillCDNode|DropShenfuNode|ClearMoveCmdNode|GetHeroBornAgePlayDelayTimeNode|GetCampTowers|SetMonsterE"
+        },
+        {
+          "off": "0x11425ae",
+          "va": "0x11425ae",
+          "context": "downStartEventParams|maxNoReachTime|MoveRotateDragCoefficient|gender|bHide|clickCloseDelay|feature_aivoic"
+        },
+        {
+          "off": "0x11426d3",
+          "va": "0x11426d3",
+          "context": "deadStillCanBeFowExplored|SetUseHostMoveToNearbyTargetActorsNode|buffCount|RecycleTriggered|ActorControlT"
+        },
+        {
+          "off": "0x1142a69",
+          "va": "0x1142a69",
+          "context": "Value|GetMapSkinVideIndex|ActorLimitMoveClientEventNode|cull|IsCampIncludeOrEqualNode|bUsePlayerId|IsWin|"
+        },
+        {
+          "off": "0x1142c6f",
+          "va": "0x1142c6f",
+          "context": "oject8CardStrategy|GetBattleBehaviorMoveActorTeleportRuntime|ADGBuffSkillNormalParamContext|SubRevivePlac"
+        }
+      ],
+      "utf16": []
+    },
+    "Movement": {
+      "ascii": [
+        {
+          "off": "0x11472a8",
+          "va": "0x11472a8",
+          "context": "StateBase|TriCampGameDataHub|UniformMovementState|GameStatistic|Project8SetNumenAIStateRuntime|ActorRunningCi"
+        },
+        {
+          "off": "0x114f236",
+          "va": "0x114f236",
+          "context": "GetEffectArgByBit|SrcTarget|GetActorMovementStateNode|needRecoverCollect|Completed|GetCampAllCallOrgansNode|T"
+        },
+        {
+          "off": "0x1150295",
+          "va": "0x1150295",
+          "context": "StartUpPreDisplayTime|Project8PlayerMovement|AGE::MultiStageMoveDuration|Physics::GravityMoveCmdProxy|Physics"
+        },
+        {
+          "off": "0x1156ab5",
+          "va": "0x1156ab5",
+          "context": "Node|PhysicsManager|SGCore::ShipModeMovement|Physics::AutoAdjustHeightMoveCmdUnion|Physics::PeriodSyncMoveCmd"
+        },
+        {
+          "off": "0x1162583",
+          "va": "0x1162583",
+          "context": "tion|PassiveHpCrossScopeCondition|NoMovementPassiveEvent|CompensateGoldCoinInBattlePassiveEvent|AGE::STrigger"
+        },
+        {
+          "off": "0x1167bde",
+          "va": "0x1167bde",
+          "context": "eator|SGCore::DoRotatingState|HoldonMovementMode|ADGPassiveSkillCDEffectContext|GameSerializer|GlobalVariable"
+        },
+        {
+          "off": "0x117002c",
+          "va": "0x117002c",
+          "context": "time|AGE::AreaTriggerDuration|PlayerMovement|SetSyncType|Physics::SprintNormalMoveCmdProxy|Physics::Trigonome"
+        },
+        {
+          "off": "0x1177424",
+          "va": "0x1177424",
+          "context": "estoryedObjDir|areaShape|updateLimitMovementAreaPos|skillCombine_2|rightActorId|bUseTargetPositionDir|CheckCo"
+        },
+        {
+          "off": "0x1180e8b",
+          "va": "0x1180e8b",
+          "context": "bush_list|IsMoveStop 0|IsMoveStop 3|MovementComponent::UpdateLogic|TaoShaFactory|LoadObject|ActionConfig|SetF"
+        },
+        {
+          "off": "0x1190b51",
+          "va": "0x1190b51",
+          "context": "ilter|MoveBallDuration_filter|PlayerMovement_filter|CallActorControler_filter|EventListener|CheckEventEnum<en"
+        },
+        {
+          "off": "0x1195524",
+          "va": "0x1195524",
+          "context": "nIncomeCondition|HeroTrickTrainCheckMovementCondition|AGE::SplitMultiBulletDuration|AGE::SplitBulletDuration|"
+        },
+        {
+          "off": "0x119a7bd",
+          "va": "0x119a7bd",
+          "context": "Skill_0|Project8SystemCreator|MovingMovementState|EventBattleTowerDiveStat|IsClientGraph|extendFlag|Project8S"
+        },
+        {
+          "off": "0x11a1245",
+          "va": "0x11a1245",
+          "context": "ector|SGCore::RotatingState|VariableMovementState|FireHoleGameStatistic|UltimateAwakenPVPGameStatistic|Export"
+        },
+        {
+          "off": "0x11af227",
+          "va": "0x11af227",
+          "context": "eNodeScriptApisFilter|BulletCircularMovementNodeRuntime|AGE::ShowSkillTargetImgDuration|SGCore::TameManager|A"
+        },
+        {
+          "off": "0x11b4c68",
+          "va": "0x11b4c68",
+          "context": "OnActorAbnormalMoveEnd|Bool|Int|IdleMovementState|GraphLogicNodeRuntime|OnBothUnallyEventNodeRuntime|ActorTao"
+        },
+        {
+          "off": "0x11bac56",
+          "va": "0x11bac56",
+          "context": "e::ChargeWillRealUseState|DecelerateMovementState|AccelerateMovementState|useExtSerializer|DummyInterface|Blu"
+        },
+        {
+          "off": "0x11bac6e",
+          "va": "0x11bac6e",
+          "context": "e|DecelerateMovementState|AccelerateMovementState|useExtSerializer|DummyInterface|Blueprint/|.gvars|AllowRunt"
+        },
+        {
+          "off": "0x11c1095",
+          "va": "0x11c1095",
+          "context": "nge|UseSkill_2|GameFowCollector|AutoMovementMode|ShortBreakGameStatistic|ADGHitTriggerAgeParamEffectContext|G"
+        },
+        {
+          "off": "0x11cf0d3",
+          "va": "0x11cf0d3",
+          "context": "rceShow|bLowDeviceLoad|allowVerticalMovement|bInHeritHostHpRatio|bUseHostAtkRate|NotSetRevivePos|KillActorNod"
+        },
+        {
+          "off": "0x11d50bc",
+          "va": "0x11d50bc",
+          "context": "E::MoveToPositionDuration|AGE::LimitMovementAreaDuration|AGE::NewCollisionCheckDurationContext|AGE::ActorPosi"
+        },
+        {
+          "off": "0x11daecb",
+          "va": "0x11daecb",
+          "context": "L_4|State_Null|Actor_Nil|DirectionalMovementMode|DefaultValue|StartGuid|GetGoldCoinSourceKillRuntime|Project8"
+        },
+        {
+          "off": "0x11e2caf",
+          "va": "0x11e2caf",
+          "context": "aphLoghicEyeBulletEvt|BulletCircularMovementNode|UpdateFinish|finishMoveDist|ActorsMoveToTargetPosNode|SetIgn"
+        },
+        {
+          "off": "0x11e7c28",
+          "va": "0x11e7c28",
+          "context": "ectEventManager|PlayerEffectManager|MovementMode|ADGSkillCDEffectContext|CActorDataCenter|SGSkill::BuffSoulCo"
+        },
+        {
+          "off": "0x11f166c",
+          "va": "0x11f166c",
+          "context": "awnBulletEpCost|bTriggerActorAsLimitMovementAreaRefObj|randomRange|bFilterSkillHide|bSetAlpha|bSetMulColor|bM"
+        }
+      ],
+      "utf16": []
+    },
+    "Hero": {
+      "ascii": [
+        {
+          "off": "0x113e62a",
+          "va": "0x113e62a",
+          "context": "ssg::SSGScrAtkTarget::InitStopAtkAtkHeroWhenExtremeKDA|rsp_train_config|normal_monster|cannot find meta_i"
+        },
+        {
+          "off": "0x113ebcb",
+          "va": "0x113ebcb",
+          "context": "tMonsterUnitPara|RuleSituation1|RuleHeroUnit|Prefix %s, frame %d, organ para: camp %d, lane %d, order %d,"
+        },
+        {
+          "off": "0x113f18f",
+          "va": "0x113f18f",
+          "context": "before %d monster_top2 %d|VecFeatureHeroMainHeroFeature::IsFriendAttackingBaojun|./hero_stat_output/|No n"
+        },
+        {
+          "off": "0x113f197",
+          "va": "0x113f197",
+          "context": "d monster_top2 %d|VecFeatureHeroMainHeroFeature::IsFriendAttackingBaojun|./hero_stat_output/|No need proc"
+        },
+        {
+          "off": "0x113f206",
+          "va": "0x113f206",
+          "context": "ame|ai_rule::RuleAiInstruction::InitHeroStatePara|ai_rule::RuleAiInstruction::InitMonsterPara|is_use_new_"
+        },
+        {
+          "off": "0x113feb1",
+          "va": "0x113feb1",
+          "context": "enemy_hero:%d, RealDistance[%d] MainHeroAlertDistance[%d]\n|CurFrame[%d] Enter Alert Because LastAlertFram"
+        },
+        {
+          "off": "0x114052c",
+          "va": "0x114052c",
+          "context": "] origin_economic_gap: %d|[GetParaByHeroAndLevelJuben] ai_level:%d not exist. use m_avg_player_ailevel:%d"
+        },
+        {
+          "off": "0x11407d7",
+          "va": "0x11407d7",
+          "context": "sics::PushDynamicCircleLimitAreaCmd|HeroSwitchCmd|GMSwitchAllActorGodModeCmd|PlayerSellEquipCmd|UseObject"
+        },
+        {
+          "off": "0x1140d42",
+          "va": "0x1140d42",
+          "context": "eEquipLevelNotShareIncome|KillTimer|HeroEquipInBattleChanged|UseSkill|SLOT_SKILL_2|SLOT_SKILL_11|Client::"
+        },
+        {
+          "off": "0x1140e33",
+          "va": "0x1140e33",
+          "context": "me|WantedRankChangeEventNodeRuntime|HeroSoulMaxLevelChangeEventNodeRuntime|UnityObjectPlayEmojiRuntime|Ga"
+        },
+        {
+          "off": "0x1140ea6",
+          "va": "0x1140ea6",
+          "context": "bbleTextRuntime|ActorEnterCombatWithHeroNodeRuntime|WaitActionFinishNodeRuntime|WaitRVOMoveToPosStopNodeR"
+        },
+        {
+          "off": "0x114114c",
+          "va": "0x114114c",
+          "context": "rtTargetDuration|AGETemplate::FilterHeroAtkDistDuration|AGETemplate::FindGameObjectDuration|AGETemplate::"
+        },
+        {
+          "off": "0x114124b",
+          "va": "0x114124b",
+          "context": "boGuideTask|AGETemplate::GuideToggleHeroShowTick|AGETemplate::NewGetUnityObjTick|AGETemplate::InitSquadUn"
+        },
+        {
+          "off": "0x1141454",
+          "va": "0x1141454",
+          "context": "SGSkill::BufferLogicEffect|AGE::SyncHeroTransToBoatNode|AGE::GuidePathIndicatorTick|AGE::SetParticleExtra"
+        },
+        {
+          "off": "0x1141cfc",
+          "va": "0x1141cfc",
+          "context": "de|SetBattleRoundEndNode|GetAllAliveHeroActorsNode|OnProject8OneCampChessAllDeadEventNode|SetAsAIInstance"
+        },
+        {
+          "off": "0x11420a2",
+          "va": "0x11420a2",
+          "context": "ureTextDataNode|buffMonsters|NtfCopyHeroFeatureTimerNode|SetCameraPositionNode|changeDelimiter|RefreshTim"
+        },
+        {
+          "off": "0x114223a",
+          "va": "0x114223a",
+          "context": "ngeNode|RealMoveToActorRightNode|GetHeroWhoAttackSelfNode|GetCurRouteIndex|GetCurBehaviorNode|SetMonsterE"
+        },
+        {
+          "off": "0x11422fc",
+          "va": "0x11422fc",
+          "context": "|DropShenfuNode|ClearMoveCmdNode|GetHeroBornAgePlayDelayTimeNode|GetCampTowers|SetMonsterEnduranceDown|Se"
+        },
+        {
+          "off": "0x1142405",
+          "va": "0x1142405",
+          "context": "triggerNames|bIndependentUnit|CreateHeroNode|callMonsterCfgID|ForceSyncExtralEffectMask|FullStateRevive|B"
+        },
+        {
+          "off": "0x1142600",
+          "va": "0x1142600",
+          "context": "oseDelay|feature_aivoice::VecFeatureHeroMainHeroFeature::Enemy2InMainHeroSkill2AtkRange|Degree2Direction "
+        },
+        {
+          "off": "0x1142608",
+          "va": "0x1142608",
+          "context": "|feature_aivoice::VecFeatureHeroMainHeroFeature::Enemy2InMainHeroSkill2AtkRange|Degree2Direction debug|no"
+        },
+        {
+          "off": "0x1142621",
+          "va": "0x1142621",
+          "context": "ureHeroMainHeroFeature::Enemy2InMainHeroSkill2AtkRange|Degree2Direction debug|normalResult|energyValue|Is"
+        },
+        {
+          "off": "0x1142f96",
+          "va": "0x1142f96",
+          "context": "vertPropertyTypeToMountPropertyType|HeroConfigId|endNamespace () called on global namespace|Context.|[Pro"
+        },
+        {
+          "off": "0x1143203",
+          "va": "0x1143203",
+          "context": "DisableSkillTargetRuleIgnoreFilterAsHero|bAutoHostControl|bSwitchHost|bBaseOnNow|followTargetIcon|changeS"
+        }
+      ],
+      "utf16": []
+    },
+    "Actor": {
+      "ascii": [
+        {
+          "off": "0x11407f0",
+          "va": "0x11407f0",
+          "context": "mitAreaCmd|HeroSwitchCmd|GMSwitchAllActorGodModeCmd|PlayerSellEquipCmd|UseObjectiveSkillCmd|SGSkill::BuffH"
+        },
+        {
+          "off": "0x1140904",
+          "va": "0x1140904",
+          "context": "|SGCore::enPriceComparisonType|AGE::ActorMoveType|AGE::HitTriggerPriorityMode|OrganBranch|RES_SKILLFUNC_TY"
+        },
+        {
+          "off": "0x1140caf",
+          "va": "0x1140caf",
+          "context": "Accumulator_SingleActionMultiTarget|ActorSGWBatchMessageManager|battleDynamicID|IsOpenComboGuideSys|ExtraP"
+        },
+        {
+          "off": "0x1140de5",
+          "va": "0x1140de5",
+          "context": "eDefenseTrialsGameStatistic|EndGuid|ActorRunningRankChangeEventClientNodeRuntime|WantedRankChangeEventNode"
+        },
+        {
+          "off": "0x1140e92",
+          "va": "0x1140e92",
+          "context": "Runtime|GameObjectBubbleTextRuntime|ActorEnterCombatWithHeroNodeRuntime|WaitActionFinishNodeRuntime|WaitRV"
+        },
+        {
+          "off": "0x1141050",
+          "va": "0x1141050",
+          "context": "rOffsetDuration|AGETemplate::ShowHudActorHeadIconDuration|AGETemplate::NewHighlightSkillButton|AGETemplate"
+        },
+        {
+          "off": "0x1141103",
+          "va": "0x1141103",
+          "context": "JustMoveDuration|AGETemplate::MoveToActorNearby|AGETemplate::SetSpecialHurtTargetDuration|AGETemplate::Fil"
+        },
+        {
+          "off": "0x11413eb",
+          "va": "0x11413eb",
+          "context": "late::PlaySoundTick|AGETemplate::GetActorRevivePos|AGETemplate::ReviveTimerTick|AGETemplate::EmptyAction|S"
+        },
+        {
+          "off": "0x1141591",
+          "va": "0x1141591",
+          "context": "end|AGE::VariableScopeBuffTick|AGE::ActorMoveBackSave|AGE::CheckBuffMarkCountTick|AGE::NewVariableIntCompa"
+        },
+        {
+          "off": "0x1141631",
+          "va": "0x1141631",
+          "context": "ModifyParticleScaleDuration|AGE::NewActorRootListAdd|AGE::ChangeTriggerParticlePathDuration|AGE::AddActorM"
+        },
+        {
+          "off": "0x1141671",
+          "va": "0x1141671",
+          "context": "TriggerParticlePathDuration|AGE::AddActorMaterialDuration|frame synchr active forbid set timeScale|RandomS"
+        },
+        {
+          "off": "0x114175c",
+          "va": "0x114175c",
+          "context": "tionIsHostPlayer|TriggerActionIsNullActor|TriggerActionSetActorProp|TriggerActionAssignNameVariable|SGSkil"
+        },
+        {
+          "off": "0x1141772",
+          "va": "0x1141772",
+          "context": "erActionIsNullActor|TriggerActionSetActorProp|TriggerActionAssignNameVariable|SGSkill::SimpleSkillChangeEv"
+        },
+        {
+          "off": "0x1141860",
+          "va": "0x1141860",
+          "context": "Check|SafeAreaPos|ShrinkAreaForAI|stActorPlayAnim|VoiceInteractionSkillLevelUpTrigger|HorizontalTask_Skill"
+        },
+        {
+          "off": "0x1141963",
+          "va": "0x1141963",
+          "context": "ManagerAttachAndUnattach|AGE::ResizeActorBoundingBoxDuration|AGE::SkillTimerProcessBarDurationEx|AGE::Simp"
+        },
+        {
+          "off": "0x1141a98",
+          "va": "0x1141a98",
+          "context": "orderUnit|AccumulateDamageCondition|ActorCritCondition|ContinuousDamagePassiveEvent|BeforeRealTakeDamageEv"
+        },
+        {
+          "off": "0x1141b80",
+          "va": "0x1141b80",
+          "context": "m|EnvEntityBuffHolder|UL_Surender|stActorMoveCmdChangeParam|stForceMoveActorEndParam|stSimpleHurtEventResu"
+        },
+        {
+          "off": "0x1141ba3",
+          "va": "0x1141ba3",
+          "context": "tActorMoveCmdChangeParam|stForceMoveActorEndParam|stSimpleHurtEventResultInfo|FieldName|TargetOffset|Filte"
+        },
+        {
+          "off": "0x1141c7b",
+          "va": "0x1141c7b",
+          "context": "estPosAwayFromTargetTime|Project8GetActorSellPrice|bImmediateRevive|MaxRange|SkillUseCount|isAlly|loseNum|"
+        },
+        {
+          "off": "0x1141d00",
+          "va": "0x1141d00",
+          "context": "etBattleRoundEndNode|GetAllAliveHeroActorsNode|OnProject8OneCampChessAllDeadEventNode|SetAsAIInstanceNode|"
+        },
+        {
+          "off": "0x1142204",
+          "va": "0x1142204",
+          "context": "tackNode|HasNormalAttackCMDNode|WaitActorDyingStateChangeNode|RealMoveToActorRightNode|GetHeroWhoAttackSel"
+        },
+        {
+          "off": "0x1142228",
+          "va": "0x1142228",
+          "context": "ActorDyingStateChangeNode|RealMoveToActorRightNode|GetHeroWhoAttackSelfNode|GetCurRouteIndex|GetCurBehavio"
+        },
+        {
+          "off": "0x1142455",
+          "va": "0x1142455",
+          "context": "ectMask|FullStateRevive|BlockExcludeActorsNode|CreateEyeNode|ActorFilterNode|includeDead|passiveId2|isAdva"
+        },
+        {
+          "off": "0x114246e",
+          "va": "0x114246e",
+          "context": "lockExcludeActorsNode|CreateEyeNode|ActorFilterNode|includeDead|passiveId2|isAdvancedAI|GetSoldierRegionRo"
+        }
+      ],
+      "utf16": []
+    },
+    "VInt3": {
+      "ascii": [
+        {
+          "off": "0x1140f49",
+          "va": "0x1140f49",
+          "context": "onForCurUseSkillNodeRuntime|ConstantVInt3NodeRuntime|WaitStateTask|WaitState|AlwaysTransition|DecorateWhen"
+        },
+        {
+          "off": "0x114269d",
+          "va": "0x114269d",
+          "context": "D|GetActorHpRateNode|SetNamedVaribleVInt3Node|movable|deadStillCanBeFowExplored|SetUseHostMoveToNearbyTarg"
+        },
+        {
+          "off": "0x1142873",
+          "va": "0x1142873",
+          "context": "leInt32Node|ConstantJsonDocLiteNode|VInt3MapTryGetValueNode|ActorRootMapRemoveNode|ConstantVInt2Node|Varia"
+        },
+        {
+          "off": "0x11439bb",
+          "va": "0x11439bb",
+          "context": "|CreateArcTrapezoid: center must be VInt3|AddCollisionShape: expected (collisionShape)|PassiveSkill2Desc|D"
+        },
+        {
+          "off": "0x1148391",
+          "va": "0x1148391",
+          "context": "tHeroFeatureDelimiterNode|Loc|NewGetVInt3Variable|Enemy|curEnergyPercent|highlightResId|backValue|firstVal"
+        },
+        {
+          "off": "0x1149d64",
+          "va": "0x1149d64",
+          "context": "mePattern|reversePath|System.String|VInt3Value|Sync2Charp|Framework/src/Serializer/UGCUnityTypeSerializer."
+        },
+        {
+          "off": "0x1149e27",
+          "va": "0x1149e27",
+          "context": "ams|stCommonSpawnEventParams|stActorVInt3EventParam|Skip custom log2.%s|GetCurFrameNum|RecycleActor|StopAg"
+        },
+        {
+          "off": "0x1149ec2",
+          "va": "0x1149ec2",
+          "context": "e_traceback_error_handler|Normalize|VInt3_GameObjectTuple|IsAlive|RemoveNativeListener|mountStrategy|SoulE"
+        },
+        {
+          "off": "0x1150163",
+          "va": "0x1150163",
+          "context": "teAwakenMonsterControler|DesignFile|VInt3ArrayNode|Nav info triangles was not found in artist level|SGCore"
+        },
+        {
+          "off": "0x115634b",
+          "va": "0x115634b",
+          "context": "ger|Int32MapForeachLoopNode|VariableVInt3Node|VariableVInt2Node|VariableFix16Node|VariableStringArraySette"
+        },
+        {
+          "off": "0x11563ee",
+          "va": "0x11563ee",
+          "context": "opNode|BooleanArrayClearElementNode|VInt3ArrayCountNode|UnityObjectArrayNode|HashMapArrayGetElementNode|Gr"
+        },
+        {
+          "off": "0x11573f1",
+          "va": "0x11573f1",
+          "context": "caleZParamName|filterPath|LVarType|rVInt3Value|refreshForward|bCompareRatio|heightOffset|hpTenThousandthRa"
+        },
+        {
+          "off": "0x11576cf",
+          "va": "0x11576cf",
+          "context": "s:%d>|IsValid|TPooledPointer<TArray<VInt3>>|ActorRootArr_GameObjectArrTuple|clear pcg resource |FootballSh"
+        },
+        {
+          "off": "0x115c409",
+          "va": "0x115c409",
+          "context": "viveLife|SetTaskProgressNode|IsWorldVInt3ValidNode|GetAttackMoveToTargetResultNode|bFilterForbidSelect|Get"
+        },
+        {
+          "off": "0x115cb44",
+          "va": "0x115cb44",
+          "context": "int3param2|OnAIStateChangeEventNode|VInt3AngleCalcNode|setX|InterruptExecNode|DataSelectorNode|TriggerComp"
+        },
+        {
+          "off": "0x115cbfb",
+          "va": "0x115cbfb",
+          "context": "dOrSetNode|ActorRootMapNode|VariableVInt3SplitterNode|Int32ArrayClearElementNode|Int32ArrayRemoveAtIndexNo"
+        },
+        {
+          "off": "0x115cd6d",
+          "va": "0x115cd6d",
+          "context": "nGrassEventClientNode|GetParamConfigVInt3ClientNode|bReconnect|DynamicGraphLogicNode|LuaFile|RandomSwitchC"
+        },
+        {
+          "off": "0x1161a0e",
+          "va": "0x1161a0e",
+          "context": "me|GlobalVariableBooleanNodeRuntime|VInt3MapForeachLoopNodeRuntime|BooleanArrayForeachLoopNodeRuntime|Play"
+        },
+        {
+          "off": "0x116346e",
+          "va": "0x116346e",
+          "context": "LeftTime|AIWaitFrameNode|CosineNode|VInt3ProjectionNode|VInt3CrossNode|ValueA|LogicEqualNode|WhileNode|Int"
+        },
+        {
+          "off": "0x1163482",
+          "va": "0x1163482",
+          "context": "Node|CosineNode|VInt3ProjectionNode|VInt3CrossNode|ValueA|LogicEqualNode|WhileNode|Int32MapCountNode|VInt3"
+        },
+        {
+          "off": "0x11634c3",
+          "va": "0x11634c3",
+          "context": "ualNode|WhileNode|Int32MapCountNode|VInt3MapRemoveNode|VInt3MapNode|GlobalVariableActionNode|Int32ArrayChe"
+        },
+        {
+          "off": "0x11634d6",
+          "va": "0x11634d6",
+          "context": "nt32MapCountNode|VInt3MapRemoveNode|VInt3MapNode|GlobalVariableActionNode|Int32ArrayCheckRangeNode|VInt3Ar"
+        },
+        {
+          "off": "0x1163515",
+          "va": "0x1163515",
+          "context": "ActionNode|Int32ArrayCheckRangeNode|VInt3ArrayRemoveAtIndexNode|UnityObjectArrayClearElementNode|UnityObje"
+        },
+        {
+          "off": "0x116a731",
+          "va": "0x116a731",
+          "context": "nvalid table udata|ebc/|IsXZChanged|VInt3_2_Tuple|Int32_2_boolTuple|GetOwner|SetLocalScale|CreateSphere: e"
+        }
+      ],
+      "utf16": []
+    },
+    "VInt2": {
+      "ascii": [
+        {
+          "off": "0x11428aa",
+          "va": "0x11428aa",
+          "context": "Node|ActorRootMapRemoveNode|ConstantVInt2Node|VariableFix16SplitterNode|StringArrayRemoveBeforeIndexNode|S"
+        },
+        {
+          "off": "0x1148e8d",
+          "va": "0x1148e8d",
+          "context": "VariableActorRootNode|GlobalVariableVInt2Node|StringArrayCheckRangeNode|BooleanConstantArrayNode|BooleanAr"
+        },
+        {
+          "off": "0x114e52e",
+          "va": "0x114e52e",
+          "context": "IWaitFrameNodeRuntime|GlobalVariableVInt2NodeRuntime|VariableVInt2NodeRuntime|GlobalVariableHashMapArrayNo"
+        },
+        {
+          "off": "0x114e547",
+          "va": "0x114e547",
+          "context": "balVariableVInt2NodeRuntime|VariableVInt2NodeRuntime|GlobalVariableHashMapArrayNodeRuntime|GlobalVariableF"
+        },
+        {
+          "off": "0x115635d",
+          "va": "0x115635d",
+          "context": "hLoopNode|VariableVInt3Node|VariableVInt2Node|VariableFix16Node|VariableStringArraySetterNode|Int32ArrayRe"
+        },
+        {
+          "off": "0x1169767",
+          "va": "0x1169767",
+          "context": "CurFrameTickCompareNode|BNZ|VariableVInt2CreatorNode|Int32ArrayCopyNode|VariableInt32ArraySetterNode|Boole"
+        },
+        {
+          "off": "0x117f635",
+          "va": "0x117f635",
+          "context": "e|InitLocalEnv|WriteToLocal|VFactor|VInt2|NavInt3|center|VInt4|Assertion!!!\n  File:{0}\n  Function:{1}\n  Li"
+        },
+        {
+          "off": "0x11c8e6e",
+          "va": "0x11c8e6e",
+          "context": "|Int2NumBothBigThanZeroNode|VariableVInt2SetterNode|ConstantActionNode|UnityObjectArrayPopTailNode|HashMap"
+        },
+        {
+          "off": "0x11cf6c9",
+          "va": "0x11cf6c9",
+          "context": "balVariableActorRootMapNode|VariableVInt2SplitterNode|VariableActionNode|StringArrayRandomShuffleNode|Glob"
+        },
+        {
+          "off": "0x11d44f0",
+          "va": "0x11d44f0",
+          "context": "fDataConstantMapNodeRuntime|ConstantVInt2NodeRuntime|GlobalVariableUnityObjectArrayNodeRuntime|HashMapArra"
+        },
+        {
+          "off": "0x11f71ea",
+          "va": "0x11f71ea",
+          "context": "ngine/src/TypeScript/USGLog.cpp|USG.VInt2|deCollisionVelAccel|SelfSkillCombineTag|TargetSkillCombineID_1_P"
+        },
+        {
+          "off": "0x120ac38",
+          "va": "0x120ac38",
+          "context": "ElementNode|ActionArrayCountNode|srcVInt2|srcInt|actorType|stateType|bRefreshSkillBean|blockTargetId|modif"
+        }
+      ],
+      "utf16": []
+    },
+    "Vector3": {
+      "ascii": [
+        {
+          "off": "0x1161e91",
+          "va": "0x1161e91",
+          "context": "etHeroLevelTick|AGETemplate::NewSaveVector3VarTick|AGETemplate::CheckConditionTick|AGETemplate::ChangeSkillI"
+        },
+        {
+          "off": "0x1164357",
+          "va": "0x1164357",
+          "context": "c/Serializer/VariableSerializer.cpp|Vector3Serializer|Physics::SMNodeSecurityPolicy|end of null pointer %s|B"
+        },
+        {
+          "off": "0x1185a4e",
+          "va": "0x1185a4e",
+          "context": "AD:%d|ai_trial_not_fight init error|Vector3|Foundation/Physics/include/Physics/Transform/VisualOffsetBlender"
+        },
+        {
+          "off": "0x118fc44",
+          "va": "0x118fc44",
+          "context": "MakingBeginEventListenerNode|NewSaveVector3Variable|NtfTriggerHighLightBloodHudNode|SkillLevelUpEventNode|ma"
+        },
+        {
+          "off": "0x11a1a4c",
+          "va": "0x11a1a4c",
+          "context": "TDualKeyDatabinConverter|AGE::NewGetVector3VarTick|AGE::GetSkillContextContent|AGE::ForbidAbilityTick|slotTy"
+        },
+        {
+          "off": "0x11afe31",
+          "va": "0x11afe31",
+          "context": "ntParams|USG.USGVCollisionShape|USG.Vector3|GameCoreTS|collisionInertia|samecamprestitution|collisionCD|Cont"
+        },
+        {
+          "off": "0x11b11b5",
+          "va": "0x11b11b5",
+          "context": "eName|isOnlySendBySelf|BindVariable|Vector3 data len should be 8|{0} must be float|string serializer does no"
+        },
+        {
+          "off": "0x11b5237",
+          "va": "0x11b5237",
+          "context": "ercialActionTick|AGETemplate::NewGetVector3VarTick|AGETemplate::TriggerIndicatorDynamicConnectVecTick|AGETem"
+        },
+        {
+          "off": "0x11c2365",
+          "va": "0x11c2365",
+          "context": "erHeroFeatureNode|changeTimer|NewGetVector3Variable|NewGetArrayVariable|controlType|majorValueDefinition|isG"
+        },
+        {
+          "off": "0x11d72ef",
+          "va": "0x11d72ef",
+          "context": "eeOutPutOffsetArr|VInt3[]|Variables|Vector3 data len should be 12|Framework/Parts/Serializer/src/Serializer/"
+        },
+        {
+          "off": "0x11e1f48",
+          "va": "0x11e1f48",
+          "context": "vent_HeroFeatureTrigger|AGE::NewSaveVector3VarTick|AGE::GetShipDriftModeParamTick|AGE::NewVariableVInt3CalTi"
+        }
+      ],
+      "utf16": []
+    },
+    "Vector2": {
+      "ascii": [
+        {
+          "off": "0x119d55d",
+          "va": "0x119d55d",
+          "context": "ngine.GameObject[]|BoundsSerializer|Vector2Serializer|{0} must be double|{0} must be uint8|INTERACTION_CHANN"
+        },
+        {
+          "off": "0x119edfb",
+          "va": "0x119edfb",
+          "context": "alManager->Trial|AITrialManager->QY|Vector2|DetourPathInfo|VBounds|log|evolution_units_new_list1|feature_aiv"
+        }
+      ],
+      "utf16": []
+    },
+    "Encrypt": {
+      "ascii": [],
+      "utf16": []
+    },
+    "Decrypt": {
+      "ascii": [],
+      "utf16": []
+    },
+    "Crypt": {
+      "ascii": [],
+      "utf16": []
+    },
+    "Xor": {
+      "ascii": [],
+      "utf16": []
+    },
+    "Fow": {
+      "ascii": [
+        {
+          "off": "0x1140da1",
+          "va": "0x1140da1",
+          "context": "1|Client::WatchCampExplorer|GameGridFow|OriginalBreathModule|UltimateDefenseTrialsGameStatistic|EndGuid|"
+        },
+        {
+          "off": "0x11426bd",
+          "va": "0x11426bd",
+          "context": "ibleVInt3Node|movable|deadStillCanBeFowExplored|SetUseHostMoveToNearbyTargetActorsNode|buffCount|Recycle"
+        },
+        {
+          "off": "0x1150845",
+          "va": "0x1150845",
+          "context": "seSkill|bBasicsShaderKey|bContinuousFowDetection|bNoRecordAGEDir|bFilterMonsterSoldier|frameRateThreshol"
+        },
+        {
+          "off": "0x1156b92",
+          "va": "0x1156b92",
+          "context": "ollisionShape|VCollisionBox|GameGridFow_filter|HideSwitch|EventStatisticData_filter|ActorStar|HideActorM"
+        },
+        {
+          "off": "0x115a9c7",
+          "va": "0x115a9c7",
+          "context": "lityModelAttackContext|hackMark|GameFowFilter|PredeterminedRandomModule|class |NetDeSerialize|SetEntityC"
+        },
+        {
+          "off": "0x115b116",
+          "va": "0x115b116",
+          "context": "tWatchContextEventClientNodeRuntime|FowVisiblePolicy|FowVisiblePolicy_FakeFow|member|CompositeStochastic"
+        },
+        {
+          "off": "0x115b127",
+          "va": "0x115b127",
+          "context": "tClientNodeRuntime|FowVisiblePolicy|FowVisiblePolicy_FakeFow|member|CompositeStochastic|WaitFramesState|"
+        },
+        {
+          "off": "0x115b13c",
+          "va": "0x115b13c",
+          "context": "wVisiblePolicy|FowVisiblePolicy_FakeFow|member|CompositeStochastic|WaitFramesState|AGETemplate::Duration"
+        },
+        {
+          "off": "0x11614b7",
+          "va": "0x11614b7",
+          "context": "|Physics::PushBezierMoveCmd|GameBaseFow|Mul|enGuishiEventID|AGE::ModifyScaleCurve|AGE::TriggerHexMapType"
+        },
+        {
+          "off": "0x1162f8d",
+          "va": "0x1162f8d",
+          "context": "ActorEquipChangeNode|DanmakuPlayModeFoweverTipHideNode|weidth|CancelCameraLerpParam|val|SetMiniMapIconVi"
+        },
+        {
+          "off": "0x1169b4c",
+          "va": "0x1169b4c",
+          "context": "NavPathMoveCmd|LevelConfig|entryPos|FowLos|AwakenTransportNTF|Project8PlayerCard|bDeactivateSelf|Trigger"
+        },
+        {
+          "off": "0x116da3b",
+          "va": "0x116da3b",
+          "context": "sExistByHash|Project8TalentItem|GameFowManager::UpdateMain|SGCore::UnityTransform|Duplicate Diff Class {"
+        },
+        {
+          "off": "0x11707d5",
+          "va": "0x11707d5",
+          "context": "trPt2|bFixEnd|rotateBackDegreeSpeed|FowRegionType|gravityHeight|SmallRes|ageRefParamName|vector3ParamSta"
+        },
+        {
+          "off": "0x1176d22",
+          "va": "0x1176d22",
+          "context": "ion_BlueprintTrigger_filter|GameBaseFow_filter|VCollisionCylinderSector_filter|OMGHeroTriggerUnit_filter"
+        },
+        {
+          "off": "0x118a34e",
+          "va": "0x118a34e",
+          "context": "pshotDuration_filter|HorizonMarkerByFow_filter|OMG_SWITCH_WEAPON|FillRecoverData|SendGameEventTick_filte"
+        },
+        {
+          "off": "0x118f2ed",
+          "va": "0x118f2ed",
+          "context": "e|AGE::CheckBlockTick|AGE::SetRenderFowRegionDuration|AGE::ModifyUnityObjectTransformDuration|AGE::Trigg"
+        },
+        {
+          "off": "0x11907ee",
+          "va": "0x11907ee",
+          "context": "Framework/src/BattleSys/Horizon/GameFowMapData.cpp|Project8BanCampLogic|scalerFactor|StateMachine|rotate"
+        },
+        {
+          "off": "0x119662d",
+          "va": "0x119662d",
+          "context": "ID_ActorBorned|LoadServerResData|maxFowRegionOrder|FieldObjNew|RefreshMoveCmdProperty|matP2|magSqrD1P1|P"
+        },
+        {
+          "off": "0x11966f6",
+          "va": "0x11966f6",
+          "context": "ile|Framework/src/BattleSys/Horizon/FowLos.cpp|USGLevelConfig|Framework/include/BattleSys/Horizon/CampFo"
+        },
+        {
+          "off": "0x1196738",
+          "va": "0x1196738",
+          "context": "ework/include/BattleSys/Horizon/CampFowMapData.h|GetRelicGameInfoNodeRuntime|ExtraBornPlaceObjList|SGSki"
+        },
+        {
+          "off": "0x119c906",
+          "va": "0x119c906",
+          "context": "EventID_FightStart|libQtskDB.so|GameFowMapData|gridHeight|PFCInvalidState : Type = {0}|UpdateFrameInner|"
+        },
+        {
+          "off": "0x11a10ee",
+          "va": "0x11a10ee",
+          "context": "TaskCondition_ActorDead|GameDistanceFow|HeroAcquisitionManager|USGGameModeBase|CSpeedAdjuster|GuishiDoll"
+        },
+        {
+          "off": "0x11ab6ad",
+          "va": "0x11ab6ad",
+          "context": "tZone_v2|HeroPos30sEvent|SkillEvent|FowTimerUpdateInfo|FirstMovedEventParams|CellTraversal<Physics::NavM"
+        },
+        {
+          "off": "0x11c1084",
+          "va": "0x11c1084",
+          "context": "tartLevel|BuffChange|UseSkill_2|GameFowCollector|AutoMovementMode|ShortBreakGameStatistic|ADGHitTriggerA"
+        }
+      ],
+      "utf16": []
+    },
+    "Fog": {
+      "ascii": [
+        {
+          "off": "0x1141fbd",
+          "va": "0x1141fbd",
+          "context": "eNameNode|additionRotationY|SetShuntFog|bEnable|actorID|bFilterMid|BlessingSphereAge|SetTeamPickupCoinCo"
+        },
+        {
+          "off": "0x114215e",
+          "va": "0x114215e",
+          "context": "intNode|OutputVar|UniqueKey|SetSceneFogParamNode|OnTimeUpEvent|startPosition|selfPos|mirrorIdealPos|GetS"
+        },
+        {
+          "off": "0x11c2fff",
+          "va": "0x11c2fff",
+          "context": "FightPrepareFin|sharedRedChannelWithFogOfWar|SGCore::SquadUnit|Foundation/Physics/src/Physics/SceneManag"
+        }
+      ],
+      "utf16": []
+    },
+    "Visibility": {
+      "ascii": [
+        {
+          "off": "0x11499c4",
+          "va": "0x11499c4",
+          "context": "PropertyReduced|stopRotDis|bSyncWithVisibility|shakePosRange|useCurveRes|bIsMonsterGetHostHero|bRecoverBulletS"
+        },
+        {
+          "off": "0x116e8f0",
+          "va": "0x116e8f0",
+          "context": "aterialVector4Duration|AGE::SetActorVisibilityDuration|AGE::ChangeObjMaterialDuration|AGE::NewUnityObjAddOrSet"
+        },
+        {
+          "off": "0x11765f8",
+          "va": "0x11765f8",
+          "context": "icForwardNode|DeadNotRecycle|bParentVisibility|showType|numAssist|SoldierType|NullControl|PauseGameLogicNode|H"
+        },
+        {
+          "off": "0x1183198",
+          "va": "0x1183198",
+          "context": "|SequencerNode|AGETemplate::SetActorVisibilityDuration|Framework/src/BattleSys/Horizon/FieldObjBase.cpp|m_data"
+        },
+        {
+          "off": "0x119cf98",
+          "va": "0x119cf98",
+          "context": "l|mulColorVal|bFollowSpecifiedTargetVisibility|EyeCfgIdByMonster|bulletCount|controlRemoveParam|bCanReflect|bR"
+        },
+        {
+          "off": "0x119d06f",
+          "va": "0x119d06f",
+          "context": "ctor|isHostAcotr|bRevertToOrg|bGrassVisibilityHorizon|bChargingSkillCD|checkActorId|bNotReviveScale|scaleTime|"
+        },
+        {
+          "off": "0x11bd0bb",
+          "va": "0x11bd0bb",
+          "context": "pe|methodName|fsmNames|bFollowObjectVisibility|isJointSkill|SelectMode|buffOverrideParam4|bRandomTriggerInterv"
+        },
+        {
+          "off": "0x11c7a0d",
+          "va": "0x11c7a0d",
+          "context": "RecordActorPositionTick|AGE::SetPathVisibility|............|PVPTopRightPanel/panelTopRight/PauseBtn|PVPTopRigh"
+        },
+        {
+          "off": "0x11d4c32",
+          "va": "0x11d4c32",
+          "context": "|AGE::GetActorsDistanceTick|AGE::SetVisibility|targetPositionNavLoc|AGE::SetAnimationAlwaysAnimate|AGE::NewVar"
+        },
+        {
+          "off": "0x11d6492",
+          "va": "0x11d6492",
+          "context": "napshotDuration|AGETemplate::SetPathVisibility|AGETemplate::SetVisibility|IsAsyncInstantiate|ScriptName|Fix16A"
+        },
+        {
+          "off": "0x11d64ad",
+          "va": "0x11d64ad",
+          "context": "::SetPathVisibility|AGETemplate::SetVisibility|IsAsyncInstantiate|ScriptName|Fix16ArrayNodeRuntime|matP3|Physi"
+        },
+        {
+          "off": "0x11d6825",
+          "va": "0x11d6825",
+          "context": "UnactiveBuffDuration_filter|SetActorVisibilityDuration_filter|GuishiGameplayComponent_filter|BulletControler_f"
+        },
+        {
+          "off": "0x11d6b7a",
+          "va": "0x11d6b7a",
+          "context": "dEnemyIfHaveBuff|CopyHpRate|bInitialVisibility|bCheckEndPosInsideBlock|bCheckNotNearMapEdge|bLimitByArea|bRese"
+        },
+        {
+          "off": "0x11f16e5",
+          "va": "0x11f16e5",
+          "context": "|modifyTranslationToTarget|specifiedVisibilityTarget|bForbidBulletInObstacle|bSpawnInOriginPosWhenDeviate|debu"
+        },
+        {
+          "off": "0x11f1c76",
+          "va": "0x11f1c76",
+          "context": "Name|srcTarget|rVarName|bFollowActorVisibility|isRotateToTarget|isReachNavEdgeStop|FeatureType|dirPara|rebound"
+        },
+        {
+          "off": "0x11f5f62",
+          "va": "0x11f5f62",
+          "context": "j|AGE::MainActorMoveTo|AGE::SetActorVisibilityTick|AGE::SetAnimationVectorParamTick|AGE::TriggerBuffIconGlowTi"
+        },
+        {
+          "off": "0x11f7fa3",
+          "va": "0x11f7fa3",
+          "context": "ntrolXInMoveDir|WayPointId|bCopyHostVisibility|bCopyOriginalMesh|CopyEpRate|triggerRatio|bCheckActorCrossDynam"
+        },
+        {
+          "off": "0x1204527",
+          "va": "0x1204527",
+          "context": "Int32ArrayNode|AGETemplate::SetActorVisibilityTick|quaternion|CActorInfo|GameCoreTS.Event.en_BattleEventID_Gam"
+        }
+      ],
+      "utf16": []
+    },
+    "World": {
+      "ascii": [
+        {
+          "off": "0x113e896",
+          "va": "0x113e896",
+          "context": "HENG:%d|expected ' or \"|SlotValue|isWorld|NavLoc|MPathFindingMoveInfo|square|div|share_layer|get main_hero"
+        },
+        {
+          "off": "0x1148139",
+          "va": "0x1148139",
+          "context": "omboColorA|AddGeneralMiniNotifyNode|WorldPos|SignalType|progressValue|GetSkillIndicatorTargetEvent|hideui|"
+        },
+        {
+          "off": "0x1155e4a",
+          "va": "0x1155e4a",
+          "context": "|headPtsUpperLimit|SetObjectRotateInWorldSpace|autoReset|routeID2|SuspendCampRouteSoldierRegionNode|soldie"
+        },
+        {
+          "off": "0x115c404",
+          "va": "0x115c404",
+          "context": "ingReviveLife|SetTaskProgressNode|IsWorldVInt3ValidNode|GetAttackMoveToTargetResultNode|bFilterForbidSelec"
+        },
+        {
+          "off": "0x1163b79",
+          "va": "0x1163b79",
+          "context": "ager::SIG_UpdateLogic|uint16|USGMobaWorld|Project8LevelLogic|SGCore::ConditionGuideTaskCompCondition|SGCor"
+        },
+        {
+          "off": "0x1169bed",
+          "va": "0x1169bed",
+          "context": "plate::RandomAnimDuration|BaseCellToWorldPosInner|GetFlushOrShiftOptPos|Physics::ControledLineMoveCmdUnion"
+        },
+        {
+          "off": "0x116fe86",
+          "va": "0x116fe86",
+          "context": "rackobject|MTLoad|LPC|Physics::LogicWorld|rotateBodyDegreeSpeed|showMarkSrcMap|EnvEntityControler|UGCHeroC"
+        },
+        {
+          "off": "0x1170d47",
+          "va": "0x1170d47",
+          "context": "etController|SpawnScriptActor|CreateWorld|HasActorBegunPlay|module content not found|CreateArcTrapezoid: e"
+        },
+        {
+          "off": "0x1176c0e",
+          "va": "0x1176c0e",
+          "context": "AGETemplate::TriggerHeroHudParticle|WorldPosToBaseCellIdxOfGrid|PlayerOneStepSellPickupCmd|RandomPosRule|R"
+        },
+        {
+          "off": "0x117ac63",
+          "va": "0x117ac63",
+          "context": "omHeroItem|USGMoba55GamePlayFactory|WorldCommandBase|SetOffsetThreshold|Physics::PushTFixGravityMoveCmd|Ph"
+        },
+        {
+          "off": "0x117c278",
+          "va": "0x117c278",
+          "context": "t8GetDamageMpGetRateNode|Project8GetWorldMaxColPosNode|Direction|IsProject8ShouldChargeNode|extraDamage|ar"
+        },
+        {
+          "off": "0x117cc6a",
+          "va": "0x117cc6a",
+          "context": "|USG.STailsmanOverrideParams|USG.USGWorld|vdspeeds|includeTarRadius|cameraHost|AGETemplate::Project8Talent"
+        },
+        {
+          "off": "0x1182a08",
+          "va": "0x1182a08",
+          "context": "niMapIconNode|StartAt|IntName|targetWorldPos|bNoSkill|bInHeritHostEp|useEmptyActor|prefabName|GetSphereRad"
+        },
+        {
+          "off": "0x118916d",
+          "va": "0x118916d",
+          "context": "erCamp|AddPlayerAchievementNode|bUseWorldPos|bRespawn|RandMax|DataTableName|HeroPosition|OrganActor|Modify"
+        },
+        {
+          "off": "0x119601c",
+          "va": "0x119601c",
+          "context": "G.CommonPlayerEventParam|USG.USGMobaWorld|ChangeDirDuration|checkType|checkActor|SelfSkillCombineID_3_Prob"
+        },
+        {
+          "off": "0x1196aad",
+          "va": "0x1196aad",
+          "context": "eWhenTargetDead|startTimeOffset|bSetWorldY|applyActionSpeedToParticle|scaleYStandard|clearIndicatorCameraO"
+        },
+        {
+          "off": "0x1196ef2",
+          "va": "0x1196ef2",
+          "context": "teMove|minDistance|bOnlyEffectInLerpWorld|bSyncFlyingState|bInNormalAtk|checkImmeRevive|skillCacheSlot|Slo"
+        },
+        {
+          "off": "0x11aaffa",
+          "va": "0x11aaffa",
+          "context": "/shenpan_config.txt|GetJsWrapper|GetWorld|SendUIAnimation|GetParamValue|GoldCoinInBattleAutoIncreaseValue|"
+        },
+        {
+          "off": "0x11ae154",
+          "va": "0x11ae154",
+          "context": "ModeCmd|UnityObjectManager|Physics::WorldEventListenerInvoker|MicroFrameSynchr|ComboGuideFailConditionUseO"
+        },
+        {
+          "off": "0x11b0586",
+          "va": "0x11b0586",
+          "context": "gion|Foundation/Physics/src/Physics/World.cpp|backVelocity|Physics::RotateState|SGCore::CustomBattleEffect"
+        },
+        {
+          "off": "0x11b0eb4",
+          "va": "0x11b0eb4",
+          "context": "Degree|evtName|maxTrackDistance|bUseWorldDir|BuffID2|bChangeHeight|bSetActorHudExposeStatus|bIsChangeLimit"
+        },
+        {
+          "off": "0x11b7970",
+          "va": "0x11b7970",
+          "context": "llList_7|m_critValue|m_hurtType|FromWorld|SetCamp|DestroyEquip|SetHideKillNotify|get AI result|keyname[%s]"
+        },
+        {
+          "off": "0x11bc552",
+          "va": "0x11bc552",
+          "context": "ystemActorNode|ChildActor|isOffsetInWorldCoordinate|SetHeroContiKillNum|curLevel|ActorDyingEventNode|Repea"
+        },
+        {
+          "off": "0x11dd8af",
+          "va": "0x11dd8af",
+          "context": "Count|main chunk|Lerp|xyz|At|DestroyWorld|HasBeenInitialized|IsEnable|AddCollisionShape: expected a VColli"
+        }
+      ],
+      "utf16": []
+    },
+    "Transform": {
+      "ascii": [
+        {
+          "off": "0x1140792",
+          "va": "0x1140792",
+          "context": "Opr2|Update|SetNavMeshEnable|ConnectTransform|SyncPositionMoveCmd|Physics::PushDynamicCircleLimitAreaCmd|HeroS"
+        },
+        {
+          "off": "0x1141552",
+          "va": "0x1141552",
+          "context": "otation|Mods/AGE/src/AGE/Tick/ModifyTransform.cpp|CubicVectorBlend|AGE::VariableScopeBuffTick|AGE::ActorMoveBa"
+        },
+        {
+          "off": "0x1148c57",
+          "va": "0x1148c57",
+          "context": "|GetOldSpawnerMonster|GetUnityObjectTransform|IsUnityObjectActiveNode|GetDirBetweenActorsNode|isDeadAge|SetSyn"
+        },
+        {
+          "off": "0x114e86b",
+          "va": "0x114e86b",
+          "context": "rgetTick|AGETemplate::AdjustParticleTransformTick|AGETemplate::GetCommonAtkObj|AGETemplate::RemoveSkillMarkTic"
+        },
+        {
+          "off": "0x1154dae",
+          "va": "0x1154dae",
+          "context": "itionMarkTick|AGE::ModifyUnityObjectTransform|AGE::NewGetSlotLevelTick|AGE::CheckGameTimeTick|AGE::DelayHurtHu"
+        },
+        {
+          "off": "0x115fb2d",
+          "va": "0x115fb2d",
+          "context": "oice::RuleAiInstruction::InitMapAreaTransform|loaded %d key equip set entries (%d heroes) from %s|ai_rule_aivo"
+        },
+        {
+          "off": "0x1160e5b",
+          "va": "0x1160e5b",
+          "context": "avMode: %d|hanminqin mengtian|Lixin TransformingNotAnySkill:%d|LiubeiActionOpt|frame_no:%d behav_mode:%d Filte"
+        },
+        {
+          "off": "0x1161bb6",
+          "va": "0x1161bb6",
+          "context": "rator|AGETemplate::ModifyUnityObjectTransformDurationClient|AGETemplate::ModifyUnityObjectTransformDuration|AG"
+        },
+        {
+          "off": "0x1161bec",
+          "va": "0x1161bec",
+          "context": "lient|AGETemplate::ModifyUnityObjectTransformDuration|AGETemplate::FilterPropertyValueDuration|AGETemplate::Ba"
+        },
+        {
+          "off": "0x116da5f",
+          "va": "0x116da5f",
+          "context": "FowManager::UpdateMain|SGCore::UnityTransform|Duplicate Diff Class {0}, {1}|RandomGenerator|PredictMoveSend|Ph"
+        },
+        {
+          "off": "0x11702c8",
+          "va": "0x11702c8",
+          "context": "Num|_A|BloodBag|useExtraYOffset|bUseTransformByMap|bUpdatePosLater|bAffectedByEquipProperty|bUseIndicatorDirRe"
+        },
+        {
+          "off": "0x1176c7e",
+          "va": "0x1176c7e",
+          "context": "EquipComponent|EquipSecond|Physics::TransformSimplePolicy|ExpandableBox|Physics::DynamicCircleLimitAreaCmdProx"
+        },
+        {
+          "off": "0x11778cb",
+          "va": "0x11778cb",
+          "context": "BattleSys/ActorManager.cpp|Physics::TransformSecurityPolicy|stUGCPlayerChatParams|stActorTranslucencyChangePar"
+        },
+        {
+          "off": "0x117a546",
+          "va": "0x117a546",
+          "context": "|DarkTransLight: %d|LixinActionOpt::TransformToDark|LiubeiActionOpt::Process|KEEP_DIST_MONSTER_SRC_DIST|stage "
+        },
+        {
+          "off": "0x117bb0e",
+          "va": "0x117bb0e",
+          "context": "d|AGE::SetDynamicParamDuration|applyTransform|endSize|AGE::HeightOffsetDuration|AGE::TriggerDynamicHUDPart|AGE"
+        },
+        {
+          "off": "0x1181fbd",
+          "va": "0x1181fbd",
+          "context": "wTargetBloodDuration|AGE::SetMiniMapTransformSyncActorDuration|actorTarget|AGE::ProtectThresholdBuffDuration|d"
+        },
+        {
+          "off": "0x1182aa4",
+          "va": "0x1182aa4",
+          "context": "etActorKilledIncomeNode|CalcRelativeTransformNode|ChangeBuffIconNode|InvalidControl|ShowButtonSkillBuffCountNo"
+        },
+        {
+          "off": "0x1185a79",
+          "va": "0x1185a79",
+          "context": "|Foundation/Physics/include/Physics/Transform/VisualOffsetBlender.h|log_gamecore|exp|all|sub|mul|key:%d featur"
+        },
+        {
+          "off": "0x118a088",
+          "va": "0x118a088",
+          "context": "pawn|DoActorLeave|Offset_x|Physics::TransformProxy|Foundation/Physics/src/Physics/Transform/TransformProxy.cpp"
+        },
+        {
+          "off": "0x118a0b6",
+          "va": "0x118a0b6",
+          "context": "roxy|Foundation/Physics/src/Physics/Transform/TransformProxy.cpp|lapseMoveSpeed|durationLengthFactor|Physics::"
+        },
+        {
+          "off": "0x118a0c0",
+          "va": "0x118a0c0",
+          "context": "ation/Physics/src/Physics/Transform/TransformProxy.cpp|lapseMoveSpeed|durationLengthFactor|Physics::LocalOffse"
+        },
+        {
+          "off": "0x118f315",
+          "va": "0x118f315",
+          "context": "egionDuration|AGE::ModifyUnityObjectTransformDuration|AGE::TriggerBluePrintInstDuration|AGE::ChangeActorMeshDu"
+        },
+        {
+          "off": "0x1190aef",
+          "va": "0x1190aef",
+          "context": "moMoveCmd|Physics::Gravity|Physics::Transform|OMGConsumableUnit_filter|UGCLegacyDesignLevelLogic_filter|MoveBa"
+        },
+        {
+          "off": "0x1193dc1",
+          "va": "0x1193dc1",
+          "context": "st_emy_hero:%d,buff_monster_dist:%d|TransformToDark|LixinActionOpt::KeepNotUseSkill4|KEEP_DIST_HERO_MONSTER_SR"
+        }
+      ],
+      "utf16": []
+    },
+    "FrameSync": {
+      "ascii": [
+        {
+          "off": "0x1142bdb",
+          "va": "0x1142bdb",
+          "context": "ceSkinElement|RecoverCollectBuffer|CFrameSynchr.UpdateLogicPartA|magSqrD2P2|ServerTrialSystem|Physics::IdleSta"
+        },
+        {
+          "off": "0x115684e",
+          "va": "0x115684e",
+          "context": "egionOrder|serializedGrassCellList|CFrameSynchr.UpdateFrameFree|LPD|AddBuffPassiveEvent|GrassBVH|grassID|\r\n co"
+        },
+        {
+          "off": "0x1176a34",
+          "va": "0x1176a34",
+          "context": "eClientNode|refParamName|LevelGrid|CFrameSynchr|AdvanceFrameCmds|backContext|Physics::SlowRotate|GrassCellInfo"
+        },
+        {
+          "off": "0x119c94b",
+          "va": "0x119c94b",
+          "context": "tate : Type = {0}|UpdateFrameInner|CFrameSynchr.UpdateTails|PostUpdate|AGE::CheckCanWalkWallTick|Physics::Push"
+        },
+        {
+          "off": "0x11aa368",
+          "va": "0x11aa368",
+          "context": "elGrassWrapper|PlayerChangeCmd|StartFrameSynchr|CFrameSynchr.UpdateLogicPartB|GuishiBossFightStart|Physics::Lo"
+        },
+        {
+          "off": "0x11aa375",
+          "va": "0x11aa375",
+          "context": "r|PlayerChangeCmd|StartFrameSynchr|CFrameSynchr.UpdateLogicPartB|GuishiBossFightStart|Physics::LockState|Physi"
+        },
+        {
+          "off": "0x11ae173",
+          "va": "0x11ae173",
+          "context": "ics::WorldEventListenerInvoker|MicroFrameSynchr|ComboGuideFailConditionUseOtherSkill|Physics::PushJoyLeapMoveC"
+        },
+        {
+          "off": "0x11b0528",
+          "va": "0x11b0528",
+          "context": "pare|blockId|size can not be empty|CFrameSynchr.UpdateFrameLockTime|LPA|Physics::SceneManageRegion|Foundation/"
+        },
+        {
+          "off": "0x11daab6",
+          "va": "0x11daab6",
+          "context": "killIndicatorTargetCmd|CopyActorCmd|FrameSynchr|IState|X*%d/10000|Framework/src/EventCollector/FinishReportDat"
+        },
+        {
+          "off": "0x11e35cd",
+          "va": "0x11e35cd",
+          "context": "fowOfflineData|Framework/src/Driver/FrameSynchr.cpp|oriMatP2|matP1|magSqrD1P3|AGE::WallWalkFuncDuration|Battle"
+        }
+      ],
+      "utf16": []
+    },
+    "Frame": {
+      "ascii": [
+        {
+          "off": "0x113e2ba",
+          "va": "0x113e2ba",
+          "context": "an info rid=%d, type=%d |ssg::SSGScrFrame::InitSetMetaValueConf|3|-ssg_frame_protect_cpos|RuleProtectCposB"
+        },
+        {
+          "off": "0x113fe5f",
+          "va": "0x113fe5f",
+          "context": "er_max_time_range|enemy_hero_num|CurFrame[%d] Check Alert Distance, main_hero:%d; enemy_hero:%d, RealDista"
+        },
+        {
+          "off": "0x113fecb",
+          "va": "0x113fecb",
+          "context": "e[%d] MainHeroAlertDistance[%d]\n|CurFrame[%d] Enter Alert Because LastAlertFrame:%d; ContinueAlertFrameCou"
+        },
+        {
+          "off": "0x113fef2",
+          "va": "0x113fef2",
+          "context": "me[%d] Enter Alert Because LastAlertFrame:%d; ContinueAlertFrameCount:%d\n|skill1 predict direction:%d,%d|i"
+        },
+        {
+          "off": "0x113ff09",
+          "va": "0x113ff09",
+          "context": "use LastAlertFrame:%d; ContinueAlertFrameCount:%d\n|skill1 predict direction:%d,%d|in rule version|Gjmy pre"
+        },
+        {
+          "off": "0x1140bfd",
+          "va": "0x1140bfd",
+          "context": "ation/Common/src/File/DummyFile.cpp|Framework/Parts/Databin/src/Resource/CLanguageMap.cpp|[LanguageMap Loa"
+        },
+        {
+          "off": "0x11416cc",
+          "va": "0x11416cc",
+          "context": "meScale|RandomSwitchCaseNodeRuntime|Framework/src/BattleSys/BattleInteraction/BattleInteractionGroup.cpp|L"
+        },
+        {
+          "off": "0x1142bdb",
+          "va": "0x1142bdb",
+          "context": "ceSkinElement|RecoverCollectBuffer|CFrameSynchr.UpdateLogicPartA|magSqrD2P2|ServerTrialSystem|Physics::Idl"
+        },
+        {
+          "off": "0x1142e74",
+          "va": "0x1142e74",
+          "context": "bleCommonAttackIndicatorTick_filter|Framework/src/Client/Actor/ActorControler_filter.cpp|InitBuffDemand|Pu"
+        },
+        {
+          "off": "0x1143369",
+          "va": "0x1143369",
+          "context": "al|paramSpecialType|bAdjustFlyTimeByFrameDelta|bControlled|bDoneWhenAbortMove|bSmoothLerp|toTheWallWidth|d"
+        },
+        {
+          "off": "0x11438c9",
+          "va": "0x11438c9",
+          "context": "killTimerProgressEventParam|{|GetCurFrameTick|IsTargetCanBeAttackedIgnoreVisible|LookAtDirection|GetSkillB"
+        },
+        {
+          "off": "0x11449b6",
+          "va": "0x11449b6",
+          "context": "t_noise_rate|set_camp_hp|ssg::SSGScrFrame::GetSSGScrFrameAtkNearPlayerV3|ssg_name: %s -> radius: %d, hp_ra"
+        },
+        {
+          "off": "0x11449c6",
+          "va": "0x11449c6",
+          "context": "_camp_hp|ssg::SSGScrFrame::GetSSGScrFrameAtkNearPlayerV3|ssg_name: %s -> radius: %d, hp_rate: %.2f, self_h"
+        },
+        {
+          "off": "0x1144a69",
+          "va": "0x1144a69",
+          "context": "ero:%d peiwan:%d dist:%d|ssg::SSGScrFrame::GetSSGSetMetaValue|ssg_leave_buff_for_player|label:%d labeltype"
+        },
+        {
+          "off": "0x11453af",
+          "va": "0x11453af",
+          "context": "xt need update|SaveFeatureInfoOfEachFrame::InitHeroRoleConfig  |[IsPredictFrame] Overclocking predict|[Par"
+        },
+        {
+          "off": "0x11453d5",
+          "va": "0x11453d5",
+          "context": "ame::InitHeroRoleConfig  |[IsPredictFrame] Overclocking predict|[ParseCoachSubgoal] Failed to find a maxim"
+        },
+        {
+          "off": "0x1145c96",
+          "va": "0x1145c96",
+          "context": "um %d|feature::SaveFeatureInfoOfEachFrame::SaveAllHerosVisibleStateLastFrame|GameTS test session plan requ"
+        },
+        {
+          "off": "0x1145cb9",
+          "va": "0x1145cb9",
+          "context": "hFrame::SaveAllHerosVisibleStateLastFrame|GameTS test session plan requires non-empty runId.|GameTS runtim"
+        },
+        {
+          "off": "0x1146517",
+          "va": "0x1146517",
+          "context": "Range: %d|LiubangActionOpt::Init|CurFrame[%d] Hero[%d] Skill_Common[%d] UnUsable\n|target_offset|skill2_tim"
+        },
+        {
+          "off": "0x1146c1d",
+          "va": "0x1146c1d",
+          "context": "itySignal|PreconditionConfig|SetCoreFrame|ActionTerminateMove|SyncGroundY|Physics::PushControledLineMoveCm"
+        },
+        {
+          "off": "0x1146cab",
+          "va": "0x1146cab",
+          "context": "oject8AllyRescueCmd|SvrNtfPlayerQuitFrameExtendStateCmd|SvrModeSpawnerMgr|Physics::PaceAdjustor|X*%d|Minut"
+        },
+        {
+          "off": "0x11473fd",
+          "va": "0x11473fd",
+          "context": "e|HelpToAttackEventNodeRuntime|BeginFrameExtendStateEventNodeRuntime|TraverseJsonArrayItemNodeRuntime|Grap"
+        },
+        {
+          "off": "0x11474e4",
+          "va": "0x11474e4",
+          "context": "InGrassEventClientNodeRuntime|RenderFrameUpdateEventNodeClientRuntime|Sequence|TransitionPhase|DecoratorTi"
+        },
+        {
+          "off": "0x114810e",
+          "va": "0x114810e",
+          "context": "am2|TriggerPathIndicator|cpuJumpLateFrame|comboColorA|AddGeneralMiniNotifyNode|WorldPos|SignalType|progres"
+        }
+      ],
+      "utf16": []
+    },
+    "Sync": {
+      "ascii": [
+        {
+          "off": "0x114079c",
+          "va": "0x114079c",
+          "context": "e|SetNavMeshEnable|ConnectTransform|SyncPositionMoveCmd|Physics::PushDynamicCircleLimitAreaCmd|HeroSwitch"
+        },
+        {
+          "off": "0x1141450",
+          "va": "0x1141450",
+          "context": "ion|SGSkill::BufferLogicEffect|AGE::SyncHeroTransToBoatNode|AGE::GuidePathIndicatorTick|AGE::SetParticleE"
+        },
+        {
+          "off": "0x1142424",
+          "va": "0x1142424",
+          "context": "reateHeroNode|callMonsterCfgID|ForceSyncExtralEffectMask|FullStateRevive|BlockExcludeActorsNode|CreateEye"
+        },
+        {
+          "off": "0x1142be0",
+          "va": "0x1142be0",
+          "context": "nElement|RecoverCollectBuffer|CFrameSynchr.UpdateLogicPartA|magSqrD2P2|ServerTrialSystem|Physics::IdleSta"
+        },
+        {
+          "off": "0x1146c37",
+          "va": "0x1146c37",
+          "context": "ig|SetCoreFrame|ActionTerminateMove|SyncGroundY|Physics::PushControledLineMoveCmd|Physics::BezierMotionCo"
+        },
+        {
+          "off": "0x1148457",
+          "va": "0x1148457",
+          "context": "shWidthLimit|SetBuXueHuaDataNode|AddSyncActiveObjNode|playerIdList|videoID|resRefActor|FilterActor|GetCam"
+        },
+        {
+          "off": "0x114898e",
+          "va": "0x114898e",
+          "context": "ode|data2|GetUID|syncSkillSlot|forceSyncBuffs|.so|oppo_continue_not_visible_sec reset frame_no:%d\tno_visi"
+        },
+        {
+          "off": "0x1148c9e",
+          "va": "0x1148c9e",
+          "context": "etDirBetweenActorsNode|isDeadAge|SetSyncSkillIndicatorNode|isRemove|bIsLeastLayerBuff|isSpecialMove|Actor"
+        },
+        {
+          "off": "0x11499bc",
+          "va": "0x11499bc",
+          "context": "|bFilterPropertyReduced|stopRotDis|bSyncWithVisibility|shakePosRange|useCurveRes|bIsMonsterGetHostHero|bR"
+        },
+        {
+          "off": "0x1149d6f",
+          "va": "0x1149d6f",
+          "context": "eversePath|System.String|VInt3Value|Sync2Charp|Framework/src/Serializer/UGCUnityTypeSerializer.cpp|SGameB"
+        },
+        {
+          "off": "0x114fbdb",
+          "va": "0x114fbdb",
+          "context": "omPos|RemoveBindToActorSlotNode|NeedSync|isAccurateRiver|ActorAbnormalMoveEndEventNode|GetQuicklyBuyEquip"
+        },
+        {
+          "off": "0x114feb2",
+          "va": "0x114feb2",
+          "context": "fsetAndScaleNode|StorylineEventNode|SyncDisplayFuncRegionStateEventNode|SpawnTimer|replaceTexture|RedTowe"
+        },
+        {
+          "off": "0x1156853",
+          "va": "0x1156853",
+          "context": "Order|serializedGrassCellList|CFrameSynchr.UpdateFrameFree|LPD|AddBuffPassiveEvent|GrassBVH|grassID|\r\n co"
+        },
+        {
+          "off": "0x1156af3",
+          "va": "0x1156af3",
+          "context": "stHeightMoveCmdUnion|Physics::PeriodSyncMoveCmdUnion|Physics::DemoMoveCmdUnion|lerpRatio|Physics::MotionR"
+        },
+        {
+          "off": "0x115ca1e",
+          "va": "0x115ca1e",
+          "context": "tActorEnergyTypeNode|RandomPosition|SyncAbortSkill|headPt|OutBinderTarget|ActorNavRegionChangeEventNode|A"
+        },
+        {
+          "off": "0x115d628",
+          "va": "0x115d628",
+          "context": "moothLerpAddOrDelete|globalMaxCount|SyncMasterSkillSlot|bResetSkillLevel|bSkillGroup|hitNum3|bCurSlot|bPa"
+        },
+        {
+          "off": "0x115d715",
+          "va": "0x115d715",
+          "context": "gGravity|phaseShift|bActorInBattle|bSyncMoveCmdDir|uAwakenBuffId|gameOverSkinID|filterByHostPlayerSacredA"
+        },
+        {
+          "off": "0x11619b4",
+          "va": "0x11619b4",
+          "context": "angeEventNodeRuntime|ExecuteVariableSyncNodeRuntime|CountTriggerNodeRuntime|WhileNodeRuntime|GlobalVariab"
+        },
+        {
+          "off": "0x1169d77",
+          "va": "0x1169d77",
+          "context": "ffectDuration_filter|SetParticleAutoSynchroActorAnimatorParams_filter|SetCameraLerpParamDuration_filter|M"
+        },
+        {
+          "off": "0x116ee5b",
+          "va": "0x116ee5b",
+          "context": "No1|stSpawnBulletSkillEventParam|GetSyncPathID|Trigger|roundId|selectedSkillList|refreshCardUseList|BigAw"
+        },
+        {
+          "off": "0x1170038",
+          "va": "0x1170038",
+          "context": "eaTriggerDuration|PlayerMovement|SetSyncType|Physics::SprintNormalMoveCmdProxy|Physics::TrigonometricMove"
+        },
+        {
+          "off": "0x1170a86",
+          "va": "0x1170a86",
+          "context": "acetoReboundDir|firstBarImg|bPause|bSyncSkillBean|switchBuff|fadeoutStartTime|flipTargetID|outDamageValue"
+        },
+        {
+          "off": "0x1174490",
+          "va": "0x1174490",
+          "context": "/GraphLogicCustomDefRuntime.cpp|Opl|SyncNormalMove|CreateCollisionBox|Physics::PushSmoothRotateCmd|Physic"
+        },
+        {
+          "off": "0x117568f",
+          "va": "0x117568f",
+          "context": "8ActorInBattleFieldChangeParam|AGE::SyncMoveSpeedDuration|AGE::SmoothSteerMoveDuration|checkFlag|AGE::Sim"
+        }
+      ],
+      "utf16": []
+    },
+    "Hurt": {
+      "ascii": [
+        {
+          "off": "0x1140835",
+          "va": "0x1140835",
+          "context": "d|UseObjectiveSkillCmd|SGSkill::BuffHurtRateHandle|MinuteDivideInfo10m|what the fuck?|EvtCollector::NONHE"
+        },
+        {
+          "off": "0x1141126",
+          "va": "0x1141126",
+          "context": "oActorNearby|AGETemplate::SetSpecialHurtTargetDuration|AGETemplate::FilterHeroAtkDistDuration|AGETemplate"
+        },
+        {
+          "off": "0x1141bb9",
+          "va": "0x1141bb9",
+          "context": "am|stForceMoveActorEndParam|stSimpleHurtEventResultInfo|FieldName|TargetOffset|FilterByBuff|BothAllyEvent"
+        },
+        {
+          "off": "0x1147356",
+          "va": "0x1147356",
+          "context": "alAttackEventNodeRuntime|ActorReduceHurtEventNodeRuntime|intParam3|WaitNotHasMoveCMDNodeRuntime|ActorTele"
+        },
+        {
+          "off": "0x11476d7",
+          "va": "0x11476d7",
+          "context": "eviveDyingHeroDuration|AGETemplate::HurtTriggerDuration|AGETemplate::SkillUIEffect|AGETemplate::TriggerNe"
+        },
+        {
+          "off": "0x1147e82",
+          "va": "0x1147e82",
+          "context": "ondition|TakeDamagePassiveEvent|DeadHurtPassiveEvent|InGameInteractiveRecorder|Fury|ControlAvoidanceMVPDo"
+        },
+        {
+          "off": "0x114831b",
+          "va": "0x114831b",
+          "context": "Node|growProgressID|checkShieldType|HurtType|isBatchable|ageName|totalTimeLength|bStart|bIncludeDyinghero"
+        },
+        {
+          "off": "0x1148d42",
+          "va": "0x1148d42",
+          "context": "Tick|SetSpecialSkillNodeStateNode|BeHurt|Close_Others|isTask|GetCurrentPlayIDNode|Arr|GetGameStartTimeNod"
+        },
+        {
+          "off": "0x114cd12",
+          "va": "0x114cd12",
+          "context": "l_config_id:%d|SeckillCombo::CalRealHurt|skill:%d not usable, last_use_frame:%d, cur_frame:%d|rule_retrea"
+        },
+        {
+          "off": "0x114e95b",
+          "va": "0x114e95b",
+          "context": "f.bytes|Databin/data_xls/UGCPveActorHurtTagConfig.bytes|TriggerParticleModifyParam|AGE::TickEvent|AGE::Pr"
+        },
+        {
+          "off": "0x114f152",
+          "va": "0x114f152",
+          "context": "e|InputVar|IsComputer|customData|canHurtValue|HashMapGetNode|GraphLogicCustomDefIsTargetTypeNode|bAuto|op"
+        },
+        {
+          "off": "0x11509cf",
+          "va": "0x11509cf",
+          "context": "HIGH_ExposureColorIntensity|bSpecialHurtTarget|thresholdMid|outputCurFrameNo|bPreInMove|bChooseSkillInCD|"
+        },
+        {
+          "off": "0x1153954",
+          "va": "0x1153954",
+          "context": "CurFrame[%d] Failed Get DaJi Skill2 HurtInfo\n|CurFrame[%d] Not In HeroAlert\n|hero_cid:%d, position:%d,%d|"
+        },
+        {
+          "off": "0x115482a",
+          "va": "0x115482a",
+          "context": "wnObjBlockDuration|AGETemplate::LinkHurtPartGODuration|AGETemplate::SimpleSpawnObjectDuration|AGETemplate"
+        },
+        {
+          "off": "0x1154df2",
+          "va": "0x1154df2",
+          "context": "ck|AGE::CheckGameTimeTick|AGE::DelayHurtHudRenderDuration|AGE::AnimationIKDuration|AGE::ADGEffectDuration"
+        },
+        {
+          "off": "0x1155083",
+          "va": "0x1155083",
+          "context": "odeMoveActorTeleport|AGE::SetSpecialHurtTargetDuration|AGE::SetAnimationParamsDuration|AGE::PlaySoundWhen"
+        },
+        {
+          "off": "0x1155486",
+          "va": "0x1155486",
+          "context": "ject8CareerEffectNode|Project8PlayerHurtNode|Project8IsBattleRoundEnd|WaitProject8BattleRoundChangeNode|D"
+        },
+        {
+          "off": "0x11569a6",
+          "va": "0x11569a6",
+          "context": "ionSetNamedVariableAtTime|AGE::HitBeHurtObjectDuration|Dead|DeSerializeHero|syncUpdateSR|AvoidRepeatSibli"
+        },
+        {
+          "off": "0x1156da6",
+          "va": "0x1156da6",
+          "context": "erLimitActionName|bExposeBullet|bSetHurtColor|bTargetPosition|bRemoveWhenControlled|decelerateDuration|re"
+        },
+        {
+          "off": "0x1157728",
+          "va": "0x1157728",
+          "context": "ource |FootballShowEmoji|PVEGetActorHurtTagBonus|Warning|USG|GetParamCount|CreateCapsule|sheets|RecyleTim"
+        },
+        {
+          "off": "0x115a2c5",
+          "va": "0x115a2c5",
+          "context": "_res|fail_to_init_skill_delay_time.|HurtEnemyHero no-tank set skill:%d, dir:%d,%d|[SetNewAction] (skill_s"
+        },
+        {
+          "off": "0x115b626",
+          "va": "0x115b626",
+          "context": ":KillSoldierLineTick|AGE::SetSpecialHurtMaterialHostTick|AGE::SetActionRefSkillContextParamTick|translati"
+        },
+        {
+          "off": "0x115e896",
+          "va": "0x115e896",
+          "context": "hLimitUtility.cpp|SGSkill::SkillFuncHurtDelegator|[Proces2] m_is_attack_done: %d|[Process] main_hero_hp_r"
+        },
+        {
+          "off": "0x1161598",
+          "va": "0x1161598",
+          "context": "S_SKILLFUNC_TYPE_MODIFY_DAMAGE|ExtraHurt_Value|H525Link|H505ActiveShieldTime|GPTHuoYanShanFireballHitRing"
+        }
+      ],
+      "utf16": []
+    },
+    "Coordinate": {
+      "ascii": [
+        {
+          "off": "0x114fd08",
+          "va": "0x114fd08",
+          "context": "eNode|PlayBornAgeActionNode|ignoreY|CoordinateInCircleNode|num2|BooleanToStringConverterNode|GraphLogicDynamic"
+        },
+        {
+          "off": "0x1196ec6",
+          "va": "0x1196ec6",
+          "context": "ntrolZ|recordMaxMoveTimeName|bUseXYZCoordinateMove|minDistance|bOnlyEffectInLerpWorld|bSyncFlyingState|bInNorm"
+        },
+        {
+          "off": "0x11bc557",
+          "va": "0x11bc557",
+          "context": "ActorNode|ChildActor|isOffsetInWorldCoordinate|SetHeroContiKillNum|curLevel|ActorDyingEventNode|RepeatCount|Ga"
+        },
+        {
+          "off": "0x11cf5eb",
+          "va": "0x11cf5eb",
+          "context": "IFallbackNode|adjacent2|ArcsineNode|Coordinate|GraphLogicLoadedEventNode|IntClampNode|SwitchNode|Namespace|Con"
+        },
+        {
+          "off": "0x11e3b02",
+          "va": "0x11e3b02",
+          "context": "it|spawnSlot|fadeTime|bOffsetInWorldCoordinate|modifyScaling|bInvisibleBullet|bSelectFromActionList|bControlRe"
+        }
+      ],
+      "utf16": []
+    },
+    "Location": {
+      "ascii": [
+        {
+          "off": "0x1144687",
+          "va": "0x1144687",
+          "context": "EscapeFromSkill::EscapeFunc::RefreshLocationOfAllEnemyWhenReleaseSkill |buff_label|EscapeFromSkill::EscapeFun"
+        },
+        {
+          "off": "0x1145a0a",
+          "va": "0x1145a0a",
+          "context": "ure::VecFeatureHeroMainHeroFeature::LocationInfoTimeSeries|feature::VecFeatureHero::LoadEquipConfigID|0;|_-1_"
+        },
+        {
+          "off": "0x1148611",
+          "va": "0x1148611",
+          "context": "earOrgans|GetAllAttackOgransNode|GetLocationGrassBlockID|LevelRankDataControlerGetHeroDataNode|GetMaxEquipLev"
+        },
+        {
+          "off": "0x1148b7c",
+          "va": "0x1148b7c",
+          "context": "ice::VecFeatureHeroMainHeroFeature::LocationInfoTimeSeries|[GetTargetAroundNum] Monster target:%d,%d,%d dist:"
+        },
+        {
+          "off": "0x114f799",
+          "va": "0x114f799",
+          "context": "yNode|FromSelfForwardGetClosestGrassLocation|ClearPreLoadBlock|Desc|UnityObjectOnBindBinderEventNode|ignoreOu"
+        },
+        {
+          "off": "0x116003c",
+          "va": "0x116003c",
+          "context": "ure::Enemy2InMainHeroCommonAtkRange|Location Info not found|feature::VecFeatureHeroMainHeroFeature::MainHeroR"
+        },
+        {
+          "off": "0x11600b6",
+          "va": "0x11600b6",
+          "context": "tion|VecFeatureHeroMainHeroFeature::LocationXMonsterTop3Distance rundongwang|frame: %d, config_id: %d, main_h"
+        },
+        {
+          "off": "0x1161397",
+          "va": "0x1161397",
+          "context": "CurSkillChange|PredictUpdatePing|SetLocation|SetMoveCmdPlaySpeed|EndMoveCmd|Physics::ConstantMotionController"
+        },
+        {
+          "off": "0x1176ab6",
+          "va": "0x1176ab6",
+          "context": "ore|LegacyMapID|Level/|GetGrassBoundLocationsRuntime|VInt3ConstantArrayNode|Physics::SNavMeshCut|dynamicTempl"
+        },
+        {
+          "off": "0x1178384",
+          "va": "0x1178384",
+          "context": "omSkill_aivoice::EscapeFunc::RefreshLocationOfAllEnemyWhenReleaseSkill |give pos skill_1 whether_nes:true|fin"
+        },
+        {
+          "off": "0x117d8be",
+          "va": "0x117d8be",
+          "context": "de|bUseRandomBullet|bTargetOnlyCheckLocation|bChangePlayerCampPosOffsetWhenHitTrigger|extraTransmitNuffId|hur"
+        },
+        {
+          "off": "0x11822c4",
+          "va": "0x11822c4",
+          "context": "condFilter|times|state|GetActorLogicLocationNode|CreateGuishiEnvInventoryItemNode|CollideeDegree|TotalTime|vo"
+        },
+        {
+          "off": "0x1184ef3",
+          "va": "0x1184ef3",
+          "context": "ll::EscapeFunc::GetNearestEenmyTowerLocation|ssg_config_path|' reshape input error: | forward error: |Feature"
+        },
+        {
+          "off": "0x1188cb2",
+          "va": "0x1188cb2",
+          "context": "amageAbility|AGE::UpdateWallParticleLocationDuration|AGE::TriggerSkillSideButton|intParam|bMoveOnXAxis|Bezier"
+        },
+        {
+          "off": "0x1189f9e",
+          "va": "0x1189f9e",
+          "context": "nSys|Physics::GroupRelation|GetGrassLocationsRuntime|IsValidTargetInExtraMesh|done_|GetActorAwakeForbidGlyphs"
+        },
+        {
+          "off": "0x118bac4",
+          "va": "0x118bac4",
+          "context": "omSkill_aivoice::EscapeFunc::RefreshLocationOfAllEnemyWhenReleaseSkill update location wrong |***** frame has"
+        },
+        {
+          "off": "0x118bea6",
+          "va": "0x118bea6",
+          "context": "EscapeFromSkill::EscapeFunc::RefreshLocationOfAllEnemyWhenReleaseSkill update location |rule_avoid_skill init"
+        },
+        {
+          "off": "0x118bf86",
+          "va": "0x118bf86",
+          "context": "osBulletOffine InsertEnemyBulletDistLocationInfo|()Ljava/io/File;|RemapFunc error: '%d' of '%d'.|# moduleName"
+        },
+        {
+          "off": "0x11967a8",
+          "va": "0x11967a8",
+          "context": "awnBuffParam|sourceActor|bUseTriggerLocationAsSoundSource|SoliderType|RefObjList|AGETemplate::SimpleSpawnBuff"
+        },
+        {
+          "off": "0x1197e21",
+          "va": "0x1197e21",
+          "context": "ce::EscapeFunc::GetNearestEenmyTowerLocation|escape from dir_normal result -- x:%d,y:%d,z:%d|offline Judge|m_"
+        },
+        {
+          "off": "0x1199671",
+          "va": "0x1199671",
+          "context": "frd_num|in_organ_attacked|}|Monster Location:%s|SeckillCombo::LoadSeckillCombo|SeckillCombo::ParseSkillList|c"
+        },
+        {
+          "off": "0x119be31",
+          "va": "0x119be31",
+          "context": "rans|SetLinkerValueDataNode|GetGrassLocation|EffectType|EventSrcActor|soldierWaveID|outputObjs|OnRemove|GetPl"
+        },
+        {
+          "off": "0x119dfe3",
+          "va": "0x119dfe3",
+          "context": "omSkill_aivoice::EscapeFunc::RefreshLocationOfAllEnemyWhenReleaseSkill first frame init |***** normalized deg"
+        },
+        {
+          "off": "0x119e23d",
+          "va": "0x119e23d",
+          "context": "EscapeFromSkill::EscapeFunc::RefreshLocationOfAllEnemyWhenReleaseSkill find cooldown_info of last frame |skil"
+        }
+      ],
+      "utf16": []
+    },
+    "Fixed": {
+      "ascii": [
+        {
+          "off": "0x1180ed3",
+          "va": "0x1180ed3",
+          "context": "aFactory|LoadObject|ActionConfig|SetFixedRotateSpeed|Physics::PushMirrorActorMoveCmd|Physics::PushShipDrif"
+        },
+        {
+          "off": "0x1182539",
+          "va": "0x1182539",
+          "context": "reathEffectNode|PlayersNum|endPos|IsFixedInScene|SkinBattleFeatureType|quickStolenEquipLimit|bFakeSteal|de"
+        },
+        {
+          "off": "0x119d444",
+          "va": "0x119d444",
+          "context": "seParaDir|moveSpeedMax|AGETemplate::FixedStyleFloatDigitDuration|mergeBuffs|forwardActorId|dstSlotType|xEd"
+        },
+        {
+          "off": "0x11a3530",
+          "va": "0x11a3530",
+          "context": "ion|Physics::RotatingState|Physics::FixedSpeedRotate|AGE::MultiTargetSplineBulletDuration|Physics::Instanc"
+        },
+        {
+          "off": "0x11b781e",
+          "va": "0x11b781e",
+          "context": "roperty|CanUseSkill|StorylineResume|FixedDistanceExt|GetSkillLevel|LuaDatabin: invalid udata|PooledHandle<"
+        },
+        {
+          "off": "0x11e91a9",
+          "va": "0x11e91a9",
+          "context": "ameraNode|SetCinemaCameraHeightNode|FixedDistanceExtNode|SpawnActorNode|SetExtraEffectCDParamNode|SpawnPoi"
+        },
+        {
+          "off": "0x11fc8f5",
+          "va": "0x11fc8f5",
+          "context": "deActorMeshObjectByTagDuration|AGE::FixedStyleFloatDigitDuration|destRot|ExtraBuffTriggerInfo|TriggerActio"
+        }
+      ],
+      "utf16": []
+    },
+    "PositionRecorder": {
+      "ascii": [
+        {
+          "off": "0x1141a69",
+          "va": "0x1141a69",
+          "context": "on|AGE::AddRVOAgentDuration|SGCore::PositionRecorderUnit|AccumulateDamageCondition|ActorCritCondition|Continuo"
+        }
+      ],
+      "utf16": []
+    },
+    "Visible": {
+      "ascii": [
+        {
+          "off": "0x11438ee",
+          "va": "0x11438ee",
+          "context": "rameTick|IsTargetCanBeAttackedIgnoreVisible|LookAtDirection|GetSkillBeanCD|LuaDatabinMeta|Cross|clear ai res"
+        },
+        {
+          "off": "0x1145bd8",
+          "va": "0x1145bd8",
+          "context": "o] IgnoreHeroTarget config_id:%d NotVisible|combo info error : %s|target hero dead|feature::FeatureImgLikeMa"
+        },
+        {
+          "off": "0x1145ca9",
+          "va": "0x1145ca9",
+          "context": "FeatureInfoOfEachFrame::SaveAllHerosVisibleStateLastFrame|GameTS test session plan requires non-empty runId."
+        },
+        {
+          "off": "0x1147f33",
+          "va": "0x1147f33",
+          "context": "|SetHpByRate|fightOver|stHorizonMarkVisibleChangeParam|stActorNavRegionChangeEventParam|dropItem|HeroId|unfi"
+        },
+        {
+          "off": "0x1148736",
+          "va": "0x1148736",
+          "context": "ressbarDown|ActorBubbleText|BattleUIVisible|SetCircleMeshRatio|ratio|stateIndex|PausePvpCurrentTimeNode|myBi"
+        },
+        {
+          "off": "0x1149b3c",
+          "va": "0x1149b3c",
+          "context": "inLightIntensity|cdTimeRatio|bChangeVisible|searchTargetMode|indicatorPos|randomId|checkBeRepressed|CheckCur"
+        },
+        {
+          "off": "0x114cb8d",
+          "va": "0x114cb8d",
+          "context": "t_time|game::AiProcess::SaveAllHerosVisibleLastFrame|game::AiProcess::RefreshAtkMonsterInfo|attack_long|.mjs"
+        },
+        {
+          "off": "0x114f9f9",
+          "va": "0x114f9f9",
+          "context": "lective_scan|instancenorm|binary_op|VisibleExtract::extract_event|BulletInfo: |Radian:| input=|frameno:%d\tNo"
+        },
+        {
+          "off": "0x1150dbd",
+          "va": "0x1150dbd",
+          "context": "2Arr|__usg_createScriptComponent|SetVisible|CreateTriangle: expected (vertices, height, center)|GetActorsInA"
+        },
+        {
+          "off": "0x11550c8",
+          "va": "0x11550c8",
+          "context": "ionParamsDuration|AGE::PlaySoundWhenVisibleDuration|AGE::PlayMaterialEffectAnimationDuration|actor|AGE::Ener"
+        },
+        {
+          "off": "0x1155ede",
+          "va": "0x1155ede",
+          "context": "lBreathNode|regionIndexB|SetBattleUIVisibleByTriggerNode|beReplacedMonsterCfgID|iValue|SetRtpcValueNode|Sort"
+        },
+        {
+          "off": "0x1159bdd",
+          "va": "0x1159bdd",
+          "context": "itConfig()|game::AiProcess::SaveCampVisible|feature::SaveFeatureInfoOfEachFrame::SaveLastAtkMonsterI|,\"planJ"
+        },
+        {
+          "off": "0x115b119",
+          "va": "0x115b119",
+          "context": "tchContextEventClientNodeRuntime|FowVisiblePolicy|FowVisiblePolicy_FakeFow|member|CompositeStochastic|WaitFr"
+        },
+        {
+          "off": "0x115b12a",
+          "va": "0x115b12a",
+          "context": "ientNodeRuntime|FowVisiblePolicy|FowVisiblePolicy_FakeFow|member|CompositeStochastic|WaitFramesState|AGETemp"
+        },
+        {
+          "off": "0x1162a4f",
+          "va": "0x1162a4f",
+          "context": "Event|SetAttackRouteByRouteIDNode|isVisible|SetActorGodeModeNode|thresholdWhenDisableExtraEffect|OptionID|Op"
+        },
+        {
+          "off": "0x1162fcf",
+          "va": "0x1162fcf",
+          "context": "elCameraLerpParam|val|SetMiniMapIconVisibleNode|CountDown|DestroyMiniMapUI3DEventNode|SignalID|isEnemyDestro"
+        },
+        {
+          "off": "0x116671e",
+          "va": "0x116671e",
+          "context": "criptionInfo()|game::AiProcess::SaveVisibleMonsterStateLastFrame|,\"message\":|AITrialPassive::AITrialPassive("
+        },
+        {
+          "off": "0x117356c",
+          "va": "0x117356c",
+          "context": "re::SaveFeatureInfoOfEachFrame::SaveVisibleMonsterStateLastFrame|Current GameCoreTS session is not a Harness"
+        },
+        {
+          "off": "0x117545d",
+          "va": "0x117545d",
+          "context": "mpareValueTick|AGE::Project8SetActorVisibleDuration|startSize|AGE::DisableMoveProbeDuration|AGE::SwitchCamer"
+        },
+        {
+          "off": "0x11759a6",
+          "va": "0x11759a6",
+          "context": "|stEquipInBattleChangedEventParam|inVisibleCD|SkillSelectBuffEffectStackStatisticNode|normalWeight|ShapeType"
+        },
+        {
+          "off": "0x11775f3",
+          "va": "0x11775f3",
+          "context": "utOfRange|minSpeed|connectType|bOnlyVisible|modifyFreq|therapicType|incomeSoulRatio|bIgnoreEnemyCampHero|lea"
+        },
+        {
+          "off": "0x117db77",
+          "va": "0x117db77",
+          "context": "rojectPos|speedoraccelChange|bFilterVisible|bSelectSpawnerRegionType|selectSpawnerRegionType|bSelectCareer|u"
+        },
+        {
+          "off": "0x11802ce",
+          "va": "0x11802ce",
+          "context": "_move_frame_no: %d, diff_degree: %d|Visible2Invisible|sgametest_%d.log|GameTsSessionPlanJsonTooLarge|AITrial"
+        },
+        {
+          "off": "0x1181676",
+          "va": "0x1181676",
+          "context": "FromActorOnDamageRuntime|ActorFilterVisibleChangeEventNodeRuntime|MoveCityEventClientNodeRuntime|BlueprintBi"
+        }
+      ],
+      "utf16": []
+    },
+    "Security": {
+      "ascii": [
+        {
+          "off": "0x115b8ca",
+          "va": "0x115b8ca",
+          "context": "r|VoiceInteractionEncounterMonster|CSecurityActorManagerPolicy|AGE::Project8CheckConditionTick|SGCore::OMGHer"
+        },
+        {
+          "off": "0x115bc3b",
+          "va": "0x115bc3b",
+          "context": "kinEffect|UnityObject|Framework/src/Security/SecurityHelper.h|stUpdateAxisScaleParam|stBlueprintActorMovePara"
+        },
+        {
+          "off": "0x115bc44",
+          "va": "0x115bc44",
+          "context": "|UnityObject|Framework/src/Security/SecurityHelper.h|stUpdateAxisScaleParam|stBlueprintActorMoveParam|stGraph"
+        },
+        {
+          "off": "0x1164378",
+          "va": "0x1164378",
+          "context": "pp|Vector3Serializer|Physics::SMNodeSecurityPolicy|end of null pointer %s|B|%d|%s|IsPlayer|MaxAttackDistanceE"
+        },
+        {
+          "off": "0x11778d4",
+          "va": "0x11778d4",
+          "context": "/ActorManager.cpp|Physics::TransformSecurityPolicy|stUGCPlayerChatParams|stActorTranslucencyChangeParams|stSp"
+        },
+        {
+          "off": "0x118a27c",
+          "va": "0x118a27c",
+          "context": "ta_filter|VCollisionTriangle_filter|SecuritySys_filter|GameStatistic_filter|GuishiLevelLogic_filter|NtfChijiP"
+        },
+        {
+          "off": "0x11949ad",
+          "va": "0x11949ad",
+          "context": "/Task/HorizontalTask/BlueprintEvent|SecuritySys::UpdateLogic|onComponentCreated|USGGameStateBase|Prefab_Chara"
+        },
+        {
+          "off": "0x11a0aef",
+          "va": "0x11a0aef",
+          "context": "ilder::BuildPolicyMulti|CameraHeightSecurityHelper|LoaderActorExtraMem|OMGGemstone|LuaCallback|UltimateAwaken"
+        },
+        {
+          "off": "0x11af53a",
+          "va": "0x11af53a",
+          "context": "traData|stCalculateEquipPriceParam|CSecurityPlayerPolicy|bForbidMove|PlayerID|FirstJudgeDelay|JumpScareBeAtta"
+        },
+        {
+          "off": "0x11b6cfd",
+          "va": "0x11b6cfd",
+          "context": "henSwitch|Foundation/Common/include/Security/SecurityHandleWrapper.inl|DynamicShape|Physics::CollisionSimpleP"
+        },
+        {
+          "off": "0x11b6d06",
+          "va": "0x11b6d06",
+          "context": "|Foundation/Common/include/Security/SecurityHandleWrapper.inl|DynamicShape|Physics::CollisionSimplePolicy|bHi"
+        },
+        {
+          "off": "0x11c0b5f",
+          "va": "0x11c0b5f",
+          "context": "m: %d, equip_ailevel_3|VisibleCameraSecurityHelper|PlayerAbilityModelContext|DreamInBattleTripCampFactory|Fra"
+        },
+        {
+          "off": "0x11cd2bf",
+          "va": "0x11cd2bf",
+          "context": "elCooperativeContext|UnlimitFactory|SecurityGamePlayFactory|repeat id|CreateComponent|Failure|TrySetLocation|"
+        },
+        {
+          "off": "0x11cd804",
+          "va": "0x11cd804",
+          "context": "k_rdlock returns {0}|StarEvaluation|SecuritySys|AILab/ai_config/5v5/tactics/feature/hero_main_job.txt|project"
+        },
+        {
+          "off": "0x11da81a",
+          "va": "0x11da81a",
+          "context": "erAbilityModelJungleContext|ResourceSecurityHelper|GuishiConsumable|Project8CoinItem|SkillCDController|OMGCon"
+        },
+        {
+          "off": "0x11e77c4",
+          "va": "0x11e77c4",
+          "context": "%d|_$local_task_param_$_|GameBuilderSecurity|AGE::DurationEnergyCostMode|AGE::SimpleMoveType|AGE::ActionRefPa"
+        },
+        {
+          "off": "0x11ea2d0",
+          "va": "0x11ea2d0",
+          "context": "ysics::DegreeRotateMoveCmd|Physics::SecurityVCollisionShape|Physics::LerpTransform|BattleTaskCondition_Base_f"
+        },
+        {
+          "off": "0x11f12de",
+          "va": "0x11f12de",
+          "context": "d|Physics::ShipModeMoveCmd|Physics::SecurityTransform|BlueprintBinder_filter|CPlayerCenter_filter|CActorManag"
+        },
+        {
+          "off": "0x1205086",
+          "va": "0x1205086",
+          "context": "gic|CPlayerCenter|Physics::CollisionSecurityPolicy|numX_|stSyncDisplayFuncRegionStateEventParams|sgame_unity|"
+        },
+        {
+          "off": "0x1209a2e",
+          "va": "0x1209a2e",
+          "context": "ctionGroupDeadTrigger|Framework/src/Security/SecurityActorPolicy.cpp|EventTriggerFromActorAttributeRuntime|Pa"
+        },
+        {
+          "off": "0x1209a37",
+          "va": "0x1209a37",
+          "context": "pDeadTrigger|Framework/src/Security/SecurityActorPolicy.cpp|EventTriggerFromActorAttributeRuntime|PaintCompon"
+        }
+      ],
+      "utf16": []
+    },
+    "ByteArray": {
+      "ascii": [
+        {
+          "off": "0x1204ffe",
+          "va": "0x1204ffe",
+          "context": "oveDest|checkTimedHeroAtkBlock|SGameByteArraySerializer|{0} must be int64|SGameInt8Serializer|OnUse|CActorMana"
+        }
+      ],
+      "utf16": []
+    },
+    "Obfuscate": {
+      "ascii": [],
+      "utf16": []
+    }
+  },
+  "candidate_dynsyms": [
+    "    18: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND wmemmove@LIBC (2)",
+    "    49: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND remove@LIBC (2)",
+    "    66: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND posix_memalign@LIBC (2)",
+    "   125: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND memmove@LIBC (2)",
+    "   216: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND pua_remove",
+    "   309: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __memmove_chk@LIBC (2)",
+    "   440: 00000000021f039c   308 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk113basic_istreamIwNS_11char_traitsIwEEE4syncEv",
+    "   467: 00000000021ea0e8    12 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk115basic_streambufIwNS_11char_traitsIwEEE4syncEv",
+    "   481: 00000000021f6618   172 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk17collateIcE12do_transformEPKcS3_",
+    "   502: 00000000021e9984    16 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk115basic_streambufIcNS_11char_traitsIcEEE7seekposENS_4fposI9mbstate_tEEj",
+    "   522: 00000000021ed098   380 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk113basic_istreamIcNS_11char_traitsIcEEE5seekgENS_4fposI9mbstate_tEE",
+    "   542: 00000000021f4e08   156 FUNC    GLOBAL DEFAULT   15 _ZNSt6__ndk18ios_base4moveERS0_",
+    "   544: 000000000221b854    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk120__codecvt_utf8_utf16IwE11do_encodingEv",
+    "   578: 0000000002219e68    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk114__codecvt_utf8IDsE11do_encodingEv",
+    "   637: 00000000021f5028    28 FUNC    GLOBAL DEFAULT   15 _ZNSt6__ndk18ios_base15sync_with_stdioEb",
+    "   886: 00000000045f21b8    12 FUNC    GLOBAL DEFAULT   15 sgame_crypto_aead_lock",
+    "   959: 00000000022197e0    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk17codecvtIDic9mbstate_tE11do_encodingEv",
+    "   987: 0000000002219b64    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk114__codecvt_utf8IwE11do_encodingEv",
+    "  1130: 000000000221a14c    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk114__codecvt_utf8IDiE11do_encodingEv",
+    "  1183: 000000000221b148    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk115__codecvt_utf16IDiLb1EE11do_encodingEv",
+    "  1227: 0000000002207250    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk110moneypunctIwLb0EE16do_positive_signEv",
+    "  1237: 000000000221a940    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk115__codecvt_utf16IDsLb0EE11do_encodingEv",
+    "  1249: 0000000002207368    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk110moneypunctIwLb1EE13do_pos_formatEv",
+    "  1259: 00000000021f0610   380 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk113basic_istreamIwNS_11char_traitsIwEEE5seekgENS_4fposI9mbstate_tEE",
+    "  1326: 000000000221a3a0    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk115__codecvt_utf16IwLb0EE11do_encodingEv",
+    "  1333: 00000000022074b8    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk117moneypunct_bynameIwLb0EE16do_positive_signEv",
+    "  1382: 00000000021e958c    16 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk115basic_streambufIcNS_11char_traitsIcEEE10pubseekposENS_4fposI9mbstate_tEEj",
+    "  1419: 000000000221bb7c    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk120__codecvt_utf8_utf16IDiE11do_encodingEv",
+    "  1480: 00000000022074e4    12 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk117moneypunct_bynameIwLb0EE13do_pos_formatEv",
+    "  1515: 00000000021f1de8   304 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk113basic_ostreamIcNS_11char_traitsIcEEE5seekpENS_4fposI9mbstate_tEE",
+    "  1529: 0000000001214f00     8 OBJECT  WEAK   DEFAULT   11 _ZNSt6__ndk112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE4nposE",
+    "  1547: 00000000021f6788   188 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk17collateIwE12do_transformEPKwS3_",
+    "  1587: 0000000002215920   516 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk114collate_bynameIcE12do_transformEPKcS3_",
+    "  1590: 00000000022072b0    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk110moneypunctIwLb0EE13do_pos_formatEv",
+    "  1623: 00000000021e9ca0    16 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk115basic_streambufIwNS_11char_traitsIwEEE7pubsyncEv",
+    "  1652: 000000000221b9e8    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk120__codecvt_utf8_utf16IDsE11do_encodingEv",
+    "  1665: 000000000221a6c8    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk115__codecvt_utf16IwLb1EE11do_encodingEv",
+    "  1678: 00000000022073ec    12 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk117moneypunct_bynameIcLb0EE13do_pos_formatEv",
+    "  1688: 000000000222e990    44 FUNC    GLOBAL DEFAULT   15 _ZNSt6__ndk16thread20hardware_concurrencyEv",
+    "  1702: 0000000002207308    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk110moneypunctIwLb1EE16do_positive_signEv",
+    "  1759: 0000000002207534    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk117moneypunct_bynameIwLb1EE16do_positive_signEv",
+    "  1774: 0000000002207170    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk110moneypunctIcLb0EE13do_pos_formatEv",
+    "  1794: 0000000002215fc0   552 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk114collate_bynameIwE12do_transformEPKwS3_",
+    "  1795: 0000000002218750   236 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk17codecvtIwc9mbstate_tE11do_encodingEv",
+    "  1822: 0000000001214f08     8 OBJECT  WEAK   DEFAULT   11 _ZNSt6__ndk112basic_stringIwNS_11char_traitsIwEENS_9allocatorIwEEE4nposE",
+    "  1844: 0000000002207560    12 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk117moneypunct_bynameIwLb1EE13do_pos_formatEv",
+    "  1858: 00000000022071c8    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk110moneypunctIcLb1EE16do_positive_signEv",
+    "  1933: 000000000220743c    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk117moneypunct_bynameIcLb1EE16do_positive_signEv",
+    "  1980: 00000000021ea0d8    16 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk115basic_streambufIwNS_11char_traitsIwEEE7seekposENS_4fposI9mbstate_tEEj",
+    "  2005: 00000000021ecf64   308 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk113basic_istreamIcNS_11char_traitsIcEEE4syncEv",
+    "  2017: 0000000002207468    12 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk117moneypunct_bynameIcLb1EE13do_pos_formatEv",
+    "  2042: 00000000021e9994    12 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk115basic_streambufIcNS_11char_traitsIcEEE4syncEv",
+    "  2095: 00000000021f4340   304 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk113basic_ostreamIwNS_11char_traitsIwEEE5seekpENS_4fposI9mbstate_tEE",
+    "  2127: 0000000002207140    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk110moneypunctIcLb0EE16do_positive_signEv",
+    "  2145: 00000000022071f8    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk110moneypunctIcLb1EE13do_pos_formatEv",
+    "  2170: 000000000221ae20    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk115__codecvt_utf16IDiLb0EE11do_encodingEv",
+    "  2173: 0000000002227a7c    36 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk111char_traitsIwE4moveEPwPKwm",
+    "  2182: 00000000021e959c    16 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk115basic_streambufIcNS_11char_traitsIcEEE7pubsyncEv",
+    "  2194: 000000000121171c     4 OBJECT  GLOBAL DEFAULT   11 _ZNSt6__ndk18ios_base7showposE",
+    "  2202: 00000000022073c0    16 FUNC    WEAK   DEFAULT   15 _ZNKSt6__ndk117moneypunct_bynameIcLb0EE16do_positive_signEv",
+    "  2204: 000000000460a338    12 FUNC    GLOBAL DEFAULT   15 MoveMemory",
+    "  2265: 000000000221ab50    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk115__codecvt_utf16IDsLb1EE11do_encodingEv",
+    "  2326: 00000000021e9c90    16 FUNC    WEAK   DEFAULT   15 _ZNSt6__ndk115basic_streambufIwNS_11char_traitsIwEEE10pubseekposENS_4fposI9mbstate_tEEj",
+    "  2381: 0000000002217de8    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk17codecvtIcc9mbstate_tE11do_encodingEv",
+    "  2424: 0000000002218fd4    12 FUNC    GLOBAL DEFAULT   15 _ZNKSt6__ndk17codecvtIDsc9mbstate_tE11do_encodingEv"
+  ],
+  "limitations": "No runtime values or keys; literal presence is not evidence of coordinate encryption."
+}

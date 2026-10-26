@@ -1,0 +1,22 @@
+{
+  "bytes": 60322264,
+  "sha256": "5e66b7a0597679b6ef0383755eee4adb60a71f15a87a6fab91582eaa7f85a3a7",
+  "magic_hex": "af1bb1fa1d0000000001000000a8090000a90900d4882000d4312a00748db100",
+  "literal_counts": {
+    "Position": 2287,
+    "Move": 2458,
+    "Hero": 23154,
+    "Actor": 2979,
+    "Vector3": 241,
+    "VInt3": 50,
+    "Encrypt": 95,
+    "Decrypt": 26,
+    "Fog": 250,
+    "Fow": 89,
+    "Transform": 1159,
+    "Frame": 4013,
+    "Sync": 1132,
+    "Location": 594,
+    "Coordinate": 106
+  }
+}
