@@ -9,8 +9,9 @@ from ace_range_from_tencent_apks import RangeFile,SOURCES
 _,pkg,version,md5,size=SOURCES["hok"]
 url=f"http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/{md5}.apk?fsname={pkg}_{version}.apk"
 out=Path("out/hok_coord_owner");out.mkdir(parents=True,exist_ok=True)
-r=RangeFile(url);assert r.size==size
-with zipfile.ZipFile(r) as z:data=z.read("assets/bin/Data/Managed/Metadata/global-metadata.dat")
+cache=Path("work/hok_cached/global-metadata.dat")
+assert cache.exists(), "Missing verified cached metadata; restore artifact first"
+data=cache.read_bytes()
 assert struct.unpack_from("<I",data,0)[0]==0xfab11baf
 pairs=[struct.unpack_from("<II",data,8+i*8) for i in range(35)]
 stringo,stringlen=pairs[2];strings=data[stringo:stringo+stringlen]
@@ -66,4 +67,3 @@ summary={
 print("HOK_CONFIG_OWNER",json.dumps({"match_count":len(targets),"owners":owner_rows},ensure_ascii=False)[:19000],flush=True)
 print("HOK_RELEVANT_TYPES",json.dumps(name_candidates[:120],ensure_ascii=False)[:21000],flush=True)
 print("HOK_OWNER_SUCCESS",{"class_count":len(types),"matched":len(targets),"type_names_found":len(name_candidates)},flush=True)
-r.close()
