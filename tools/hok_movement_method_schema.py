@@ -9,8 +9,9 @@ from ace_range_from_tencent_apks import RangeFile,SOURCES
 _,pkg,ver,md5,size=SOURCES["hok"]
 u=f"http://imtt.dd.qq.com/sjy.00022/sjy.00001/16891/apk/{md5}.apk?fsname={pkg}_{ver}.apk"
 out=Path("out/hok_move_members");out.mkdir(parents=True,exist_ok=True)
-r=RangeFile(u);assert r.size==size
-with zipfile.ZipFile(r) as z:data=z.read("assets/bin/Data/Managed/Metadata/global-metadata.dat")
+cache=Path("work/hok_cached/global-metadata.dat")
+assert cache.exists(), "Missing verified cached metadata; restore artifact first"
+data=cache.read_bytes()
 pairs=[struct.unpack_from("<II",data,8+i*8) for i in range(32)]
 st,ss=pairs[2];string_data=data[st:st+ss]
 def S(i):
@@ -82,4 +83,3 @@ for typ in types:
  print("TYPE",json.dumps(typ,ensure_ascii=False)[:8500],flush=True)
 print("METHODS",json.dumps(methods_hits,ensure_ascii=False)[:13000],flush=True)
 print("HOK_MEMBERS_DONE",len(types),flush=True)
-r.close()
