@@ -3,6 +3,7 @@
 GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Version + Platform + Architecture` 查询；是否仍可用以 GitHub 实际返回的 `expires_at` 为准。
 
 ## Index
+| Honor of Kings IL2CPP coordinate native kit | 12.1.1.1 | Android | arm64-v8a | `40311637215` | SINGLE × 4 | `2027-01-24T10:59:21Z` |
 | OSS NDK r28c pinned source snapshot | cJSON 1.7.19 + zlib 1.3.1 + xxHash 0.8.3 | GitHub source / Any | Portable C source | `40162823267` | SINGLE | `2027-01-23T04:41:50Z` |
 | OSS Android ARM64 NDK r28c cJSON+zlib+xxHash | cJSON 1.7.19 + zlib 1.3.1 + xxHash 0.8.3 | Android API35 / Linux | arm64-v8a target, x86_64 host | `40162461240` | SINGLE | `2027-01-23T04:35:49Z` |
 | Android NDK minimal Clang/LLD | r28c-minimal-v1 | Linux | x86_64 host + AArch64 target | 39121838147 | SPLIT × 2 (95 MB) | 2027-01-16T11:05:31Z |
@@ -2921,3 +2922,32 @@ Restore: verify current existence and expires_at, download each Artifact separat
 | zlib source snapshot | 1.3.1 | Portable source | Any | `upstream/zlib/` | `a22401a39d6d89b56a760f678f5ac611712dc70bbf4c61264b4cd621927877de` (combined manifest hash) |
 | xxHash source snapshot | 0.8.3 | Portable source | Any | `upstream/xxHash/` | `a22401a39d6d89b56a760f678f5ac611712dc70bbf4c61264b4cd621927877de` (combined manifest hash) |
 
+
+## Honor of Kings CN Unity IL2CPP coordinate kit v12.1.1.1 (2026-10-26)
+
+- Original APK: Tencent MyApp remote ZIP, version 12.1.1.1, package `com.tencent.tmgp.sgame`, claimed source 1,748,020,376 bytes.
+- Source checksum caveat: ZIP member CRC32 and extracted SO SHA256 verified; entire APK MD5/SHA256 **not** verified.
+- Workflow: `.github/workflows/hok-coordinate-engine.yml`, GitHub Run ID `40311637215`.
+- All per-member ZIPs individually below 100MB; `Storage Mode: SINGLE` for every Artifact.
+- Requested retention: 400 days. Actual GitHub expires_at governs: `2027-01-24T10:59:21Z`.
+- Part Count: 1 for each individually packaged file; each original binary is inside its own ZIP.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| HoK IL2CPP native | 12.1.1.1 | Android | arm64-v8a | `lib/arm64-v8a/libil2cpp.so` | `6e00c3ac8ac129d7b6dd5bdd5c8c72777d70a91a317d193bf5f422505d9bafd5` |
+| HoK GameCore native | 12.1.1.1 | Android | arm64-v8a | `lib/arm64-v8a/libGameCore.so` | `dc034883ea2fc5c6be42d2e3b068652a7e1829f73450bb732fceebbd8f75d4c8` |
+| HoK Unity native | 12.1.1.1 | Android | arm64-v8a | `lib/arm64-v8a/libunity.so` | `6f862b245e048e8062b71c747d817bbb942276039bf6991adea60046b19b68a8` |
+| HoK global-metadata | 12.1.1.1 | Android / Unity IL2CPP Metadata | arm64-v8a | `assets/bin/Data/Managed/Metadata/global-metadata.dat` | `5e66b7a0597679b6ef0383755eee4adb60a71f15a87a6fab91582eaa7f85a3a7` |
+
+### Artifacts
+
+| Artifact Name | Artifact ID | Run ID | File | Artifact Size | Artifact Digest | Created At | Expires At | Storage Mode | Original File | Original Size | Original SHA256 | Part Count |
+|---|---:|---:|---|---:|---|---|---|---|---|---:|---|---:|
+| `hok-coordinate-v12.1.1.1-il2cpp-arm64` | `12644338989` | `40311637215` | `hok-12.1.1.1-il2cpp.zip` | 77648291 | `sha256:7fb40761b492dd94d98687b42aa415b0a230dad9cc2d8bebb10dec854a0904fa` | `2026-10-26T11:00:17Z` | `2027-01-24T10:59:21Z` | SINGLE | `lib/arm64-v8a/libil2cpp.so` | 227661664 | `6e00c3ac8ac129d7b6dd5bdd5c8c72777d70a91a317d193bf5f422505d9bafd5` | 1 |
+| `hok-coordinate-v12.1.1.1-gamecore-arm64` | `12644064463` | `40311637215` | `hok-12.1.1.1-gamecore.zip` | 21200618 | `sha256:867d29d1b57fb7b2fb2d670a1670dd89adc11a5a69592aee45779ec81590f708` | `2026-10-26T11:00:19Z` | `2027-01-24T10:59:21Z` | SINGLE | `lib/arm64-v8a/libGameCore.so` | 86426392 | `dc034883ea2fc5c6be42d2e3b068652a7e1829f73450bb732fceebbd8f75d4c8` | 1 |
+| `hok-coordinate-v12.1.1.1-unity-arm64` | `12644788311` | `40311637215` | `hok-12.1.1.1-unity.zip` | 13956892 | `sha256:e3005dff66484e8f3aa591e19730345b94bae1e302f4050ff91a07a3c41fb3e5` | `2026-10-26T11:00:21Z` | `2027-01-24T10:59:21Z` | SINGLE | `lib/arm64-v8a/libunity.so` | 30220440 | `6f862b245e048e8062b71c747d817bbb942276039bf6991adea60046b19b68a8` | 1 |
+| `hok-coordinate-v12.1.1.1-global-metadata` | `12644384544` | `40311637215` | `hok-12.1.1.1-metadata.zip` | 17343114 | `sha256:7d820c83f0715afe5e5a18b102c6f876b6ab86ea00cf6aa79301e7a081724b1a` | `2026-10-26T11:00:23Z` | `2027-01-24T10:59:21Z` | SINGLE | `assets/bin/Data/Managed/Metadata/global-metadata.dat` | 60322264 | `5e66b7a0597679b6ef0383755eee4adb60a71f15a87a6fab91582eaa7f85a3a7` | 1 |
+
+### Restore
+
+Use the four GitHub artifact IDs above; download each individually with `download_workflow_artifact`. Check its outer ZIP against `Artifact Digest`, extract its inner `hok-12.1.1.1-*.zip`, check against `portable_archive_sha256` in `reports/hok_20261026/portable_archive_manifest.json` of branch `work/hok-coordinate-study-20261026`, extract ELF/metadata, verify original SHA256 and ZIP CRC32. These are individual binary files; no 1.75GB whole APK is included.
