@@ -1,0 +1,46 @@
+name: Cache JADX 1.5.6 tools
+on:
+  push:
+    paths:
+      - '.github/workflows/cache-jadx-20261026.yml'
+  workflow_dispatch:
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download and validate JADX
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-delay 3 --output jadx-1.5.6.zip https://github.com/skylot/jadx/releases/download/v1.5.6/jadx-1.5.6.zip
+          unzip -tq jadx-1.5.6.zip
+          sha256sum jadx-1.5.6.zip | tee manifest.sha256
+          stat -c '%n %s bytes' jadx-1.5.6.zip
+          split --bytes=90000000 --numeric-suffixes=0 --suffix-length=2 jadx-1.5.6.zip jadx-1.5.6.part.
+          sha256sum jadx-1.5.6.part.* | tee manifest.parts.sha256
+      - name: Upload JADX part 00
+        uses: actions/upload-artifact@v4
+        with:
+          name: jadx-1.5.6-part-00
+          path: jadx-1.5.6.part.00
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - name: Upload JADX part 01
+        if: ${{ hashFiles('jadx-1.5.6.part.01') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jadx-1.5.6-part-01
+          path: jadx-1.5.6.part.01
+          compression-level: 0
+          retention-days: 400
+      - name: Upload JADX manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: jadx-1.5.6-manifest
+          path: |
+            manifest.sha256
+            manifest.parts.sha256
+          retention-days: 400
