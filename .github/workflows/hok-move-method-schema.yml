@@ -1,0 +1,27 @@
+name: HOK movement VInt3 coordinate exact method fields
+on:
+  push:
+    branches: [work/hok-coordinate-re-20261026]
+    paths:
+      - .github/workflows/hok-move-method-schema.yml
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe official cached URL and inspect remote native directory
+        run: |
+          set -euo pipefail
+          python3 tools/hok_movement_method_schema.py
+          head -c 15000 out/hok_move_members/members.json
+      - name: Preserve report for this investigation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hok-movement-method-schema
+          path: out/hok_move_members/
+          if-no-files-found: warn
+          retention-days: 1
