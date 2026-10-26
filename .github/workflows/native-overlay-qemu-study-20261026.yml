@@ -1,0 +1,64 @@
+name: Android native overlay QEMU compatibility study 20261026
+on:
+  push:
+    paths:
+      - '.github/workflows/native-overlay-qemu-study-20261026.yml'
+      - 'tools/ndk-overlay-study-20261026/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned sources and build ARM64 native executables
+        run: python3 -u tools/ndk-overlay-study-20261026/build_projects.py
+      - name: Upload transfer manifest
+        if: always() && hashFiles('overlay-study-parts/TRANSFER_MANIFEST.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-overlay-study-20261026-manifest
+          path: overlay-study-parts/TRANSFER_MANIFEST.json
+          retention-days: 1
+          compression-level: 0
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-overlay-study-20261026-failure-logs
+          path: overlay-study-output/logs/
+          retention-days: 1
+      - name: Upload source and binary part 00
+        if: always() && hashFiles('overlay-study-parts/part-00.bin') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-overlay-study-20261026-part-00
+          path: overlay-study-parts/part-00.bin
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source and binary part 01
+        if: always() && hashFiles('overlay-study-parts/part-01.bin') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-overlay-study-20261026-part-01
+          path: overlay-study-parts/part-01.bin
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source and binary part 02
+        if: always() && hashFiles('overlay-study-parts/part-02.bin') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-overlay-study-20261026-part-02
+          path: overlay-study-parts/part-02.bin
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source and binary part 03
+        if: always() && hashFiles('overlay-study-parts/part-03.bin') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-overlay-study-20261026-part-03
+          path: overlay-study-parts/part-03.bin
+          retention-days: 1
+          compression-level: 0
