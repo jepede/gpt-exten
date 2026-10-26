@@ -1,0 +1,2571 @@
+{
+  "engine": "HoK 12.1.1.1 libGameCore.so AArch64",
+  "elf": {
+    ".rodata": {
+      "no": 237,
+      "type": 1,
+      "va": 16507808,
+      "off": 16507808,
+      "size": 2481708,
+      "name": ".rodata"
+    },
+    ".text": {
+      "no": 25,
+      "type": 1,
+      "va": 35149680,
+      "off": 35145584,
+      "size": 43753884,
+      "name": ".text"
+    },
+    ".rela.dyn": {
+      "no": 130,
+      "type": 4,
+      "va": 207272,
+      "off": 207272,
+      "size": 16284408,
+      "name": ".rela.dyn"
+    },
+    ".eh_frame_hdr": {
+      "no": 88,
+      "type": 1,
+      "va": 22242624,
+      "off": 22242624,
+      "size": 2740564,
+      "name": ".eh_frame_hdr"
+    }
+  },
+  "candidate_string_count": 348,
+  "candidate_strings": [
+    {
+      "va": "0x116960d",
+      "name": "GetActorLogicPosNode",
+      "keywords": [
+        "GetActorLogicPos"
+      ]
+    },
+    {
+      "va": "0x117dfff",
+      "name": "GetActorLogicPos",
+      "keywords": [
+        "GetActorLogicPos"
+      ]
+    },
+    {
+      "va": "0x11a2fc2",
+      "name": "SetActorLogicPosNode",
+      "keywords": [
+        "SetActorLogicPos"
+      ]
+    },
+    {
+      "va": "0x1192575",
+      "name": "view_manager::ViewManager::ModifyEnemyInvisibleHeroPositionByTimeDynamic",
+      "keywords": [
+        "ModifyEnemyInvisibleHeroPositionByTimeDynamic",
+        "ModifyEnemyInvisibleHeroPosition",
+        "HeroPosition"
+      ]
+    },
+    {
+      "va": "0x11c5f0b",
+      "name": "game_aivoice::AiProcess::ModifyEnemyInvisibleHeroPositionByTimeDynamic",
+      "keywords": [
+        "ModifyEnemyInvisibleHeroPositionByTimeDynamic",
+        "ModifyEnemyInvisibleHeroPosition",
+        "HeroPosition"
+      ]
+    },
+    {
+      "va": "0x117f1d6",
+      "name": "view_manager::ViewManager::ModifyEnemyInvisibleHeroPosition",
+      "keywords": [
+        "ModifyEnemyInvisibleHeroPosition",
+        "HeroPosition"
+      ]
+    },
+    {
+      "va": "0x11e6222",
+      "name": "game_aivoice::AiProcess::ModifyEnemyInvisibleHeroPosition",
+      "keywords": [
+        "ModifyEnemyInvisibleHeroPosition",
+        "HeroPosition"
+      ]
+    },
+    {
+      "va": "0x116c7eb",
+      "name": "lanlingwang use skill3, invisible, real_location = (%d,%d), main_hero_location = (%d, %d)",
+      "keywords": [
+        "real_location",
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11925be",
+      "name": "yindao, cid:%d, invisible, real_location = (%d,%d), modify to (%d,%d)",
+      "keywords": [
+        "real_location",
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11b25de",
+      "name": "ake use skill3, invisible, real_location = (%d,%d), modify to (%d,%d)",
+      "keywords": [
+        "real_location",
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x1145b4b",
+      "name": "_invisible_visible_rule_case1",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x114a64e",
+      "name": "guiguzi_skill1_invisible_state",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x114b500",
+      "name": "hero:%d loc:(%d, %d) invisible2visible change to 55000",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x114bcfd",
+      "name": "invisible_visible_rule_case2",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x114c547",
+      "name": "hero:%d loc:(%d, %d) invisible2visible delay:%d change to 50000",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x114d8b7",
+      "name": "frame=%d,monster_rid=%d,invisible,move_to_it",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x114d91d",
+      "name": "frame=%d,emy_hero=%d,cid=%d,hp=%d,dis_from_main=%d,invisible",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x1152f26",
+      "name": "_invisible_visible_rule_case2",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11580a3",
+      "name": "invisible_value_location",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x116570b",
+      "name": "[Init] m_invisible_range:%d",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x117417f",
+      "name": "no_shoot_invisible_frame_gap",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x117912c",
+      "name": "sesion end frame_no: %d hero %d m_invisible_to_visible_frame %d cur_invisible_skill_delay %d diff %d skill_type:%d",
+      "keywords": [
+        "invisible",
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11795b8",
+      "name": "frame:%d rid=%d SKIP unit_invisible_time: not seen yet since enqueue",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x117f55c",
+      "name": "sesion end frame_no: %d hero %d m_invisible_to_visible_frame %d cur_invisible_skill_delay %d diff %d",
+      "keywords": [
+        "invisible",
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x1185459",
+      "name": "frame:%d camp:%d, main_hero:%d, modify emy_hero:%d to spring, frame_diff:%d, last_visible_dist:%d, dist:%d, invisible_range:%d",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x118d061",
+      "name": "hero:%d invisible2visible",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x118d07b",
+      "name": "ake use skill3, invisible and dist to main hero > 100, real location = (%d, %d), modified_location = (50000,0,50000), main_hero_location = (%d, %d)",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x1192f25",
+      "name": "hero_state.invisible_enemy_cnt_ceil",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x119901c",
+      "name": "lanlingwang use skill3, invisible, modified location = (%d,%d), main_hero_location = (%d, %d)",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x119ed3d",
+      "name": "invisible_to_visible_delta",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x119f627",
+      "name": "ake use skill3, invisible and dist to main hero < 100, real location = (%d, %d), main_hero_location = (%d, %d)",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x119f696",
+      "name": "ake use skill3, invisible and dist to main hero < 100, modified_location = (%d, %d), main_hero_location = (%d, %d)",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11a6f31",
+      "name": "last_enemy_visible_frame %d last_enemy_invisible_frame %d",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11ac0c5",
+      "name": "mian_hero [%d-%d-%d] tgt_hero [%d-%d-%d] cur_frame %d, last_invisible_ingrass %d --> visible_ingrass less than 6 frame",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11b33ca",
+      "name": "lanlingwang use skill3, invisible and far to main hero, real location = (%d, %d), modified location = (-50000, -50000), main_hero_location = (%d, %d)",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11b8e93",
+      "name": "invisible_to_visible_delay",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11bef92",
+      "name": " check visible frame_no: %d hero %d m_invisible_to_visible_frame %d m_previous_visible_num %d min_visilble_dist %d friend_num %d near_friend_num %d is_friend_front %d is_enemy_invisible_5s %d exist_filter_hero %d ",
+      "keywords": [
+        "invisible",
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11c0f57",
+      "name": "invisible_range: ",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11c433e",
+      "name": "guiguzi_skill3_invisible_state",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11c5cda",
+      "name": "hero_state.invisible_enemy_cnt_floor",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11ca4d2",
+      "name": "guiguzi_skill3_invisible_ready_state",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11d1fed",
+      "name": "invisible_visible_rule_case1",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11d2080",
+      "name": " invisible_to_visible_tag sesion start frame_no: %d hero %d m_invisible_to_visible_frame %d cur_invisible_skill_delay %d diff %d",
+      "keywords": [
+        "invisible",
+        "invisible",
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11d2925",
+      "name": "ake use skill3, invisible and dist to main hero > 100, real location = (%d, %d), modified_location = (-50000,0,-50000), main_hero_location = (%d, %d)",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11d7a24",
+      "name": "guiguzi_skill1_invisible_state_time",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11d8792",
+      "name": "invisible_range",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11d87a2",
+      "name": "frame:%d main_hero:%d hero:%d, not visible duration(sec) = %d, dist = %d, last_dist = %d, enemy true location = (%d, %d), main_hero_location = (%d, %d), invisible_range:%d",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11ddf77",
+      "name": "guiguzi_skill3_invisible_ready_state_time",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11def93",
+      "name": "m_enable_invisible_visible_rule right hand",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11dfac7",
+      "name": "frame:%d rid=%d SKIP unit_invisible_time: friendly hero, range=[%d,%d]",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11dfb0e",
+      "name": "frame:%d rid=%d SKIP unit_invisible_time: val=%d range=[%d,%d]",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11dfda4",
+      "name": "lanlingwang use skill3, invisible and far to main hero, real location = (%d, %d), modified location = (50000, 50000), main_hero_location = (%d, %d)",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11e4fb2",
+      "name": "last_enemy_invisible_frame",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11ec6c2",
+      "name": "use_invisible_to_visible_delay_rule",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x11f3691",
+      "name": "m_enable_invisible_visible_rule right hand case 2",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x120566d",
+      "name": "guiguzi_skill3_invisible_state_time",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x1205b09",
+      "name": "invisible_value_is_hero_insight",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x12070a1",
+      "name": "frame %d, mainCid %d, mainRid %d, camp %d, valid %d, visibleEnemyCnt %d, invisibleEnemyCnt %d, useVisibleRule %d, visibleFloor %d, visibleCeil %d, useInvisibleRule %d, invisibleFloor %d, invisibleCeil %d",
+      "keywords": [
+        "invisible",
+        "invisible",
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x120c358",
+      "name": "hero_last_invisible_duration",
+      "keywords": [
+        "invisible"
+      ]
+    },
+    {
+      "va": "0x114ad54",
+      "name": "EscapeFromSkill_aivoice::EscapeFunc::OnlyKeepEnemyPosBulletForVectorFeature",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x114d690",
+      "name": "CurFrame[%d] Enter Danger Because In HeroDanger, EnemyPos[%d;%d:%d:%d] MainHeroPos[%d;%d:%d:%d] MovePos[%d:%d:%d]\n",
+      "keywords": [
+        "EnemyPos",
+        "MainHeroPos"
+      ]
+    },
+    {
+      "va": "0x115189a",
+      "name": "EscapeFromSkill_aivoice::EscapeFunc::OnlyKeepEnemyPosBullet: ",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x1151d25",
+      "name": "EscapeFromSkill::EscapeFunc::ExtractCurrentSkillItemInfoOffline AvoidSkill OnlyKeepEnemyPosBullet",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x116278a",
+      "name": "Project8GetRandomEnemyPositionNode",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x116b4cc",
+      "name": "EscapeFromSkill::EscapeFunc::OnlyKeepEnemyPosBulletOffin",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x1178415",
+      "name": "EscapeFromSkill_aivoice::EscapeFunc::OnlyKeepEnemyPosBullet",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11849f7",
+      "name": "EscapeFromSkill_aivoice::EscapeFunc::OnlyKeepEnemyPosBullet ",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x118bb29",
+      "name": "AvoidSkill OnlyKeepEnemyPosBullet",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x118bf37",
+      "name": "EscapeFromSkill::EscapeFunc::OnlyKeepEnemyPosBulletOffine InsertEnemyBulletDistLocationInfo",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11a528c",
+      "name": "EscapeFromSkill::EscapeFunc::OnlyKeepEnemyPosBullet InsertEnemyBulletDistLocationInfo",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11b1f41",
+      "name": "EscapeFromSkill_aivoice::EscapeFunc::OnlyKeepEnemyPosBulletOffine ",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11b22b4",
+      "name": "EscapeFromSkill::EscapeFunc::OnlyKeepEnemyPosBulletForVectorFeature",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11b8487",
+      "name": "EscapeFromSkill_aivoice::EscapeFunc::OnlyKeepEnemyPosBullet InsertEnemyBulletDistLocationInfo",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11b8536",
+      "name": "EscapeFromSkill_aivoice::EscapeFunc::OnlyKeepEnemyPosBulletOffine: ",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11c046c",
+      "name": "CurFrame[%d] Enter Alert Because In HeroAlert, EnemyPos[%d;%d:%d:%d] MainHeroPos[%d;%d:%d:%d] MovePos[%d:%d:%d]\n",
+      "keywords": [
+        "EnemyPos",
+        "MainHeroPos"
+      ]
+    },
+    {
+      "va": "0x11c4d2d",
+      "name": "EscapeFromSkill::EscapeFunc::OnlyKeepEnemyPosBulletOffine: ",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11cab00",
+      "name": "EscapeFromSkill_aivoice::EscapeFunc::ExtractCurrentSkillItemInfoOffline AvoidSkill OnlyKeepEnemyPosBullet",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11cea40",
+      "name": "Project8GetCrossEnemyPositionNode",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11d8256",
+      "name": "EscapeFromSkill::EscapeFunc::OnlyKeepEnemyPosBullet: ",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11de59e",
+      "name": "EscapeFromSkill_aivoice::EscapeFunc::OnlyKeepEnemyPosBulletOffine InsertEnemyBulletDistLocationInfo",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11e258a",
+      "name": "Project8GetMaxtrixCrowdedEnemyPositionNode",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11e529f",
+      "name": "EscapeFromSkill::EscapeFunc::OnlyKeepEnemyPosBullet",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x11f92c5",
+      "name": "EscapeFromSkill_aivoice::EscapeFunc::OnlyKeepEnemyPosBulletOffin",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x1205f9d",
+      "name": "EscapeFromSkill::EscapeFunc::OnlyKeepEnemyPosBullet ",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x120c50f",
+      "name": "EscapeFromSkill::EscapeFunc::OnlyKeepEnemyPosBulletOffine ",
+      "keywords": [
+        "EnemyPos"
+      ]
+    },
+    {
+      "va": "0x1140f41",
+      "name": "ConstantVInt3NodeRuntime",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x114268e",
+      "name": "SetNamedVaribleVInt3Node",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1142873",
+      "name": "VInt3MapTryGetValueNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1143998",
+      "name": "CreateArcTrapezoid: center must be VInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x114838b",
+      "name": "NewGetVInt3Variable",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1149d64",
+      "name": "VInt3Value",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1149e20",
+      "name": "stActorVInt3EventParam",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1149ec2",
+      "name": "VInt3_GameObjectTuple",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1150163",
+      "name": "VInt3ArrayNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1156343",
+      "name": "VariableVInt3Node",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11563ee",
+      "name": "VInt3ArrayCountNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11573f0",
+      "name": "rVInt3Value",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11576b9",
+      "name": "TPooledPointer<TArray<VInt3>>",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x115c402",
+      "name": "IsWorldVInt3ValidNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x115cb44",
+      "name": "VInt3AngleCalcNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x115cbf3",
+      "name": "VariableVInt3SplitterNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x115cd5f",
+      "name": "GetParamConfigVInt3ClientNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1161a0e",
+      "name": "VInt3MapForeachLoopNodeRuntime",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x116346e",
+      "name": "VInt3ProjectionNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1163482",
+      "name": "VInt3CrossNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11634c3",
+      "name": "VInt3MapRemoveNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11634d6",
+      "name": "VInt3MapNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1163515",
+      "name": "VInt3ArrayRemoveAtIndexNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x116a731",
+      "name": "VInt3_2_Tuple",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x116e1ab",
+      "name": "VariableVInt3NodeRuntime",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x116f62f",
+      "name": "GetParamConfigVInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x116f9c5",
+      "name": "GetNamedVaribleVInt3Node",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x116fb52",
+      "name": "VInt3CalDistance2DNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x116fbba",
+      "name": "VInt3MapForeachLoopNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x116fc03",
+      "name": "VInt3ArraySetElementNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x116fc1c",
+      "name": "GlobalVariableVInt3ArrayNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1170df4",
+      "name": "CreateLine: start/end must be VInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11766bd",
+      "name": "VInt3FracMultiplyNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1176ac7",
+      "name": "VInt3ConstantArrayNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x117d040",
+      "name": "VInt3MapClearNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x117d052",
+      "name": "ConstantVInt3Node",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x117d09a",
+      "name": "VariableVInt3ArraySetterNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x117e092",
+      "name": "CreateBox: arguments must be VInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11815db",
+      "name": "GlobalVariableVInt3MapNodeRuntime",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x118278f",
+      "name": "SetActorParamConfigVInt3Node",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1182e4a",
+      "name": "VInt3SubtractNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x118315d",
+      "name": "RandomSelectVInt3Except",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1183ddd",
+      "name": "VInt3RotateY",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1187de3",
+      "name": "VInt3Array",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1189b2e",
+      "name": "VInt3RotateYFracNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1189b43",
+      "name": "VInt3RotateYNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1189b78",
+      "name": "VInt3LerpNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1189bb5",
+      "name": "VariableVInt3CreatorNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11903c1",
+      "name": "VInt3Calc2DVerticalDir",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1190699",
+      "name": "SetParamConfigVInt3ClientNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1194f2e",
+      "name": "AGETemplate::NewVariableVInt3CalTick",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1195bcd",
+      "name": "GetActorParamConfigVInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1196325",
+      "name": "VInt3ArrayPopTailNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11a11c8",
+      "name": "TraverseVInt3Array",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11a2b0f",
+      "name": "SetParamConfigVInt3Node",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11a30e5",
+      "name": "VInt3MultiplyNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11a31e6",
+      "name": "VInt3ArrayForeachLoopNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11a41ea",
+      "name": "VInt3_3_Tuple",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11a5472",
+      "name": "VInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11aa3ea",
+      "name": "VInt3ConstantArrayNodeRuntime",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11ae791",
+      "name": "VInt3MapNodeRuntime",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11b011e",
+      "name": "VInt3NormalizeNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11b0131",
+      "name": "VInt3XZNegative",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11b0207",
+      "name": "VInt3ArrayGetElementIndexNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11b0225",
+      "name": "VInt3ArrayCheckRangeNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11b13d2",
+      "name": "CreateCylinderSector: center must be VInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11b68a8",
+      "name": "VInt3ConstantMapNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11b68bd",
+      "name": "VInt3MapCopyNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11c2c0d",
+      "name": "VInt3AddNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11c3dd2",
+      "name": "CreateCapsule: center must be VInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11c85da",
+      "name": "NewSaveVInt3Variable",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11c8dcd",
+      "name": "VInt3Normalize2Node",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11c8e12",
+      "name": "VInt3ToStringConverterNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11ca066",
+      "name": "CreateSphere: center must be VInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11ca089",
+      "name": "CreateTriangle: center must be VInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11cb768",
+      "name": "Foundation/Common/include/Type/VInt3.inl",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11cf675",
+      "name": "VInt3MapCountNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11cf687",
+      "name": "VariableVInt3MapSetterNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11d6101",
+      "name": "VInt3SetComponent",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11d6116",
+      "name": "VInt3CalDistanceNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11d61bf",
+      "name": "VInt3ArrayAddElementNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11d72dd",
+      "name": "VInt3[]",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11dc7b1",
+      "name": "VInt3DirectionAngleNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11dc7c9",
+      "name": "VInt3CompareNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11dc856",
+      "name": "VInt3MapTryAddOrSetNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11dc8cc",
+      "name": "VInt3ArrayCopyNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11dc8df",
+      "name": "VInt3ArrayInsertElementNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11e181d",
+      "name": "GlobalVariableVInt3ArrayNodeRuntime",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11e1f76",
+      "name": "AGE::NewVariableVInt3CalTick",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11e32ea",
+      "name": "VInt3DivideNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11e90db",
+      "name": "VInt3LengthNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11e9cfe",
+      "name": "VariableVInt3SetterNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11e9d34",
+      "name": "VInt3ArrayRemoveBeforeIndexNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11e9d54",
+      "name": "VInt3ArrayRandomShuffleNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11e9d70",
+      "name": "VInt3ArrayRandomPickupNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11f75fe",
+      "name": "VInt3ArrayDifferenceNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11f7617",
+      "name": "VInt3ArrayClearElementNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11f8612",
+      "name": "CreateHexagonPrism: center must be VInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11fd61c",
+      "name": "USG.VInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11fd96d",
+      "name": "GlobalVariableVInt3MapNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11fd988",
+      "name": "GlobalVariableVInt3Node",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11fdec2",
+      "name": "VInt3ArrayNodeRuntime",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x11fec51",
+      "name": "CreateCirque: center must be VInt3",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x12028c3",
+      "name": "VInt3ConstantMapNodeRuntime",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x12028df",
+      "name": "GlobalVariableVInt3NodeRuntime",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x12028fe",
+      "name": "VInt3ArrayForeachLoopNodeRuntime",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x12039f1",
+      "name": "GetVInt3YValueNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1204327",
+      "name": "VInt3ArrayRemoveElementNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x120514c",
+      "name": "CreateTriangle: vertices must be VInt3[]",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x120ab24",
+      "name": "VInt3ArrayGetElementNode",
+      "keywords": [
+        "VInt3"
+      ]
+    },
+    {
+      "va": "0x1141629",
+      "name": "AGE::NewActorRootListAdd",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x114288b",
+      "name": "ActorRootMapRemoveNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1142982",
+      "name": "ActorRootArrayClearElementNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11429a1",
+      "name": "GlobalVariableActorRootArrayNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1142f45",
+      "name": "__usg_onActorRootDestroyed",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1148e63",
+      "name": "GlobalVariableActorRootNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1148f92",
+      "name": "ActorRootArrayForeachLoopNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x114961f",
+      "name": "__usg_onActorRootBorned",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x114edaa",
+      "name": "VariableActorRootNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x114f545",
+      "name": "NewGetActorRoot",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1155a85",
+      "name": "SetActorParamConfigActorRootNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1156c0f",
+      "name": "ActorRoot_filter",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11576d7",
+      "name": "ActorRootArr_GameObjectArrTuple",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x115cbe2",
+      "name": "ActorRootMapNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1163592",
+      "name": "ActorRootArrayDifferenceNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11635af",
+      "name": "ActorRootArrayNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11643d7",
+      "name": "ActorRootArr",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11680ef",
+      "name": "AGETemplate::NewGetActorRootTick",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1169889",
+      "name": "ActorRootArrayRemoveBeforeIndexNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11698ad",
+      "name": "ActorRootArraySetElementNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x116eb7b",
+      "name": "Mods/USG/GameModes/Moba55/src/GamePlay/GameMode/Adapter/USGMobaActorRoot.cpp",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x116fcc9",
+      "name": "ActorRootArrayRandomPickupNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x116fce8",
+      "name": "ActorRootArrayGetElementNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11767b1",
+      "name": "ActorRootConstantMapNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11767ca",
+      "name": "ActorRootMapClearNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11767e0",
+      "name": "ActorRootMapForeachLoopNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x117d147",
+      "name": "ActorRootArrayRandomShuffleNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x117d167",
+      "name": "ActorRootArrayRemoveAtIndexNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1182f76",
+      "name": "VariableActorRootArraySetterNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1187fca",
+      "name": "ActorRootMapNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1188738",
+      "name": "AGE::NewActorRootListCount",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11888c6",
+      "name": "AGE::NewActorRootListAddTick",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1188b92",
+      "name": "ConstantActorRootNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x118a20d",
+      "name": "ActorRoot::SIG_UpdateLogic",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x118fdbf",
+      "name": "BaseActorRoot",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11905a3",
+      "name": "ActorRootArrayPopTailNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1194dc5",
+      "name": "ActorRootArrayForeachLoopNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11952d9",
+      "name": "AGE::NewGetActorRootDuration",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x119541b",
+      "name": "ActorRootBinderNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11962dd",
+      "name": "ActorRootMapCopyNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x119635a",
+      "name": "ActorRootArrayGetElementIndexNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x119637c",
+      "name": "ActorRootArrayCountNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x119c228",
+      "name": "USG.USGMobaActorRoot",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11a16ca",
+      "name": "AGETemplate::NewActorRootList",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11a1921",
+      "name": "AGETemplate::NewActorRootListCount",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11a2757",
+      "name": "ActorRootList",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11a3196",
+      "name": "ActorRootMapCountNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11a8ace",
+      "name": "AGETemplate::NewRmvActorRootTick",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11a8da1",
+      "name": "AGE::NewActorRootListRmv",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11a9923",
+      "name": "IsActorRootEqualNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11affce",
+      "name": "GetUnityObjectFromActorRoot",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11b1367",
+      "name": "bool_ActorRootTuple",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11b5279",
+      "name": "AGETemplate::NewActorRootListAddTick",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11b6871",
+      "name": "VariableActorRootSetterNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11b68ce",
+      "name": "VariableActorRootMapSetterNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11b7857",
+      "name": "PooledHandle<ActorRoot>",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11bb63b",
+      "name": "AGE::NewActorRootList",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11bc3b1",
+      "name": "USG.USGActorRoot",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11bcdba",
+      "name": "ActorRoot",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11c3cc4",
+      "name": "TPooledPointer<TArray<PooledHandle<ActorRoot>>>",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11c74f3",
+      "name": "ActorRootConstantMapNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11c7513",
+      "name": "ActorRootMapForeachLoopNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11c78ea",
+      "name": "AGETemplate::GetDataFromActorRootList",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11c7eed",
+      "name": "USGMobaActorRoot",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11c8935",
+      "name": "SetAgeActorRootNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11c8f32",
+      "name": "ActorRootArrayCheckRangeNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11cf6a2",
+      "name": "GlobalVariableActorRootMapNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11d4497",
+      "name": "GlobalVariableActorRootNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11d5801",
+      "name": "GetActorParamConfigActorRootNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11dadbe",
+      "name": "USGActorRoot",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11db7b6",
+      "name": "AGE::GetDataFromActorRootList",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11dc316",
+      "name": "GetAgeActorRootNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11dc93d",
+      "name": "ActorRootConstantArrayNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11dc958",
+      "name": "ActorRootArrayAddElementNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11dc975",
+      "name": "ActorRootArrayRemoveElementNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11e31b1",
+      "name": "GetObjIDFromActorRoot",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11e415c",
+      "name": "TPooledPointer<TArray<PooledHandle<ActorRoot>>>>",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11e8310",
+      "name": "AGETemplate::NewGetActorRootDuration",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11e9ce2",
+      "name": "ActorRootMapTryAddOrSetNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11ead8f",
+      "name": "ActorRoot_Int32_Tuple",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11ef056",
+      "name": "GlobalVariableActorRootArrayNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11f0dcd",
+      "name": "ActorRootArrayInsertElementNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11f0f08",
+      "name": "ActorRootBinderNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11f5b78",
+      "name": "AGETemplate::NewActorRootListAdd",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11f73cd",
+      "name": "GetActorRootFromUnityObject",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11f759e",
+      "name": "ConstantActorRootNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11f75b4",
+      "name": "VariableActorRootNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11f75ca",
+      "name": "ActorRootMapTryGetValueNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11fc1b3",
+      "name": "GlobalVariableActorRootMapNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11fc47e",
+      "name": "AGETemplate::NewActorRootListRmv",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11fc4db",
+      "name": "AGETemplate::NewSaveActorRootTick",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11fc9d8",
+      "name": "ActorRootArrayNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11fd1eb",
+      "name": "NewSaveActorRoot",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11fdac1",
+      "name": "ActorRootArrayCopyNode",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1202e52",
+      "name": "AGE::NewSaveActorRootTick",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x1202f6a",
+      "name": "AGE::NewGetActorRootTick",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x12030f4",
+      "name": "ActorRootConstantArrayNodeRuntime",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x120962f",
+      "name": "AGE::NewRmvActorRootTick",
+      "keywords": [
+        "ActorRoot"
+      ]
+    },
+    {
+      "va": "0x11624e1",
+      "name": "AGE::CheckActorPositionDuration",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x1168a3d",
+      "name": "Project8GetHighestDamageActorPositionNode",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x116f014",
+      "name": "bUseBindActorPos",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x118ef13",
+      "name": "AGETemplate::ValidateActorPositionTick",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x118f1f1",
+      "name": "AGE::ValidateActorPositionTick",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x1194e93",
+      "name": "AGETemplate::ActorPositionChangeEventListenerDuration",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x119a5c3",
+      "name": "CheckActorPositionCrossWall",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x119a990",
+      "name": "ActorPositionChangeListenerNodeRuntime",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x119adbb",
+      "name": "AGETemplate::RecordActorPositionTick",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x119bc56",
+      "name": "CheckActorPos",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x11ae660",
+      "name": "ActorPositionChangeEventNodeRuntime",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x11c79e4",
+      "name": "AGE::RecordActorPositionTick",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x11d50f7",
+      "name": "AGE::ActorPositionChangeEventListenerDuration",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x11d6692",
+      "name": "AGETemplate::CheckActorPositionDuration",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x11f0ba2",
+      "name": "ActorPositionChangeEventNode",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x11f6ae6",
+      "name": "RecordActorPositionNode",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x11fd869",
+      "name": "ActorPositionChangeListenerNode",
+      "keywords": [
+        "ActorPos"
+      ]
+    },
+    {
+      "va": "0x11a95f4",
+      "name": "GetPositionInUnityObjectPairSetNode",
+      "keywords": [
+        "GetPositionInUnity"
+      ]
+    },
+    {
+      "va": "0x1189195",
+      "name": "HeroPosition",
+      "keywords": [
+        "HeroPosition"
+      ]
+    },
+    {
+      "va": "0x11d1b38",
+      "name": "view_manager::ViewManager::ModifyHeroPositionWhenNearby",
+      "keywords": [
+        "HeroPosition"
+      ]
+    },
+    {
+      "va": "0x11431ae",
+      "name": "backControlXInMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x114672f",
+      "name": "GuanyuActionOpt::OptimizeMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x1149847",
+      "name": "bUseForwardWhenMoveDirZero",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11537ac",
+      "name": "mask skill3 -> kMoveDir, hp_rate:%.2f",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x1154147",
+      "name": "AGE::SimpleMoveDirType",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x1156edf",
+      "name": "backControlYInMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x115746a",
+      "name": "OffsetInMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x1163cb0",
+      "name": "bFilterMoveDirection",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x116a12c",
+      "name": "controlYInMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x1173977",
+      "name": "kUseMoveDirRandom",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x117747f",
+      "name": "bEndOffsetWithMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x117d874",
+      "name": "filterMoveDirectionTargetId",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x117dcd0",
+      "name": "bCalcOffsetUseMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x117dead",
+      "name": "bSyncMoveDirection",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x118179f",
+      "name": "AGETemplate::ForbidMoveDirectionCmdDuration",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11872a5",
+      "name": "Ignore, yAction:%d not kMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x118a96c",
+      "name": "controlZInMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x118af3c",
+      "name": "MoveDirection",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x1194f75",
+      "name": "AGETemplate::FilterTargetCacheMoveDirectionTick",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11959fc",
+      "name": "MoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x119d002",
+      "name": "attackControlYInMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11af290",
+      "name": "AGE::MoveDirectionalLeapDuration",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11d6c9c",
+      "name": "rotateToMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11e76f3",
+      "name": "CreateMoveDirectionState",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11f554b",
+      "name": "Physics::MoveDirectionState",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11f602f",
+      "name": "AGE::FilterTargetCacheMoveDirectionTick",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11f7f77",
+      "name": "attackControlXInMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11f80f9",
+      "name": "controlXInMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11fb2c5",
+      "name": "more restrict Laye rule for bailixuance. Change MoveDir to MovePos",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x11fcc04",
+      "name": "AGE::ForbidMoveDirectionCmdDuration",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x1207f17",
+      "name": "target_monster_hp_rate is less than STAY_WITH_MONSTER_HP threshold. Change MoveDir to NormAtk",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x12084ba",
+      "name": "OptimizeMoveDir",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x1208aa0",
+      "name": "MoveDirectionCmd",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x120912f",
+      "name": "AGETemplate::MoveDirectionalLeapDuration",
+      "keywords": [
+        "MoveDir"
+      ]
+    },
+    {
+      "va": "0x114079c",
+      "name": "SyncPositionMoveCmd",
+      "keywords": [
+        "SyncPosition"
+      ]
+    }
+  ],
+  "total_instructions_decoded": 25,
+  "function_entries": 342568,
+  "validated_code_xrefs": [],
+  "relocation_xrefs": [
+    {
+      "location": "0x4dd01c8",
+      "points_to": "0x116f014",
+      "label": "bUseBindActorPos",
+      "kind": 1027
+    },
+    {
+      "location": "0x4df2360",
+      "points_to": "0x11959fc",
+      "label": "MoveDir",
+      "kind": 1027
+    },
+    {
+      "location": "0x4df7200",
+      "points_to": "0x1189195",
+      "label": "HeroPosition",
+      "kind": 1027
+    },
+    {
+      "location": "0x4e08b40",
+      "points_to": "0x11a2757",
+      "label": "ActorRootList",
+      "kind": 1027
+    },
+    {
+      "location": "0x4e08ce0",
+      "points_to": "0x11a2757",
+      "label": "ActorRootList",
+      "kind": 1027
+    },
+    {
+      "location": "0x4e09690",
+      "points_to": "0x119bc56",
+      "label": "CheckActorPos",
+      "kind": 1027
+    },
+    {
+      "location": "0x4e1bbc8",
+      "points_to": "0x118fdbf",
+      "label": "BaseActorRoot",
+      "kind": 1027
+    },
+    {
+      "location": "0x4e4d870",
+      "points_to": "0x116f014",
+      "label": "bUseBindActorPos",
+      "kind": 1027
+    },
+    {
+      "location": "0x4e87e38",
+      "points_to": "0x1189195",
+      "label": "HeroPosition",
+      "kind": 1027
+    },
+    {
+      "location": "0x4e948b8",
+      "points_to": "0x11959fc",
+      "label": "MoveDir",
+      "kind": 1027
+    },
+    {
+      "location": "0x4e9c150",
+      "points_to": "0x11a2757",
+      "label": "ActorRootList",
+      "kind": 1027
+    }
+  ],
+  "snippets": {},
+  "interpretation": [
+    "These are actual Capstone-parsed ARM64 address references, not a proof of encryption.",
+    "The use of ViewManager ModifyEnemyInvisibleHeroPosition may indicate fog-of-war coordinate obfuscation, different from cryptographic encryption.",
+    "Relevant function behavior must be checked before claiming an algorithm."
+  ]
+}
