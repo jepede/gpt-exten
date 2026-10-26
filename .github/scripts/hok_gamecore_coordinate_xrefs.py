@@ -76,15 +76,19 @@ with SO.open("rb") as f:
  # Capstone must decode all ARM64 instructions, no manual opcode parsing.
  cap=Cs(CS_ARCH_ARM64,CS_MODE_LITTLE_ENDIAN)
  cap.detail=True
+ cap.skipdata=True
  active=collections.defaultdict(list)
  pages=collections.defaultdict(list)
  for x in target:pages[x&~0xfff].append(x)
  refs=[]
  mnems=collections.Counter()
- total=0
+ total=0; skipped=0
  for ins in cap.disasm(mm[text["off"]:text["off"]+text["size"]],text["va"]):
   total+=1
-  pc=ins.address;mn=ins.mnemonic;ops=ins.operands
+  pc=ins.address;mn=ins.mnemonic
+  if mn.startswith("."):
+   skipped+=1;active.clear();continue
+  ops=ins.operands
   if mn=="adrp" and len(ops)>=2 and ops[0].type==CS_OP_REG and ops[1].type==CS_OP_IMM:
    dest=ops[0].reg
    page=ops[1].imm
@@ -114,7 +118,7 @@ with SO.open("rb") as f:
   if mn in ("bl","blr","br","ret","b"):
    active.clear()
   if total%2500000==0:print("ARM64_SCANNED",total,"XREF",len(refs),flush=True)
- print("ARM64_SCAN_DONE",total,"XREF",len(refs),"FDE",len(FDE),"RELOC_REF",len(reloc_refs),flush=True)
+ print("ARM64_SCAN_DONE",total,"SKIPDATA",skipped,"XREF",len(refs),"FDE",len(FDE),"RELOC_REF",len(reloc_refs),flush=True)
  # Strict grouping by function (FDE) and label; keep only validated string address calculations.
  groups=collections.defaultdict(list)
  for x in refs:groups[x["fde_start"]].append(x)
@@ -134,7 +138,7 @@ with SO.open("rb") as f:
  "engine":"HoK 12.1.1.1 libGameCore.so AArch64",
  "elf":{x:secs[x] for x in (".rodata",".text",".rela.dyn",".eh_frame_hdr")},
  "candidate_string_count":len(target),"candidate_strings":[{"va":hex(k),**v} for k,v in target.items()],
- "total_instructions_decoded":total,"function_entries":len(FDE),"validated_code_xrefs":refs[:3000],
+ "total_instructions_decoded":total,"skipdata_pseudoinstructions":skipped,"function_entries":len(FDE),"validated_code_xrefs":refs[:3000],
  "relocation_xrefs":reloc_refs[:1000],"snippets":snippets,
  "interpretation":["These are actual Capstone-parsed ARM64 address references, not a proof of encryption.",
  "The use of ViewManager ModifyEnemyInvisibleHeroPosition may indicate fog-of-war coordinate obfuscation, different from cryptographic encryption.",
