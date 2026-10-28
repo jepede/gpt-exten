@@ -2951,3 +2951,26 @@ Restore: verify current existence and expires_at, download each Artifact separat
 ### Restore
 
 Use the four GitHub artifact IDs above; download each individually with `download_workflow_artifact`. Check its outer ZIP against `Artifact Digest`, extract its inner `hok-12.1.1.1-*.zip`, check against `portable_archive_sha256` in `reports/hok_20261026/portable_archive_manifest.json` of branch `work/hok-coordinate-study-20261026`, extract ELF/metadata, verify original SHA256 and ZIP CRC32. These are individual binary files; no 1.75GB whole APK is included.
+
+## Artifact Record — Prettier 3.6.2 (2026-10-28)
+
+- Artifact Name: `prettier-3_6_2-node-any`
+- Artifact ID: `12784231033`
+- Run ID: `40613352471`
+- Workflow: `.github/workflows/cache-prettier-3-6-2-20261028.yml`
+- Run URL: https://github.com/jepede/gpt-exten/actions/runs/40613352471
+- File: `prettier-3.6.2-node-any.zip`
+- Size: `2151341` bytes
+- SHA256: `0e2f3bb06ff000765d8d234408eeb50d2695ad974d781dc1ce259f739cec4eb1`
+- Created At: `2026-10-28T01:10:04Z`
+- Expires At: `2027-01-26T01:09:52Z`
+- Storage Mode: `SINGLE`
+- Original File: `prettier-3.6.2.tgz`
+- Original Size: `2152632` bytes
+- Original SHA256: `bc81ab83674f175a8601b7d013786f48ec2507dd4a5fcf3415831ff13a875bdf`
+- Part Count: `1`
+- Verification: Official npm tarball SHA-512 integrity verified in Actions; artifact ZIP and package SHA-256 verified after download. CLI entry: `package/bin/prettier.cjs`. Requested retention 400 days; actual expiry above is authoritative.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Prettier | 3.6.2 | any (Node.js) | any | `prettier-3.6.2.tgz` | `bc81ab83674f175a8601b7d013786f48ec2507dd4a5fcf3415831ff13a875bdf` |
