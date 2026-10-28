@@ -1,0 +1,29 @@
+name: TShield init1 TLS Certificate Probe
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  cert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Inspect endpoint certificate only
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 15 openssl s_client -connect 103.217.191.153:4681 -showcerts </dev/null > cert.full.txt 2>&1 || true
+          awk '/BEGIN CERTIFICATE/{f=1} f{print} /END CERTIFICATE/{exit}' cert.full.txt > cert.pem || true
+          if [ -s cert.pem ]; then
+            openssl x509 -in cert.pem -noout -subject -issuer -serial -fingerprint -sha256 -dates -ext subjectAltName | tee cert.info.txt
+          else
+            echo 'NO_CERT' | tee cert.info.txt
+          fi
+      - name: Upload certificate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: tshield-init1-cert
+          path: cert.*
+          retention-days: 90
