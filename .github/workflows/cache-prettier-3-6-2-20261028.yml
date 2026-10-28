@@ -1,0 +1,38 @@
+name: Cache Prettier 3.6.2
+on:
+  push:
+    paths:
+      - .github/workflows/cache-prettier-3-6-2-20261028.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and verify official npm package
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, json, pathlib, tarfile, urllib.request
+          target=pathlib.Path("bundle")
+          target.mkdir()
+          with urllib.request.urlopen("https://registry.npmjs.org/prettier/3.6.2") as r:
+              metadata=json.load(r)
+          with urllib.request.urlopen(metadata["dist"]["tarball"]) as r:
+              data=r.read()
+          expected=metadata["dist"]["integrity"]
+          assert expected=="sha512-"+base64.b64encode(hashlib.sha512(data).digest()).decode()
+          artifact=target/"prettier-3.6.2.tgz"
+          artifact.write_bytes(data)
+          (target/"manifest.json").write_text(json.dumps({"name":"prettier","version":"3.6.2","platform":"any","architecture":"any","file":artifact.name,"bytes":len(data),"sha256":hashlib.sha256(data).hexdigest()},indent=2))
+          with tarfile.open(artifact) as archive:
+              archive.extractall("verify",filter="data")
+          PY
+          node verify/package/bin/prettier.cjs --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prettier-3_6_2-node-any
+          path: bundle/
+          retention-days: 400
+          if-no-files-found: error
