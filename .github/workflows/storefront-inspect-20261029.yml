@@ -1,0 +1,76 @@
+name: Inspect public storefront assets
+on:
+  push:
+    paths:
+      - .github/workflows/storefront-inspect-20261029.yml
+  workflow_dispatch:
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Fetch public page and scripts
+        shell: bash
+        run: |
+          mkdir -p out
+          python3 - <<'PY'
+          import requests,re,html
+          from urllib.parse import urljoin
+          sess=requests.Session()
+          sess.headers.update({'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36'})
+          url='https://ds.xiaoman.top/liebiao/5F3D441DDE1C816D'
+          try:
+              r=sess.get(url,timeout=24)
+              print('MAIN',r.status_code,'URL',r.url,'TYPE',r.headers.get('Content-Type'),'SIZE',len(r.content))
+              open('out/page.html','w').write(r.text)
+              print('TITLE',re.findall(r'<title[^>]*>(.*?)</title>',r.text,re.S|re.I)[:2])
+              print('BODY_START',re.sub('<[^>]+>',' ',r.text[:4000])[:1500])
+          except Exception as e:
+              print('MAIN_ERROR',repr(e));raise SystemExit(0)
+          srcs=re.findall(r'<script[^>]+src\\s*=\\s*["\\x27]([^"\\x27]+)',r.text,re.I)
+          print('JS_SCRIPTS',srcs[:40])
+          pats=[r'pan\\.baidu\\.com',r'pan\\.quark\\.cn',r'123pan\\.',r'alipan\\.com',r'aliyundrive\\.com',r'网盘',r'购卡',r'提取码',r'https?://[^\\s"\\x27<>]+']
+          for i,src in enumerate(srcs[:24]):
+              target=urljoin(r.url,html.unescape(src))
+              try:
+                  x=sess.get(target,timeout=18)
+                  print('SCRIPT',i,x.status_code,x.url,'SIZE',len(x.content))
+                  if x.ok and len(x.content)<3000000:
+                      open(f'out/script{i:02d}.js','w').write(x.text)
+                      for p in pats:
+                          matches=list(re.finditer(p,x.text,re.I))
+                          if matches:
+                              print('SCRIPT_MATCH',i,p,'COUNT',len(matches))
+                              for m in matches[:6]:
+                                  print(' ',repr(x.text[max(0,m.start()-80):m.end()+170])[:280])
+              except Exception as e: print('SCRIPT_ERROR',i,repr(e))
+          for p in pats:
+              matches=list(re.finditer(p,r.text,re.I))
+              if matches:
+                  print('PAGE_MATCH',p,'COUNT',len(matches))
+                  for m in matches[:12]: print(' ',repr(r.text[max(0,m.start()-90):m.end()+150])[:290])
+          PY
+      - name: Render public page in Chrome
+        shell: bash
+        run: |
+          CHROME=$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)
+          echo "CHROME=$CHROME"
+          if [ -n "$CHROME" ]; then
+            timeout 55 "$CHROME" --headless --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-background-networking --disable-extensions --virtual-time-budget=7000 --dump-dom 'https://ds.xiaoman.top/liebiao/5F3D441DDE1C816D' > out/rendered.html 2>out/chrome-error.log || true
+            python3 - <<'PY'
+          import re
+          s=open('out/rendered.html',errors='replace').read()
+          print('RENDERED_SIZE',len(s))
+          t=re.sub(r'<script\\b[^>]*>.*?</script>|<style\\b[^>]*>.*?</style>',' ',s,flags=re.S|re.I)
+          print('RENDERED_TEXT',re.sub(r'\\s+',' ',re.sub('<[^>]+>',' ',t))[:7000])
+          for p in [r'网盘',r'下载',r'购卡',r'https?://(?:pan|www\\.123|alipan|www\\.aliyun)[^\\s"\\x27<>]+']:
+              matches=list(re.finditer(p,s,re.I))
+              print('RENDERED_MATCH',p,len(matches))
+              for m in matches[:10]: print(' ',repr(s[max(0,m.start()-180):m.end()+200])[:420])
+          PY
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-public-20261029
+          path: out/
+          retention-days: 1
