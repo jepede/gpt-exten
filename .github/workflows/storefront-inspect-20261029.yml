@@ -27,9 +27,9 @@ jobs:
               print('BODY_START',re.sub('<[^>]+>',' ',r.text[:4000])[:1500])
           except Exception as e:
               print('MAIN_ERROR',repr(e));raise SystemExit(0)
-          srcs=re.findall(r'<script[^>]+src\\s*=\\s*["\\x27]([^"\\x27]+)',r.text,re.I)
+          srcs=re.findall('<script[^>]+src="([^"]+)"',r.text,re.I)
           print('JS_SCRIPTS',srcs[:40])
-          pats=[r'pan\\.baidu\\.com',r'pan\\.quark\\.cn',r'123pan\\.',r'alipan\\.com',r'aliyundrive\\.com',r'网盘',r'购卡',r'提取码',r'https?://[^\\s"\\x27<>]+']
+          pats=['网盘','下载','购卡','提取码','/index/','/api/','goodid','selectcateid','order','pay','pan.baidu.com','pan.quark.cn','123pan','aliyundrive','alipan']
           for i,src in enumerate(srcs[:24]):
               target=urljoin(r.url,html.unescape(src))
               try:
