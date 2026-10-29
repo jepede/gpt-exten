@@ -69,6 +69,32 @@ jobs:
               for m in matches[:10]: print(' ',repr(s[max(0,m.start()-180):m.end()+200])[:420])
           PY
           fi
+      - name: Examine public product descriptions and anonymous order-query page
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import requests, re
+          s=requests.Session()
+          s.headers.update({'User-Agent':'Mozilla/5.0','Referer':'https://ds.xiaoman.top/liebiao/5F3D441DDE1C816D'})
+          for goodid in (114465,114466):
+              try:
+                  r=s.post('https://ds.xiaoman.top/ajax/getgoodinfo',data={'goodid':goodid},timeout=20)
+                  print('PUBLIC_GOODINFO',goodid,'HTTP',r.status_code,'LEN',len(r.content))
+                  data=r.json()
+                  print('GOODINFO_KEYS',goodid,list(data.keys()) if isinstance(data,dict) else type(data).__name__)
+                  if isinstance(data,dict):
+                      print('GOODINFO_NAME',goodid,data.get('name'))
+                      print('GOODINFO_REMARK',goodid,str(data.get('remark',''))[:650])
+                      print('GOODINFO_HAS_CLOUD_LINK',goodid,bool(re.search(r'(?:pan[.]baidu[.]com|pan[.]quark[.]cn|123pan|alipan|aliyundrive)',str(data),re.I)))
+              except Exception as e:print('PUBLIC_GOODINFO_ERROR',goodid,repr(e))
+          try:
+              r=s.get('https://ds.xiaoman.top/orderquery',timeout=20)
+              html=r.text
+              print('ORDERQUERY_PAGE',r.status_code,'LEN',len(html))
+              t=re.sub(r'<[^>]+>',' ',re.sub(r'<script.*?</script>',' ',html,flags=re.S|re.I))
+              print('ORDERQUERY_TEXT',re.sub(r'\\s+',' ',t)[:850])
+          except Exception as e:print('ORDERQUERY_ERROR',repr(e))
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: site-public-20261029
