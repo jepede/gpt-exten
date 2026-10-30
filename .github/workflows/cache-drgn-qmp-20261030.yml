@@ -1,0 +1,71 @@
+name: Cache drgn QMP debug tools 20261030
+on:
+  push:
+    paths: ['.github/workflows/cache-drgn-qmp-20261030.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  cache:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch pinned drgn release and verify PyPI digests
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          python -m pip download --index-url https://pypi.org/simple --only-binary=:all: --no-deps drgn==0.3.0 -d release
+          python - <<'PY'
+          import hashlib,json,pathlib,urllib.request
+          root=pathlib.Path('release')
+          info=json.load(urllib.request.urlopen('https://pypi.org/pypi/drgn/0.3.0/json'))
+          files={x['filename']:x for x in info['urls']}
+          wheel=next(root.glob('*.whl'))
+          assert hashlib.sha256(wheel.read_bytes()).hexdigest()==files[wheel.name]['digests']['sha256']
+          src=next(x for x in info['urls'] if x['packagetype']=='sdist')
+          data=urllib.request.urlopen(src['url']).read()
+          assert hashlib.sha256(data).hexdigest()==src['digests']['sha256']
+          (root/src['filename']).write_bytes(data)
+          (root/'pypi-provenance.json').write_text(json.dumps({'project':'drgn','version':'0.3.0','files':[files[wheel.name],src]},indent=2))
+          PY
+      - name: Reuse verified kernel cache for matching fw_cfg module
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/repos/jepede/gpt-exten/actions/artifacts/11032351529/zip -o cached-kernel.zip
+          echo '64fdcf5d1843bedfe0012cb19667f4b2865f81b835033d6f296a01e3dce7599a  cached-kernel.zip' | sha256sum -c -
+          unzip -q cached-kernel.zip -d cached
+          python - <<'PY'
+          import pathlib,tarfile,subprocess,lzma,hashlib,json
+          root=pathlib.Path('release')
+          tars=list(pathlib.Path('cached').rglob('*.tar'));assert len(tars)==1
+          assert hashlib.sha256(tars[0].read_bytes()).hexdigest()=='1819458934fb118d7b11bf9564aa8fb4c6882a932d6fada0dc76ac58dcf44ca1'
+          with tarfile.open(tars[0]) as t:
+              candidates=[m for m in t if 'linux-image-6.12.111' in m.name and m.name.endswith('.deb')];assert len(candidates)==1
+              data=t.extractfile(candidates[0]).read()
+          assert hashlib.sha256(data).hexdigest()=='981370389cb9f6241b41f66ea5c8a0e7bdd28b9e959cec4d3bac97b1eb1248bf'
+          pathlib.Path('kernel.deb').write_bytes(data)
+          subprocess.run(['dpkg-deb','-x','kernel.deb','kernel'],check=True)
+          mods=list(pathlib.Path('kernel').rglob('qemu_fw_cfg.ko.xz'));assert len(mods)==1
+          (root/'qemu_fw_cfg.ko').write_bytes(lzma.decompress(mods[0].read_bytes()))
+          (root/'kernel-provenance.json').write_text(json.dumps({'source_run_id':36566866696,'source_artifact_id':11032351529,'kernel':'6.12.111-1','deb_sha256':hashlib.sha256(data).hexdigest(),'module_sha256':hashlib.sha256((root/'qemu_fw_cfg.ko').read_bytes()).hexdigest()},indent=2))
+          PY
+      - name: Package and hash
+        run: |
+          set -euo pipefail
+          (cd release && sha256sum * > SHA256SUMS.txt)
+          tar -czf drgn-qmp-0.3.0-cp312-x86_64-20261030.tar.gz -C release .
+          test "$(stat -c%s drgn-qmp-0.3.0-cp312-x86_64-20261030.tar.gz)" -lt 95000000
+          sha256sum drgn-qmp-0.3.0-cp312-x86_64-20261030.tar.gz > PACKAGE_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: drgn-qmp-0_3_0-cp312-x86_64-20261030
+          path: |
+            drgn-qmp-0.3.0-cp312-x86_64-20261030.tar.gz
+            PACKAGE_SHA256SUMS.txt
+          retention-days: 400
+          if-no-files-found: error
