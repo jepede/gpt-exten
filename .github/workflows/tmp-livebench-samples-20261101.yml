@@ -1,0 +1,55 @@
+name: Temporary LiveBench Dataset Samples 20261101
+on:
+  pull_request:
+    paths:
+      - .github/workflows/tmp-livebench-samples-20261101.yml
+permissions:
+  contents: read
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Download bounded LiveBench sample rows
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          from urllib.parse import urlencode
+          import json, hashlib, zipfile, time
+          categories=["math","reasoning","language","instruction_following","data_analysis"]
+          out=Path("livebench_samples");out.mkdir(exist_ok=True)
+          stats=[]
+          for category in categories:
+              params=urlencode({"dataset":"livebench/"+category,"config":"default","split":"test","offset":0,"length":30})
+              url="https://datasets-server.huggingface.co/rows?"+params
+              try:
+                  req=Request(url,headers={"User-Agent":"GPT-Questionbank-Curator/1.0"})
+                  with urlopen(req,timeout=120) as r: data=json.load(r)
+                  rows=data.get("rows",[])
+                  saved=[]
+                  for item in rows:
+                      row=item.get("row",item)
+                      obj={k:row.get(k) for k in ("question_id","category","task","turns","ground_truth","livebench_release_date","livebench_removal_date") if k in row}
+                      obj["_source"]="https://huggingface.co/datasets/livebench/"+category
+                      saved.append(obj)
+                  p=out/(category+".jsonl")
+                  p.write_text("".join(json.dumps(x,ensure_ascii=False,default=str)+"\n" for x in saved),encoding="utf-8")
+                  stats.append({"category":category,"requested":30,"saved":len(saved),"source":url,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()})
+                  print(category,len(saved),flush=True)
+              except Exception as e:
+                  stats.append({"category":category,"error":str(e),"source":url})
+                  print("WARNING",category,str(e),flush=True)
+          (out/"manifest.json").write_text(json.dumps(stats,ensure_ascii=False,indent=2),encoding="utf-8")
+          with zipfile.ZipFile("livebench-five-categories-samples.zip","w",zipfile.ZIP_DEFLATED) as z:
+              for p in out.iterdir():z.write(p,p.relative_to(out.parent))
+          print("complete",flush=True)
+          
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: livebench-samples-20261101
+          path: livebench-five-categories-samples.zip
+          retention-days: 1
+          compression-level: 0
