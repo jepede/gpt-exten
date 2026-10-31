@@ -1,0 +1,55 @@
+name: Temporary GPT Question Bank Export 20261101
+on:
+  pull_request:
+    paths:
+      - .github/workflows/tmp-gpt-question-bank-20261101.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Fetch source question datasets and record hashes
+        shell: bash
+        run: |
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          import hashlib, json, zipfile, time
+          specs = [["garystafford/openai-reasoning-benchmark","main","benchmarks/main/dataset.jsonl"],["garystafford/openai-reasoning-benchmark","main","benchmarks/complex/prompts.json"],["garystafford/openai-reasoning-benchmark","main","benchmarks/reasoning/prompts.json"],["garystafford/openai-reasoning-benchmark","main","benchmarks/decision/prompts.json"],["garystafford/openai-reasoning-benchmark","main","evals/main-matrix.json"],["garystafford/openai-reasoning-benchmark","main","LICENSE"],["egnaro9/model-drift","main","modeldrift/suite.py"],["egnaro9/model-drift","main","tests/test_suite.py"],["egnaro9/model-drift","main","LICENSE"],["petergpt/bullshit-benchmark","main","questions.json"],["petergpt/bullshit-benchmark","main","questions.v2.json"],["petergpt/bullshit-benchmark","main","LICENSE"],["joannany/gpt-drift","master","experiments/compare_5_2_vs_5_4.py"],["joannany/gpt-drift","master","examples/experiment.py"],["joannany/gpt-drift","master","LICENSE"],["LiveBench/LiveBench","main","livebench/download_questions.py"],["LiveBench/LiveBench","main","livebench/common.py"],["LiveBench/LiveBench","main","LICENSE"],["scaleapi/SWE-bench_Pro-os","main","helper_code/sweap_eval_full_v2.jsonl"],["scaleapi/SWE-bench_Pro-os","main","LICENSE"],["lchen001/LLMDrift","main","data/prime/questions.json"],["lchen001/LLMDrift","main","LICENSE"],["promptfoo/promptfoo","main","examples/compare-gpt-model-tiers/promptfooconfig.yaml"],["promptfoo/promptfoo","main","examples/compare-gpt-reasoning-effort/promptfooconfig.yaml"],["promptfoo/promptfoo","main","examples/compare-openai-models/promptfooconfig.yaml"],["promptfoo/promptfoo","main","examples/compare-gpt-model-tiers-mmlu-pro/promptfooconfig.yaml"],["promptfoo/promptfoo","main","LICENSE"]]
+          root = Path("benchmark_raw")
+          root.mkdir(exist_ok=True)
+          manifest=[]
+          for i,(repo, branch, path) in enumerate(specs, 1):
+              dest=root/repo/path
+              dest.parent.mkdir(parents=True,exist_ok=True)
+              url="https://raw.githubusercontent.com/"+repo+"/"+branch+"/"+path
+              for trial in range(4):
+                  try:
+                      req=Request(url,headers={"User-Agent":"GPT-Benchmark-Curator/2026-11-01"})
+                      with urlopen(req,timeout=90) as resp:
+                          data=resp.read()
+                      break
+                  except Exception as e:
+                      if trial==3: raise RuntimeError(str((repo,path,e))) from e
+                      time.sleep(2**trial)
+              dest.write_bytes(data)
+              sha=hashlib.sha256(data).hexdigest()
+              manifest.append({"repo":repo,"branch":branch,"path":path,"url":url,"bytes":len(data),"sha256":sha})
+              print(str(i)+"/"+str(len(specs)),repo,path,len(data),sha[:14],flush=True)
+          (root/"source_manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+          with zipfile.ZipFile("gpt-questionbank-upstream-20261101.zip","w",zipfile.ZIP_DEFLATED,compresslevel=6) as z:
+              for p in sorted(root.rglob("*")):
+                  if p.is_file(): z.write(p,p.relative_to(root.parent))
+          p=Path("gpt-questionbank-upstream-20261101.zip")
+          print("ARCHIVE",p.stat().st_size,hashlib.sha256(p.read_bytes()).hexdigest(),flush=True)
+          
+      - name: Upload temporary dataset
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-questionbank-upstream-20261101
+          path: gpt-questionbank-upstream-20261101.zip
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
