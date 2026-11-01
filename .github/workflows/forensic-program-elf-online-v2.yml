@@ -1,0 +1,36 @@
+name: program.elf C2 evidence v2 (pinned CA)
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/forensic-program-elf-online-v2.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Evidence-only socket and verified TLS observation
+        run: |
+          set -euo pipefail
+          python3 tools/forensics_program_elf_live_v2.py
+          cp tools/forensics_program_elf_live_v2.py evidence/probe_source.py
+          cp .github/workflows/forensic-program-elf-online-v2.yml evidence/probe_workflow.yml
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path('evidence')
+          m=json.loads((p/'manifest.json').read_text())
+          m['files'].update({x.name:{'bytes':x.stat().st_size,'sha256':hashlib.sha256(x.read_bytes()).hexdigest()}
+                              for x in (p/'probe_source.py',p/'probe_workflow.yml')})
+          (p/'manifest.json').write_text(json.dumps(m,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: program-elf-c2-live-v2-pinned
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 1
