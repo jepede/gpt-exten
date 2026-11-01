@@ -1,0 +1,83 @@
+name: program.elf C2 evidence (read-only, no credentials)
+on:
+  push:
+    branches:
+      - forensics/program-elf-live-20261102
+    paths:
+      - .github/workflows/forensic-program-elf-online.yml
+permissions:
+  contents: read
+jobs:
+  network-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Collect bounded live network observations
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          python3 - <<'PY'
+          import datetime, hashlib, json, os, pathlib, socket, ssl, time
+          root=pathlib.Path('evidence')
+          host='103.36.63.136'
+          events=[]
+          def now(): return datetime.datetime.now(datetime.timezone.utc).isoformat()
+          def digest(data): return hashlib.sha256(data).hexdigest()
+          def event(op,**kw):
+              x={'time_utc':now(),'operation':op,**kw}
+              events.append(x)
+              print(json.dumps(x,ensure_ascii=False),flush=True)
+          event('source',runner='github-actions-ubuntu',repo=os.getenv('GITHUB_REPOSITORY'),run_id=os.getenv('GITHUB_RUN_ID'),commit=os.getenv('GITHUB_SHA'),sample_sha256='e2f6dab884afb7a61da706d2140108d734993018430bd69084682ab0275675d6',note='Sample not downloaded or executed; live probes are read-only')
+          for port in (8974,3000):
+              t=time.monotonic()
+              try:
+                  with socket.create_connection((host,port),timeout=5) as s:
+                      event('tcp_connect',port=port,ok=True,local=s.getsockname(),peer=s.getpeername(),elapsed_ms=round(1000*(time.monotonic()-t),1))
+              except OSError as e:
+                  event('tcp_connect',port=port,ok=False,error=type(e).__name__,detail=str(e),errno=e.errno,elapsed_ms=round(1000*(time.monotonic()-t),1))
+          req=('GET /online HTTP/1.1\r\nHost: '+host+':3000\r\nConnection: close\r\n\r\n').encode()
+          (root/'online_request.raw').write_bytes(req)
+          t=time.monotonic()
+          try:
+              with socket.create_connection((host,3000),timeout=5) as s:
+                  s.settimeout(5)
+                  s.sendall(req)
+                  chunks=[]; n=0; partial=False
+                  while n<524288:
+                      try: b=s.recv(min(8192,524288-n))
+                      except socket.timeout: partial=True; break
+                      if not b: break
+                      chunks.append(b);n+=len(b)
+                  raw=b''.join(chunks)
+              (root/'online_response.raw').write_bytes(raw)
+              event('GET_online',ok=True,bytes=len(raw),sha256=digest(raw),status_line=raw.split(b'\r\n',1)[0][:120].decode('ascii','replace'),partial=partial or n>=524288,elapsed_ms=round(1000*(time.monotonic()-t),1))
+          except OSError as e:
+              event('GET_online',ok=False,error=type(e).__name__,detail=str(e),elapsed_ms=round(1000*(time.monotonic()-t),1))
+          t=time.monotonic()
+          try:
+              ctx=ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+              ctx.check_hostname=False
+              ctx.verify_mode=ssl.CERT_NONE
+              ctx.minimum_version=ssl.TLSVersion.TLSv1_2
+              with socket.create_connection((host,8974),timeout=5) as s:
+                  with ctx.wrap_socket(s,server_hostname=host) as tls:
+                      leaf=tls.getpeercert(binary_form=True)
+                      (root/'tls_leaf_unverified.der').write_bytes(leaf)
+                      event('TLS_leaf_snapshot',ok=True,authenticated=False,cert_sha256=digest(leaf),version=tls.version(),cipher=tls.cipher(),elapsed_ms=round(1000*(time.monotonic()-t),1))
+          except (OSError,ssl.SSLError) as e:
+              event('TLS_leaf_snapshot',ok=False,error=type(e).__name__,detail=str(e),elapsed_ms=round(1000*(time.monotonic()-t),1))
+          (root/'observations.json').write_text(json.dumps(events,ensure_ascii=False,indent=2)+'\n')
+          files={}
+          for f in root.iterdir():
+              if f.is_file(): files[f.name]={'bytes':f.stat().st_size,'sha256':digest(f.read_bytes())}
+          (root/'sha256_manifest.json').write_text(json.dumps({'created_utc':now(),'files':files},indent=2)+'\n')
+          print('RESULT_FILES',json.dumps(files))
+          PY
+      - name: Upload evidence (no secrets, temporary)
+        uses: actions/upload-artifact@v4
+        with:
+          name: program-elf-c2-live-readonly
+          path: evidence/
+          retention-days: 1
+          if-no-files-found: error
