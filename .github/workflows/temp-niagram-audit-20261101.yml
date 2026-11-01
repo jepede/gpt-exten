@@ -1,0 +1,249 @@
+name: Niagram 1273 Temporary Security Audit
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-niagram-audit-20261101.yml'
+  workflow_dispatch:
+jobs:
+  static-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 38
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch GitHub source and inspect 1273 release
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-out
+          git clone --depth 1 --branch 1273 --single-branch https://github.com/HSSkyBoy/Niagram.git niagram-src
+          git -C niagram-src fetch --no-tags --depth=1 origin refs/tags/1270:refs/tags/1270
+          git -C niagram-src fetch --no-tags --depth=1 origin refs/heads/dev:refs/remotes/origin/dev
+          python3 audits/niagram-20261101/audit.py
+          curl --fail --location --silent --show-error --retry 3 -H 'Accept: application/vnd.github+json' -o audit-out/release.json https://api.github.com/repos/HSSkyBoy/Niagram/releases/tags/1273 || true
+          python3 - <<'PY'
+          import json,os
+          p='audit-out/release.json'
+          try:
+           j=json.load(open(p)); assets=j.get('assets',[])
+           for a in assets:print('ASSET',a['name'],a['size'],a['browser_download_url'])
+           opts=[a for a in assets if a['name'].lower().endswith('.apk')]
+           opts.sort(key=lambda a:(('arm64' not in a['name'].lower()),a['size']))
+           if opts:
+            open('audit-out/apk-url.txt','w').write(opts[0]['browser_download_url'])
+            open('audit-out/apk-asset.txt','w').write(opts[0]['name'])
+          except Exception as e:print('Release API unavailable',str(e))
+          PY
+          if test -s audit-out/apk-url.txt; then
+            APKURL="$(cat audit-out/apk-url.txt)"
+            curl --fail --location --retry 3 --retry-delay 4 --connect-timeout 20 --max-time 850 --output audit-out/niagram-1273.apk "$APKURL" || rm -f audit-out/niagram-1273.apk
+          fi
+          if test -s audit-out/niagram-1273.apk; then
+            sha256sum audit-out/niagram-1273.apk > audit-out/apk-sha256.txt
+            unzip -tq audit-out/niagram-1273.apk > audit-out/apk-zip-integrity.txt 2>&1 || true
+            find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -1 > audit-out/apksigner-location.txt || true
+            S="$(cat audit-out/apksigner-location.txt)"
+            if test -n "$S"; then "$S" verify --verbose --print-certs audit-out/niagram-1273.apk > audit-out/apk-signature.txt 2>&1 || true; fi
+            find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1 > audit-out/aapt-location.txt || true
+            T="$(cat audit-out/aapt-location.txt)"
+            if test -n "$T"; then "$T" dump badging audit-out/niagram-1273.apk > audit-out/apk-badging.txt 2>&1 || true; "$T" dump permissions audit-out/niagram-1273.apk > audit-out/apk-permissions.txt 2>&1 || true; fi
+            python3 - <<'PY'
+          import re,zipfile,collections,hashlib,json
+          from urllib.parse import urlsplit
+          p='audit-out/niagram-1273.apk'
+          z=zipfile.ZipFile(p)
+          names=z.namelist()
+          d=collections.defaultdict(set)
+          rx=re.compile(rb'https?://[a-zA-Z0-9_.~:/?#\[\]@!$&()*+,;=%-]{5,200}')
+          for fn in names:
+           if fn.endswith(".dex"):
+            for b in rx.findall(z.read(fn)):
+             u=b.decode("ascii","ignore")
+             h=urlsplit(u).hostname
+             if h:d[h.lower()].add(u[:220])
+          with open('audit-out/apk-domains.tsv','w') as f:
+           for domain,urls in sorted(d.items(),key=lambda t:(-len(t[1]),t[0])):
+            f.write(domain+'\t'+str(len(urls))+'\t'+' | '.join(sorted(urls)[:5])+'\n')
+          with open('audit-out/apk-so-sha256.txt','w') as f:
+           for fn in names:
+            if fn.endswith('.so'):f.write(hashlib.sha256(z.read(fn)).hexdigest()+'  '+fn+'\n')
+          with open('audit-out/apk-contents.json','w') as f:
+           json.dump({'filecount':len(names),'dex_files':[n for n in names if n.endswith('.dex')],'native_libraries':[n for n in names if n.endswith('.so')],'domains':len(d)},f,indent=2)
+          PY
+          fi
+          # Source archive contains exactly tracked files at release tag, including no .git history.
+          git -C niagram-src archive --format=tar 1273 | gzip -1 > audit-out/niagram-1273-source.tar.gz
+          sha256sum audit-out/niagram-1273-source.tar.gz > audit-out/source-sha256.txt
+          split --bytes=90000000 --numeric-suffixes=0 --suffix-length=2 audit-out/niagram-1273-source.tar.gz source.part.
+          if test -s audit-out/niagram-1273.apk; then split --bytes=90000000 --numeric-suffixes=0 --suffix-length=2 audit-out/niagram-1273.apk apk.part.; fi
+          sha256sum source.part.* apk.part.* 2>/dev/null > audit-out/part-sha256.txt || true
+          du -h audit-out/*.tar.gz audit-out/niagram-1273.apk 2>/dev/null || true
+          cat audit-out/source-sha256.txt audit-out/apk-sha256.txt 2>/dev/null || true
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-audit-results
+          path: |
+            audit-out/report.md
+            audit-out/signals.tsv
+            audit-out/domains.tsv
+            audit-out/interesting-files.txt
+            audit-out/sensitive-sources.tar.gz
+            audit-out/diff-*.txt
+            audit-out/diff-*.patch
+            audit-out/gitmodules.txt
+            audit-out/git-refs.txt
+            audit-out/scope.json
+            audit-out/release.json
+            audit-out/apk-*.txt
+            audit-out/apk-*.json
+            audit-out/apk-domains.tsv
+            audit-out/source-sha256.txt
+            audit-out/part-sha256.txt
+          retention-days: 1
+          if-no-files-found: error
+      - name: Upload source 00
+        if: ${{ hashFiles('source.part.00') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-00
+          path: source.part.00
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source 01
+        if: ${{ hashFiles('source.part.01') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-01
+          path: source.part.01
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source 02
+        if: ${{ hashFiles('source.part.02') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-02
+          path: source.part.02
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source 03
+        if: ${{ hashFiles('source.part.03') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-03
+          path: source.part.03
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source 04
+        if: ${{ hashFiles('source.part.04') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-04
+          path: source.part.04
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source 05
+        if: ${{ hashFiles('source.part.05') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-05
+          path: source.part.05
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source 06
+        if: ${{ hashFiles('source.part.06') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-06
+          path: source.part.06
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source 07
+        if: ${{ hashFiles('source.part.07') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-07
+          path: source.part.07
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source 08
+        if: ${{ hashFiles('source.part.08') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-08
+          path: source.part.08
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source 09
+        if: ${{ hashFiles('source.part.09') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-09
+          path: source.part.09
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source 10
+        if: ${{ hashFiles('source.part.10') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-10
+          path: source.part.10
+          retention-days: 1
+          compression-level: 0
+      - name: Upload source 11
+        if: ${{ hashFiles('source.part.11') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-source-11
+          path: source.part.11
+          retention-days: 1
+          compression-level: 0
+      - name: Upload apk 00
+        if: ${{ hashFiles('apk.part.00') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-apk-00
+          path: apk.part.00
+          retention-days: 1
+          compression-level: 0
+      - name: Upload apk 01
+        if: ${{ hashFiles('apk.part.01') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-apk-01
+          path: apk.part.01
+          retention-days: 1
+          compression-level: 0
+      - name: Upload apk 02
+        if: ${{ hashFiles('apk.part.02') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-apk-02
+          path: apk.part.02
+          retention-days: 1
+          compression-level: 0
+      - name: Upload apk 03
+        if: ${{ hashFiles('apk.part.03') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-apk-03
+          path: apk.part.03
+          retention-days: 1
+          compression-level: 0
+      - name: Upload apk 04
+        if: ${{ hashFiles('apk.part.04') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-apk-04
+          path: apk.part.04
+          retention-days: 1
+          compression-level: 0
+      - name: Upload apk 05
+        if: ${{ hashFiles('apk.part.05') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: niagram-20261101-apk-05
+          path: apk.part.05
+          retention-days: 1
+          compression-level: 0
