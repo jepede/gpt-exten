@@ -1,0 +1,101 @@
+name: TGX synthetic non-invasive C2 protocol observation
+on:
+  push:
+    branches:
+      - forensic-tgx-20261102
+    paths:
+      - .github/workflows/tgx-safe-probe-20261102.yml
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Record synthetic HEAD and synthetic handshake
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          python3 - <<'PY'
+          import socket, secrets, hashlib, json, pathlib, datetime, time, re, os
+          IP = "103.36.63.136"
+          PORT = 6342
+          PATH = "/api/v1/handshake"
+          RAW_MAX = 16384
+          def now():
+              return datetime.datetime.now(datetime.timezone.utc).isoformat()
+          for mode in ("head", "synthetic-handshake"):
+              out = pathlib.Path("evidence")/mode
+              out.mkdir()
+              nonce = secrets.token_hex(8)
+              fake_pskid = hashlib.sha256(bytes(32)).hexdigest()[:8]
+              body = (f"proto=1\nmode=stage\npkg=org.example.tgx.forensic_{nonce}\n"
+                      f"client=relay\npskid={fake_pskid}\n").encode() if mode == "synthetic-handshake" else b""
+              method = "POST" if body else "HEAD"
+              lines = [
+                  f"{method} {PATH} HTTP/1.1",
+                  f"Host: {IP}:{PORT}", "User-Agent: relay/1",
+                  "Connection: close", "X-Forensic-Research: synthetic-no-sensitive-data",
+                  f"X-Forensic-Nonce: {nonce}"]
+              if body:
+                  lines.extend(["Content-Type: text/plain", f"Content-Length: {len(body)}"])
+              request = ("\r\n".join(lines) + "\r\n\r\n").encode() + body
+              response = b""
+              started = now()
+              report = {
+                  "type": "fresh_externally_executed_synthetic_probe_not_victim_capture",
+                  "sample_sha256": "b3d8b6c6d3b2eff73106a54f22d9df5cb9adc1c367f521c094a04a54f121137c",
+                  "target": f"{IP}:{PORT}", "method": method, "mode": mode,
+                  "started_utc": started,
+                  "submitted_real_telegram_data": False,
+                  "submitted_real_master_key": False,
+                  "performed_put_upload": False
+              }
+              t = time.monotonic()
+              try:
+                  with socket.create_connection((IP, PORT), timeout=5) as s:
+                      s.settimeout(5)
+                      report["tcp_connected"] = True
+                      report["peer_ip"] = s.getpeername()[0]
+                      s.sendall(request)
+                      report["request_sent"] = True
+                      raw = bytearray()
+                      while len(raw) < RAW_MAX:
+                          try:
+                              b = s.recv(min(4096, RAW_MAX-len(raw)))
+                          except socket.timeout:
+                              report["receive_timeout"] = True
+                              break
+                          if not b:
+                              break
+                          raw.extend(b)
+                      response = bytes(raw)
+                      report["result"] = "response_observed" if raw else "no_response"
+              except OSError as e:
+                  report["result"] = "network_error"
+                  report["error_kind"] = type(e).__name__
+                  report["error_message"] = str(e)[:160]
+              report["finished_utc"] = now()
+              report["duration_ms"] = round((time.monotonic()-t)*1000,2)
+              report["request_sha256"] = hashlib.sha256(request).hexdigest()
+              report["response_sha256"] = hashlib.sha256(response).hexdigest()
+              report["response_length"] = len(response)
+              report["request_length"] = len(request)
+              report["response_first_line"] = response.split(b"\r\n",1)[0].decode("latin-1", "replace")[:160]
+              (out/"request.bin").write_bytes(request)
+              (out/"response.bin").write_bytes(response)
+              (out/"evidence.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n")
+              print(mode, report["result"], report.get("error_message",""), report["response_first_line"])
+          PY
+          (cd evidence && find . -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt)
+          echo "Captured evidence at (UTC):"
+          date -u +%Y-%m-%dT%H:%M:%SZ
+      - name: Upload short-retention evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tgx-noninvasive-probe-20261102
+          path: evidence/
+          retention-days: 1
+          if-no-files-found: warn
