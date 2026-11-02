@@ -3,6 +3,7 @@
 GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Version + Platform + Architecture` 查询；是否仍可用以 GitHub 实际返回的 `expires_at` 为准。
 
 ## Index
+| ARM64 RE offline analysis wheels | unicorn 2.1.4 + capstone 5.0.6 + pyelftools 0.32 | Linux / Python 3.13 | x86_64 host / AArch64 target | `41417939591` | SINGLE | `2027-01-31T09:06:13Z` |
 | Honor of Kings IL2CPP coordinate native kit | 12.1.1.1 | Android | arm64-v8a | `40311637215` | SINGLE × 4 | `2027-01-24T10:59:21Z` |
 | OSS NDK r28c pinned source snapshot | cJSON 1.7.19 + zlib 1.3.1 + xxHash 0.8.3 | GitHub source / Any | Portable C source | `40162823267` | SINGLE | `2027-01-23T04:41:50Z` |
 | OSS Android ARM64 NDK r28c cJSON+zlib+xxHash | cJSON 1.7.19 + zlib 1.3.1 + xxHash 0.8.3 | Android API35 / Linux | arm64-v8a target, x86_64 host | `40162461240` | SINGLE | `2027-01-23T04:35:49Z` |
@@ -2974,3 +2975,34 @@ Use the four GitHub artifact IDs above; download each individually with `downloa
 | Name | Version | Platform | Architecture | File/Path | SHA256 |
 |---|---|---|---|---|---|
 | Prettier | 3.6.2 | any (Node.js) | any | `prettier-3.6.2.tgz` | `bc81ab83674f175a8601b7d013786f48ec2507dd4a5fcf3415831ff13a875bdf` |
+
+## ARM64 offline reverse analysis wheels (Python 3.13 x86_64, 2026-11-02)
+
+- Artifact Name: `python313-arm64-analysis-unicorn-capstone-pyelftools-20261102`
+- Artifact ID: `13128646263`
+- Run ID: `41417939591`
+- Workflow: `.github/workflows/cache-re-arm64-wheels-20261102.yml`
+- Platform: Linux manylinux2014; Architecture: x86_64 host / AArch64 emulation
+- File: `re-arm64-python313-wheels-artifact.zip`
+- Size: `18108191` bytes
+- SHA256: `7e67a7660e0789c61fe12de74c306cdb16436d1d60ed3882ba666c41886736ab`
+- Created At: `2026-11-02T09:06:23Z`
+- Expires At: `2027-01-31T09:06:13Z` (actual API)
+- Storage Mode: SINGLE
+- Original File: `wheels/*.whl` (three separate wheels in one artifact)
+- Original Size: `18107016` bytes (sum of wheel sizes)
+- Original SHA256: N/A (no concatenated original file; per-wheel SHA256 below)
+- Part Count: 1
+- Source: PyPI binary wheels downloaded by GitHub Actions; validated locally using `WHEELS.sha256` and ZIP SHA256.
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| unicorn | 2.1.4 | Linux CPython abi3 manylinux2014 | x86_64 / ARM64 emulation | `unicorn-2.1.4-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl` | `9d6e6dea140560de4ebd8446661f7ef84a357d428c14a3ef09dacd306ec8c239` |
+| capstone | 5.0.6 | Linux manylinux2014 | x86_64 / ARM64 decoding | `capstone-5.0.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl` | `0358855773100bb91ae6681fabce7299df83156945ba943f6211061a592c54a6` |
+| pyelftools | 0.32 | Any Python 3.13 | Portable | `pyelftools-0.32-py3-none-any.whl` | `013df952a006db5e138b1edf6d8a68ecc50630adbd0d83a2d41e7f846163d738` |
+
+### Restore
+
+Call `download_workflow_artifact` for artifact `13128646263` from `jepede/gpt-exten`. Verify outer ZIP SHA256 and each inner wheel using `WHEELS.sha256`. Install using `python -m pip install --no-index --find-links wheels unicorn==2.1.4 capstone==5.0.6 pyelftools==0.32`. Reuse while artifact remains available.
