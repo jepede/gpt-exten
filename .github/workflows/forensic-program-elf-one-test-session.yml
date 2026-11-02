@@ -1,0 +1,110 @@
+name: program.elf isolated test enrollment and hello
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/forensic-program-elf-one-test-session.yml]
+permissions:
+  contents: read
+jobs:
+  validate-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Exactly one fabricated registration and (if authorized) one hello
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          python3 - <<'PY'
+          import base64,datetime,hashlib,json,os,pathlib,secrets,socket,time
+          root=pathlib.Path("evidence")
+          host="103.36.63.136";port=8974
+          G=bytes.fromhex("046b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296"+
+                          "4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5")
+          assert len(G)==65
+          def b64(b):return base64.urlsafe_b64encode(b).rstrip(b"=").decode()
+          def h(b):return hashlib.sha256(b).hexdigest()
+          def now():return datetime.datetime.now(datetime.timezone.utc).isoformat()
+          def send(path,body):
+              payload=json.dumps(body,separators=(",",":"),ensure_ascii=True).encode()
+              req=(f"POST {path} HTTP/1.1\r\nHost: {host}\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: {len(payload)}\r\n\r\n").encode()+payload
+              start=time.monotonic()
+              raw=b"";expected=None;complete=False
+              with socket.create_connection((host,port),timeout=7) as s:
+                  s.settimeout(6)
+                  s.sendall(req)
+                  while len(raw)<131072:
+                      try: part=s.recv(8192)
+                      except socket.timeout:break
+                      if not part:break
+                      raw+=part
+                      head,sep,bodybytes=raw.partition(b"\r\n\r\n")
+                      if sep:
+                          for line in head.split(b"\r\n")[1:]:
+                              if line.lower().startswith(b"content-length:"):
+                                  val=line.split(b":",1)[1].strip()
+                                  if val.isdigit():expected=len(head)+4+int(val)
+                          if expected is not None and len(raw)>=expected:
+                              complete=(len(raw)==expected)
+                              break
+              first,sep,rb=raw.partition(b"\r\n\r\n")
+              status_line=first.split(b"\r\n",1)[0].decode("ascii","replace") if raw else None
+              code=int(status_line.split()[1]) if status_line and len(status_line.split())>=2 else None
+              try: parsed=json.loads(rb.decode())
+              except Exception:parsed=None
+              meta={"path":path,"request_sha256":h(req),"response_sha256":h(raw),
+                    "response_length":len(raw),"http_code":code,"http_status_line":status_line,
+                    "complete":complete,"elapsed_ms":round((time.monotonic()-start)*1000,1)}
+              return meta,raw,parsed
+          summary={"timestamp_utc":now(),"run_id":os.getenv("GITHUB_RUN_ID"),
+                   "github_commit":os.getenv("GITHUB_SHA"),"server":f"{host}:{port}",
+                   "sample_sha256":"e2f6dab884afb7a61da706d2140108d734993018430bd69084682ab0275675d6",
+                   "experiment":"single synthetic device enrollment, single hello if registration accepted",
+                   "uses_victim_device_data":False,"executes_commands":False,"credentials_publicly_logged":False,
+                   "changes_remote_state":True,"observed_command_count":None}
+          try:
+              device_id=hashlib.sha256(secrets.token_bytes(32)).hexdigest()
+              reg={"device_id":device_id,"device_pub":b64(G),"version":"1.1.1"}
+              meta,raw,parsed=send("/v1/register",reg)
+              summary["registration"]=meta
+              summary["test_device_id_sha256"]=h(device_id.encode())
+              if isinstance(parsed,dict):
+                  summary["registration"]["response_keys"]=sorted(parsed.keys())
+                  summary["registration"]["error_code"]=parsed.get("error")
+              if meta["http_code"]==200 and isinstance(parsed,dict) and all(isinstance(parsed.get(k),str) and parsed[k] for k in ("token","sig")):
+                  summary["registration"]["token_sha256"]=h(parsed["token"].encode())
+                  summary["registration"]["sig_sha256"]=h(parsed["sig"].encode())
+                  nonce=secrets.token_bytes(16)
+                  hello={"token":parsed["token"],"sig":parsed["sig"],
+                         "ticket":"INVALID_RESEARCH_TICKET","ticket_sig":"INVALID_RESEARCH_TICKET_SIG",
+                         "purpose":"action","eph_pub":b64(G),"client_nonce":b64(nonce)}
+                  meta,raw,dec=send("/v3/hello",hello)
+                  summary["hello"]=meta
+                  if isinstance(dec,dict):
+                      summary["hello"]["response_keys"]=sorted(dec.keys())
+                      summary["hello"]["error_code"]=dec.get("error")
+                  (root/"hello_response.raw").write_bytes(raw)
+                  ctx={"device_id":device_id,"client_nonce_b64u":b64(nonce),"client_private_hex":"%064x"%1,
+                       "ephemeral_private_is_public_test_scalar_one":True,
+                       "note":"Synthetic research session, not the victim device"}
+                  (root/"TEST_only_ephemeral_context.json").write_text(json.dumps(ctx,indent=2)+"\n")
+              else:
+                  summary["hello"]={"skipped":"registration did not provide valid synthetic token & sig"}
+                  # Only store uncredentialed error responses.
+                  if meta["http_code"]!=200:(root/"registration_error_response.raw").write_bytes(raw)
+          except Exception as exc:
+              summary["error"]={"type":type(exc).__name__,"detail":str(exc)}
+          (root/"experiment.json").write_text(json.dumps(summary,indent=2,ensure_ascii=False)+"\n")
+          files={}
+          for f in root.iterdir():
+              if f.is_file():files[f.name]={"sha256":h(f.read_bytes()),"bytes":f.stat().st_size}
+          (root/"manifest.json").write_text(json.dumps(files,indent=2)+"\n")
+          print("EXPERIMENT_SUMMARY",json.dumps(summary,ensure_ascii=False),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: program-elf-one-synthetic-session-evidence
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 1
