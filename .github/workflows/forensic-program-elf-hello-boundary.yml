@@ -1,0 +1,100 @@
+name: program.elf hello auth-boundary evidence
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/forensic-program-elf-hello-boundary.yml
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: One synthetic request; no malware/no victim tokens/no command execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          python3 - <<'PY'
+          import base64, datetime, hashlib, json, os, pathlib, secrets, socket, time
+          out=pathlib.Path("evidence")
+          HOST="103.36.63.136"
+          PORT=8974
+          # P-256 standard base point G, public test key for scalar 1.
+          # Only for synthetic NEGATIVE CONTROL, not for real authenticated sessions.
+          P256_G=bytes.fromhex(
+              "046b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296"
+              "4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5"
+          )
+          def utc():return datetime.datetime.now(datetime.timezone.utc).isoformat()
+          def sha(b):return hashlib.sha256(b).hexdigest()
+          def b64(b):return base64.urlsafe_b64encode(b).rstrip(b"=").decode("ascii")
+          if len(P256_G)!=65 or P256_G[0]!=4: raise ValueError("invalid public key test vector")
+          nonce=secrets.token_bytes(16)
+          # Deliberately INVALID ticket and token. Never read device sessions.
+          fields={"token":"INVALID_TEST_TOKEN","sig":"INVALID_TEST_SIG",
+              "ticket":"INVALID_TEST_TICKET","ticket_sig":"INVALID_TEST_TICKET_SIG",
+              "purpose":"action","eph_pub":b64(P256_G),"client_nonce":b64(nonce)}
+          body=json.dumps(fields,ensure_ascii=True,separators=(",",":")).encode()
+          req=(f"POST /v3/hello HTTP/1.1\r\nHost: {HOST}\r\n"
+              "Content-Type: application/json\r\nConnection: close\r\n"
+              f"Content-Length: {len(body)}\r\n\r\n").encode()+body
+          (out/"request_test_only.raw").write_bytes(req)
+          start=time.monotonic(); chunks=[]; response=b"";complete=False;failure=None
+          try:
+              with socket.create_connection((HOST,PORT),timeout=6) as sock:
+                  sock.settimeout(6)
+                  sock.sendall(req)
+                  deadline=time.monotonic()+8
+                  while time.monotonic()<deadline and sum(map(len,chunks))<131072:
+                      try: part=sock.recv(8192)
+                      except socket.timeout:
+                          break
+                      if not part:break
+                      chunks.append(part)
+                      all_bytes=b"".join(chunks)
+                      header,sep,payload=all_bytes.partition(b"\r\n\r\n")
+                      if sep:
+                          import re
+                          match=re.search(br"(?im)^content-length:\s*(\d+)\s*$",header)
+                          if match and len(payload)>=int(match.group(1)):
+                              complete=True
+                              break
+              response=b"".join(chunks)
+          except Exception as exc:
+              response=b"".join(chunks)
+              failure={"type":type(exc).__name__,"detail":str(exc)}
+          (out/"response_test_only.raw").write_bytes(response)
+          status=response.split(b"\r\n",1)[0].decode("ascii","replace")[:120] if response else None
+          header,sep,payload=response.partition(b"\r\n\r\n")
+          summary={"time_utc":utc(),"run_id":os.getenv("GITHUB_RUN_ID"),
+               "commit":os.getenv("GITHUB_SHA"),
+               "source":"gpt-exten GitHub Actions",
+               "target":f"{HOST}:{PORT}","method":"POST","path":"/v3/hello",
+               "credential_kind":"fabricated negative control only",
+               "contains_victim_credentials":False,
+               "sample_sha256":"e2f6dab884afb7a61da706d2140108d734993018430bd69084682ab0275675d6",
+               "request_sha256":sha(req),"response_sha256":sha(response),
+               "response_bytes":len(response),"status_line":status,
+               "http_message_complete":complete,
+               "error":failure,
+               "recovered_action_plan":False,
+               "shell_commands_executed":False,
+               "elapsed_ms":round((time.monotonic()-start)*1000,1)}
+          if sep and len(payload)<16384:
+              summary["server_response_body_utf8"]=payload.decode("utf8","replace")
+          (out/"observation.json").write_text(json.dumps(summary,indent=2,ensure_ascii=False)+"\n")
+          print(json.dumps(summary,ensure_ascii=False),flush=True)
+          manifest={}
+          for p in sorted(out.iterdir()):
+              manifest[p.name]={"bytes":p.stat().st_size,"sha256":sha(p.read_bytes())}
+          (out/"SHA256_manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: program-elf-hello-auth-boundary-negative
+          path: evidence/
+          retention-days: 1
+          if-no-files-found: warn
