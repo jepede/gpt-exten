@@ -1,4 +1,5 @@
 name: program.elf C2 evidence v2 (pinned CA)
+# Additional observation on 2026-11-02 UTC; only passive GET and TLS checks.
 on:
   push:
     branches: [main]
