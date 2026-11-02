@@ -1,0 +1,38 @@
+name: Cache ARM64 RE analysis Python wheels 2026-11-02
+on:
+  push:
+    paths:
+      - '.github/workflows/cache-re-arm64-wheels-20261102.yml'
+  workflow_dispatch:
+jobs:
+  download:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Resolve binary wheels only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p wheels
+          python -m pip download --only-binary=:all: --dest wheels             'unicorn==2.1.4'             'capstone==5.0.6'             'pyelftools==0.32'
+          python - <<'PY'
+          import hashlib,pathlib
+          for p in sorted(pathlib.Path('wheels').glob('*')):
+              print(p.name, p.stat().st_size, hashlib.sha256(p.read_bytes()).hexdigest())
+          PY
+          (cd wheels && sha256sum *.whl) > WHEELS.sha256
+          stat -c '%n %s bytes' wheels/*
+      - name: Upload wheels and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: python313-arm64-analysis-unicorn-capstone-pyelftools-20261102
+          path: |
+            wheels/*.whl
+            WHEELS.sha256
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
