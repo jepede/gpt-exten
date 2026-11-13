@@ -1,0 +1,30 @@
+name: Verify MT cold-start specimen
+on:
+  push:
+    branches: ['audit/mt-26110366-coldstart-review']
+    paths: ['.github/workflows/mt-coldstart-verify.yml']
+permissions: {}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Fetch official public variants and retain only an exact match
+        shell: bash
+        run: |
+          set -eu
+          for suffix in /target28 ''; do
+            url="https://pan.mt2.cn/apk/26110366${suffix}"
+            if curl --proto '=https' --proto-redir '=https' -fsSL --retry 1 --connect-timeout 8 --max-time 45 --max-filesize 99000000 "$url" -o sample.tmp; then
+              hash=$(sha256sum sample.tmp | cut -d' ' -f1)
+              printf '%s %s %s bytes\n' "$url" "$hash" "$(stat -c %s sample.tmp)"
+              if [ "$hash" = a8e1b6585cbc37b2397ff0d2c5fe872bfa0fab761dbcbf72f12ad4fd1df614db ]; then mv sample.tmp original.apk; break; fi
+            fi
+          done
+          test -s original.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mt-26110366-target28-matched
+          path: original.apk
+          retention-days: 1
+          compression-level: 0
