@@ -1,0 +1,88 @@
+name: Native ARM64 IL2CPP end-to-end evidence
+on:
+  push:
+    branches: ['build/elf-so-r2ghidra-arm64-20261115']
+    paths: ['.github/workflows/verify-managed-il2cpp-arm64-20261115.yml']
+permissions:
+  actions: read
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 14
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cpp2il-2022.1.0-pre21-linux-x64-arm64
+          run-id: 43711759007
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: cpp-in
+      - uses: actions/download-artifact@v4
+        with:
+          name: il2cpp-managed-linux-x64-arm64-20261115
+          run-id: 43712010762
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: managed-in
+      - uses: actions/download-artifact@v4
+        with:
+          name: unity-tool-validation-fixtures
+          run-id: 43712114194
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: fixtures
+      - name: Check architecture, hashes and set up CLI
+        run: |
+          set -euxo pipefail
+          test "$(uname -m)" = aarch64
+          uname -a
+          (cd fixtures && sha256sum -c SHA256SUMS)
+          mkdir assets runtime dumper ilspy out log
+          tar xf cpp-in/cpp2il-linux.tar.gz
+          (cd cpp2il && sha256sum -c SHA256SUMS)
+          tar xf managed-in/il2cpp-managed-tools.tar -C assets
+          (cd assets && sha256sum -c SHA256SUMS)
+          tar xf assets/dotnet-runtime-10.0.15-linux-arm64.tar.gz -C runtime
+          unzip -q assets/Il2CppDumper-net7-v6.7.46.zip -d dumper
+          jq '.RequireAnyKey=false' dumper/config.json > tmp.json && mv tmp.json dumper/config.json
+          unzip -q assets/ilspycmd.any.11.2.0.10050.nupkg 'tools/net10.0/any/*' -d ilspy
+          file cpp2il/aarch64/Cpp2IL runtime/dotnet
+          runtime/dotnet --info
+      - name: Run Cpp2IL with plugin, Il2CppDumper and ILSpy for two target platforms
+        shell: bash
+        run: |
+          set -euxo pipefail
+          root=$PWD
+          export DOTNET_ROOT="$root/runtime" DOTNET_MULTILEVEL_LOOKUP=0 DOTNET_ROLL_FORWARD=Major NO_COLOR=1
+          for target in android windows; do
+            case "$target" in
+              android) binary=libil2cpp.so; version=2020.3.30f1; type=UnityAssetStoreNavigator ;;
+              windows) binary=GameAssembly.dll; version=2019.4.34f1; type=NormalBehaviour ;;
+            esac
+            dest="$root/out/$target"
+            mkdir -p "$dest/dumper"
+            pair="$root/fixtures/$target"
+            (cd cpp2il && ./aarch64/Cpp2IL --force-binary-path "$pair/$binary" --force-metadata-path "$pair/global-metadata.dat" --force-unity-version "$version" --output-as isil --output-to "$dest/isil") > "log/$target-cpp.log" 2>&1 || { tail -80 "log/$target-cpp.log"; exit 1; }
+            grep -F 'Using Plugin: Stripped CodeReg Support' "log/$target-cpp.log"
+            grep -F 'Mapping pointers' "log/$target-cpp.log"
+            grep -F 'Got Binary codereg:' "log/$target-cpp.log"
+            test -s "$dest/isil/IsilDump/Assembly-CSharp/$type.txt"
+            "$DOTNET_ROOT/dotnet" dumper/Il2CppDumper.dll "$pair/$binary" "$pair/global-metadata.dat" "$dest/dumper" > "log/$target-dumper.log" 2>&1 || { cat "log/$target-dumper.log"; exit 1; }
+            test -s "$dest/dumper/il2cpp.h"
+            test -s "$dest/dumper/script.json"
+            test -s "$dest/dumper/DummyDll/Assembly-CSharp.dll"
+            grep -F "class $type" "$dest/dumper/dump.cs"
+            "$DOTNET_ROOT/dotnet" ilspy/tools/net10.0/any/ilspycmd.dll -t "$type" "$dest/dumper/DummyDll/Assembly-CSharp.dll" > "$dest/type.cs"
+            grep -F "class $type" "$dest/type.cs"
+            {
+              echo "### $target · Unity $version · $type"
+              echo "Linux $(uname -m), $(. /etc/os-release; echo "$PRETTY_NAME")"
+              grep -E 'Using Plugin: Stripped|actual IL2CPP Metadata version|Got Binary codereg:|Mapping pointers' "log/$target-cpp.log"
+              grep -E 'CodeRegistration :|MetadataRegistration :' "log/$target-dumper.log"
+              grep -F "class $type" "$dest/type.cs"
+              echo "ISIL files: $(find "$dest/isil" -name '*.txt' | wc -l), dummy assemblies: $(find "$dest/dumper/DummyDll" -name '*.dll' | wc -l)"
+            } | tee -a "$GITHUB_STEP_SUMMARY" log/summary.txt
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-arm64-il2cpp-test-summary
+          path: log/summary.txt
+          retention-days: 1
