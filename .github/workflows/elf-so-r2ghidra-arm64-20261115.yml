@@ -83,11 +83,12 @@ jobs:
           cc -shared -fPIC -O2 rep/sample.c -o rep/sample.so
           root/bin/r2 -v > rep/version.txt
           ldd root/usr/lib/radare2/6.2.2/core_ghidra.so > rep/ldd.txt
-          ! grep -F 'not found' rep/ldd.txt
+          if grep -F 'not found' rep/ldd.txt; then exit 1; fi
           root/bin/r2 -N -q -e scr.color=0 -e bin.relocs.apply=true -c 's sym.count_children;af;pdg' rep/sample.so > rep/pseudocode.txt
           cat rep/pseudocode.txt
           grep -F sym.count_children rep/pseudocode.txt
-          grep -F 'while (' rep/pseudocode.txt
+          grep -Eq '(for|while) *\(' rep/pseudocode.txt
+          grep -F '+ 1' rep/pseudocode.txt
           grep -F return rep/pseudocode.txt
           tar -C root -cJf dist/native-arm64-r2ghidra-6.2.2.tar.xz .
           cp input/SHA256SUMS dist/SOURCES.sha256
