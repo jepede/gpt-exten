@@ -14,6 +14,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| radare2 and native r2ghidra | 6.2.2 | Linux / glibc | AArch64 host | `43712258073` | SINGLE | `2027-02-13T12:07:42Z` |
 | Native Python RE wheels | Capstone 5.0.6 + Unicorn 2.1.4 + Keystone 0.9.2 | Linux / CPython | AArch64 host and target | `43712201463` | SINGLE | `2027-02-13T12:07:03Z` |
 | Cpp2IL CLI and Stripped CodeReg Support | 2022.1.0-pre-release.21 | Linux / glibc | x86_64, aarch64 | `43711759007` | SINGLE | `2027-02-13T12:01:48Z` |
 | Android 36 ARM64 graphics/framework sysroot | android36-r02-graphics-20261017 | Android API36 | AArch64 | 39007458676 | SINGLE | 2027-01-15T05:45:59Z |
@@ -3114,3 +3115,34 @@ Verified on Linux x86_64 with the matching Cpp2IL upstream Unity 2022.3.35f1 Win
 | Keystone Engine sdist | 0.9.2 | PyPI source | Any | `source/keystone-engine-0.9.2.tar.gz` | `2f7af62dab0ce6c2732dbb4f31cfa2184a8a149e280b96b92ebc0db84c6e50f5` |
 
 On a native AArch64 runner, Keystone assembled two instructions, Capstone decoded them and Unicorn executed them to produce x0=42. Reuse the pure-Python pyelftools 0.32 wheel in existing artifact 13128646263.
+
+## Artifact Record: Linux AArch64 radare2 and native r2ghidra (2026-11-15)
+
+- Name: radare2 + native r2ghidra + Sleigh
+- Version: 6.2.2
+- Platform: Linux / glibc (native Ubuntu 24.04 ARM64 runner)
+- Architecture: AArch64 host, multiarchitecture analysis targets
+- Artifact Name: `linux-arm64-radare2-r2ghidra-6.2.2`
+- Artifact ID: `14161251322`
+- Run ID: `43712258073` (success)
+- Workflow: `.github/workflows/elf-so-r2ghidra-arm64-20261115.yml` on branch `build/elf-so-r2ghidra-arm64-20261115`, commit `aa924fd53a56d63e6f1360d71615c0954db0a29a`
+- File: `linux-arm64-radare2-r2ghidra-6.2.2.zip` (Actions ZIP)
+- Size: 19920966 bytes
+- SHA256: `a9ebc71914ebd885a5c764db12786c4db5335e88e8b44af395d96d5afda256a0`
+- Created At: `2026-11-15T12:09:07Z`
+- Expires At: `2027-02-13T12:07:42Z` (actual GitHub expires_at, expired=false)
+- Storage Mode: SINGLE
+- Original File: `native-arm64-r2ghidra-6.2.2.tar.xz`
+- Original Size: 19847728 bytes
+- Original SHA256: `7e8f4eadbd684caf75305ba785ce332f0bcd315566234163a4fec998db7a0ca6`
+- Part Count: 1
+- Upstream runtime/dev/source SHA256s in `SOURCES.sha256`. Sources were radareorg/radare2 ARM64 debs and the official radareorg/r2ghidra release source tarball. The previously cached platform-independent Sleigh data, Artifact ID 12024094996, was reused and byte-verified.
+- Runner validation covered native execution and full Ghidra C pseudocode (linked-list counter). Evidence includes compiled shared object, source, pseudocode, loaded dependencies, version, and all file hashes. Runtime requires glibc 2.38 and libstdc++ with GLIBCXX_3.4.32.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Runtime bundle | 6.2.2 | Linux / glibc | AArch64 | `native-arm64-r2ghidra-6.2.2.tar.xz` | `7e8f4eadbd684caf75305ba785ce332f0bcd315566234163a4fec998db7a0ca6` |
+| radare2 CLI | 6.2.2 | Linux / glibc | AArch64 | `usr/bin/radare2` inside runtime bundle | `d8cb9d27035bf6bf6238b6d2d28690dffcf9fb0aa23d4c3900029fed3db27e6c` |
+| Native r2ghidra plugin | 6.2.2 | Linux / glibc | AArch64 | `usr/lib/radare2/6.2.2/core_ghidra.so` inside runtime bundle | `7b5ce33d60306deba1c0fed793ab55cfae7dfdec0c84a76c277f94758e114966` |
+
+Restore by calling `download_workflow_artifact` with ID 14161251322, verifying the ZIP SHA256, checking its `SHA256SUMS` file and extracting the runtime tarball. Use `bin/r2` inside the chosen installation prefix.
