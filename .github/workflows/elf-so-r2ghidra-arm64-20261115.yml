@@ -1,0 +1,102 @@
+name: Native ARM64 ELF decompiler 6.2.2
+on:
+  push:
+    branches: ['build/elf-so-r2ghidra-arm64-20261115']
+    paths: ['.github/workflows/elf-so-r2ghidra-arm64-20261115.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 35
+    steps:
+      - name: Restore verified architecture-independent Sleigh data
+        uses: actions/download-artifact@v4
+        with:
+          name: r2ghidra-6.2.2-amd64-sleigh
+          run-id: 38850726295
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: cache
+      - name: Acquire pinned ARM64 packages and source
+        run: |
+          set -euxo pipefail
+          test "$(uname -m)" = aarch64
+          mkdir -p input src root rep dist
+          cd input
+          for f in radare2_6.2.2_arm64.deb radare2-dev_6.2.2_arm64.deb; do
+            curl -fsSL --retry 3 -O "https://github.com/radareorg/radare2/releases/download/6.2.2/$f"
+          done
+          curl -fsSL --retry 3 -O 'https://github.com/radareorg/r2ghidra/releases/download/6.2.2/r2ghidra-6.2.2.tar.xz'
+          cat > SHA256SUMS <<'END'
+          6e3ccf220e5b53adedc9dccc67825e908b545aabd4cf8723f0c43ebfd0c4f437  radare2_6.2.2_arm64.deb
+          7c3a1818b9a271eb7f82afaa3c18f67493b4a86f5c9638316403380d13ec413d  radare2-dev_6.2.2_arm64.deb
+          326ca94ae5052949c22c6b24e2f37cbdf692a2ecce1baf96fdd07971b616b7e1  r2ghidra-6.2.2.tar.xz
+          05ff67acce1f32e0d97aecb59f6f2a782cc9e37c4b40ede6b66386cd651086a0  ../cache/r2ghidra_sleigh-6.2.2.zip
+          END
+          sha256sum -c SHA256SUMS
+          sudo dpkg -i radare2_6.2.2_arm64.deb radare2-dev_6.2.2_arm64.deb
+          sudo ldconfig
+          dpkg-deb -x radare2_6.2.2_arm64.deb ../root
+          tar xf r2ghidra-6.2.2.tar.xz -C ../src --strip-components=1
+      - name: Compile only native plugin, reuse existing Sleigh tables
+        run: |
+          set -euxo pipefail
+          cd src
+          ls -la subprojects
+          if [ ! -f subprojects/ghidra-native/src/decompiler/architecture.cc ] || [ ! -f subprojects/zlib/zlib.h ]; then
+            ./preconfigure
+          fi
+          ./configure --prefix=/usr
+          make ghidra-processors.txt
+          make -C src -j"$(nproc)" core_ghidra.so > ../build.log 2>&1 || { tail -100 ../build.log; exit 1; }
+          target=../root/usr/lib/radare2/6.2.2
+          install -m 755 src/core_ghidra.so "$target/core_ghidra.so"
+          strip --strip-unneeded "$target/core_ghidra.so"
+          unzip -q ../cache/r2ghidra_sleigh-6.2.2.zip -d "$target"
+          mv "$target/r2ghidra_sleigh-6.2.2" "$target/r2ghidra_sleigh"
+          mkdir -p ../root/usr/share/doc/r2ghidra
+          for f in LICENSE* LESSER* COPYING* subprojects/ghidra-native/LICENSE* subprojects/zlib/LICENSE*; do
+            if test -f "$f"; then cp "$f" "../root/usr/share/doc/r2ghidra/$(echo "$f" | tr / _)"; fi
+          done
+      - name: Verify decompilation on native ARM processor
+        run: |
+          set -euxo pipefail
+          mkdir -p root/bin
+          cat > root/bin/run-native <<'WRAP'
+          #!/bin/sh
+          set -eu
+          tool=$(basename -- "$0")
+          here=$(dirname -- "$(readlink -f -- "$0")")
+          prefix=$(CDPATH='' cd -- "$here/../usr" && pwd)
+          export R2_PREFIX="$prefix"
+          export SLEIGHHOME="$prefix/lib/radare2/6.2.2/r2ghidra_sleigh"
+          export LD_LIBRARY_PATH="$prefix/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          exec "$prefix/bin/$tool" "$@"
+          WRAP
+          chmod 755 root/bin/run-native
+          for cmd in r2 radare2 rabin2 rasm2 radiff2 rafind2 rahash2 rax2; do ln -s run-native "root/bin/$cmd"; done
+          cat > rep/sample.c <<'END'
+          struct node { struct node *next; };
+          int count_children(struct node *p) { int result=0; while (p) { ++result; p = p->next; } return result; }
+          END
+          cc -shared -fPIC -O2 rep/sample.c -o rep/sample.so
+          root/bin/r2 -v > rep/version.txt
+          ldd root/usr/lib/radare2/6.2.2/core_ghidra.so > rep/ldd.txt
+          ! grep -F 'not found' rep/ldd.txt
+          root/bin/r2 -N -q -e scr.color=0 -e bin.relocs.apply=true -c 's sym.count_children;af;pdg' rep/sample.so > rep/pseudocode.txt
+          cat rep/pseudocode.txt
+          grep -F sym.count_children rep/pseudocode.txt
+          grep -F 'while (' rep/pseudocode.txt
+          grep -F return rep/pseudocode.txt
+          tar -C root -cJf dist/native-arm64-r2ghidra-6.2.2.tar.xz .
+          cp input/SHA256SUMS dist/SOURCES.sha256
+          cp rep/* dist/
+          cd dist
+          sha256sum native-arm64-r2ghidra-6.2.2.tar.xz *.so *.c *.txt SOURCES.sha256 > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64-radare2-r2ghidra-6.2.2
+          path: dist/
+          retention-days: 400
+          compression-level: 0
