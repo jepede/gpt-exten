@@ -1,0 +1,58 @@
+name: Cache Cpp2IL Linux CLI and registration plugin
+on:
+  push:
+    paths:
+      - '.github/workflows/cache-cpp2il-20261115.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cache:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Fetch and pin the upstream release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag=2022.1.0-pre-release.21
+          base="https://github.com/SamboyCoding/Cpp2IL/releases/download/$tag"
+          raw=https://raw.githubusercontent.com/SamboyCoding/Cpp2IL/12c8b4413900558a14e30adc4fc4d13d82383901
+          mkdir -p cpp2il/{x86_64,aarch64,Plugins} bundle fixture
+          curl -fsSL --retry 3 "$base/Cpp2IL-$tag-Linux" -o cpp2il/x86_64/Cpp2IL
+          curl -fsSL --retry 3 "$base/Cpp2IL-$tag-Linux-ARM64" -o cpp2il/aarch64/Cpp2IL
+          curl -fsSL --retry 3 "$base/Cpp2IL.Plugin.StrippedCodeRegSupport.dll" -o cpp2il/Plugins/Cpp2IL.Plugin.StrippedCodeRegSupport.dll
+          curl -fsSL --retry 3 "$raw/LICENSE" -o cpp2il/LICENSE
+          test "$(git hash-object cpp2il/LICENSE)" = 00aca57aa31ecc3c48d2a5858fc4bd5c203d2640
+          cat > cpp2il/SHA256SUMS <<'SUMS'
+          526998e593c52c029c5a6215c5c6c9f9d963706bfc409fc9ff80a95c4c500349  x86_64/Cpp2IL
+          2d8e76b11f52fd85440ec60abf87d5c3455ea54f5104e0af51da15ba4440871b  aarch64/Cpp2IL
+          2cc4f8c66541f18b4daed5410149ee7859c3190454d30bda5ccd0895d2989ee6  Plugins/Cpp2IL.Plugin.StrippedCodeRegSupport.dll
+          SUMS
+          (cd cpp2il && sha256sum -c SHA256SUMS)
+          chmod +x cpp2il/{x86_64,aarch64}/Cpp2IL
+          file cpp2il/{x86_64,aarch64}/Cpp2IL
+          tar --sort=name --mtime='@0' --numeric-owner --owner=0 --group=0 -cf - cpp2il | gzip -n > bundle/cpp2il-linux.tar.gz
+          sha256sum bundle/cpp2il-linux.tar.gz
+          stat -c '%s' bundle/cpp2il-linux.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cpp2il-2022.1.0-pre21-linux-x64-arm64
+          path: bundle/cpp2il-linux.tar.gz
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - name: Analyze upstream Unity test project
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$PWD/fixture"
+          raw=https://raw.githubusercontent.com/SamboyCoding/Cpp2IL/12c8b4413900558a14e30adc4fc4d13d82383901/TestFiles/Simple_2022_3_35
+          curl -fsSL --retry 3 "$raw/GameAssembly.dll" -o "$fixture/GameAssembly.dll"
+          curl -fsSL --retry 3 "$raw/Simple_2022_3_35_Data/il2cpp_data/Metadata/global-metadata.dat" -o "$fixture/global-metadata.dat"
+          test "$(git hash-object "$fixture/GameAssembly.dll")" = 7d17bee1024fbbc22f8f6c005a45cd644b017d57
+          test "$(git hash-object "$fixture/global-metadata.dat")" = 10dde3658c531894bd16df3e66f0fb1ef81fce9e
+          cd cpp2il
+          ./x86_64/Cpp2IL --force-binary-path "$fixture/GameAssembly.dll" --force-metadata-path "$fixture/global-metadata.dat" --force-unity-version 2022.3.35f1 --output-as dll_empty --output-to "$fixture/out" | tee "$fixture/test.log"
+          test -s "$(find "$fixture/out" -name mscorlib.dll -print -quit)"
+          find "$fixture/out" -name '*.dll' | wc -l
