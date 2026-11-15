@@ -3,6 +3,8 @@
 GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Version + Platform + Architecture` 查询；是否仍可用以 GitHub 实际返回的 `expires_at` 为准。
 
 ## Index
+| IL2CPP managed Linux tools | Il2CppDumper 6.7.46 + ILSpy 11.2.0.10050 + .NET 10.0.15 + Keystone 0.9.2 | Linux | x86_64 / AArch64 (Keystone x86_64) | `43712010762` | SINGLE | `2027-02-13T12:04:50Z` |
+| Il2CppDumper source | v6.7.46 | Any | Any | `38414524682` | SINGLE | `2027-01-11T14:34:29Z` |
 | ARM64 RE offline analysis wheels | unicorn 2.1.4 + capstone 5.0.6 + pyelftools 0.32 | Linux / Python 3.13 | x86_64 host / AArch64 target | `41417939591` | SINGLE | `2027-01-31T09:06:13Z` |
 | Honor of Kings IL2CPP coordinate native kit | 12.1.1.1 | Android | arm64-v8a | `40311637215` | SINGLE × 4 | `2027-01-24T10:59:21Z` |
 | OSS NDK r28c pinned source snapshot | cJSON 1.7.19 + zlib 1.3.1 + xxHash 0.8.3 | GitHub source / Any | Portable C source | `40162823267` | SINGLE | `2027-01-23T04:41:50Z` |
@@ -3035,3 +3037,51 @@ Call `download_workflow_artifact` for artifact `13128646263` from `jepede/gpt-ex
 | Cpp2IL.Plugin.StrippedCodeRegSupport | 2022.1.0-pre-release.21 | Cpp2IL | AnyCPU | `cpp2il/Plugins/Cpp2IL.Plugin.StrippedCodeRegSupport.dll` | `2cc4f8c66541f18b4daed5410149ee7859c3190454d30bda5ccd0895d2989ee6` |
 
 Verified on Linux x86_64 with the matching Cpp2IL upstream Unity 2022.3.35f1 Windows fixture. 12409 method pointers were mapped and 36 DLLs were produced with the `dll_empty` output mode.
+
+
+## IL2CPP managed Linux tools and runtime (2026-11-15)
+
+- Artifact Name: `il2cpp-managed-linux-x64-arm64-20261115`
+- Artifact ID: `14160494403`
+- Run ID: `43712010762`
+- Workflow: `.github/workflows/cache-il2cpp-managed-20261115.yml`
+- File: `il2cpp-managed.zip`
+- Size: `76769442` bytes
+- SHA256: `f49cf4e9ea75bc706407c05d8eb87ec427a52a344ccbdd03f93b67c046f822cb`
+- Created At: `2026-11-15T12:04:59Z`
+- Expires At: `2027-02-13T12:04:50Z` (actual GitHub API)
+- Storage Mode: SINGLE
+- Original File: `il2cpp-managed-tools.tar`
+- Original Size: `76769280` bytes
+- Original SHA256: `1b32d53b1a364c5080ba1563235dc1846bb1371a18da61ffa220f61eab352516`
+- Part Count: 1
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Il2CppDumper | 6.7.46 | .NET | Any | Il2CppDumper-net7-v6.7.46.zip | c7f365347ce6bd816cdf774830e44ac46aea59c391c94f388605667394d6aba2 |
+| .NET Runtime | 10.0.15 | Linux glibc | x86_64 | dotnet-runtime-10.0.15-linux-x64.tar.gz | 6fd6f9029008e0985271f3bd285de9efe249e38438cd2ea431e3f8a5b2420815 |
+| .NET Runtime | 10.0.15 | Linux glibc | AArch64 | dotnet-runtime-10.0.15-linux-arm64.tar.gz | 1e963b7c51de5fd51fbd8b7059a8e5b7c19351f46fc5cea8723adf2e458cf4b1 |
+| ILSpy CLI portable | 11.2.0.10050 | .NET 10 | Any | ilspycmd.any.11.2.0.10050.nupkg | d4015f1c63aa2211c1c692321ecc28f3c241ae586d441f50c5ac50383ad00388 |
+| Keystone Engine | 0.9.2 | Linux glibc | x86_64 | keystone_engine-0.9.2-py2.py3-none-manylinux1_x86_64.whl | 5a5316a34323620b1bba31dcfe9e4b4ca6f0c030e82fc7a151da7c8fbe81a379 |
+| ILSpy license | 11.2 | Any | Any | ILSpy-LICENSE.txt | 5527fe802347740da8ec2b510cffa4d22939c7f0773ae342a85a2e2b64e4a34b |
+
+## Il2CppDumper pinned source (reused 2026-11-15)
+
+- Artifact Name: `il2cppdumper-source-v6.7.46`
+- Artifact ID: `11822369575`
+- Run ID: `38414524682`
+- Workflow: `.github/workflows/fetch-il2cppdumper-v6.7.46.yml`
+- File: `il2cppdumper-source.zip`
+- Size: 569288 bytes
+- SHA256: `aa8736ed7ff7d65a3497d4c377df7f7fadaa9de9e691e0902a331dfdbda49592`
+- Created At: `2026-10-13T14:34:35Z`
+- Expires At: `2027-01-11T14:34:29Z`
+- Storage Mode: SINGLE
+- Original File: `Il2CppDumper-v6.7.46.tar.gz` (also expanded in artifact)
+- Original Size: 76249 bytes
+- Original SHA256: `a23ba541d2b085c5c1ca94c9c72cf217b88c8600589c4554285778ae4f4df2a8`
+- Part Count: 1
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Il2CppDumper source | v6.7.46 (8a521b9c180cf13499253f0818cbc729dca767cb) | Any | Any | Il2CppDumper-v6.7.46.tar.gz | a23ba541d2b085c5c1ca94c9c72cf217b88c8600589c4554285778ae4f4df2a8 |
