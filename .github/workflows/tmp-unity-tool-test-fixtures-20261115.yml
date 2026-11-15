@@ -1,0 +1,69 @@
+name: Temporary public Unity tool test fixtures
+on:
+  push:
+    branches: ['tmp/unity-tool-test-fixtures-20261115']
+    paths: ['.github/workflows/tmp-unity-tool-test-fixtures-20261115.yml']
+permissions:
+  contents: read
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch pinned Cpp2IL upstream synthetic test application
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://raw.githubusercontent.com/SamboyCoding/Cpp2IL/b5ad444b82267cb1e4b88b8b373c008105bdea52/TestFiles/Simple_2019_4_34'
+          mkdir -p out/windows
+          cd out/windows
+          curl -fsSL --retry 3 "$base/GameAssembly.dll" -o GameAssembly.dll
+          curl -fsSL --retry 3 "$base/Simple_2019_4_34_Data/il2cpp_data/Metadata/global-metadata.dat" -o global-metadata.dat
+          test "$(git hash-object GameAssembly.dll)" = 8afac62a9b03af9785abe2b56d2bf388635dd270
+          test "$(git hash-object global-metadata.dat)" = 205a4e8b7bba4b9e3ec77d0f07c62de013343883
+          curl -fsSL --retry 3 "$base/README.md" -o UPSTREAM-README.md
+      - name: Inspect the author-published Android demo APK
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 'https://github.com/noodle1983/UnityAndroidIl2cppPatchDemo/releases/download/v8.0/cn.noodle1983.unitypatchdemo.apk' -o demo.apk
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          root = Path("out/android")
+          with ZipFile("demo.apk") as apk:
+              entries = apk.namelist()
+              print("\n".join(n for n in entries if "il2cpp" in n.lower() or "metadata" in n.lower() or "globalgamemanagers" in n))
+              native = next(n for n in entries if n == "lib/arm64-v8a/libil2cpp.so")
+              dat = next(n for n in entries if n.endswith("/global-metadata.dat"))
+              data = apk.read(dat)
+              so = apk.read(native)
+              assert so[:4] == b"\x7fELF" and len(so) < 80000000
+              assert data[:4] == bytes.fromhex("af1bb1fa") and len(data) < 16000000
+              root.mkdir(exist_ok=True)
+              (root / "global-metadata.dat").write_bytes(data)
+              (root / "libil2cpp.so").write_bytes(so)
+              notes = ["Author demo release v8.0",native,dat, "IL2CPP metadata header version " + str(int.from_bytes(data[4:8], "little"))]
+              for n in (p for p in entries if p.endswith("globalgamemanagers") or p.endswith("data.unity3d")):
+                  with apk.open(n) as f:
+                      versions = re.findall(rb"[0-9]{1,4}\.[0-9]+\.[0-9]+[abfp][0-9]+", f.read(16384))
+                  notes.extend(n + ": " + v.decode() for v in dict.fromkeys(versions))
+              (root / "SOURCE.txt").write_text("\n".join(notes) + "\n")
+              print("\n".join(notes))
+          PY
+      - name: Create test-input manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd out
+          find . -type f -print0 | sort -z | xargs -0 sha256sum > ../SHA256SUMS
+          mv ../SHA256SUMS .
+          test "$(du -sb . | cut -f1)" -lt 104800000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unity-tool-validation-fixtures
+          path: out/
+          retention-days: 1
+          compression-level: 6
+          if-no-files-found: error
