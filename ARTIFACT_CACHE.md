@@ -12,6 +12,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| Cpp2IL CLI and Stripped CodeReg Support | 2022.1.0-pre-release.21 | Linux / glibc | x86_64, aarch64 | `43711759007` | SINGLE | `2027-02-13T12:01:48Z` |
 | Android 36 ARM64 graphics/framework sysroot | android36-r02-graphics-20261017 | Android API36 | AArch64 | 39007458676 | SINGLE | 2027-01-15T05:45:59Z |
 | Android 36 ARM64 i18n ICU APEX | android36-r02-i18n-20261017 | Android API36 APEX | AArch64 | 39007941479 | SINGLE | 2027-01-15T05:54:10Z |
 | QEMU TCG Plugins: execlog/hotblocks/vmptrace | v10.0.13-plugin-api4-20261017 | Ubuntu 24.04 / Linux (QEMU Debian 13) | x86_64 host, AArch64 guest | `39003891690` | SINGLE | `2027-01-15T04:47:37Z` |
@@ -3006,3 +3007,31 @@ Use the four GitHub artifact IDs above; download each individually with `downloa
 ### Restore
 
 Call `download_workflow_artifact` for artifact `13128646263` from `jepede/gpt-exten`. Verify outer ZIP SHA256 and each inner wheel using `WHEELS.sha256`. Install using `python -m pip install --no-index --find-links wheels unicorn==2.1.4 capstone==5.0.6 pyelftools==0.32`. Reuse while artifact remains available.
+
+## Cpp2IL tools for Linux (2026-11-15)
+
+### Artifact Record
+
+- Artifact Name: `cpp2il-2022.1.0-pre21-linux-x64-arm64`
+- Artifact ID: `14160930720`
+- Run ID: `43711759007`
+- Workflow: `.github/workflows/cache-cpp2il-20261115.yml`
+- File: `cpp2il-2022.1.0-pre21-linux-x64-arm64.zip` (GitHub artifact archive)
+- Size: 19984692 bytes
+- SHA256: `3e0d55274ac4ead071f86133f658288272be595ae56a909ac1bf0d85f84e7315`
+- Created At: `2026-11-15T12:01:54Z`
+- Expires At: `2027-02-13T12:01:48Z`
+- Storage Mode: SINGLE
+- Original File: `cpp2il-linux.tar.gz`
+- Original Size: 19984540 bytes
+- Original SHA256: `69d1b576872029e962e60a08b812af55bd06c2b5816aa944fad713ae0154e67f`
+- Part Count: 1
+- Source: https://github.com/SamboyCoding/Cpp2IL/releases/tag/2022.1.0-pre-release.21
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Cpp2IL | 2022.1.0-pre-release.21 | Linux / glibc | x86_64 | `cpp2il/x86_64/Cpp2IL` | `526998e593c52c029c5a6215c5c6c9f9d963706bfc409fc9ff80a95c4c500349` |
+| Cpp2IL | 2022.1.0-pre-release.21 | Linux / glibc | aarch64 | `cpp2il/aarch64/Cpp2IL` | `2d8e76b11f52fd85440ec60abf87d5c3455ea54f5104e0af51da15ba4440871b` |
+| Cpp2IL.Plugin.StrippedCodeRegSupport | 2022.1.0-pre-release.21 | Cpp2IL | AnyCPU | `cpp2il/Plugins/Cpp2IL.Plugin.StrippedCodeRegSupport.dll` | `2cc4f8c66541f18b4daed5410149ee7859c3190454d30bda5ccd0895d2989ee6` |
+
+Verified on Linux x86_64 with the matching Cpp2IL upstream Unity 2022.3.35f1 Windows fixture. 12409 method pointers were mapped and 36 DLLs were produced with the `dll_empty` output mode.
