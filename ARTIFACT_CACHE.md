@@ -14,6 +14,7 @@ GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Vers
 
 | Name | Version | Platform | Architecture | Run ID | Storage | Expires At |
 |---|---|---|---|---:|---|---|
+| Native Python RE wheels | Capstone 5.0.6 + Unicorn 2.1.4 + Keystone 0.9.2 | Linux / CPython | AArch64 host and target | `43712201463` | SINGLE | `2027-02-13T12:07:03Z` |
 | Cpp2IL CLI and Stripped CodeReg Support | 2022.1.0-pre-release.21 | Linux / glibc | x86_64, aarch64 | `43711759007` | SINGLE | `2027-02-13T12:01:48Z` |
 | Android 36 ARM64 graphics/framework sysroot | android36-r02-graphics-20261017 | Android API36 | AArch64 | 39007458676 | SINGLE | 2027-01-15T05:45:59Z |
 | Android 36 ARM64 i18n ICU APEX | android36-r02-i18n-20261017 | Android API36 APEX | AArch64 | 39007941479 | SINGLE | 2027-01-15T05:54:10Z |
@@ -3085,3 +3086,31 @@ Verified on Linux x86_64 with the matching Cpp2IL upstream Unity 2022.3.35f1 Win
 | Name | Version | Platform | Architecture | File/Path | SHA256 |
 |---|---|---|---|---|---|
 | Il2CppDumper source | v6.7.46 (8a521b9c180cf13499253f0818cbc729dca767cb) | Any | Any | Il2CppDumper-v6.7.46.tar.gz | a23ba541d2b085c5c1ca94c9c72cf217b88c8600589c4554285778ae4f4df2a8 |
+
+## Native AArch64 Python RE wheels (2026-11-15)
+
+### Artifact Record
+
+- Artifact Name: `python-re-linux-aarch64-capstone-unicorn-keystone-20261115`
+- Artifact ID: `14161221260`
+- Run ID: `43712201463`
+- Workflow: `.github/workflows/cache-python-retools-linux-aarch64.yml`
+- File: `python-re-linux-aarch64-capstone-unicorn-keystone-20261115.zip` (GitHub artifact archive)
+- Size: 20822035 bytes
+- SHA256: `fbd2b266ccc560b3c18ce2a4efe08c7ee82a07a7a82833e747592d1d0eb3e3f5`
+- Created At: `2026-11-15T12:07:58Z`
+- Expires At: `2027-02-13T12:07:03Z`
+- Storage Mode: SINGLE
+- Original File: `python-re-aarch64.tar.gz`
+- Original Size: 20821873 bytes
+- Original SHA256: `e3c04d03d5e01a58cbd5153e82285eadf0da64de865bd24c88e24619a6764cc2`
+- Part Count: 1
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Capstone | 5.0.6 | Linux / manylinux2014 | AArch64 | `wheels/capstone-5.0.6-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl` | `fa7892f0c89455078c18f07d2d309fb07baa53061b8f9a63db1ea00d41a46726` |
+| Unicorn | 2.1.4 | Linux CPython abi3 / manylinux2014 | AArch64 | `wheels/unicorn-2.1.4-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl` | `bd1fb0c9af5f57e356d8a96928b4fe045b2e18f308ef23b481d5f970008aa722` |
+| Keystone Engine | 0.9.2 | Linux / Ubuntu 24.04 native build | AArch64 | `wheels/keystone_engine-0.9.2-py2.py3-none-linux_aarch64.whl` | `bb0eed43da2644c7d19e4c4ff934cc5eb0e1431f952d2e3fbf1b106b2b61b3a5` |
+| Keystone Engine sdist | 0.9.2 | PyPI source | Any | `source/keystone-engine-0.9.2.tar.gz` | `2f7af62dab0ce6c2732dbb4f31cfa2184a8a149e280b96b92ebc0db84c6e50f5` |
+
+On a native AArch64 runner, Keystone assembled two instructions, Capstone decoded them and Unicorn executed them to produce x0=42. Reuse the pure-Python pyelftools 0.32 wheel in existing artifact 13128646263.
