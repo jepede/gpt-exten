@@ -22,7 +22,7 @@ jobs:
           }
           fetch https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/10.0/releases.json ../releases.json
           for arch in x64 arm64; do
-            item=$(jq -ce --arg arch "linux-$arch" '.releases[] | select(.runtime.version=="10.0.15") | .runtime.files[] | select(.rid==$arch and (.name | endswith(".tar.gz")))' ../releases.json)
+            item=$(jq -ce --arg suffix "/dotnet-runtime-10.0.15-linux-$arch.tar.gz" 'first(.releases[] | select(.runtime.version=="10.0.15") | .runtime.files[] | select(.url | endswith($suffix)))' ../releases.json)
             name="dotnet-runtime-10.0.15-linux-$arch.tar.gz"
             fetch "$(jq -r .url <<<"$item")" "$name"
             echo "$(jq -r .hash <<<"$item")  $name" | sha512sum -c -
