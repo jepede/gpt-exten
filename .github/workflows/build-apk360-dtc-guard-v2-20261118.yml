@@ -1,0 +1,193 @@
+name: Build exact-sample DTC compatibility helper
+on:
+  push:
+    paths: ['.github/workflows/build-apk360-dtc-guard-v2-20261118.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Compile with preinstalled Android NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > restore_dtc_guard.c <<'SOURCE'
+          /* Compatibility for the exact supplied DTC build, preserving business methods.
+           * The private loader otherwise terminates when it sees recovered classes2.dex.
+           * Apply only when the complete observed instruction signature matches. */
+          #include <android/log.h>
+          #include <pthread.h>
+          #include <stdint.h>
+          #include <stdio.h>
+          #include <string.h>
+          #include <sys/mman.h>
+          #include <unistd.h>
+          
+          extern const unsigned char restore_dtc_branch[];
+          /* The actual AArch64 assembler supplies the replacement instruction. */
+          __asm__(".text\n.p2align 2\n.global restore_dtc_branch\n"
+                  "restore_dtc_branch:\nb .+28\n");
+          
+          static const unsigned char expected[32] = {
+              0xe0, 0x03, 0x17, 0xaa, 0xff, 0x07, 0x01, 0xf9, 0xc2, 0xfe, 0xff,
+              0x97, 0xe0, 0x00, 0x00, 0xb4, 0x08, 0x03, 0x40, 0xf9, 0xe0, 0x03,
+              0x18, 0xaa, 0x08, 0x15, 0x40, 0xf9, 0x00, 0x01, 0x3f, 0xd6};
+          
+          static long raw6(long number, long a, long b, long c, long d, long e, long f) {
+            register long x8 __asm__("x8") = number, x0 __asm__("x0") = a,
+                             x1 __asm__("x1") = b, x2 __asm__("x2") = c,
+                             x3 __asm__("x3") = d, x4 __asm__("x4") = e,
+                             x5 __asm__("x5") = f;
+            __asm__ volatile("svc #0"
+                             : "+r"(x0)
+                             : "r"(x8), "r"(x1), "r"(x2), "r"(x3), "r"(x4), "r"(x5)
+                             : "memory", "cc");
+            return x0;
+          }
+          
+          static char raw_maps[1048576];
+          
+          static uintptr_t hexword(const char **text) {
+            uintptr_t result = 0;
+            for (;;) {
+              char c = **text;
+              int value = c >= '0' && c <= '9'   ? c - '0'
+                          : c >= 'a' && c <= 'f' ? c - 'a' + 10
+                                                 : -1;
+              if (value < 0)
+                return result;
+              result = result * 16 + (unsigned)value;
+              ++*text;
+            }
+          }
+          
+          static uintptr_t raw_library_base(void) {
+            long fd = raw6(56, -100, (long)"/proc/self/maps", 0, 0, 0, 0);
+            if (fd < 0)
+              return 0;
+            long size = 0;
+            while ((unsigned long)size < sizeof(raw_maps) - 1) {
+              long n = raw6(63, fd, (long)(raw_maps + size), sizeof(raw_maps) - 1 - size,
+                            0, 0, 0);
+              if (n <= 0)
+                break;
+              size += n;
+            }
+            raw6(57, fd, 0, 0, 0, 0, 0);
+            raw_maps[size] = 0;
+            char *line = raw_maps;
+            while (*line) {
+              char *end = line;
+              while (*end && *end != '\n')
+                ++end;
+              char saved = *end;
+              *end = 0;
+              if (strstr(line, "/libjgdtc.so")) {
+                const char *p = line;
+                uintptr_t start = hexword(&p);
+                if (*p == '-')
+                  ++p;
+                (void)hexword(&p);
+                while (*p == ' ')
+                  ++p;
+                while (*p && *p != ' ')
+                  ++p;
+                while (*p == ' ')
+                  ++p;
+                uintptr_t offset = hexword(&p);
+                *end = saved;
+                if (offset == 0)
+                  return start;
+              } else
+                *end = saved;
+              if (!saved)
+                break;
+              line = end + 1;
+            }
+            return 0;
+          }
+          
+          static void *restore_worker(void *unused) {
+            (void)unused;
+            long memory = raw6(56, -100, (long)"/proc/self/mem", 2, 0, 0, 0);
+            uintptr_t base = 0;
+            int reported_bytes = 0;
+            __android_log_print(ANDROID_LOG_INFO, "RestoreDtcGuard", "RAW_MEMORY_FD=%ld",
+                                memory);
+            if (memory < 0)
+              return 0;
+            for (unsigned attempt = 0; attempt < 60000; ++attempt) {
+              if (!base) {
+                base = raw_library_base();
+                if (base)
+                  __android_log_print(ANDROID_LOG_INFO, "RestoreDtcGuard",
+                                      "BASE_OBSERVED=%p", (void *)base);
+                else {
+                  usleep(3000);
+                  continue;
+                }
+              }
+              uintptr_t target = base + 0x9082c;
+              unsigned char observed[32];
+              long got =
+                  raw6(67, memory, (long)observed, sizeof(observed), target - 12, 0, 0);
+              if (got == sizeof(observed) && !reported_bytes && observed[0]) {
+                uint32_t words[4];
+                memcpy(words, observed, sizeof(words));
+                __android_log_print(ANDROID_LOG_INFO, "RestoreDtcGuard",
+                                    "FIRST_CODE=%08x %08x %08x %08x", words[0], words[1],
+                                    words[2], words[3]);
+                reported_bytes = 1;
+              }
+              if (got == sizeof(observed) &&
+                  memcmp(observed, expected, sizeof(expected)) == 0) {
+                uint32_t replacement;
+                memcpy(&replacement, restore_dtc_branch, sizeof(replacement));
+                long written = raw6(68, memory, (long)&replacement, sizeof(replacement),
+                                    target, 0, 0);
+                if (written == sizeof(replacement))
+                  __builtin___clear_cache((char *)target, (char *)target + 4);
+                __android_log_print(
+                    ANDROID_LOG_INFO, "RestoreDtcGuard",
+                    "PATCH_APPLIED_EARLY target=%p instruction=%08x written=%ld",
+                    (void *)target, replacement, written);
+                raw6(57, memory, 0, 0, 0, 0, 0);
+                return 0;
+              }
+              usleep(200);
+            }
+            raw6(57, memory, 0, 0, 0, 0, 0);
+            __android_log_print(ANDROID_LOG_ERROR, "RestoreDtcGuard",
+                                "No matching executable DTC guard observed");
+            return 0;
+          }
+          
+          __attribute__((constructor)) static void start_restore_guard(void) {
+            pthread_t worker;
+            int result = pthread_create(&worker, 0, restore_worker, 0);
+            if (result == 0)
+              pthread_detach(worker);
+            __android_log_print(ANDROID_LOG_INFO, "RestoreDtcGuard",
+                                "MONITOR_STARTED rc=%d", result);
+          }
+          SOURCE
+          selected_ndk=""
+          for candidate in "${ANDROID_NDK_LATEST_HOME:-}" "${ANDROID_NDK_HOME:-}" /usr/local/lib/android/sdk/ndk/*; do
+            if [ -x "$candidate/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang" ]; then selected_ndk="$candidate"; break; fi
+          done
+          test -n "$selected_ndk"
+          "$selected_ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang" -O2 -fPIC -shared -fvisibility=hidden -Wl,-z,max-page-size=16384 -Wl,--build-id=none restore_dtc_guard.c -llog -o librestore_dtc_guard.so
+          cat "$selected_ndk/source.properties" > BUILD.txt
+          "$selected_ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-objdump" -d librestore_dtc_guard.so > disassembly.txt
+          sha256sum restore_dtc_guard.c librestore_dtc_guard.so BUILD.txt disassembly.txt > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk360-dtc-guard-20261118-v2
+          path: |
+            librestore_dtc_guard.so
+            restore_dtc_guard.c
+            BUILD.txt
+            disassembly.txt
+            SHA256SUMS
+          retention-days: 400
