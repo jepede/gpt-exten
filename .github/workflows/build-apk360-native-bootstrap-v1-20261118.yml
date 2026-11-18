@@ -1,0 +1,300 @@
+name: Build sample-local Android JNI bootstrap
+on:
+  push:
+    paths: ['.github/workflows/build-apk360-native-bootstrap-v1-20261118.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Compile own bootstrap with preinstalled NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > vip_bootstrap.c <<'SOURCE'
+          /* Sample-local JNI bootstrap. Original primary DEX and manifest stay unchanged.
+           * Loads the original vendor library after app-local certificate input setup.
+           * No replacement business methods, forced entry name, or synthetic UI.
+           */
+          #include <android/asset_manager.h>
+          #include <android/asset_manager_jni.h>
+          #include <android/log.h>
+          #include <dlfcn.h>
+          #include <errno.h>
+          #include <fcntl.h>
+          #include <jni.h>
+          #include <limits.h>
+          #include <stdarg.h>
+          #include <stdio.h>
+          #include <stdlib.h>
+          #include <string.h>
+          #include <sys/stat.h>
+          #include <sys/system_properties.h>
+          #include <sys/types.h>
+          #include <time.h>
+          #include <unistd.h>
+          
+          static int journal_fd = -1;
+          static void *vendor_handle;
+          
+          static void stage(const char *format, ...) {
+            char message[1600], line[1800];
+            va_list args;
+            va_start(args, format);
+            vsnprintf(message, sizeof(message), format, args);
+            va_end(args);
+            struct timespec ts;
+            clock_gettime(CLOCK_REALTIME, &ts);
+            int n = snprintf(line, sizeof(line), "%lld.%03ld pid=%d uid=%d %s\n",
+                             (long long)ts.tv_sec, ts.tv_nsec / 1000000L, getpid(),
+                             getuid(), message);
+            __android_log_print(ANDROID_LOG_INFO, "RestoreNative", "%s", message);
+            if (journal_fd >= 0 && n > 0 && n < (int)sizeof(line)) {
+              ssize_t done = 0;
+              while (done < n) {
+                ssize_t count = write(journal_fd, line + done, (size_t)(n - done));
+                if (count < 0 && errno == EINTR)
+                  continue;
+                if (count <= 0)
+                  break;
+                done += count;
+              }
+              fsync(journal_fd);
+            }
+          }
+          
+          static int check_java(JNIEnv *env, const char *where) {
+            if (!(*env)->ExceptionCheck(env))
+              return 0;
+            stage("JAVA_EXCEPTION stage=%s", where);
+            (*env)->ExceptionDescribe(env);
+            (*env)->ExceptionClear(env);
+            return -1;
+          }
+          
+          static int safe_dir(const char *path) {
+            if (mkdir(path, 0700) && errno != EEXIST)
+              return -1;
+            struct stat st;
+            if (lstat(path, &st) || !S_ISDIR(st.st_mode) || st.st_uid != getuid())
+              return -1;
+            return 0;
+          }
+          
+          static int extract_asset(AAssetManager *manager, const char *asset_name,
+                                   const char *path) {
+            AAsset *asset =
+                AAssetManager_open(manager, asset_name, AASSET_MODE_STREAMING);
+            if (!asset) {
+              stage("MISSING_ASSET name=%s", asset_name);
+              return -1;
+            }
+            char temporary[PATH_MAX];
+            if (snprintf(temporary, sizeof(temporary), "%s.tmp.%d", path, getpid()) >=
+                (int)sizeof(temporary)) {
+              AAsset_close(asset);
+              return -1;
+            }
+            int fd = open(temporary, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW,
+                          0600);
+            if (fd < 0) {
+              AAsset_close(asset);
+              return -1;
+            }
+            /* Android 14+ DCL: make the inode read-only immediately after opening. */
+            int status = fchmod(fd, 0400);
+            unsigned char block[16384];
+            size_t total = 0;
+            while (!status) {
+              int count = AAsset_read(asset, block, sizeof(block));
+              if (count < 0) {
+                status = -1;
+                break;
+              }
+              if (!count)
+                break;
+              int position = 0;
+              while (position < count) {
+                ssize_t n = write(fd, block + position, (size_t)(count - position));
+                if (n < 0 && errno == EINTR)
+                  continue;
+                if (n <= 0) {
+                  status = -1;
+                  break;
+                }
+                position += (int)n;
+              }
+              total += (size_t)count;
+            }
+            if (!status && fsync(fd))
+              status = -1;
+            if (close(fd))
+              status = -1;
+            if (!status && total != (size_t)AAsset_getLength64(asset))
+              status = -1;
+            if (!status && rename(temporary, path))
+              status = -1;
+            if (status)
+              unlink(temporary);
+            AAsset_close(asset);
+            stage("EXTRACT asset=%s bytes=%zu status=%d", asset_name, total, status);
+            return status;
+          }
+          
+          JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
+            JNIEnv *env = NULL;
+            if ((*vm)->GetEnv(vm, (void **)&env, JNI_VERSION_1_6) != JNI_OK)
+              return JNI_ERR;
+            stage("WRAPPER_ENTER");
+            jclass stub = (*env)->FindClass(env, "com/stub/StubApp");
+            if (check_java(env, "find-stub") || !stub)
+              return JNI_ERR;
+            jmethodID get_context = (*env)->GetStaticMethodID(
+                env, stub, "getAppContext", "()Landroid/content/Context;");
+            if (check_java(env, "get-context-method") || !get_context)
+              return JNI_ERR;
+            jobject context = (*env)->CallStaticObjectMethod(env, stub, get_context);
+            if (check_java(env, "get-context") || !context)
+              return JNI_ERR;
+            jclass context_type = (*env)->GetObjectClass(env, context);
+            jmethodID get_cache =
+                (*env)->GetMethodID(env, context_type, "getCacheDir", "()Ljava/io/File;");
+            if (check_java(env, "get-cache-method") || !get_cache)
+              return JNI_ERR;
+            jobject cache = (*env)->CallObjectMethod(env, context, get_cache);
+            if (check_java(env, "get-cache") || !cache)
+              return JNI_ERR;
+            jclass file_type = (*env)->FindClass(env, "java/io/File");
+            jmethodID absolute = (*env)->GetMethodID(env, file_type, "getAbsolutePath",
+                                                     "()Ljava/lang/String;");
+            if (check_java(env, "cache-path-method") || !absolute)
+              return JNI_ERR;
+            jstring cache_string = (*env)->CallObjectMethod(env, cache, absolute);
+            if (check_java(env, "cache-path") || !cache_string)
+              return JNI_ERR;
+            const char *cache_chars = (*env)->GetStringUTFChars(env, cache_string, NULL);
+            if (!cache_chars)
+              return JNI_ERR;
+            char directory[PATH_MAX], journal[PATH_MAX], dex_path[PATH_MAX],
+                so_path[PATH_MAX];
+            int length = snprintf(directory, sizeof(directory), "%s/restore_native_v24",
+                                  cache_chars);
+            (*env)->ReleaseStringUTFChars(env, cache_string, cache_chars);
+            if (length < 0 || length >= (int)sizeof(directory) || safe_dir(directory))
+              return JNI_ERR;
+            if (snprintf(journal, sizeof(journal), "%s/startup-native.log", directory) >=
+                (int)sizeof(journal))
+              return JNI_ERR;
+            journal_fd = open(
+                journal, O_WRONLY | O_APPEND | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
+            char sdk[PROP_VALUE_MAX] = {0};
+            __system_property_get("ro.build.version.sdk", sdk);
+            stage("CONTEXT_READY sdk=%s", sdk);
+            if (snprintf(dex_path, sizeof(dex_path), "%s/helper.dex", directory) >=
+                    (int)sizeof(dex_path) ||
+                snprintf(so_path, sizeof(so_path), "%s/libjiagu_vip_64.so", directory) >=
+                    (int)sizeof(so_path))
+              return JNI_ERR;
+            jmethodID get_assets = (*env)->GetMethodID(
+                env, context_type, "getAssets", "()Landroid/content/res/AssetManager;");
+            if (check_java(env, "get-assets-method") || !get_assets)
+              return JNI_ERR;
+            jobject java_assets = (*env)->CallObjectMethod(env, context, get_assets);
+            if (check_java(env, "get-assets") || !java_assets)
+              return JNI_ERR;
+            AAssetManager *assets = AAssetManager_fromJava(env, java_assets);
+            if (!assets ||
+                extract_asset(assets, "restore_runtime/helper.dex", dex_path) ||
+                extract_asset(assets, "restore_runtime/original/libjiagu_vip_64.so",
+                              so_path))
+              return JNI_ERR;
+            jmethodID get_loader = (*env)->GetMethodID(
+                env, context_type, "getClassLoader", "()Ljava/lang/ClassLoader;");
+            if (check_java(env, "get-loader-method") || !get_loader)
+              return JNI_ERR;
+            jobject target_loader = (*env)->CallObjectMethod(env, context, get_loader);
+            if (check_java(env, "get-loader") || !target_loader)
+              return JNI_ERR;
+            jclass dex_type = (*env)->FindClass(env, "dalvik/system/DexClassLoader");
+            if (check_java(env, "dex-loader-type") || !dex_type)
+              return JNI_ERR;
+            jmethodID constructor =
+                (*env)->GetMethodID(env, dex_type, "<init>",
+                                    "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/"
+                                    "String;Ljava/lang/ClassLoader;)V");
+            if (check_java(env, "dex-loader-constructor") || !constructor)
+              return JNI_ERR;
+            jstring dex_name = (*env)->NewStringUTF(env, dex_path);
+            jstring opt_name = (*env)->NewStringUTF(env, directory);
+            jobject helper_loader = (*env)->NewObject(
+                env, dex_type, constructor, dex_name, opt_name, NULL, target_loader);
+            if (check_java(env, "new-helper-loader") || !helper_loader)
+              return JNI_ERR;
+            jclass loader_type = (*env)->FindClass(env, "java/lang/ClassLoader");
+            jmethodID load_class = (*env)->GetMethodID(
+                env, loader_type, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+            if (check_java(env, "load-class-method") || !load_class)
+              return JNI_ERR;
+            jstring bootstrap_name =
+                (*env)->NewStringUTF(env, "lab.restore.NativeBootstrap");
+            jclass bootstrap = (jclass)(*env)->CallObjectMethod(
+                env, helper_loader, load_class, bootstrap_name);
+            if (check_java(env, "load-helper-bootstrap") || !bootstrap)
+              return JNI_ERR;
+            jmethodID install = (*env)->GetStaticMethodID(
+                env, bootstrap, "install",
+                "(Landroid/content/Context;Ljava/lang/ClassLoader;)V");
+            if (check_java(env, "helper-install-method") || !install)
+              return JNI_ERR;
+            stage("JAVA_BOOTSTRAP_ENTER");
+            (*env)->CallStaticVoidMethod(env, bootstrap, install, context, target_loader);
+            if (check_java(env, "helper-install"))
+              return JNI_ERR;
+            stage("JAVA_BOOTSTRAP_RETURN");
+            vendor_handle = dlopen(so_path, RTLD_NOW | RTLD_LOCAL);
+            if (!vendor_handle) {
+              stage("VENDOR_DLOPEN_FAILED %s", dlerror());
+              return JNI_ERR;
+            }
+            stage("VENDOR_DLOPEN_OK");
+            jint (*original)(JavaVM *, void *) =
+                (jint(*)(JavaVM *, void *))dlsym(vendor_handle, "JNI_OnLoad");
+            if (!original) {
+              stage("VENDOR_JNI_SYMBOL_FAILED %s", dlerror());
+              return JNI_ERR;
+            }
+            stage("VENDOR_JNI_ENTER");
+            jint result = original(vm, reserved);
+            stage("VENDOR_JNI_RETURN result=0x%x exception=%d", result,
+                  (*env)->ExceptionCheck(env));
+            return result;
+          }
+          
+          JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
+            if (vendor_handle) {
+              void (*original)(JavaVM *, void *) =
+                  (void (*)(JavaVM *, void *))dlsym(vendor_handle, "JNI_OnUnload");
+              if (original)
+                original(vm, reserved);
+            }
+            stage("WRAPPER_UNLOAD");
+          }
+          SOURCE
+          selected_ndk=""
+          for candidate in "${ANDROID_NDK_LATEST_HOME:-}" "${ANDROID_NDK_HOME:-}" /usr/local/lib/android/sdk/ndk/*; do
+            if [ -x "$candidate/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang" ]; then selected_ndk="$candidate"; break; fi
+          done
+          test -n "$selected_ndk"
+          "$selected_ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang" -Wall -Wextra -Werror -O2 -fPIC -shared -Wl,--build-id=none vip_bootstrap.c -o libjiagu_vip_64.so -llog -landroid -ldl
+          cat "$selected_ndk/source.properties" > BUILD.txt
+          sha256sum vip_bootstrap.c libjiagu_vip_64.so BUILD.txt > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk360-native-bootstrap-20261118-v1
+          path: |
+            libjiagu_vip_64.so
+            vip_bootstrap.c
+            BUILD.txt
+            SHA256SUMS
+          retention-days: 400
