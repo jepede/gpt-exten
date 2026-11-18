@@ -1,0 +1,70 @@
+name: Build ARM64 DEX acquisition helper v2 complete mappings
+on:
+  push:
+    paths: ['.github/workflows/build-apk360-memdex-v2-20261118.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Compile standalone read-only helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > memdex64.c <<'SOURCE'
+          typedef unsigned long U;
+          typedef long S;
+          static char maps[1048576], chunk[1048688], copybuf[65536], pathbuf[1024];
+          static U emitted[256]; static int nemit;
+          static S sys6(S n,S a,S b,S c,S d,S e,S f) {
+           register S x8 __asm__("x8")=n,x0 __asm__("x0")=a,x1 __asm__("x1")=b,x2 __asm__("x2")=c,x3 __asm__("x3")=d,x4 __asm__("x4")=e,x5 __asm__("x5")=f;
+           __asm__ volatile("svc #0":"+r"(x0):"r"(x8),"r"(x1),"r"(x2),"r"(x3),"r"(x4),"r"(x5):"memory","cc"); return x0;
+          }
+          static U len(const char*s){U n=0;while(s[n])n++;return n;}
+          static int has(const char*s,const char*t){for(;*s;s++){U i=0;while(t[i]&&s[i]&&s[i]==t[i])i++;if(!t[i])return 1;}return 0;}
+          static void text(const char*s){U n=len(s);while(n){S r=sys6(64,1,(S)s,n,0,0,0);if(r<=0)return;s+=r;n-=r;}}
+          static char* cat(char*d,const char*s){while(*s)*d++=*s++;*d=0;return d;}
+          static char* hex(char*d,U v){char t[32];int n=0;do{t[n++]="0123456789abcdef"[v&15];v>>=4;}while(v);while(n)*d++=t[--n];*d=0;return d;}
+          static U parse(char**s){U n=0;while(1){char c=**s;int v=c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:-1;if(v<0)break;n=n*16+v;(*s)++;}return n;}
+          static U word(const char*p){return (U)(unsigned char)p[0]|((U)(unsigned char)p[1]<<8)|((U)(unsigned char)p[2]<<16)|((U)(unsigned char)p[3]<<24);}
+          static int header(const char*p){U n=word(p+32),c=word(p+96),o=word(p+100);return word(p+36)==112&&word(p+40)==0x12345678&&n>=112&&n<=134217728&&c>0&&c<500000&&o>=112&&o+c*32<=n&&word(p+56)>0&&word(p+64)>0&&word(p+60)+word(p+56)*4<=n&&word(p+68)+word(p+64)*4<=n;}
+          static void save(S mem,U address,U n,U classes,const char*out) {
+           for(int i=0;i<nemit;i++)if(emitted[i]==address)return;
+           if(nemit<256)emitted[nemit++]=address;
+           char *q=cat(pathbuf,out);q=cat(q,"/dex_");q=hex(q,address);q=cat(q,"_");q=hex(q,n);cat(q,".dex");
+           S fd=sys6(56,-100,(S)pathbuf,577,0600,0,0);if(fd<0){text("OPEN_FAIL\n");return;}
+           U left=n,pos=address;int okay=1;
+           while(left){U want=left>sizeof(copybuf)?sizeof(copybuf):left;S got=sys6(67,mem,(S)copybuf,want,pos,0,0);if(got<=0){okay=0;break;}U done=0;while(done<(U)got){S r=sys6(64,fd,(S)(copybuf+done),got-done,0,0,0);if(r<=0){okay=0;break;}done+=r;}if(!okay)break;left-=got;pos+=got;}
+           sys6(57,fd,0,0,0,0,0);
+           if(okay){char line[1200],*p=cat(line,"DEX_SAVED address=0x");p=hex(p,address);p=cat(p," size=0x");p=hex(p,n);p=cat(p," classes=0x");p=hex(p,classes);p=cat(p," file=");p=cat(p,pathbuf);cat(p,"\n");text(line);}else text("DUMP_READ_FAILED\n");
+          }
+          int run(U*stack){
+           if(stack[0]<3){text("Usage: memdex64 PID OUTPUT_DIRECTORY\n");return 2;}
+           char**argv=(char**)(stack+1);const char*pid=argv[1],*out=argv[2];
+           char proc[160],*p=cat(proc,"/proc/");p=cat(p,pid);cat(p,"/maps");
+           S fd=sys6(56,-100,(S)proc,0,0,0,0);if(fd<0){text("MAPS_OPEN_FAILED\n");return 3;}
+           S n=0;while((U)n<sizeof(maps)-1){S r=sys6(63,fd,(S)(maps+n),sizeof(maps)-1-n,0,0,0);if(r<=0)break;n+=r;}sys6(57,fd,0,0,0,0,0);if(n<=0){text("MAPS_READ_FAILED\n");return 4;}maps[n]=0;
+           sys6(34,-100,(S)out,0755,0,0,0);
+           p=cat(pathbuf,out);cat(p,"/maps.txt");fd=sys6(56,-100,(S)pathbuf,577,0600,0,0);if(fd>=0){sys6(64,fd,(S)maps,n,0,0,0);sys6(57,fd,0,0,0,0,0);}
+           p=cat(proc,"/proc/");p=cat(p,pid);cat(p,"/mem");S mem=sys6(56,-100,(S)proc,0,0,0,0);if(mem<0){text("MEM_OPEN_FAILED\n");return 5;}
+           text("MEMDEX_BEGIN\n");char*line=maps;U total=0;
+           while(*line){char*endline=line;while(*endline&&*endline!='\n')endline++;char saved=*endline;*endline=0;char*r=line;U begin=parse(&r);if(*r=='-')r++;U end=parse(&r);while(*r==' ')r++;
+           int skip=*r!='r'||end<=begin||end-begin>536870912||has(line,"/apex/")||has(line,"/system/")||has(line,"/vendor/")||has(line,"/dev/__properties__")||has(line,"[vdso]")||has(line,"[vvar]")||has(line,"jit-cache")||has(line,"jit-zygote")||has(line,"dalvik-zygote")||has(line,".art")||has(line,".oat")||has(line,".odex");
+           if(!skip){text("SCAN ");text(line);text("\n");for(U pos=begin;pos<end;){U want=end-pos;if(want>sizeof(chunk))want=sizeof(chunk);S got=sys6(67,mem,(S)chunk,want,pos,0,0);if(got<112)break;for(U i=0;i+112<=(U)got;i+=4)if((unsigned char)chunk[i+36]==112&&(unsigned char)chunk[i+40]==120&&(unsigned char)chunk[i+41]==86&&header(chunk+i))save(mem,pos+i,word(chunk+i+32),word(chunk+i+96),out);U advance=end-pos;if(advance>1048576)advance=1048576;pos+=advance;total+=advance;}}
+           *endline=saved;if(!saved)break;line=endline+1;
+           }
+           sys6(57,mem,0,0,0,0,0);char lineout[128],*q=cat(lineout,"MEMDEX_DONE saved=0x");q=hex(q,nemit);q=cat(q," scanned=0x");q=hex(q,total);cat(q,"\n");text(lineout);return 0;
+          }
+          __asm__(".global _start\n_start:\nmov x0, sp\nbl run\nmov x8, #93\nsvc #0\n");
+          SOURCE
+          clang --target=aarch64-linux-gnu -fuse-ld=lld -nostdlib -static -ffreestanding -fno-builtin -fno-stack-protector -O2 -Wl,-e,_start -Wl,--build-id=none -Wl,-z,max-page-size=4096 memdex64.c -o memdex64
+          sha256sum memdex64 memdex64.c > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk360-memdex64-v2
+          path: |
+            memdex64
+            memdex64.c
+            SHA256SUMS
+          retention-days: 400
