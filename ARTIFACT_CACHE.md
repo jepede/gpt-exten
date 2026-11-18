@@ -3511,3 +3511,29 @@ Requires the observed executable library base, scans the exact private-image ran
 | config-write observer | v4 | Android API23+ / Linux perf | aarch64 | perf_break64 | ce69c98db9de60f3951edbd0eff3823aaccb62737d447f134ac77523eebb8e17 |
 | config-write source | v4 | C source | AArch64 target | perf_break64.c | c569ba73ac4d037f64b07895f1f4697fbfb19931b3eda74663bd2abd34225ac3 |
 | NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+
+## Artifact Record — APK360 app-local native bootstrap v2
+
+- Artifact Name: `apk360-native-bootstrap-20261118-v2`
+- Artifact ID: `14433780704`
+- Run ID: `44317467067`
+- Workflow: `.github/workflows/build-apk360-native-bootstrap-v2-20261118.yml`
+- File: `apk360-native-bootstrap-v2.zip`
+- Size: `13068` bytes
+- SHA256: `212f0b4e21efe24f81b1e3a43e63ff225b07084a0702ff76c11d065e643a07ab`
+- Created At: `2026-11-18T13:48:42Z`
+- Expires At: `2027-02-16T13:48:25Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-native-bootstrap-v2.zip`
+- Original Size: `13068` bytes
+- Original SHA256: `212f0b4e21efe24f81b1e3a43e63ff225b07084a0702ff76c11d065e643a07ab`
+- Part Count: 1
+- Build: preinstalled NDK r30/API23, own source only; no upstream download. Artifact ZIP and every SHA256SUMS member verified.
+- Validation: Compilation succeeded. Runtime validation pending; not a completed recovered business APK. Direct Binder bridge restricted to own process/package, original native entry validated against executable libandroid_runtime mapping.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| native bootstrap | v2 | Android API23+ | aarch64 | libjiagu_vip_64.so | d0ed4b73b3e67b337bf68f2ab6a6290ed22d42ec9cf303392d94633e22b418f7 |
+| bootstrap source | v2 | C source | AArch64 target | vip_bootstrap.c | 7a948c2b3147915601ee8ef68b63c2a50cce2f77f70602f33ab4a0064ffadbba |
+| NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
