@@ -3670,3 +3670,31 @@ Requires the observed executable library base, scans the exact private-image ran
 | helper source | v4 | C source | AArch64 target | vip_bootstrap.c | 23ac98c8a468f2d4b343a7a56e2e557690acab7bc9db50ac80d9c0c78752884b |
 | LLVM disassembly | v4 | LLVM objdump | aarch64 | disassembly.txt | 185c9740f8605a3a35fb475fe4730238b863b55eeea699cb139a1ac6c57e8f49 |
 | NDK metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+
+## Artifact Record — APK360 passthrough and syscall-input diagnostic v5
+
+- Artifact Name: `apk360-native-input-20261118-v5`
+- Artifact ID: `14441011833`
+- Run ID: `44334857290`
+- Workflow: `.github/workflows/build-apk360-native-input-v5-20261118.yml`
+- File: `apk360-native-input-v5.zip`
+- Size: `65256` bytes
+- SHA256: `fe27ee8f2e9edf91352efca5724da42ce6e149f88c8ae5970a4307b7b4a8a235`
+- Created At: `2026-11-18T15:22:40Z`
+- Expires At: `2027-02-16T15:22:20Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-native-input-v5.zip`
+- Original Size: `65256` bytes
+- Original SHA256: `fe27ee8f2e9edf91352efca5724da42ce6e149f88c8ae5970a4307b7b4a8a235`
+- Part Count: 1
+- Build: own source only, preinstalled NDK r30/API23. All members hash-verified, source equals exact local formatted source. No target APK uploaded.
+- Validation: diagnostic prototype, genuine APK runtime not yet validated. Stage controls preserve original vendor methods; syscall adapter adds a local filter and NO_NEW_PRIVS, retaining all inherited restrictions. Does not constitute completed devirtualization or repaired APK.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| input diagnostic helper | v5 | Android API23+ | aarch64 | librestore_input_v5.so | c2f45489dd2e591f77e4fc71be5677a1b632dacdb078f5cd704f688eb0811e96 |
+| nonroot CLI selftest | v5 | Android API23+ | aarch64 | archive_input_selftest | 7943d07c67d575119d9bbdf4d7ce42e6a58da5a502ccb48250e6de20a360e1e4 |
+| source | v5 | C source | AArch64 target | vip_bootstrap.c | 76537c1bf1303c397517975ca3c676c35ffc526393d4d02977e9004d6a5723ce |
+| LLVM disassembly | v5 | LLVM objdump | aarch64 | disassembly.txt | da6f5b0de27d7e8e004701fa9550321ab9ceeb11e054218bd2b2d4a87c6068ce |
+| NDK metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
