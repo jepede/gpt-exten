@@ -3436,3 +3436,78 @@ Requires the observed executable library base, scans the exact private-image ran
 | config-write observer | v1 | Android API23+ / Linux perf | aarch64 | perf_break64 | 5b8646be97d16c458a6314c8c7c24ea5c620a98cb84dce3bf75d4a7c88f7ab9f |
 | config-write observer source | v1 | portable C | AArch64 target | perf_break64.c | 4fcde6589f2f3a7da35598f216f14975d7f9265514c98b72ff338337da4972dc |
 | NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+## Artifact Record — APK360 all-thread configuration write observer v2
+
+- Artifact Name: `apk360-watch-config-20261118-v2`
+- Artifact ID: `14432061664`
+- Run ID: `44315021764`
+- Workflow: `.github/workflows/build-apk360-watch-config-v2-20261118.yml`
+- File: `apk360-watch-config-v2.zip`
+- Size: `10679` bytes
+- SHA256: `bb258ef9e7cbd309e30120f0bf9d705ae514eecf3ea669308be50bb93fa66657`
+- Created At: `2026-11-18T13:34:23Z`
+- Expires At: `2027-02-16T13:34:07Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-watch-config-v2.zip`
+- Original Size: `10679` bytes
+- Original SHA256: `bb258ef9e7cbd309e30120f0bf9d705ae514eecf3ea669308be50bb93fa66657`
+- Part Count: 1
+- Build: preinstalled NDK r30/API23, Wall/Wextra/Werror. Own observer source only; no upstream download. ZIP and all SHA256SUMS verified.
+- Validation: Runtime self-test: EXEC3/3, inherited per-task mmap fails EINVAL; unsupported version retained for reproducibility.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| config-write observer | v2 | Android API23+ / Linux perf | aarch64 | perf_break64 | c095b1ae1758038e39c38abd62521580b959d3044156aeb5342bfef5899153e6 |
+| config-write source | v2 | C source | AArch64 target | perf_break64.c | 2c678560f8ec6f1d66aeabae83a6011cf9f9671dbf7aa1d336fbcb20c35ac1bc |
+| NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+## Artifact Record — APK360 all-thread configuration write observer v3
+
+- Artifact Name: `apk360-watch-config-20261118-v3`
+- Artifact ID: `14431214208`
+- Run ID: `44315345393`
+- Workflow: `.github/workflows/build-apk360-watch-config-v3-20261118.yml`
+- File: `apk360-watch-config-v3.zip`
+- Size: `11463` bytes
+- SHA256: `dbbb4e5bc2786fae657e6951a4181ef021b5aec26dba8ee021d23ae8bd1aea8f`
+- Created At: `2026-11-18T13:36:30Z`
+- Expires At: `2027-02-16T13:36:00Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-watch-config-v3.zip`
+- Original Size: `11463` bytes
+- Original SHA256: `dbbb4e5bc2786fae657e6951a4181ef021b5aec26dba8ee021d23ae8bd1aea8f`
+- Part Count: 1
+- Build: preinstalled NDK r30/API23, Wall/Wextra/Werror. Own observer source only; no upstream download. ZIP and all SHA256SUMS verified.
+- Validation: Runtime self-test: EXEC3/3, SET_OUTPUT fails EINVAL because destination ring was not mapped yet; failed prototype, not valid write evidence.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| config-write observer | v3 | Android API23+ / Linux perf | aarch64 | perf_break64 | 1ee2fea1b73df0c6daa4985c08998e0f79292d3108116ddd6b4bb2bc2ae19f25 |
+| config-write source | v3 | C source | AArch64 target | perf_break64.c | 3eeac2ca8f7d4b568e66ebda4ea4fb8c1ec1a1bbc122f6f532d4f604c69b3b58 |
+| NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+## Artifact Record — APK360 all-thread configuration write observer v4
+
+- Artifact Name: `apk360-watch-config-20261118-v4`
+- Artifact ID: `14432906148`
+- Run ID: `44315838617`
+- Workflow: `.github/workflows/build-apk360-watch-config-v4-20261118.yml`
+- File: `apk360-watch-config-v4.zip`
+- Size: `11554` bytes
+- SHA256: `27e80d0e8aef9b19cd6ae3287fc23586b557c6fcd872cb95fdd5cb5303b64f55`
+- Created At: `2026-11-18T13:39:22Z`
+- Expires At: `2027-02-16T13:38:55Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-watch-config-v4.zip`
+- Original Size: `11554` bytes
+- Original SHA256: `27e80d0e8aef9b19cd6ae3287fc23586b557c6fcd872cb95fdd5cb5303b64f55`
+- Part Count: 1
+- Build: preinstalled NDK r30/API23, Wall/Wextra/Werror. Own observer source only; no upstream download. ZIP and all SHA256SUMS verified.
+- Validation: Actual ARM64 runtime self-test: EXEC3/3, main-thread WRITE3/3, new inherited-thread WRITE3/3 (total6/value9). Output ring mapped before SET_OUTPUT; all current TIDs instrumented, future threads inherit. Target-run validation is separate.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| config-write observer | v4 | Android API23+ / Linux perf | aarch64 | perf_break64 | ce69c98db9de60f3951edbd0eff3823aaccb62737d447f134ac77523eebb8e17 |
+| config-write source | v4 | C source | AArch64 target | perf_break64.c | c569ba73ac4d037f64b07895f1f4697fbfb19931b3eda74663bd2abd34225ac3 |
+| NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
