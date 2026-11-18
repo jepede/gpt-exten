@@ -3182,3 +3182,92 @@ Restore by calling `download_workflow_artifact` with ID 14161251322, verifying t
 | zstandard | 0.23.0 | Linux / Python 3.12 | x86_64 | python/zstandard | 0fde12666e62df479effb79bfabd77f8ebd3c554c687e5052270ab2e36c54184 |
 
 Directory hashes use SHA256 of sorted manifest lines `FILE_SHA256  RELATIVE_PATH\n` for files inside that directory. The bundle also includes all pinned-tool Python dependencies and a complete MANIFEST.json. Restore both part Artifacts in order and verify the reconstructed TAR.GZ SHA256 before extraction. Do not re-download these upstream tools while these Artifacts remain valid.
+
+
+## Artifact Record: APK360 read-only DEX acquisition helper v1
+
+- Name: APK360 read-only DEX acquisition helper v1
+- Version: 20261118-v1
+- Platform: Android API23+ / Linux AArch64 target
+- Architecture: arm64-v8a / AArch64
+- Artifact Name: `apk360-memdex64-v1`
+- Artifact ID: `14411034472`
+- Run ID: `44270379866`
+- Workflow: `.github/workflows/build-apk360-memdex-20261118.yml`
+- File: `apk360-memdex64-v1.zip` (GitHub Artifact archive)
+- Size: 6367 bytes
+- SHA256: `2fb6d5c37d812a25118f297d14a12eafa9abb2070ccde0bb7485cba2bada8782`
+- Created At: `2026-11-18T08:50:08Z`
+- Expires At: `2027-02-16T08:50:01Z` (actual GitHub value; verified unexpired)
+- Storage Mode: SINGLE
+- Original File: `memdex64`
+- Original Size: 7432 bytes
+- Original SHA256: `64e26265f4b989d4487ede613e509e96adc5812a7c5ae95c231ec20b5d333449`
+- Part Count: 1
+- Requested retention-days: 400; effective expiry above governs.
+- Verification: downloaded through download_workflow_artifact; Artifact ZIP and per-file SHA256SUMS verified.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| APK360 read-only DEX acquisition helper v1 | 20261118-v1 | Android / Linux | AArch64 | `memdex64` | `64e26265f4b989d4487ede613e509e96adc5812a7c5ae95c231ec20b5d333449` |
+| Source | 20261118-v1 | Portable C source | AArch64 target | `memdex64.c` | `42fc12d9b6384a0557284ce33bb779b9f7e40aca3428f984efcb780c0a1f5aa7` |
+
+
+## Artifact Record: APK360 read-only DEX acquisition helper v2 complete mappings
+
+- Name: APK360 read-only DEX acquisition helper v2 complete mappings
+- Version: 20261118-v2
+- Platform: Android API23+ / Linux AArch64 target
+- Architecture: arm64-v8a / AArch64
+- Artifact Name: `apk360-memdex64-v2`
+- Artifact ID: `14411674794`
+- Run ID: `44271302855`
+- Workflow: `.github/workflows/build-apk360-memdex-v2-20261118.yml`
+- File: `apk360-memdex64-v2.zip` (GitHub Artifact archive)
+- Size: 6361 bytes
+- SHA256: `a14b7865e726e07f41e56ce986f55ec32d29aebc45ed0995642adeed1c095deb`
+- Created At: `2026-11-18T08:56:35Z`
+- Expires At: `2027-02-16T08:56:23Z` (actual GitHub value; verified unexpired)
+- Storage Mode: SINGLE
+- Original File: `memdex64`
+- Original Size: 7328 bytes
+- Original SHA256: `a083bc01a6fcfc39c7176a10fb53be4c63483c5557f7c3efd412be82e214c294`
+- Part Count: 1
+- Requested retention-days: 400; effective expiry above governs.
+- Verification: downloaded through download_workflow_artifact; Artifact ZIP and per-file SHA256SUMS verified.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| APK360 read-only DEX acquisition helper v2 complete mappings | 20261118-v2 | Android / Linux | AArch64 | `memdex64` | `a083bc01a6fcfc39c7176a10fb53be4c63483c5557f7c3efd412be82e214c294` |
+| Source | 20261118-v2 | Portable C source | AArch64 target | `memdex64.c` | `1564c6cfa0e636fbea081838b55723299d1ee7a8fb67dbdec5fe66611ccaa351` |
+
+
+## Artifact Record: APK360 exact-build DTC multidex compatibility helper
+
+- Name: APK360 exact-build DTC multidex compatibility helper
+- Version: 20261118-v1
+- Platform: Android API23+ / Linux AArch64 target
+- Architecture: arm64-v8a / AArch64
+- Artifact Name: `apk360-dtc-guard-20261118-v1`
+- Artifact ID: `14416784535`
+- Run ID: `44282955881`
+- Workflow: `.github/workflows/build-apk360-dtc-guard-20261118.yml`
+- File: `apk360-dtc-guard-20261118-v1.zip` (GitHub Artifact archive)
+- Size: 9739 bytes
+- SHA256: `05f3a27c6b56f9acd974b264d7f8546bab69b796bc31201eb3f0772d48115d8b`
+- Created At: `2026-11-18T10:11:55Z`
+- Expires At: `2027-02-16T10:11:07Z` (actual GitHub value; verified unexpired)
+- Storage Mode: SINGLE
+- Original File: `librestore_dtc_guard.so`
+- Original Size: 9160 bytes
+- Original SHA256: `03f791482a1df84227ac6b90654597d161363c6843fb571534528249626627bf`
+- Part Count: 1
+- Requested retention-days: 400; effective expiry above governs.
+- Verification: downloaded through download_workflow_artifact; Artifact ZIP and per-file SHA256SUMS verified.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| APK360 exact-build DTC multidex compatibility helper | 20261118-v1 | Android / Linux | AArch64 | `librestore_dtc_guard.so` | `03f791482a1df84227ac6b90654597d161363c6843fb571534528249626627bf` |
+| Source | 20261118-v1 | Portable C source | AArch64 target | `restore_dtc_guard.c` | `1be5b317e2381826febc221e57729d2eb071b7969bbf31b455003731ea91666a` |
+
+Compiled with the runner's preinstalled Android NDK r30 (30.0.16248370), API23. No additional NDK download was performed. Artifact includes BUILD.txt and llvm-objdump disassembly. This compatibility helper targets the instruction signature of the supplied libjgdtc build; it is not a general unpacker.
