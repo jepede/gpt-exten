@@ -1,0 +1,881 @@
+name: Build sample-local Android JNI bootstrap
+on:
+  push:
+    paths: ['.github/workflows/build-apk360-native-input-v6-20261118.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Compile own bootstrap with preinstalled NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > vip_bootstrap.c <<'SOURCE'
+          #define _GNU_SOURCE 1
+          /* Sample-local certificate and original-file input bridge. Vendor business
+           * methods are never replaced. App paths remain real installation paths. */
+          #include <android/asset_manager.h>
+          #include <android/asset_manager_jni.h>
+          #include <android/log.h>
+          #include <dlfcn.h>
+          #include <elf.h>
+          #include <errno.h>
+          #include <fcntl.h>
+          #include <jni.h>
+          #include <limits.h>
+          #include <link.h>
+          #include <stdarg.h>
+          #include <stdatomic.h>
+          #include <stdint.h>
+          #include <stdio.h>
+          #include <stdlib.h>
+          #include <string.h>
+          #include <sys/mman.h>
+          #include <sys/stat.h>
+          #include <sys/system_properties.h>
+          #include <sys/types.h>
+          #include <time.h>
+          #include <unistd.h>
+          
+          static int journal_fd = -1;
+          
+          static void stage(const char *format, ...) {
+            char message[1600], line[1800];
+            va_list args;
+            va_start(args, format);
+            vsnprintf(message, sizeof(message), format, args);
+            va_end(args);
+            struct timespec ts;
+            clock_gettime(CLOCK_REALTIME, &ts);
+            int n = snprintf(line, sizeof(line), "%lld.%03ld pid=%d uid=%d %s\n",
+                             (long long)ts.tv_sec, ts.tv_nsec / 1000000L, getpid(),
+                             getuid(), message);
+            __android_log_print(ANDROID_LOG_INFO, "RestoreInput", "%s", message);
+          #ifdef RESTORE_INPUT_SELFTEST
+            fputs(line, stderr);
+          #endif
+            if (journal_fd >= 0 && n > 0 && n < (int)sizeof(line)) {
+              ssize_t done = 0;
+              while (done < n) {
+                ssize_t count = write(journal_fd, line + done, (size_t)(n - done));
+                if (count < 0 && errno == EINTR)
+                  continue;
+                if (count <= 0)
+                  break;
+                done += count;
+              }
+              fsync(journal_fd);
+            }
+          }
+          
+          static int check_java(JNIEnv *env, const char *where) {
+            if (!(*env)->ExceptionCheck(env))
+              return 0;
+            stage("JAVA_EXCEPTION stage=%s", where);
+            (*env)->ExceptionDescribe(env);
+            (*env)->ExceptionClear(env);
+            return -1;
+          }
+          
+          static jobject (*original_context_object)(JNIEnv *, jclass);
+          static jclass binder_bridge_class;
+          static jmethodID wrap_context_method;
+          static _Thread_local int context_bridge_active;
+          
+          static int mapped_pointer(uintptr_t address, size_t size, char access,
+                                    const char *module) {
+            FILE *maps = fopen("/proc/self/maps", "r");
+            if (!maps)
+              return 0;
+            char line[2048], mode[5];
+            unsigned long begin, end;
+            int found = 0;
+            while (fgets(line, sizeof(line), maps)) {
+              if (sscanf(line, "%lx-%lx %4s", &begin, &end, mode) != 3)
+                continue;
+              if (size > end - begin || address < begin || address > end - size)
+                continue;
+              if (!strchr(mode, access) || (module && !strstr(line, module)))
+                continue;
+              found = 1;
+              break;
+            }
+            fclose(maps);
+            return found;
+          }
+          
+          static jobject bridged_context_object(JNIEnv *env, jclass type) {
+            jobject actual = original_context_object(env, type);
+            if (!actual || (*env)->ExceptionCheck(env) || context_bridge_active)
+              return actual;
+            context_bridge_active = 1;
+            jobject result = (*env)->CallStaticObjectMethod(env, binder_bridge_class,
+                                                            wrap_context_method, actual);
+            context_bridge_active = 0;
+            return result;
+          }
+          
+          static int install_binder_bridge(JNIEnv *env, jobject loader,
+                                           jmethodID load_class) {
+            jstring name = (*env)->NewStringUTF(env, "lab.restore.BinderBridge");
+            jclass type = (jclass)(*env)->CallObjectMethod(env, loader, load_class, name);
+            if (check_java(env, "binder-helper-class") || !type)
+              return -1;
+            binder_bridge_class = (jclass)(*env)->NewGlobalRef(env, type);
+            wrap_context_method = (*env)->GetStaticMethodID(
+                env, type, "wrapContext", "(Ljava/lang/Object;)Ljava/lang/Object;");
+            if (check_java(env, "binder-helper-method") || !wrap_context_method)
+              return -1;
+            jclass internal =
+                (*env)->FindClass(env, "com/android/internal/os/BinderInternal");
+            if (check_java(env, "binder-internal-class") || !internal)
+              return -1;
+            jmethodID method = (*env)->GetStaticMethodID(
+                env, internal, "getContextObject", "()Landroid/os/IBinder;");
+            if (check_java(env, "binder-context-method") || !method)
+              return -1;
+            jobject reflected =
+                (*env)->ToReflectedMethod(env, internal, method, JNI_TRUE);
+            if (check_java(env, "binder-reflected-method") || !reflected)
+              return -1;
+            jclass executable = (*env)->FindClass(env, "java/lang/reflect/Executable");
+            jfieldID art_field = (*env)->GetFieldID(env, executable, "artMethod", "J");
+            if (check_java(env, "binder-art-method-field") || !art_field)
+              return -1;
+            uintptr_t art_method =
+                (uintptr_t)(*env)->GetLongField(env, reflected, art_field);
+            art_method &= 0x00ffffffffffffffULL;
+            if (!mapped_pointer(art_method, 32, 'r', NULL)) {
+              stage("BINDER_METHOD_LAYOUT_UNSUPPORTED method=%p", (void *)art_method);
+              return -1;
+            }
+            uintptr_t entry = 0;
+            memcpy(&entry, (void *)(art_method + 16), sizeof(entry));
+            if (!mapped_pointer(entry, 4, 'x', "/libandroid_runtime.so")) {
+              stage("BINDER_NATIVE_ENTRY_UNSUPPORTED entry=%p", (void *)entry);
+              return -1;
+            }
+            original_context_object = (jobject(*)(JNIEnv *, jclass))entry;
+            JNINativeMethod replacement = {"getContextObject", "()Landroid/os/IBinder;",
+                                           (void *)bridged_context_object};
+            if ((*env)->RegisterNatives(env, internal, &replacement, 1) != JNI_OK ||
+                check_java(env, "binder-register-local-bridge"))
+              return -1;
+            stage("BINDER_LOCAL_BRIDGE_INSTALLED original=%p method=%p", (void *)entry,
+                  (void *)art_method);
+            jmethodID verify =
+                (*env)->GetStaticMethodID(env, type, "verifyDirectPath", "()V");
+            if (check_java(env, "binder-verify-method") || !verify)
+              return -1;
+            (*env)->CallStaticVoidMethod(env, type, verify);
+            return check_java(env, "binder-direct-path-verify");
+          }
+          
+          /* Only this sample's APK read inputs are redirected to its byte-exact archive.
+           * All other calls execute the original function, including its errno handling.
+           * These three audited 16-byte prefixes contain no PC-relative instructions.
+           */
+          static char installed_apk[PATH_MAX], original_apk[PATH_MAX];
+          static void *(*real_dlsym)(void *, const char *);
+          static void **art_dlsym_slot;
+          static jint (*vendor_onload)(JavaVM *, void *);
+          static uintptr_t vendor_base;
+          static atomic_int archive_configured;
+          static atomic_uint archive_open_count;
+          /* 0=both, 1=capture-only, 2=protection observer, 3=read-only, 4=openat-only. */
+          static int diagnostic_mode;
+          
+          __asm__(".pushsection .rodata.input_jump,\"a\",%progbits\n"
+                  ".balign 8\n"
+                  ".global input_jump_template\n"
+                  ".hidden input_jump_template\n"
+                  "input_jump_template:\n"
+                  "ldr x16, 1f\n"
+                  "br x16\n"
+                  "1: .quad 0\n"
+                  ".size input_jump_template, .-input_jump_template\n"
+                  ".popsection\n");
+          extern const unsigned char input_jump_template[16];
+          
+          typedef struct {
+            uintptr_t rva;
+            unsigned char expected[16];
+            void *trampoline;
+            int installed;
+          } InputHook;
+          static InputHook read_hook = {.rva = 0x1ed710,
+                                        .expected = {0xf4, 0x0f, 0x1e, 0xf8, 0xf3, 0x7b,
+                                                     0x01, 0xa9, 0xf3, 0x03, 0x00, 0xaa,
+                                                     0xe1, 0x03, 0x14, 0x32}};
+          static InputHook openat_hook = {.rva = 0x25bc90,
+                                          .expected = {0x08, 0x07, 0x80, 0xd2, 0x01, 0x00,
+                                                       0x00, 0xd4, 0x1f, 0x04, 0x40, 0xb1,
+                                                       0x00, 0x94, 0x80, 0xda}};
+          
+          /* Optional process-local syscall input adapter. The original vendor code and
+           * its register/flag context are left untouched. This never replaces business
+           * methods. No ptrace or elevated privilege is needed by the target process.
+           */
+          #include <linux/audit.h>
+          #include <linux/filter.h>
+          #include <linux/seccomp.h>
+          #include <signal.h>
+          #include <stddef.h>
+          #include <sys/prctl.h>
+          #include <sys/syscall.h>
+          #include <sys/ucontext.h>
+          
+          #if !defined(__aarch64__)
+          #error This diagnostic adapter requires the real AArch64 signal ABI.
+          #endif
+          
+          /* Assembled by the NDK, with a named post-SVC PC for the BPF allow rule. */
+          __asm__(".pushsection .text.archive_raw_openat,\"ax\",%progbits\n"
+                  ".balign 4\n"
+                  ".global archive_raw_openat\n"
+                  ".hidden archive_raw_openat\n"
+                  ".type archive_raw_openat,%function\n"
+                  "archive_raw_openat:\n"
+                  "mov x8, #56\n"
+                  "svc #0\n"
+                  ".global archive_openat_resume\n"
+                  ".hidden archive_openat_resume\n"
+                  "archive_openat_resume:\n"
+                  "ret\n"
+                  ".size archive_raw_openat, .-archive_raw_openat\n"
+                  ".popsection\n");
+          extern long archive_raw_openat(long directory, const char *path, long flags,
+                                         long mode);
+          extern const unsigned char archive_openat_resume[];
+          static struct sigaction previous_sigsys;
+          static int self_memory_fd = -1;
+          static size_t installed_path_bytes;
+          static atomic_uint syscall_input_calls, syscall_input_redirects;
+          
+          static void syscall_input_signal(int signal_number, siginfo_t *info,
+                                           void *opaque_context) {
+            int saved_errno = errno;
+            if (signal_number != SIGSYS || !info || info->si_code != SYS_SECCOMP ||
+                info->si_errno != 0x360 || info->si_arch != AUDIT_ARCH_AARCH64 ||
+                info->si_syscall != __NR_openat) {
+              if (previous_sigsys.sa_handler == SIG_IGN) {
+                errno = saved_errno;
+                return;
+              }
+              if (previous_sigsys.sa_handler != SIG_DFL && previous_sigsys.sa_handler) {
+                if (previous_sigsys.sa_flags & SA_SIGINFO)
+                  previous_sigsys.sa_sigaction(signal_number, info, opaque_context);
+                else
+                  previous_sigsys.sa_handler(signal_number);
+              } else {
+                sigaction(SIGSYS, &previous_sigsys, NULL);
+                raise(SIGSYS);
+              }
+              errno = saved_errno;
+              return;
+            }
+            ucontext_t *context = opaque_context;
+            const char *path = (const char *)(uintptr_t)context->uc_mcontext.regs[1];
+            long flags = (long)context->uc_mcontext.regs[2];
+            const char *input = path;
+            atomic_fetch_add_explicit(&syscall_input_calls, 1, memory_order_relaxed);
+            if (diagnostic_mode != 7 && self_memory_fd >= 0 && installed_path_bytes &&
+                (flags & O_ACCMODE) == O_RDONLY &&
+                !(flags & (O_CREAT | O_TRUNC | O_APPEND))) {
+              /* pread is async-signal-safe and returns EFAULT/EIO for invalid pointers;
+               * do not dereference arbitrary syscall path pointers in the signal handler.
+               */
+              char copy[PATH_MAX];
+              uintptr_t pointer = (uintptr_t)path & 0x00ffffffffffffffULL;
+              ssize_t count =
+                  pread(self_memory_fd, copy, installed_path_bytes, (off_t)pointer);
+              int equal = count == (ssize_t)installed_path_bytes;
+              for (size_t i = 0; equal && i < installed_path_bytes; i++)
+                if (copy[i] != installed_apk[i])
+                  equal = 0;
+              if (equal) {
+                input = original_apk;
+                atomic_fetch_add_explicit(&syscall_input_redirects, 1,
+                                          memory_order_relaxed);
+              }
+            }
+            long result = archive_raw_openat((long)context->uc_mcontext.regs[0], input,
+                                             flags, (long)context->uc_mcontext.regs[3]);
+            /* The kernel restores all other GPRs, NZCV and FP/SIMD state. The existing
+             * original Bionic/private wrapper performs its own real errno translation.
+             */
+            context->uc_mcontext.regs[0] = (unsigned long)result;
+            errno = saved_errno;
+          }
+          
+          static int install_syscall_input(void) {
+            int dumpable = prctl(PR_GET_DUMPABLE, 0, 0, 0, 0);
+            if (dumpable < 0 || (!dumpable && prctl(PR_SET_DUMPABLE, 1, 0, 0, 0))) {
+              stage("SYSCALL_INPUT_DUMPABLE_QUERY_FAILED errno=%d", errno);
+              return -1;
+            }
+            self_memory_fd = open("/proc/self/mem", O_RDONLY | O_CLOEXEC);
+            int open_errno = errno;
+            if (!dumpable && prctl(PR_SET_DUMPABLE, 0, 0, 0, 0)) {
+              if (self_memory_fd >= 0)
+                close(self_memory_fd);
+              self_memory_fd = -1;
+              stage("SYSCALL_INPUT_DUMPABLE_RESTORE_FAILED errno=%d", errno);
+              return -1;
+            }
+            errno = open_errno;
+            if (self_memory_fd < 0) {
+              stage("SYSCALL_INPUT_SELF_MEMORY_UNAVAILABLE errno=%d", errno);
+              return -1;
+            }
+            installed_path_bytes = strlen(installed_apk) + 1;
+            if (installed_path_bytes > PATH_MAX)
+              return -1;
+            struct sigaction action;
+            memset(&action, 0, sizeof(action));
+            action.sa_flags = SA_SIGINFO | SA_RESTART;
+            action.sa_sigaction = syscall_input_signal;
+            sigemptyset(&action.sa_mask);
+            if (sigaction(SIGSYS, &action, &previous_sigsys))
+              return -1;
+            uintptr_t resume = (uintptr_t)archive_openat_resume;
+            struct sock_filter instructions[] = {
+                BPF_STMT(BPF_LD | BPF_W | BPF_ABS, offsetof(struct seccomp_data, arch)),
+                BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, AUDIT_ARCH_AARCH64, 0, 7),
+                BPF_STMT(BPF_LD | BPF_W | BPF_ABS, offsetof(struct seccomp_data, nr)),
+                BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_openat, 0, 5),
+                BPF_STMT(BPF_LD | BPF_W | BPF_ABS,
+                         offsetof(struct seccomp_data, instruction_pointer) + 4),
+                BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, (uint32_t)(resume >> 32), 0, 2),
+                BPF_STMT(BPF_LD | BPF_W | BPF_ABS,
+                         offsetof(struct seccomp_data, instruction_pointer)),
+                BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, (uint32_t)resume, 1, 0),
+                BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_TRAP | 0x360),
+                BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW),
+            };
+            struct sock_fprog program = {
+                .len = (unsigned short)(sizeof(instructions) / sizeof(instructions[0])),
+                .filter = instructions};
+            if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) ||
+                prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &program)) {
+              int failure_errno = errno;
+              sigaction(SIGSYS, &previous_sigsys, NULL);
+              close(self_memory_fd);
+              self_memory_fd = -1;
+              stage("SYSCALL_INPUT_FILTER_UNAVAILABLE errno=%d", failure_errno);
+              return -1;
+            }
+            int probe = openat(AT_FDCWD, "/dev/null", O_RDONLY | O_CLOEXEC, 0);
+            if (probe < 0 ||
+                !atomic_load_explicit(&syscall_input_calls, memory_order_relaxed)) {
+              stage("SYSCALL_INPUT_PROBE_FAILED fd=%d errno=%d", probe, errno);
+              if (probe >= 0)
+                close(probe);
+              return -1;
+            }
+            close(probe);
+            stage("SYSCALL_INPUT_READY mode=%d resume=%p trapped=%u redirects=%u "
+                  "no_new_privs=%d seccomp=%d vendor_code_modified=0",
+                  diagnostic_mode, (const void *)archive_openat_resume,
+                  atomic_load_explicit(&syscall_input_calls, memory_order_relaxed),
+                  atomic_load_explicit(&syscall_input_redirects, memory_order_relaxed),
+                  prctl(PR_GET_NO_NEW_PRIVS, 0, 0, 0, 0),
+                  prctl(PR_GET_SECCOMP, 0, 0, 0, 0));
+            return 0;
+          }
+          
+          #ifdef RESTORE_INPUT_SELFTEST
+          int main(int argc, char **argv) {
+            if (argc != 5)
+              return 2;
+            int uid = atoi(argv[1]);
+            if (uid < 10000 || setgid((gid_t)uid) || setuid((uid_t)uid))
+              return 3;
+            snprintf(installed_apk, sizeof(installed_apk), "%s", argv[2]);
+            snprintf(original_apk, sizeof(original_apk), "%s", argv[3]);
+            diagnostic_mode = 6;
+            char before[16] = {0}, after[16] = {0}, other[16] = {0};
+            int fd = open(installed_apk, O_RDONLY | O_CLOEXEC);
+            if (fd < 0 || read(fd, before, 8) != 8)
+              return 4;
+            close(fd);
+            if (install_syscall_input())
+              return 5;
+            fd = open(installed_apk, O_RDONLY | O_CLOEXEC);
+            if (fd < 0 || read(fd, after, 8) != 8)
+              return 6;
+            close(fd);
+            fd = open(argv[4], O_RDONLY | O_CLOEXEC);
+            if (fd < 0 || read(fd, other, 8) != 8)
+              return 7;
+            close(fd);
+            errno = 0;
+            int missing = open("/data/local/tmp/apk360-input-selftest-absent-25bc90",
+                               O_RDONLY | O_CLOEXEC);
+            int missing_errno = errno;
+            errno = 0;
+            int faulty =
+                openat(AT_FDCWD, (const char *)(uintptr_t)1, O_RDONLY | O_CLOEXEC, 0);
+            int faulty_errno = errno;
+            unsigned redirected =
+                atomic_load_explicit(&syscall_input_redirects, memory_order_relaxed);
+            int ok = !memcmp(before, "MODIFIED", 8) && !memcmp(after, "ORIGINAL", 8) &&
+                     !memcmp(other, "UNRELATED", 8) && missing == -1 &&
+                     missing_errno == ENOENT && faulty == -1 && faulty_errno == EFAULT &&
+                     redirected == 1;
+            printf("SELFTEST uid=%d before=%s after=%s unrelated=%s missing=%d "
+                   "missing_errno=%d faulty=%d faulty_errno=%d trapped=%u redirects=%u "
+                   "result=%s\n",
+                   getuid(), before, after, other, missing, missing_errno, faulty,
+                   faulty_errno,
+                   atomic_load_explicit(&syscall_input_calls, memory_order_relaxed),
+                   redirected, ok ? "PASS" : "FAIL");
+            return ok ? 0 : 8;
+          }
+          #endif
+          
+          static int memory_protection(uintptr_t address, size_t size) {
+            FILE *maps = fopen("/proc/self/maps", "r");
+            if (!maps)
+              return -1;
+            char line[2048], mode[5];
+            unsigned long begin, end;
+            int result = -1;
+            while (fgets(line, sizeof(line), maps)) {
+              if (sscanf(line, "%lx-%lx %4s", &begin, &end, mode) != 3)
+                continue;
+              if (size > end - begin || address < begin || address > end - size)
+                continue;
+              result = (mode[0] == 'r' ? PROT_READ : 0) |
+                       (mode[1] == 'w' ? PROT_WRITE : 0) |
+                       (mode[2] == 'x' ? PROT_EXEC : 0);
+              break;
+            }
+            fclose(maps);
+            return result;
+          }
+          
+          static int write_own_memory(void *destination, const void *bytes, size_t size) {
+            uintptr_t address = (uintptr_t)destination;
+            long page = sysconf(_SC_PAGESIZE);
+            if (page < 4096 || (page & (page - 1)))
+              return -1;
+            int protection = memory_protection(address, size);
+            if (protection < 0 || !(protection & PROT_READ))
+              return -1;
+            uintptr_t first = address & ~((uintptr_t)page - 1);
+            uintptr_t last =
+                (address + size + (uintptr_t)page - 1) & ~((uintptr_t)page - 1);
+            if (mprotect((void *)first, last - first, protection | PROT_WRITE)) {
+              stage("INPUT_WRITE_PERMISSION_FAILED address=%p errno=%d", destination,
+                    errno);
+              return -1;
+            }
+            if (size == sizeof(void *) && !(address & (sizeof(void *) - 1))) {
+              void *value;
+              memcpy(&value, bytes, sizeof(value));
+              __atomic_store_n((void **)destination, value, __ATOMIC_RELEASE);
+            } else
+              memcpy(destination, bytes, size);
+            __builtin___clear_cache((char *)destination, (char *)destination + size);
+            int result = mprotect((void *)first, last - first, protection);
+            if (memcmp(destination, bytes, size))
+              return -1;
+            return result;
+          }
+          
+          static int is_installed_input(const char *path) {
+            if (!path || !installed_apk[0])
+              return 0;
+            size_t length = strlen(installed_apk) + 1;
+            uintptr_t address = (uintptr_t)path & 0x00ffffffffffffffULL;
+            if (!mapped_pointer(address, length, 'r', NULL))
+              return 0;
+            return !strcmp(path, installed_apk);
+          }
+          
+          static const char *original_file_input(const char *path) {
+            if (diagnostic_mode == 5)
+              return path;
+            if (!is_installed_input(path))
+              return path;
+            unsigned count =
+                atomic_fetch_add_explicit(&archive_open_count, 1, memory_order_relaxed) +
+                1;
+            if (count <= 24)
+              stage("NATIVE_ARCHIVE_INPUT_OPEN n=%u requested=%s input=%s", count, path,
+                    original_apk);
+            return original_apk;
+          }
+          
+          static int redirected_read_open(const char *path) {
+            int (*original)(const char *) = (int (*)(const char *))read_hook.trampoline;
+            return original(original_file_input(path));
+          }
+          
+          static int redirected_openat(int directory, const char *path, int flags,
+                                       unsigned mode) {
+            int (*original)(int, const char *, int, unsigned) =
+                (int (*)(int, const char *, int, unsigned))openat_hook.trampoline;
+            const char *input = path;
+            if ((flags & O_ACCMODE) == O_RDONLY &&
+                !(flags & (O_CREAT | O_TRUNC | O_APPEND)))
+              input = original_file_input(path);
+            return original(directory, input, flags, mode);
+          }
+          
+          static int prepare_input_hook(InputHook *hook, void *replacement) {
+            void *entry = (void *)(vendor_base + hook->rva);
+            if (!mapped_pointer((uintptr_t)entry, 16, 'x', NULL) ||
+                memcmp(entry, hook->expected, 16)) {
+              stage("INPUT_CODE_SIGNATURE_MISMATCH rva=0x%lx", (unsigned long)hook->rva);
+              return -1;
+            }
+            long page = sysconf(_SC_PAGESIZE);
+            void *trampoline = mmap(NULL, (size_t)page, PROT_READ | PROT_WRITE,
+                                    MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+            if (trampoline == MAP_FAILED)
+              return -1;
+            memcpy(trampoline, entry, 16);
+            memcpy((char *)trampoline + 16, input_jump_template, 16);
+            uintptr_t continuation = (uintptr_t)entry + 16;
+            memcpy((char *)trampoline + 24, &continuation, sizeof(continuation));
+            __builtin___clear_cache(trampoline, (char *)trampoline + 32);
+            if (mprotect(trampoline, (size_t)page, PROT_READ | PROT_EXEC)) {
+              munmap(trampoline, (size_t)page);
+              return -1;
+            }
+            hook->trampoline = trampoline;
+            unsigned char branch[16];
+            memcpy(branch, input_jump_template, 16);
+            memcpy(branch + 8, &replacement, sizeof(replacement));
+            if (write_own_memory(entry, branch, 16)) {
+              munmap(trampoline, (size_t)page);
+              hook->trampoline = NULL;
+              return -1;
+            }
+            hook->installed = 1;
+            stage("NATIVE_INPUT_FUNCTION_READY rva=0x%lx trampoline=%p",
+                  (unsigned long)hook->rva, trampoline);
+            return 0;
+          }
+          
+          static void rollback_input_hook(InputHook *hook) {
+            if (hook->installed) {
+              if (write_own_memory((void *)(vendor_base + hook->rva), hook->expected, 16))
+                stage("INPUT_ROLLBACK_FAILED rva=0x%lx", (unsigned long)hook->rva);
+              else
+                hook->installed = 0;
+            }
+          }
+          
+          static int (*vendor_mprotect)(void *, size_t, int);
+          static void **vendor_mprotect_slot;
+          static atomic_int input_code_ready;
+          static unsigned decoder_protect_events;
+          static int arm_vendor_protection(void);
+          
+          static int input_mprotect(void *address, size_t length, int protection) {
+            int result = vendor_mprotect(address, length, protection);
+            if (result || !(protection & PROT_EXEC) || atomic_load(&input_code_ready))
+              return result;
+            uintptr_t first = vendor_base + read_hook.rva;
+            uintptr_t second = vendor_base + openat_hook.rva;
+            int one = memory_protection(first, 16), two = memory_protection(second, 16);
+            if (++decoder_protect_events <= 12)
+              stage("DECODER_EXEC_TRANSITION address=%p length=%zu prot=%d caller=%p "
+                    "read_prot=%d open_prot=%d",
+                    address, length, protection, __builtin_return_address(0), one, two);
+            if (one < 0 || two < 0 || !(one & PROT_EXEC) || !(two & PROT_EXEC) ||
+                memcmp((void *)first, read_hook.expected, 16) ||
+                memcmp((void *)second, openat_hook.expected, 16))
+              return result;
+            int success = 1;
+            if (diagnostic_mode != 2 && diagnostic_mode != 4)
+              success = !prepare_input_hook(&read_hook, (void *)redirected_read_open);
+            if (success && diagnostic_mode != 2 && diagnostic_mode != 3)
+              success = !prepare_input_hook(&openat_hook, (void *)redirected_openat);
+            if (!success) {
+              rollback_input_hook(&read_hook);
+              rollback_input_hook(&openat_hook);
+            }
+            atomic_store(&input_code_ready, success ? 1 : -1);
+            void *original = (void *)vendor_mprotect;
+            if (write_own_memory(vendor_mprotect_slot, &original, sizeof(original)))
+              stage("VENDOR_PROTECT_IMPORT_RESTORE_FAILED");
+            stage("DECODED_INPUT_FUNCTIONS_READY result=%d", success);
+            return result;
+          }
+          
+          static jint input_vendor_onload(JavaVM *vm, void *reserved) {
+            stage("GENUINE_VENDOR_ONLOAD_INTERCEPTED base=%p", (void *)vendor_base);
+            stage("DIAGNOSTIC_VENDOR_ONLOAD mode=%d", diagnostic_mode);
+            if (diagnostic_mode != 1 && arm_vendor_protection())
+              return JNI_ERR;
+            stage("GENUINE_VENDOR_ONLOAD_TAIL_FORWARD");
+            __attribute__((musttail)) return vendor_onload(vm, reserved);
+          }
+          
+          static void *input_dlsym(void *handle, const char *name) {
+            if (!handle || handle == RTLD_NEXT || !name || strcmp(name, "JNI_OnLoad")) {
+              /* Required tail call preserves libdl's original caller namespace. */
+              __attribute__((musttail)) return real_dlsym(handle, name);
+            }
+            void *symbol = real_dlsym(handle, name);
+            Dl_info info;
+            if (!symbol || !dladdr(symbol, &info) || !info.dli_fname ||
+                !strstr(info.dli_fname, "/.jiagu/libjiagu_vip_64.so") ||
+                (uintptr_t)symbol - (uintptr_t)info.dli_fbase != 0x2c5b88)
+              return symbol;
+            vendor_base = (uintptr_t)info.dli_fbase;
+            vendor_onload = (jint(*)(JavaVM *, void *))symbol;
+            void *original = (void *)real_dlsym;
+            if (write_own_memory(art_dlsym_slot, &original, sizeof(original))) {
+              stage("ART_DLSYM_RESTORE_FAILED");
+              return symbol;
+            }
+            stage("ART_DLSYM_RESTORED_VENDOR_CAPTURED symbol=%p", symbol);
+            return (void *)input_vendor_onload;
+          }
+          
+          static uintptr_t dynamic_pointer(uintptr_t base, uintptr_t end,
+                                           Elf64_Addr value) {
+            if (value >= base && value < end)
+              return (uintptr_t)value;
+            return base + (uintptr_t)value;
+          }
+          
+          typedef struct {
+            uintptr_t base;
+            const char *suffix;
+            const char *symbol;
+            void **slot;
+          } ImportLookup;
+          static int inspect_import_got(struct dl_phdr_info *info, size_t size,
+                                        void *context) {
+            (void)size;
+            ImportLookup *lookup = context;
+            if (!info->dlpi_name ||
+                (lookup->base && (uintptr_t)info->dlpi_addr != lookup->base) ||
+                (lookup->suffix && !strstr(info->dlpi_name, lookup->suffix)))
+              return 0;
+            uintptr_t base = (uintptr_t)info->dlpi_addr, end = base;
+            const Elf64_Dyn *dynamic = NULL;
+            size_t dynamic_count = 0;
+            for (Elf64_Half i = 0; i < info->dlpi_phnum; i++) {
+              const Elf64_Phdr *ph = &info->dlpi_phdr[i];
+              if (ph->p_type == PT_LOAD && base + ph->p_vaddr + ph->p_memsz > end)
+                end = base + ph->p_vaddr + ph->p_memsz;
+              if (ph->p_type == PT_DYNAMIC) {
+                dynamic = (const Elf64_Dyn *)(base + ph->p_vaddr);
+                dynamic_count = (size_t)ph->p_memsz / sizeof(*dynamic);
+              }
+            }
+            if (!dynamic || dynamic_count > 4096)
+              return 1;
+            const Elf64_Sym *symbols = NULL;
+            const char *strings = NULL;
+            const Elf64_Rela *jump = NULL, *rela = NULL;
+            size_t jump_size = 0, rela_size = 0, string_size = 0;
+            int jump_kind = 0;
+            for (size_t i = 0; i < dynamic_count && dynamic[i].d_tag != DT_NULL; i++) {
+              Elf64_Addr value = dynamic[i].d_un.d_ptr;
+              switch (dynamic[i].d_tag) {
+              case DT_SYMTAB:
+                symbols = (const Elf64_Sym *)dynamic_pointer(base, end, value);
+                break;
+              case DT_STRTAB:
+                strings = (const char *)dynamic_pointer(base, end, value);
+                break;
+              case DT_STRSZ:
+                string_size = (size_t)value;
+                break;
+              case DT_JMPREL:
+                jump = (const Elf64_Rela *)dynamic_pointer(base, end, value);
+                break;
+              case DT_PLTRELSZ:
+                jump_size = (size_t)value;
+                break;
+              case DT_PLTREL:
+                jump_kind = (int)value;
+                break;
+              case DT_RELA:
+                rela = (const Elf64_Rela *)dynamic_pointer(base, end, value);
+                break;
+              case DT_RELASZ:
+                rela_size = (size_t)value;
+                break;
+              default:
+                break;
+              }
+            }
+            if (!symbols || !strings || !string_size || string_size > 16777216)
+              return 1;
+            const Elf64_Rela *tables[2] = {jump_kind == DT_RELA ? jump : NULL, rela};
+            size_t lengths[2] = {jump_size, rela_size};
+            for (unsigned table = 0; table < 2; table++) {
+              if (!tables[table] || lengths[table] > 67108864 ||
+                  lengths[table] % sizeof(Elf64_Rela) ||
+                  !mapped_pointer((uintptr_t)tables[table], lengths[table], 'r', NULL))
+                continue;
+              for (size_t index = 0; index < lengths[table] / sizeof(Elf64_Rela);
+                   index++) {
+                const Elf64_Rela *rel = &tables[table][index];
+                unsigned type = ELF64_R_TYPE(rel->r_info);
+                if (type != R_AARCH64_JUMP_SLOT && type != R_AARCH64_GLOB_DAT)
+                  continue;
+                size_t symbol_index = ELF64_R_SYM(rel->r_info);
+                const Elf64_Sym *sym = &symbols[symbol_index];
+                if (!mapped_pointer((uintptr_t)sym, sizeof(*sym), 'r', NULL) ||
+                    sym->st_name >= string_size ||
+                    strcmp(strings + sym->st_name, lookup->symbol))
+                  continue;
+                void **slot = (void **)(base + rel->r_offset);
+                if (memory_protection((uintptr_t)slot, sizeof(void *)) < 0 ||
+                    !mapped_pointer((uintptr_t)*slot, 4, 'x', NULL))
+                  continue;
+                lookup->slot = slot;
+                stage("ELF_IMPORT_SLOT_FOUND symbol=%s slot=%p original=%p",
+                      lookup->symbol, (void *)slot, *slot);
+                return 1;
+              }
+            }
+            stage("ELF_IMPORT_SLOT_NOT_FOUND symbol=%s jump_size=%zu rela_size=%zu",
+                  lookup->symbol, jump_size, rela_size);
+            return 1;
+          }
+          
+          static int arm_vendor_protection(void) {
+            ImportLookup query = {.base = vendor_base, .symbol = "mprotect"};
+            dl_iterate_phdr(inspect_import_got, &query);
+            if (!query.slot) {
+              stage("VENDOR_PROTECTION_IMPORT_UNAVAILABLE");
+              return -1;
+            }
+            vendor_mprotect_slot = query.slot;
+            vendor_mprotect = (int (*)(void *, size_t, int))*query.slot;
+            void *replacement = (void *)input_mprotect;
+            if (write_own_memory(query.slot, &replacement, sizeof(replacement)))
+              return -1;
+            stage("VENDOR_DECODE_PROTECTION_OBSERVER_ARMED");
+            return 0;
+          }
+          
+          JNIEXPORT void JNICALL Java_lab_restore_NativeInput_configure(
+              JNIEnv *env, jclass type, jstring installed, jstring original) {
+            jfieldID mode_field =
+                (*env)->GetStaticFieldID(env, type, "diagnosticMode", "I");
+            if (!mode_field || check_java(env, "input-mode-field"))
+              return;
+            diagnostic_mode = (*env)->GetStaticIntField(env, type, mode_field);
+            if (diagnostic_mode < 0 || diagnostic_mode > 7) {
+              jclass error = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
+              if (error)
+                (*env)->ThrowNew(env, error, "Unsupported input mode");
+              return;
+            }
+            if (atomic_exchange_explicit(&archive_configured, 1, memory_order_acq_rel))
+              return;
+            const char *actual = (*env)->GetStringUTFChars(env, installed, NULL);
+            if (!actual)
+              return;
+            const char *archive = (*env)->GetStringUTFChars(env, original, NULL);
+            if (!archive) {
+              (*env)->ReleaseStringUTFChars(env, installed, actual);
+              return;
+            }
+            int valid =
+                strlen(actual) < sizeof(installed_apk) &&
+                strlen(archive) < sizeof(original_apk) &&
+                strstr(actual, "cn.chuci.and.wkfenshen") && strstr(actual, "/base.apk") &&
+                strstr(archive, "cn.chuci.and.wkfenshen") && strcmp(actual, archive);
+            if (valid) {
+              strcpy(installed_apk, actual);
+              strcpy(original_apk, archive);
+            }
+            (*env)->ReleaseStringUTFChars(env, original, archive);
+            (*env)->ReleaseStringUTFChars(env, installed, actual);
+            char log_path[PATH_MAX];
+            if (valid && snprintf(log_path, sizeof(log_path), "%s.native-input.log",
+                                  original_apk) < (int)sizeof(log_path))
+              journal_fd = open(
+                  log_path, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC | O_NOFOLLOW, 0600);
+            struct stat archive_stat;
+            if (!valid || stat(original_apk, &archive_stat) ||
+                !S_ISREG(archive_stat.st_mode) || archive_stat.st_uid != getuid() ||
+                archive_stat.st_size != 44934638)
+              goto failure;
+            if (diagnostic_mode == 6 || diagnostic_mode == 7) {
+              if (install_syscall_input())
+                goto failure;
+              return;
+            }
+            ImportLookup query = {.suffix = "/libart.so", .symbol = "dlsym"};
+            dl_iterate_phdr(inspect_import_got, &query);
+            art_dlsym_slot = query.slot;
+            if (query.slot)
+              real_dlsym = (void *(*)(void *, const char *)) * query.slot;
+            if (!art_dlsym_slot || !real_dlsym)
+              goto failure;
+            void *replacement = (void *)input_dlsym;
+            if (write_own_memory(art_dlsym_slot, &replacement, sizeof(replacement)))
+              goto failure;
+            stage("NATIVE_ARCHIVE_INPUT_ARMED actual=%s original=%s", installed_apk,
+                  original_apk);
+            return;
+          failure:
+            stage("NATIVE_ARCHIVE_INPUT_SETUP_FAILED");
+            jclass error = (*env)->FindClass(env, "java/lang/IllegalStateException");
+            if (error)
+              (*env)->ThrowNew(
+                  env, error,
+                  "Native archive input adapter unavailable; see startup log");
+          }
+          
+          JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
+            (void)reserved;
+            JNIEnv *env = NULL;
+            if ((*vm)->GetEnv(vm, (void **)&env, JNI_VERSION_1_6) != JNI_OK)
+              return JNI_ERR;
+            jclass input = (*env)->FindClass(env, "lab/restore/NativeInput");
+            jclass class_type = (*env)->FindClass(env, "java/lang/Class");
+            jmethodID get_loader = (*env)->GetMethodID(env, class_type, "getClassLoader",
+                                                       "()Ljava/lang/ClassLoader;");
+            if (check_java(env, "input-loader-method") || !input || !get_loader)
+              return JNI_ERR;
+            jobject loader = (*env)->CallObjectMethod(env, input, get_loader);
+            jclass loader_type = (*env)->FindClass(env, "java/lang/ClassLoader");
+            jmethodID load_class = (*env)->GetMethodID(
+                env, loader_type, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+            if (check_java(env, "input-helper-loader") || !loader || !load_class)
+              return JNI_ERR;
+            if (install_binder_bridge(env, loader, load_class))
+              return JNI_ERR;
+            stage("INPUT_BRIDGE_READY_ORIGINAL_VENDOR_NOT_LOADED_BY_HELPER");
+            return JNI_VERSION_1_6;
+          }
+          SOURCE
+          selected_ndk=""
+          for candidate in "${ANDROID_NDK_LATEST_HOME:-}" "${ANDROID_NDK_HOME:-}" /usr/local/lib/android/sdk/ndk/*; do
+            if [ -x "$candidate/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang" ]; then selected_ndk="$candidate"; break; fi
+          done
+          test -n "$selected_ndk"
+          "$selected_ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang" -Wall -Wextra -Werror -O2 -fPIC -shared -Wl,--build-id=none vip_bootstrap.c -o librestore_input_v6.so -llog -ldl
+          "$selected_ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-objdump" -d librestore_input_v6.so > disassembly.txt
+          "$selected_ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang" -Wall -Wextra -Werror -O2 -DRESTORE_INPUT_SELFTEST vip_bootstrap.c -o archive_input_selftest -llog -ldl
+          cat "$selected_ndk/source.properties" > BUILD.txt
+          sha256sum vip_bootstrap.c librestore_input_v6.so BUILD.txt disassembly.txt archive_input_selftest > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk360-native-input-20261118-v6
+          path: |
+            librestore_input_v6.so
+            vip_bootstrap.c
+            BUILD.txt
+            disassembly.txt
+            archive_input_selftest
+            SHA256SUMS
+          retention-days: 400
+
