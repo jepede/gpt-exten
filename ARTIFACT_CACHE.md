@@ -3359,3 +3359,28 @@ Requires the observed executable library base, scans the exact private-image ran
 | apk360-perf-break64 | v1 | Android API23+ / Linux perf | aarch64 | perf_break64 | c45e4658dc28202a46725782989ea1c4169c92169b397adb3ca58be47f94bcf5 |
 | apk360-perf-break64-source | v1 | source | portable C / ARM64 sample ABI | perf_break64.c | a6aa28143bdc96a66391ac2bf36a29934da51182540bc22a414ee11923cd898d |
 | apk360-perf-break64-build | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+## Artifact Record — APK360 configurable ARM64 hardware execution observer v2
+
+- Artifact Name: `apk360-perf-break64-20261118-v2`
+- Artifact ID: `14429037596`
+- Run ID: `44308743665`
+- Workflow: `.github/workflows/build-apk360-perf-break64-v2-20261118.yml`
+- File: `apk360-perf-break64-v2.zip`
+- Size: `9353` bytes
+- SHA256: `adca29419d00fa6f0a5b6716c186cf013dd1dd488d6c2d4cc7b0f30f06a09f08`
+- Created At: `2026-11-18T12:56:53Z`
+- Expires At: `2027-02-16T12:56:37Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-perf-break64-v2.zip`
+- Original Size: `9353` bytes
+- Original SHA256: `adca29419d00fa6f0a5b6716c186cf013dd1dd488d6c2d4cc7b0f30f06a09f08`
+- Part Count: 1
+- Build: runner preinstalled NDK r30 / API23, Wall/Wextra/Werror; no upstream toolchain download.
+- Validation: ZIP and every SHA256SUMS entry verified. Actual ARM64 hardware execution self-test 3 calls / 3 hits. Accepts 1–4 module RVAs, prints full x0..x30/SP/PC register samples, optionally reads selected register-address memory asynchronously through /proc/PID/mem. Memory reads are not atomic at breakpoint time; no target-code mutation/ptrace.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| apk360-perf-break64 | v2 | Android API23+ / Linux perf | aarch64 | perf_break64 | 7ac409f5967a90efb1b8db8ca026d6b24a04e314d9c4de6e58cb6d38e7f394d0 |
+| apk360-perf-break64-source | v2 | source | portable C / ARM64 sample ABI | perf_break64.c | c9b23d56b8acb384506241a1ec1f476d2f19cd4a9fed5854a7c91c586779ba6a |
+| apk360-perf-break64-build | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
