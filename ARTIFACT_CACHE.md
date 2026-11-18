@@ -3643,3 +3643,30 @@ Requires the observed executable library base, scans the exact private-image ran
 | helper source | v3 | C source | AArch64 target | vip_bootstrap.c | 2d84d11740c6cfbecb23cdbbda311ce842ea055fc0ec15d4f8c9205243c26a8e |
 | LLVM disassembly | v3 | LLVM objdump | aarch64 | disassembly.txt | 43782a5f7ef1201bdfd9f07c1aec3ea0fca98658c2dcfdea628087555e87db3a |
 | NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+
+## Artifact Record — APK360 input-stage diagnostic bridge v4
+
+- Artifact Name: `apk360-native-input-20261118-v4`
+- Artifact ID: `14440451255`
+- Run ID: `44332995493`
+- Workflow: `.github/workflows/build-apk360-native-input-v4-20261118.yml`
+- File: `apk360-native-input-v4.zip`
+- Size: `43808` bytes
+- SHA256: `48c15947da37b1fdbe89680ddbf6bc812159854c8acd4521a01791272d9f11f8`
+- Created At: `2026-11-18T15:13:13Z`
+- Expires At: `2027-02-16T15:12:50Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-native-input-v4.zip`
+- Original Size: `43808` bytes
+- Original SHA256: `48c15947da37b1fdbe89680ddbf6bc812159854c8acd4521a01791272d9f11f8`
+- Part Count: 1
+- Build: only own helper source, existing Actions NDK r30/API23; sample APK never uploaded. ZIP and all member SHA256SUMS verified, compiled source equals local source.
+- Validation: v4 runtime pending; its stage controls isolate the v3 regression. Full v3 hooks still failed genuine inner JNI under the app-private ROOT original-file control; not a completed repair.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| input-stage control helper | v4 | Android API23+ | aarch64 | librestore_input_v4.so | 3f96fe16d3c2a730770f45f3d9132a892ba118a7f97a5d84bbeddca84a8c2109 |
+| helper source | v4 | C source | AArch64 target | vip_bootstrap.c | 23ac98c8a468f2d4b343a7a56e2e557690acab7bc9db50ac80d9c0c78752884b |
+| LLVM disassembly | v4 | LLVM objdump | aarch64 | disassembly.txt | 185c9740f8605a3a35fb475fe4730238b863b55eeea699cb139a1ac6c57e8f49 |
+| NDK metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
