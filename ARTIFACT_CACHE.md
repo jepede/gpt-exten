@@ -3384,3 +3384,29 @@ Requires the observed executable library base, scans the exact private-image ran
 | apk360-perf-break64 | v2 | Android API23+ / Linux perf | aarch64 | perf_break64 | 7ac409f5967a90efb1b8db8ca026d6b24a04e314d9c4de6e58cb6d38e7f394d0 |
 | apk360-perf-break64-source | v2 | source | portable C / ARM64 sample ABI | perf_break64.c | c9b23d56b8acb384506241a1ec1f476d2f19cd4a9fed5854a7c91c586779ba6a |
 | apk360-perf-break64-build | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+## Artifact Record — APK360 sample-local JNI bootstrap v1
+
+- Artifact Name: `apk360-native-bootstrap-20261118-v1`
+- Artifact ID: `14431486121`
+- Run ID: `44312727158`
+- Workflow: `.github/workflows/build-apk360-native-bootstrap-v1-20261118.yml`
+- File: `apk360-native-bootstrap-v1.zip`
+- Size: `9377` bytes
+- SHA256: `e0a346a639cb4257d4cde82b344314d330217d4f046c265648ac32b54977c8cf`
+- Created At: `2026-11-18T13:20:46Z`
+- Expires At: `2027-02-16T13:20:34Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-native-bootstrap-v1.zip`
+- Original Size: `9377` bytes
+- Original SHA256: `e0a346a639cb4257d4cde82b344314d330217d4f046c265648ac32b54977c8cf`
+- Part Count: 1
+- Build: preinstalled NDK r30 / API23, Wall/Wextra/Werror; no upstream toolchain download. Only own bootstrap source was sent to Actions.
+- Verification: artifact ZIP SHA256 and all SHA256SUMS members verified. Runtime validation is separate; no claim of restored APK success.
+- Purpose: app-local JNI bootstrap + durable startup journal, invokes genuine original vendor JNI after app-local public-certificate input setup; retains original primary DEX and manifest. No fabricated business methods.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| APK360 JNI bootstrap | v1 | Android API23+ | aarch64 | libjiagu_vip_64.so | e7f45679aaa4c4ad1d7c9ec51e9dac8fba82456b2ed05ca77f99f247f453ad3f |
+| APK360 JNI bootstrap source | v1 | C source | Android aarch64 target | vip_bootstrap.c | 5077fa0702c718152a0c834643dd0d29ed81fad0a889d1864070cd7a6fa29e94 |
+| Android NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
