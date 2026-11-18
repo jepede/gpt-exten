@@ -3271,3 +3271,34 @@ Directory hashes use SHA256 of sorted manifest lines `FILE_SHA256  RELATIVE_PATH
 | Source | 20261118-v1 | Portable C source | AArch64 target | `restore_dtc_guard.c` | `1be5b317e2381826febc221e57729d2eb071b7969bbf31b455003731ea91666a` |
 
 Compiled with the runner's preinstalled Android NDK r30 (30.0.16248370), API23. No additional NDK download was performed. Artifact includes BUILD.txt and llvm-objdump disassembly. This compatibility helper targets the instruction signature of the supplied libjgdtc build; it is not a general unpacker.
+
+
+## Artifact Record: APK360 DTC compatibility helper direct-syscall reader v2
+
+- Name: APK360 exact-build DTC multidex compatibility helper
+- Version: 20261118-v2
+- Platform: Android API23+
+- Architecture: arm64-v8a / AArch64
+- Artifact Name: `apk360-dtc-guard-20261118-v2`
+- Artifact ID: `14417753283`
+- Run ID: `44284875147`
+- Workflow: `.github/workflows/build-apk360-dtc-guard-v2-20261118.yml`
+- File: `apk360-dtc-guard-v2.zip`
+- Size: 11472 bytes
+- SHA256: `b8bc735cd36bbe1ecc733b80ad858262c6f7b054af2d165586758b64a320f68f`
+- Created At: `2026-11-18T10:23:18Z`
+- Expires At: `2027-02-16T10:23:00Z` (actual GitHub value, verified unexpired)
+- Storage Mode: SINGLE
+- Original File: `librestore_dtc_guard.so`
+- Original Size: 8960 bytes
+- Original SHA256: `01de9cc724998d9ff39a4aaec8a02de21e767c06a6c70660cf8f2661a1729ac3`
+- Part Count: 1
+- Requested retention-days: 400; effective expiry above governs.
+- Verification: Artifact ZIP and every SHA256SUMS entry verified. Compiler is the runner's preinstalled Android NDK r30, 30.0.16248370, target API23; no NDK download.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| DTC compatibility helper | 20261118-v2 | Android API23+ | arm64-v8a | `librestore_dtc_guard.so` | `01de9cc724998d9ff39a4aaec8a02de21e767c06a6c70660cf8f2661a1729ac3` |
+| Source | 20261118-v2 | C source | AArch64 target | `restore_dtc_guard.c` | `a4b95515fb66ac4a46308dd0449041aaa740af06d90d333aae1e8f0063d2238e` |
+
+Uses direct AArch64 kernel file reads and a strict instruction signature for the supplied DTC build. Scope is compatibility testing of recovered DEX; not a general unpacker. Includes BUILD.txt and llvm-objdump evidence.
