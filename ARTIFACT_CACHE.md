@@ -3589,3 +3589,30 @@ Requires the observed executable library base, scans the exact private-image ran
 | native input bridge | v1 | Android API23+ | aarch64 | librestore_input_v1.so | 7db3a3519eda25e9af16b7f727bc73e320c710b3df8a0bc690c8cc8f88a28498 |
 | native input source | v1 | C source | AArch64 target | vip_bootstrap.c | 79e276344682918b77ba2c15e3291e6cb9e992bfa1e69ccf5f28294f2ef9e7b2 |
 | NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+
+## Artifact Record — APK360 scoped native original-file input bridge v2
+
+- Artifact Name: `apk360-native-input-20261118-v2`
+- Artifact ID: `14436852223`
+- Run ID: `44326647650`
+- Workflow: `.github/workflows/build-apk360-native-input-v2-20261118.yml`
+- File: `apk360-native-input-v2.zip`
+- Size: `40045` bytes
+- SHA256: `df74ec60516abb6b73512322a1d66e7101dad5617753e4fd350a1ad8cb8adc38`
+- Created At: `2026-11-18T14:39:49Z`
+- Expires At: `2027-02-16T14:39:27Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-native-input-v2.zip`
+- Original Size: `40045` bytes
+- Original SHA256: `df74ec60516abb6b73512322a1d66e7101dad5617753e4fd350a1ad8cb8adc38`
+- Part Count: 1
+- Build: preinstalled NDK r30/API23, own source only, no upstream download. ZIP and all SHA256SUMS verified.
+- Validation: Build and static disassembly only, runtime pending. Clang musttail path verified to restore LR/frame then BR original function. NDK-assembled jump template; original file-open prefixes audited with LLVM. This is an APK input adapter, not restored business implementations or completed devirtualization.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| native original-file adapter | v2 | Android API23+ | aarch64 | librestore_input_v2.so | 1f6c39524c530fea8d62facd40e299196e4c5f9173676907e47c48a9e89db426 |
+| native adapter source | v2 | C source | AArch64 target | vip_bootstrap.c | f0a032a6c12bc90f2f7b64dd8ba1b709c98c7807b2d9021ced7af1168c965f62 |
+| LLVM disassembly | v2 | LLVM objdump | aarch64 | disassembly.txt | 2a6796a41e6a21687fdaed57699034b2ad354e473de434a71cd9fbfda43e3edc |
+| NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
