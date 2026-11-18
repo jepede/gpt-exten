@@ -3146,3 +3146,39 @@ On a native AArch64 runner, Keystone assembled two instructions, Capstone decode
 | Native r2ghidra plugin | 6.2.2 | Linux / glibc | AArch64 | `usr/lib/radare2/6.2.2/core_ghidra.so` inside runtime bundle | `7b5ce33d60306deba1c0fed793ab55cfae7dfdec0c84a76c277f94758e114966` |
 
 Restore by calling `download_workflow_artifact` with ID 14161251322, verifying the ZIP SHA256, checking its `SHA256SUMS` file and extracting the runtime tarball. Use `bin/r2` inside the chosen installation prefix.
+
+
+## Artifact Record: APK DEX analysis tools Linux x86_64 Python 3.12 / Android ARM64 (2026-11-18)
+
+- Artifact Name: `apk360-tools-20261118-part-00`, `apk360-tools-20261118-part-01`; metadata `apk360-tools-20261118-metadata`
+- Artifact IDs: `14410417894`, `14410417900`; metadata `14411435276`
+- Run ID: `44267070294`
+- Workflow: `.github/workflows/cache-apk360-tools-20261118.yml`
+- File: `apk360-tools-linux-x86_64-python312-v1.tar.gz`
+- Original File: `apk360-tools-linux-x86_64-python312-v1.tar.gz`
+- Original Size: `170608847` bytes
+- Original SHA256: `9984d4711ebd0aae64df9572907005e907b85ecf707e63a605adbea283a7d2e4`
+- Size: Artifact ZIP sizes `94372008` + `76237175` bytes, metadata `325` bytes
+- SHA256: see per-artifact ZIP and raw-part digests below
+- Created At: `2026-11-18T08:27:47Z` through `2026-11-18T08:27:50Z`
+- Expires At: `2027-02-16T08:27:01Z` (actual GitHub value)
+- Storage Mode: `SPLIT`
+- Part Count: `2` (90 MiB first part, each separate Artifact below 100 MB)
+- Requested retention-days: `400`; actual expiry above governs
+- Local verification: Artifact ZIP SHA256/CRC, raw-part SHA256, reconstructed original size/SHA256, Android build tools and Python imports checked
+
+| Part | Artifact ID | Artifact Name | File | Raw Size | Raw SHA256 | Artifact ZIP SHA256 |
+|---:|---:|---|---|---:|---|---|
+| 1/2 | 14410417894 | apk360-tools-20261118-part-00 | apk360-tools.tar.gz.part.00 | 94371840 | ed556376ae0c9b6e5d4c5ce3cb2f3f3496ba0ad0d408f09a5ec118445977c4dd | d477368fce917b4820d85f16f219ff270ea9beaca212041b0d04ddbe2eafae3d |
+| 2/2 | 14410417900 | apk360-tools-20261118-part-01 | apk360-tools.tar.gz.part.01 | 76237007 | 0efe22a4c10ece3f333c912bbd3a9c2f4c7b38d4db7beb156881dd974cd44a60 | 07096a6b1048db475bf3c529e0eb98b3196fe4b420ea635757c626988d6e4eff |
+| metadata | 14411435276 | apk360-tools-20261118-metadata | SHA256SUMS | see ZIP | see original hashes | e05988b8bb705f3d29b64c2e338ecd06874100a0aee7519ede07af492a59eab5 |
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Apktool | 2.12.1 | Java / Linux | Any JVM | bin/apktool_2.12.1.jar | 66cf4524a4a45a7f56567d08b2c9b6ec237bcdd78cee69fd4a59c8a0243aeafa |
+| Frida server | 16.5.9 | Android | arm64-v8a | bin/frida-server-16.5.9-android-arm64.xz | ed557802fedeef4155f25fea61f55041e629811c9cb6571a161ed9629162caed |
+| Frida Python client | 16.5.9 | Linux / Python 3.12 | x86_64 | python/frida | 9cf85c839055e94e6130f5ec5f1e00281e5a5dc04388f85f9b868425614b3272 |
+| Androguard | 4.1.3 | Linux / Python 3.12 | x86_64 environment | python/androguard | 6de63f77c5ad3feb76cf8c3fd8c0e576671886871373d98d7670a7b24d163c03 |
+| zstandard | 0.23.0 | Linux / Python 3.12 | x86_64 | python/zstandard | 0fde12666e62df479effb79bfabd77f8ebd3c554c687e5052270ab2e36c54184 |
+
+Directory hashes use SHA256 of sorted manifest lines `FILE_SHA256  RELATIVE_PATH\n` for files inside that directory. The bundle also includes all pinned-tool Python dependencies and a complete MANIFEST.json. Restore both part Artifacts in order and verify the reconstructed TAR.GZ SHA256 before extraction. Do not re-download these upstream tools while these Artifacts remain valid.
