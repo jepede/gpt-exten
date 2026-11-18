@@ -3698,3 +3698,32 @@ Requires the observed executable library base, scans the exact private-image ran
 | source | v5 | C source | AArch64 target | vip_bootstrap.c | 76537c1bf1303c397517975ca3c676c35ffc526393d4d02977e9004d6a5723ce |
 | LLVM disassembly | v5 | LLVM objdump | aarch64 | disassembly.txt | da6f5b0de27d7e8e004701fa9550321ab9ceeb11e054218bd2b2d4a87c6068ce |
 | NDK metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+
+## Artifact Record — APK360 syscall-input diagnostic v6
+
+- Artifact Name: `apk360-native-input-20261118-v6`
+- Artifact ID: `14440388599`
+- Run ID: `44335472636`
+- Workflow: `.github/workflows/build-apk360-native-input-v6-20261118.yml`
+- File: `apk360-native-input-v6.zip`
+- Size: `66100` bytes
+- SHA256: `d034ec2335525765ff68b2133509e6bd5a01485fa30b32f3953766ac7165d547`
+- Created At: `2026-11-18T15:25:43Z`
+- Expires At: `2027-02-16T15:25:29Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-native-input-v6.zip`
+- Original Size: `66100` bytes
+- Original SHA256: `d034ec2335525765ff68b2133509e6bd5a01485fa30b32f3953766ac7165d547`
+- Part Count: 1
+- Build: own source only, existing Actions NDK r30/API23, no upstream download or sample upload. Every member hash verified; compiled source byte-equals canonical local source.
+- Validation: v5 UID19999 selftest setup exited5. v6 temporarily enables dumpability only to open own /proc/self/mem, restores prior state before input filtering, and exposes selftest diagnostics on stderr; runtime test pending. No completed APK claim.
+- Limitation: adds NO_NEW_PRIVS to its own process; privileged descendants and full app features require separate validation.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| diagnostic helper | v6 | Android API23+ | aarch64 | librestore_input_v6.so | 9edcdaccc9ba8df4fdfd73313ace235fee0126e18fd9ff10b4ed64a990602d58 |
+| nonroot CLI selftest | v6 | Android API23+ | aarch64 | archive_input_selftest | 367e2c0006589e3b38116a751587f70d1c29bda7a13d3fb615aae1317bf6027c |
+| source | v6 | C source | AArch64 target | vip_bootstrap.c | 5f7e44d5a1c453fce9b66ee111c399597198f0fa3b1565c8a2ed01c143b9bbd4 |
+| LLVM disassembly | v6 | LLVM objdump | aarch64 | disassembly.txt | 05a6522864fd737fb4239c4041b89051195713cbf7f819b8e03219a50e3c6c09 |
+| NDK metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
