@@ -1,0 +1,439 @@
+name: Build sample-local ARM64 hardware write observer
+on:
+  push:
+    paths: ['.github/workflows/build-apk360-watch-config-v4-20261118.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Compile with preinstalled NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > perf_break64.c <<'SOURCE'
+          /* Read-only AArch64 hardware execution-breakpoint observer for the local lab.
+           * Uses perf_event_open; does not ptrace, change code, or replace JNI methods.
+           */
+          #include <dirent.h>
+          #include <errno.h>
+          #include <fcntl.h>
+          #include <linux/hw_breakpoint.h>
+          #include <linux/perf_event.h>
+          #include <pthread.h>
+          #include <stdint.h>
+          #include <stdio.h>
+          #include <stdlib.h>
+          #include <string.h>
+          #include <sys/ioctl.h>
+          #include <sys/mman.h>
+          #include <sys/syscall.h>
+          #include <time.h>
+          #include <unistd.h>
+          
+          struct observer {
+            int fd;
+            void *mapping;
+            size_t length;
+            uint64_t count;
+            const char *name;
+            int memory_fd;
+            int output_fd;
+          };
+          
+          static unsigned observer_type = HW_BREAKPOINT_X;
+          static struct observer watched[128];
+          static unsigned watched_count;
+          static int watched_tids[64];
+          static unsigned watched_tid_count;
+          static char watched_names[128][48];
+          static int watched_pid;
+          static uintptr_t watched_base;
+          static int writes_armed;
+          
+          static double seconds(void) {
+            struct timespec now;
+            clock_gettime(CLOCK_MONOTONIC, &now);
+            return now.tv_sec + now.tv_nsec / 1e9;
+          }
+          
+          static int open_observer(struct observer *o, int pid, uintptr_t address,
+                                   const char *name) {
+            struct perf_event_attr attr = {0};
+            attr.type = PERF_TYPE_BREAKPOINT;
+            attr.size = sizeof(attr);
+            attr.bp_type = observer_type;
+            attr.inherit = observer_type == HW_BREAKPOINT_W;
+            attr.bp_addr = address;
+            attr.bp_len = observer_type == HW_BREAKPOINT_X ? HW_BREAKPOINT_LEN_4
+                                                           : HW_BREAKPOINT_LEN_8;
+            attr.sample_period = 1;
+            attr.sample_type = PERF_SAMPLE_IP | PERF_SAMPLE_TID | PERF_SAMPLE_TIME |
+                               PERF_SAMPLE_REGS_USER;
+            /* Linux AArch64 UAPI: x0..x30, SP, PC, in enum perf_event_arm_regs order. */
+            attr.sample_regs_user = (1ULL << 33) - 1;
+            attr.exclude_kernel = 1;
+            attr.exclude_hv = 1;
+            attr.wakeup_events = 1;
+            o->fd = syscall(SYS_perf_event_open, &attr, pid, -1, -1, 0);
+            o->name = name;
+            char memory_path[96];
+            snprintf(memory_path, sizeof(memory_path), "/proc/%d/mem",
+                     pid ? pid : getpid());
+            o->memory_fd = open(memory_path, O_RDONLY | O_CLOEXEC);
+            if (o->fd < 0) {
+              printf("OPEN_FAILED name=%s pid=%d address=0x%lx errno=%d %s\n", name, pid,
+                     (unsigned long)address, errno, strerror(errno));
+              return -1;
+            }
+            o->output_fd = -1;
+            int ring_fd = o->fd;
+            if (observer_type == HW_BREAKPOINT_W) {
+              struct perf_event_attr output_attr = {0};
+              output_attr.type = PERF_TYPE_SOFTWARE;
+              output_attr.size = sizeof(output_attr);
+              output_attr.config = PERF_COUNT_SW_DUMMY;
+              output_attr.disabled = 1;
+              output_attr.sample_type = attr.sample_type;
+              output_attr.sample_regs_user = attr.sample_regs_user;
+              output_attr.exclude_kernel = 1;
+              output_attr.exclude_hv = 1;
+              o->output_fd = syscall(SYS_perf_event_open, &output_attr, pid, -1, -1, 0);
+              if (o->output_fd < 0) {
+                printf("OUTPUT_ANCHOR_FAILED name=%s errno=%d %s\n", name, errno,
+                       strerror(errno));
+                if (o->output_fd >= 0)
+                  close(o->output_fd);
+                close(o->fd);
+                o->fd = -1;
+                return -1;
+              }
+              ring_fd = o->output_fd;
+            }
+            o->length = (size_t)sysconf(_SC_PAGESIZE) * 9;
+            o->mapping =
+                mmap(NULL, o->length, PROT_READ | PROT_WRITE, MAP_SHARED, ring_fd, 0);
+            if (o->mapping == MAP_FAILED) {
+              printf("MMAP_FAILED name=%s errno=%d %s\n", name, errno, strerror(errno));
+              if (o->output_fd >= 0)
+                close(o->output_fd);
+              close(o->fd);
+              o->fd = -1;
+              return -1;
+            }
+            /* SET_OUTPUT requires the destination ring to exist already. */
+            if (o->output_fd >= 0 &&
+                ioctl(o->fd, PERF_EVENT_IOC_SET_OUTPUT, o->output_fd)) {
+              printf("SET_OUTPUT_FAILED name=%s errno=%d %s\n", name, errno,
+                     strerror(errno));
+              munmap(o->mapping, o->length);
+              close(o->output_fd);
+              close(o->fd);
+              o->fd = -1;
+              return -1;
+            }
+            printf("BREAKPOINT_ARMED name=%s pid=%d address=0x%lx fd=%d\n", name, pid,
+                   (unsigned long)address, o->fd);
+            return 0;
+          }
+          
+          static void watch_tid(int tid, uintptr_t object) {
+            for (unsigned i = 0; i < watched_tid_count; ++i)
+              if (watched_tids[i] == tid)
+                return;
+            if (watched_tid_count >= 64 || watched_count + 2 > 128)
+              return;
+            watched_tids[watched_tid_count++] = tid;
+            const uintptr_t addresses[2] = {object, watched_base + 0x2b8398};
+            const char *kinds[2] = {"vtable", "singleton"};
+            observer_type = HW_BREAKPOINT_W;
+            for (unsigned i = 0; i < 2; ++i) {
+              unsigned slot = watched_count++;
+              watched[slot].fd = -1;
+              snprintf(watched_names[slot], sizeof(watched_names[slot]), "%s-tid-%d",
+                       kinds[i], tid);
+              open_observer(&watched[slot], tid, addresses[i], watched_names[slot]);
+            }
+            observer_type = HW_BREAKPOINT_X;
+          }
+          
+          static void watch_all_threads(uintptr_t object) {
+            watch_tid(watched_pid, object);
+            char path[96];
+            snprintf(path, sizeof(path), "/proc/%d/task", watched_pid);
+            DIR *directory = opendir(path);
+            if (!directory)
+              return;
+            struct dirent *entry;
+            while ((entry = readdir(directory))) {
+              int tid = atoi(entry->d_name);
+              if (tid > 0)
+                watch_tid(tid, object);
+            }
+            closedir(directory);
+            printf("ALL_THREAD_WRITE_WATCHES threads=%u events=%u inherit=1\n",
+                   watched_tid_count, watched_count);
+          }
+          
+          static uint64_t value64(const unsigned char *p) {
+            uint64_t value;
+            memcpy(&value, p, sizeof(value));
+            return value;
+          }
+          
+          static void drain(struct observer *o) {
+            struct perf_event_mmap_page *page = o->mapping;
+            uint64_t head = __atomic_load_n(&page->data_head, __ATOMIC_ACQUIRE);
+            uint64_t tail = page->data_tail;
+            size_t ring_size = page->data_size;
+            const unsigned char *ring = (unsigned char *)o->mapping + page->data_offset;
+            while (tail < head) {
+              unsigned char record[4096];
+              struct perf_event_header header;
+              for (size_t i = 0; i < sizeof(header); ++i)
+                ((unsigned char *)&header)[i] = ring[(tail + i) % ring_size];
+              if (header.size < sizeof(header) || header.size > sizeof(record) ||
+                  tail + header.size > head) {
+                printf("BAD_RING_RECORD name=%s size=%u\n", o->name, header.size);
+                break;
+              }
+              for (size_t i = 0; i < header.size; ++i)
+                record[i] = ring[(tail + i) % ring_size];
+              if (header.type == PERF_RECORD_SAMPLE && header.size >= 40 + 33 * 8) {
+                ++o->count;
+                if (o->count <= 80) {
+                  printf(
+                      "HIT name=%s n=%llu ip=0x%llx tid_pair=0x%llx time=%llu abi=%llu",
+                      o->name, (unsigned long long)o->count,
+                      (unsigned long long)value64(record + 8),
+                      (unsigned long long)value64(record + 16),
+                      (unsigned long long)value64(record + 24),
+                      (unsigned long long)value64(record + 32));
+                  for (unsigned i = 0; i < 31; ++i)
+                    printf(" x%u=0x%llx", i,
+                           (unsigned long long)value64(record + 40 + i * 8));
+                  printf(" lr=0x%llx sp=0x%llx pc=0x%llx\n",
+                         (unsigned long long)value64(record + 40 + 30 * 8),
+                         (unsigned long long)value64(record + 40 + 31 * 8),
+                         (unsigned long long)value64(record + 40 + 32 * 8));
+                }
+                if (!writes_armed && !strcmp(o->name, "constructor") && o->count == 1) {
+                  uintptr_t object =
+                      (uintptr_t)value64(record + 40) & 0x00ffffffffffffffULL;
+                  watch_all_threads(object);
+                  writes_armed = 1;
+                  printf("WRITE_WATCH_SETUP object=0x%lx singleton=0x%lx\n",
+                         (unsigned long)object, (unsigned long)(watched_base + 0x2b8398));
+                }
+                if (o->count <= 12 && o->memory_fd >= 0) {
+                  const unsigned snapshot_registers[] = {19, 20, 21, 23, 25, 28};
+                  for (unsigned k = 0;
+                       k < sizeof(snapshot_registers) / sizeof(snapshot_registers[0]);
+                       ++k) {
+                    unsigned index = snapshot_registers[k];
+                    uint64_t address = value64(record + 40 + index * 8);
+                    address &= 0x00ffffffffffffffULL;
+                    unsigned char bytes[192];
+                    ssize_t got =
+                        pread(o->memory_fd, bytes, sizeof(bytes), (off_t)address);
+                    printf("ASYNC_MEMORY name=%s n=%llu reg=x%u address=0x%llx size=%ld "
+                           "data=",
+                           o->name, (unsigned long long)o->count, index,
+                           (unsigned long long)address, (long)got);
+                    for (ssize_t i = 0; i < got; ++i)
+                      printf("%02x", bytes[i]);
+                    putchar('\n');
+                  }
+                }
+              } else if (header.type == PERF_RECORD_LOST) {
+                printf("LOST name=%s count=%llu\n", o->name,
+                       (unsigned long long)value64(record + 16));
+              }
+              tail += header.size;
+            }
+            __atomic_store_n(&page->data_tail, tail, __ATOMIC_RELEASE);
+          }
+          
+          static volatile unsigned selftest_value __attribute__((aligned(8)));
+          __attribute__((noinline, aligned(4))) static void selftest_target(void) {
+            selftest_value++;
+          }
+          
+          static void *selftest_child(void *unused) {
+            (void)unused;
+            for (unsigned i = 0; i < 3; ++i)
+              selftest_target();
+            return NULL;
+          }
+          
+          static int find_process(const char *name) {
+            DIR *directory = opendir("/proc");
+            if (!directory)
+              return -1;
+            struct dirent *entry;
+            int found = -1;
+            while ((entry = readdir(directory))) {
+              int pid = atoi(entry->d_name);
+              if (pid <= 0)
+                continue;
+              char path[96], actual[256] = {0};
+              snprintf(path, sizeof(path), "/proc/%d/cmdline", pid);
+              int fd = open(path, O_RDONLY);
+              if (fd < 0)
+                continue;
+              ssize_t size = read(fd, actual, sizeof(actual) - 1);
+              close(fd);
+              if (size > 0 && !strcmp(actual, name)) {
+                found = pid;
+                break;
+              }
+            }
+            closedir(directory);
+            return found;
+          }
+          
+          static uintptr_t module_base(int pid, const char *module) {
+            char path[96], line[2048];
+            snprintf(path, sizeof(path), "/proc/%d/maps", pid);
+            FILE *maps = fopen(path, "r");
+            if (!maps)
+              return 0;
+            uintptr_t result = 0;
+            while (fgets(line, sizeof(line), maps)) {
+              unsigned long start, end, offset;
+              char mode[5];
+              if (strstr(line, module) &&
+                  sscanf(line, "%lx-%lx %4s %lx", &start, &end, mode, &offset) == 4 &&
+                  mode[2] == 'x') {
+                result = start;
+                break;
+              }
+            }
+            fclose(maps);
+            return result;
+          }
+          
+          int main(int argc, char **argv) {
+            setvbuf(stdout, NULL, _IONBF, 0);
+            struct observer observers[4] = {
+                {.fd = -1}, {.fd = -1}, {.fd = -1}, {.fd = -1}};
+            if (argc == 2 && !strcmp(argv[1], "selftest")) {
+              if (open_observer(&observers[0], 0, (uintptr_t)selftest_target, "selftest"))
+                return 3;
+              for (unsigned i = 0; i < 3; ++i)
+                selftest_target();
+              usleep(20000);
+              drain(&observers[0]);
+              printf("SELFTEST count=%llu value=%u\n",
+                     (unsigned long long)observers[0].count, selftest_value);
+              if (observers[0].count != 3)
+                return 4;
+              munmap(observers[0].mapping, observers[0].length);
+              close(observers[0].fd);
+              close(observers[0].memory_fd);
+              struct observer write_test = {.fd = -1};
+              observer_type = HW_BREAKPOINT_W;
+              if (open_observer(&write_test, 0, (uintptr_t)&selftest_value,
+                                "selftest-write"))
+                return 8;
+              for (unsigned i = 0; i < 3; ++i)
+                selftest_target();
+              usleep(20000);
+              drain(&write_test);
+              printf("WRITE_SELFTEST count=%llu value=%u\n",
+                     (unsigned long long)write_test.count, selftest_value);
+              if (write_test.count != 3 || selftest_value != 6)
+                return 9;
+              pthread_t child;
+              if (pthread_create(&child, NULL, selftest_child, NULL))
+                return 10;
+              if (pthread_join(child, NULL))
+                return 11;
+              usleep(20000);
+              drain(&write_test);
+              printf("INHERITED_WRITE_SELFTEST count=%llu value=%u\n",
+                     (unsigned long long)write_test.count, selftest_value);
+              return write_test.count == 6 && selftest_value == 9 ? 0 : 12;
+            }
+            if (argc != 5) {
+              fprintf(stderr,
+                      "Usage: %s selftest | PROCESS MODULE SECONDS WAIT_SECONDS RVA [RVA "
+                      "...]\n",
+                      argv[0]);
+              return 2;
+            }
+            double wait_until = seconds() + atof(argv[4]);
+            int pid = -1;
+            uintptr_t base = 0;
+            while (seconds() < wait_until) {
+              pid = find_process(argv[1]);
+              if (pid > 0 && (base = module_base(pid, argv[2])))
+                break;
+              usleep(5000);
+            }
+            if (!base) {
+              puts("PROCESS_MODULE_NOT_FOUND");
+              return 5;
+            }
+            printf("BOUND pid=%d base=0x%lx\n", pid, (unsigned long)base);
+            unsigned count = 1;
+            watched_pid = pid;
+            watched_base = base;
+            if (open_observer(&observers[0], pid, base + 0x15ed90, "constructor"))
+              return 6;
+            double end = seconds() + atof(argv[3]);
+            while (seconds() < end) {
+              for (unsigned i = 0; i < count; ++i)
+                drain(&observers[i]);
+              for (unsigned i = 0; writes_armed && i < watched_count; ++i)
+                if (watched[i].fd >= 0)
+                  drain(&watched[i]);
+              usleep(5000);
+            }
+            for (unsigned i = 0; i < count; ++i) {
+              drain(&observers[i]);
+              printf("SUMMARY name=%s hits=%llu\n", observers[i].name,
+                     (unsigned long long)observers[i].count);
+              munmap(observers[i].mapping, observers[i].length);
+              close(observers[i].fd);
+              if (observers[i].output_fd >= 0)
+                close(observers[i].output_fd);
+              if (observers[i].memory_fd >= 0)
+                close(observers[i].memory_fd);
+            }
+            for (unsigned i = 0; writes_armed && i < watched_count; ++i) {
+              if (watched[i].fd < 0)
+                continue;
+              drain(&watched[i]);
+              printf("WATCH_SUMMARY name=%s hits=%llu\n", watched[i].name,
+                     (unsigned long long)watched[i].count);
+              munmap(watched[i].mapping, watched[i].length);
+              close(watched[i].fd);
+              if (watched[i].output_fd >= 0)
+                close(watched[i].output_fd);
+              close(watched[i].memory_fd);
+            }
+            return 0;
+          }
+          SOURCE
+          selected_ndk=""
+          for candidate in "${ANDROID_NDK_LATEST_HOME:-}" "${ANDROID_NDK_HOME:-}" /usr/local/lib/android/sdk/ndk/*; do
+            if [ -x "$candidate/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang" ]; then selected_ndk="$candidate"; break; fi
+          done
+          test -n "$selected_ndk"
+          "$selected_ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang" -Wall -Wextra -Werror -O2 -fPIE -pie -Wl,--build-id=none perf_break64.c -o perf_break64
+          cat "$selected_ndk/source.properties" > BUILD.txt
+          sha256sum perf_break64.c perf_break64 BUILD.txt > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk360-watch-config-20261118-v4
+          path: |
+            perf_break64
+            perf_break64.c
+            BUILD.txt
+            SHA256SUMS
+          retention-days: 400
+
+
+
