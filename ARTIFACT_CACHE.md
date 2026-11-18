@@ -3563,3 +3563,29 @@ Requires the observed executable library base, scans the exact private-image ran
 | native bootstrap | v3 | Android API23+ | aarch64 | libjiagu_vip_64.so | 9d888b2c3a37c33df9f26176b142bbc0d416abee087375b48af7d6bbef041b5c |
 | bootstrap source | v3 | C source | AArch64 target | vip_bootstrap.c | 6422397fc5c93195a1fce39fc572f4a74b2d8affcd18c610b8d9ed7373317162 |
 | NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+
+## Artifact Record — APK360 separate native certificate input bridge v1
+
+- Artifact Name: `apk360-native-input-20261118-v1`
+- Artifact ID: `14435010835`
+- Run ID: `44320238799`
+- Workflow: `.github/workflows/build-apk360-native-input-v1-20261118.yml`
+- File: `apk360-native-input-v1.zip`
+- Size: `8726` bytes
+- SHA256: `effede6a36c05a8e14d20fae135f45795e8402afd686a6b300bd4543ec3c4e34`
+- Created At: `2026-11-18T14:04:42Z`
+- Expires At: `2027-02-16T14:04:12Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-native-input-v1.zip`
+- Original Size: `8726` bytes
+- Original SHA256: `effede6a36c05a8e14d20fae135f45795e8402afd686a6b300bd4543ec3c4e34`
+- Part Count: 1
+- Build: preinstalled NDK r30/API23, own source only, no upstream download. ZIP and every member SHA256SUMS verified.
+- Validation: Runtime pending. Separate helper does not load/wrap vendor libraries; original StubApp handles native loads. Packaging/bootstrap behavior must be independently verified.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| native input bridge | v1 | Android API23+ | aarch64 | librestore_input_v1.so | 7db3a3519eda25e9af16b7f727bc73e320c710b3df8a0bc690c8cc8f88a28498 |
+| native input source | v1 | C source | AArch64 target | vip_bootstrap.c | 79e276344682918b77ba2c15e3291e6cb9e992bfa1e69ccf5f28294f2ef9e7b2 |
+| NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
