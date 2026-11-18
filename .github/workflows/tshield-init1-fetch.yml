@@ -1,0 +1,102 @@
+name: TShield init1 Fetch Bridge
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch current init1 payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          python3 - <<'PY'
+          import socket, ssl, hashlib, json, traceback
+
+          host = '103.217.191.153'
+          port = 4681
+          auth = 'TEST-CARD'
+          device = 'dev_ctf_init1'
+          req = (
+              'GET /fetch HTTP/1.1\r\n'
+              f'Host: {host}:{port}\r\n'
+              'User-Agent: Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36\r\n'
+              'Accept: */*\r\n'
+              f'X-Auth-Key: {auth}\r\n'
+              f'X-Device-Id: {device}\r\n'
+              'Connection: close\r\n\r\n'
+          ).encode()
+          open('out/request.raw','wb').write(req)
+
+          result = {
+              'host': host, 'port': port, 'auth': auth, 'device': device,
+              'request_len': len(req), 'request_sha256': hashlib.sha256(req).hexdigest(),
+              'attempts': []
+          }
+          raw = b''
+          last_exc = None
+          for use_sni in (False, True):
+              item = {'sni': use_sni}
+              try:
+                  s = socket.create_connection((host, port), timeout=15)
+                  s.settimeout(10)
+                  ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                  ctx.check_hostname = False
+                  ctx.verify_mode = ssl.CERT_NONE
+                  try:
+                      ctx.set_ciphers('DEFAULT:@SECLEVEL=0')
+                  except Exception:
+                      pass
+                  ss = ctx.wrap_socket(s, server_hostname=host if use_sni else None)
+                  item['cipher'] = ss.cipher()
+                  item['version'] = ss.version()
+                  ss.sendall(req)
+                  chunks=[]
+                  while True:
+                      try:
+                          b=ss.recv(65536)
+                      except socket.timeout:
+                          break
+                      if not b:
+                          break
+                      chunks.append(b)
+                  raw=b''.join(chunks)
+                  item['response_len']=len(raw)
+                  item['response_sha256']=hashlib.sha256(raw).hexdigest()
+                  result['attempts'].append(item)
+                  if raw:
+                      break
+              except Exception as e:
+                  last_exc=e
+                  item['error']=repr(e)
+                  item['traceback']=traceback.format_exc()
+                  result['attempts'].append(item)
+
+          open('out/response.raw','wb').write(raw)
+          if b'\r\n\r\n' in raw:
+              head, body = raw.split(b'\r\n\r\n',1)
+          else:
+              head, body = raw, b''
+          open('out/response.headers','wb').write(head)
+          open('out/response.body','wb').write(body)
+          result['response_len']=len(raw)
+          result['response_sha256']=hashlib.sha256(raw).hexdigest()
+          result['body_len']=len(body)
+          result['body_sha256']=hashlib.sha256(body).hexdigest()
+          with open('out/meta.json','w') as f:
+              json.dump(result,f,indent=2)
+          print(json.dumps(result,indent=2))
+          print('RESPONSE_HEAD',repr(head[:2048]))
+          print('BODY_PREFIX',body[:128].hex())
+          PY
+      - name: Upload response evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: tshield-init1-fetch-response
+          path: out/
+          retention-days: 90
