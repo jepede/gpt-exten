@@ -1,0 +1,61 @@
+name: Cache APK analysis tools 20261118
+on:
+  push:
+    paths: ['.github/workflows/cache-apk360-tools-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cache:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Prepare Python tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 --version
+          mkdir -p stage/python stage/bin release
+          python3 -m pip install --target stage/python 'androguard==4.1.3' 'frida==16.5.9' 'zstandard==0.23.0' 'pycryptodome==3.23.0'
+      - name: Download official pinned binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 https://github.com/iBotPeaches/Apktool/releases/download/v2.12.1/apktool_2.12.1.jar -o stage/bin/apktool_2.12.1.jar
+          curl -fL --retry 3 https://github.com/frida/frida/releases/download/16.5.9/frida-server-16.5.9-android-arm64.xz -o stage/bin/frida-server-16.5.9-android-arm64.xz
+          java -jar stage/bin/apktool_2.12.1.jar --version
+      - name: Manifest and split
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,json,hashlib,sys
+          root=pathlib.Path('stage')
+          entries=[{'file':str(p.relative_to(root)),'size':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(root.rglob('*')) if p.is_file()]
+          (root/'MANIFEST.json').write_text(json.dumps({'python':sys.version,'tools':{'androguard':'4.1.3','frida':'16.5.9','apktool':'2.12.1','zstandard':'0.23.0'},'files':entries},indent=2))
+          PY
+          tar -C stage -czf release/apk360-tools-linux-x86_64-python312-v1.tar.gz .
+          cd release
+          sha256sum apk360-tools-linux-x86_64-python312-v1.tar.gz > SHA256SUMS
+          split -b 90M -d -a 2 apk360-tools-linux-x86_64-python312-v1.tar.gz apk360-tools.tar.gz.part.
+          sha256sum apk360-tools.tar.gz.part.* >> SHA256SUMS
+          cat SHA256SUMS
+          rm apk360-tools-linux-x86_64-python312-v1.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk360-tools-20261118-part-00
+          path: release/apk360-tools.tar.gz.part.00
+          compression-level: 0
+          retention-days: 400
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('release/apk360-tools.tar.gz.part.01') != '' }}
+        with:
+          name: apk360-tools-20261118-part-01
+          path: release/apk360-tools.tar.gz.part.01
+          compression-level: 0
+          retention-days: 400
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk360-tools-20261118-metadata
+          path: release/SHA256SUMS
+          retention-days: 400
