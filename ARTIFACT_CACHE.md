@@ -3410,3 +3410,29 @@ Requires the observed executable library base, scans the exact private-image ran
 | APK360 JNI bootstrap | v1 | Android API23+ | aarch64 | libjiagu_vip_64.so | e7f45679aaa4c4ad1d7c9ec51e9dac8fba82456b2ed05ca77f99f247f453ad3f |
 | APK360 JNI bootstrap source | v1 | C source | Android aarch64 target | vip_bootstrap.c | 5077fa0702c718152a0c834643dd0d29ed81fad0a889d1864070cd7a6fa29e94 |
 | Android NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+## Artifact Record — APK360 configuration-object hardware write observer v1
+
+- Artifact Name: `apk360-watch-config-20261118-v1`
+- Artifact ID: `14432315781`
+- Run ID: `44314263932`
+- Workflow: `.github/workflows/build-apk360-watch-config-v1-20261118.yml`
+- File: `apk360-watch-config-v1.zip`
+- Size: `10049` bytes
+- SHA256: `c3dbd81fca647bcbc34816f058acfff3e28be508e9e8e7af13dcd9d5010e059b`
+- Created At: `2026-11-18T13:29:57Z`
+- Expires At: `2027-02-16T13:29:42Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-watch-config-v1.zip`
+- Original Size: `10049` bytes
+- Original SHA256: `c3dbd81fca647bcbc34816f058acfff3e28be508e9e8e7af13dcd9d5010e059b`
+- Part Count: 1
+- Build: runner preinstalled NDK r30/API23, own source only; no upstream download.
+- Verification: ZIP SHA256 and every member SHA256SUMS verified. Actual ARM64 self-test: EXEC3/3, WRITE3/3.
+- Purpose: sample-local read-only observer of execution and memory-write events; never changes target memory. After observed constructor write, arms main-thread 8-byte hardware write watches on object vtable and sample singleton slot. Async memory snapshots are explicitly not atomic.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| config-write observer | v1 | Android API23+ / Linux perf | aarch64 | perf_break64 | 5b8646be97d16c458a6314c8c7c24ea5c620a98cb84dce3bf75d4a7c88f7ab9f |
+| config-write observer source | v1 | portable C | AArch64 target | perf_break64.c | 4fcde6589f2f3a7da35598f216f14975d7f9265514c98b72ff338337da4972dc |
+| NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
