@@ -3333,3 +3333,29 @@ Uses direct AArch64 kernel file reads and a strict instruction signature for the
 | Source | 20261118-v3 | C source | AArch64 target | `restore_dtc_guard.c` | `2e6abadb374704a34b635f4c34045f3f32164132222be9a44687c37681affbe4` |
 
 Requires the observed executable library base, scans the exact private-image range for a strict 32-byte instruction signature, validates executable mapping and logs readback. Sample-specific recovered-DEX compatibility experiment, not a general unpacker.
+
+
+## Artifact Record — APK360 ARM64 hardware execution breakpoint observer v1
+
+- Artifact Name: `apk360-perf-break64-20261118-v1`
+- Artifact ID: `14423338228`
+- Run ID: `44297757608`
+- Workflow: `.github/workflows/build-apk360-perf-break64-20261118.yml`
+- File: `apk360-perf-break64-v1.zip`
+- Size: `8547` bytes
+- SHA256: `bba419cb2dea64a4c5455ca03181115f4bb5596529e11badce786c42a698c19e`
+- Created At: `2026-11-18T11:46:59Z`
+- Expires At: `2027-02-16T11:46:45Z`
+- Storage Mode: `SINGLE`
+- Original File: `apk360-perf-break64-v1.zip`
+- Original Size: `8547` bytes
+- Original SHA256: `bba419cb2dea64a4c5455ca03181115f4bb5596529e11badce786c42a698c19e`
+- Part Count: `1`
+- Build: preinstalled Android NDK r30 / API23; no upstream toolchain download; only our observer source sent to Actions.
+- Validation: ARM64 guest perf hardware execution self-test 3 calls / 3 register samples, TracerPid not used; no target code mutation.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| apk360-perf-break64 | v1 | Android API23+ / Linux perf | aarch64 | perf_break64 | c45e4658dc28202a46725782989ea1c4169c92169b397adb3ca58be47f94bcf5 |
+| apk360-perf-break64-source | v1 | source | portable C / ARM64 sample ABI | perf_break64.c | a6aa28143bdc96a66391ac2bf36a29934da51182540bc22a414ee11923cd898d |
+| apk360-perf-break64-build | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
