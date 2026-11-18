@@ -3537,3 +3537,29 @@ Requires the observed executable library base, scans the exact private-image ran
 | native bootstrap | v2 | Android API23+ | aarch64 | libjiagu_vip_64.so | d0ed4b73b3e67b337bf68f2ab6a6290ed22d42ec9cf303392d94633e22b418f7 |
 | bootstrap source | v2 | C source | AArch64 target | vip_bootstrap.c | 7a948c2b3147915601ee8ef68b63c2a50cce2f77f70602f33ab4a0064ffadbba |
 | NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+
+## Artifact Record — APK360 app-local native bootstrap v3
+
+- Artifact Name: `apk360-native-bootstrap-20261118-v3`
+- Artifact ID: `14432948407`
+- Run ID: `44318754497`
+- Workflow: `.github/workflows/build-apk360-native-bootstrap-v3-20261118.yml`
+- File: `apk360-native-bootstrap-v3.zip`
+- Size: `12773` bytes
+- SHA256: `a6e729114c885e9b5c7ad960b1d88400bbcc5eafedc932d4fb45838869ed6e8b`
+- Created At: `2026-11-18T13:56:02Z`
+- Expires At: `2027-02-16T13:55:50Z`
+- Storage Mode: SINGLE
+- Original File: `apk360-native-bootstrap-v3.zip`
+- Original Size: `12773` bytes
+- Original SHA256: `a6e729114c885e9b5c7ad960b1d88400bbcc5eafedc932d4fb45838869ed6e8b`
+- Part Count: 1
+- Build: preinstalled NDK r30/API23, own source only; no upstream download. ZIP and every member SHA256SUMS verified.
+- Validation: Runtime pending. ART-owned vendor load and explicit DTC exception journal. Original v3 first build failed unused parameter Werror; corrected before this artifact.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| native bootstrap | v3 | Android API23+ | aarch64 | libjiagu_vip_64.so | 9d888b2c3a37c33df9f26176b142bbc0d416abee087375b48af7d6bbef041b5c |
+| bootstrap source | v3 | C source | AArch64 target | vip_bootstrap.c | 6422397fc5c93195a1fce39fc572f4a74b2d8affcd18c610b8d9ed7373317162 |
+| NDK build metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
