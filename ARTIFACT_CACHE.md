@@ -3302,3 +3302,34 @@ Compiled with the runner's preinstalled Android NDK r30 (30.0.16248370), API23. 
 | Source | 20261118-v2 | C source | AArch64 target | `restore_dtc_guard.c` | `a4b95515fb66ac4a46308dd0449041aaa740af06d90d333aae1e8f0063d2238e` |
 
 Uses direct AArch64 kernel file reads and a strict instruction signature for the supplied DTC build. Scope is compatibility testing of recovered DEX; not a general unpacker. Includes BUILD.txt and llvm-objdump evidence.
+
+
+## Artifact Record: APK360 DTC executable-signature compatibility helper v3
+
+- Name: APK360 exact-build DTC multidex compatibility helper
+- Version: 20261118-v3
+- Platform: Android API23+
+- Architecture: arm64-v8a / AArch64
+- Artifact Name: `apk360-dtc-guard-20261118-v3`
+- Artifact ID: `14420170249`
+- Run ID: `44286526588`
+- Workflow: `.github/workflows/build-apk360-dtc-guard-v3-20261118.yml`
+- File: `apk360-dtc-guard-v3.zip`
+- Size: 13088 bytes
+- SHA256: `4d6eb29094446703c94b3e1c37cd15b64f2645d842274a2a7d2de752b45766d6`
+- Created At: `2026-11-18T10:33:51Z`
+- Expires At: `2027-02-16T10:33:27Z` (actual GitHub value)
+- Storage Mode: SINGLE
+- Original File: `librestore_dtc_guard.so`
+- Original Size: 9368 bytes
+- Original SHA256: `bf797ec701a1152146cea1bff97f2744463a47dc160e9d3ab386893426432d38`
+- Part Count: 1
+- Requested retention-days: 400; effective expiry above governs.
+- Verification: ZIP digest and all SHA256SUMS entries verified. Uses runner preinstalled Android NDK r30 30.0.16248370, API23; no NDK download.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| DTC compatibility helper | 20261118-v3 | Android API23+ | arm64-v8a | `librestore_dtc_guard.so` | `bf797ec701a1152146cea1bff97f2744463a47dc160e9d3ab386893426432d38` |
+| Source | 20261118-v3 | C source | AArch64 target | `restore_dtc_guard.c` | `2e6abadb374704a34b635f4c34045f3f32164132222be9a44687c37681affbe4` |
+
+Requires the observed executable library base, scans the exact private-image range for a strict 32-byte instruction signature, validates executable mapping and logs readback. Sample-specific recovered-DEX compatibility experiment, not a general unpacker.
