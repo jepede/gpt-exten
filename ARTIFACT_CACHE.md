@@ -3727,3 +3727,39 @@ Requires the observed executable library base, scans the exact private-image ran
 | source | v6 | C source | AArch64 target | vip_bootstrap.c | 5f7e44d5a1c453fce9b66ee111c399597198f0fa3b1565c8a2ed01c143b9bbd4 |
 | LLVM disassembly | v6 | LLVM objdump | aarch64 | disassembly.txt | 05a6522864fd737fb4239c4041b89051195713cbf7f819b8e03219a50e3c6c09 |
 | NDK metadata | r30 30.0.16248370 | Actions ubuntu-24.04 | linux-x86_64 | BUILD.txt | e73b7dc557cea2da9212c09ee1795434957d62e63b7550eef69fd1887a355d94 |
+
+
+## Artifact Record — Ember licensed firearm source candidates v05
+
+- Artifact Name: `ember-weapons-v05-part00`
+- Artifact ID: `14602182482`
+- Run ID: `44675812342`
+- Workflow: `.github/workflows/ember-v05-weapons.yml` on `work/ember-realism-v05-20261120`
+- File: `bundle.part00` (complete inner ZIP; rename to `ember-weapon-candidates-v05.zip`)
+- Size: `67217689` bytes (outer artifact ZIP)
+- SHA256: `562525a768aad77f27a5af05f3d58314e707aaa7376efc60dacc59d18e3899fa` (outer artifact ZIP)
+- Created At: `2026-11-20T04:39:11Z`
+- Expires At: `2027-02-18T04:38:54Z` (actual GitHub expires_at)
+- Storage Mode: SINGLE
+- Original File: `ember-weapon-candidates-v05.zip`
+- Original Size: `67217549` bytes
+- Original SHA256: `cbd3cf99ccfc39d78cabb0f4527425adf14fdd30ca163aa2a13a495a456b035f`
+- Part Count: 1
+- Requested retention-days: 400; actual expiry above is authoritative.
+- Manifest Artifact: `14602162458`, `ember-weapons-v05-manifest`, 4302 bytes, SHA256 `d9d03a41261f0e48fea0e9026d1be9a8f1435f835a5d464238e8b1f47b21fa70`, same Run/Expiry.
+- Verification: outer artifact ZIP SHA256, inner ZIP CRC32, original SHA256, and individual model file SHA256 passed locally. Includes Objaverse license annotations and original source licenses. Not every candidate is used by the final game. The audio pack was not downloaded in this run and is NOT a cache hit.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| SCAR-L | 20261120-v05 | Any | Any | `scar/scarl_reloadable.glb` | `13f03b7d9e6cd2c50a85b5fa5e3c803530ab8ac165a1cb70cb296ac0bb8188bc` |
+| SCAR-L credits | 20261120-v05 | Any | Any | `scar/LICENSE.md` | `2113382a4ee6af33d617a956a5a29a637cde31bbc005e68b1c8328870d1629de` |
+| AK47 | 20261120-v05 | Any | Any | `ak47/ak47_reloadable.glb` | `d121eb62491e7f2cc573cd7bdb04e4a482f1eca3b16df7976b2ee2306ea4e1c1` |
+| AK47 credits | 20261120-v05 | Any | Any | `ak47/LICENSE.md` | `2732d0d34c18bc4eb83248d9dff1226cac1892a0a0f682d3027d349fba08a959` |
+| Derivative source license | 20261120-v05 | Any | Any | `source-LICENSE` | `6795e9bfe7d67b87c0233b4fca631435982341efadc55702af61cfb3a71d717e` |
+| hk416_tastytony | 20261120-v05 | Any | Any | `hk416_tastytony/model.glb` | `f59b52e30fd26e249d5483320517b3a76afd67d66c844c5457e54d24c7e18a3c` |
+| hk416_a7_r4m | 20261120-v05 | Any | Any | `hk416_a7_r4m/model.glb` | `072ba303f2a3986c7c49a6bed1c21b29a79ceaab0f72ca0bd9d989c920a037ec` |
+| hk416_a7_burner | 20261120-v05 | Any | Any | `hk416_a7_burner/model.glb` | `d87c618afe8ec8a0c135503e36b439856c8a09e2a9da7ed2523aac26223ab8dd` |
+| kar98_berk | 20261120-v05 | Any | Any | `kar98_berk/model.glb` | `49ce8915e6b744dfb7ad5b557f535f959afd3afdd55e5323ddf18339110c2df1` |
+| kar98_danscrivy | 20261120-v05 | Any | Any | `kar98_danscrivy/model.glb` | `3efcc2fe427cbeb4aacd97df8ceb4838665efc03a9e3c9f4e3457e624749c22f` |
+| Objaverse object-paths index | archive-20261120 | Any | Any | `object-paths.json.gz` | `db88ff78942613f10566ec4723fb8b8f558c37ffe8e78a8fc5428a20b93886a0` |
+
