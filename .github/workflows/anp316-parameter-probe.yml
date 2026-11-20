@@ -1,0 +1,43 @@
+name: Temporary ANP316 parameter service probe
+on:
+  push:
+    branches: [work/anp316-keyquery-20261120]
+    paths: [.github/workflows/anp316-parameter-probe.yml]
+permissions:
+  contents: read
+jobs:
+  query:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Read public parameter endpoint
+        run: |
+          python3 - <<'PY'
+          import urllib.request, urllib.error, socket, json, hashlib, pathlib, time
+          out=pathlib.Path('response');out.mkdir()
+          info={'host':'yz.hdelf.com','path':'/md5api.php','time':int(time.time()),'probe_only':True}
+          try:
+              info['addresses']=sorted(set(a[4][0] for a in socket.getaddrinfo('yz.hdelf.com',80,socket.AF_INET)))
+          except Exception as e: info['dns_error']=type(e).__name__+': '+str(e)
+          body=b'act=query_pk&task_id=16468&tag=L2'
+          req=urllib.request.Request('http://yz.hdelf.com/md5api.php',data=body,headers={'Content-Type':'application/x-www-form-urlencoded'})
+          data=b''
+          try:
+              with urllib.request.urlopen(req,timeout=20) as response:
+                  info['http_status']=response.status
+                  info['content_type']=response.headers.get('Content-Type')
+                  data=response.read(1048577)
+          except urllib.error.HTTPError as e:
+              info['http_status']=e.code;data=e.read(1048577)
+          except Exception as e: info['error']=type(e).__name__+': '+str(e)
+          if len(data)>1048576: raise RuntimeError('Response exceeds limit')
+          info['size']=len(data);info['sha256']=hashlib.sha256(data).hexdigest()
+          (out/'response.bin').write_bytes(data)
+          (out/'transfer.json').write_text(json.dumps(info,indent=2))
+          print(json.dumps(info))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anp316-parameter-service-probe
+          path: response/
+          retention-days: 1
