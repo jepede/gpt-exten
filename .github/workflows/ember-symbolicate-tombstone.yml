@@ -1,0 +1,45 @@
+name: Ember v0.5.1 Godot Tombstone Symbolication
+on:
+  push:
+    branches: [work/ember-godot472-20261120]
+    paths: ['.github/workflows/ember-symbolicate-tombstone.yml']
+  workflow_dispatch:
+jobs:
+  symbolize:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Get release symbols and symbolize ARM64 crash
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_native_debug_symbols.4.7.2.stable.template_release.android.zip"
+          curl -fL --retry 5 --retry-delay 5 --connect-timeout 30 -o symbols.zip "$url"
+          echo "4bc879f6ef3967dadd55d60382fe36cd79c700877280e5b410527a5ddcb72e49  symbols.zip" | sha256sum -c -
+          mkdir -p diagnostics sym
+          unzip -Z1 symbols.zip > diagnostics/zip-file-list.txt
+          grep -Ei 'arm64|aarch64' diagnostics/zip-file-list.txt | head -60 || true
+          unzip -qq symbols.zip -d sym
+          target="270121fef88100c19643517c328b5868e01d345c"
+          echo "Target Build ID: $target" > diagnostics/symbolication.txt
+          while IFS= read -r -d '' file; do
+            id="$(readelf -n "$file" 2>/dev/null | sed -n -E 's/.*Build ID: ([[:xdigit:]]+).*/\1/p' | head -1 || true)"
+            if [[ -n "$id" ]]; then echo "$id $file" >> diagnostics/library-buildids.txt; fi
+            if [[ "$id" == "$target" ]]; then
+              echo "MATCH $file" | tee -a diagnostics/symbolication.txt
+              for addr in 0x290faf0 0x15a71b0 0x238a24c 0x2916540 0x3fad71c 0x238c828 0x238c7e0 0x2391dd4 0x1212a74; do
+                echo "=== $addr ===" | tee -a diagnostics/symbolication.txt
+                addr2line -f -C -i -e "$file" "$addr" | tee -a diagnostics/symbolication.txt
+              done
+            fi
+          done < <(find sym -type f -print0)
+          echo "Available library BuildIDs:" >> diagnostics/symbolication.txt
+          tail -40 diagnostics/library-buildids.txt >> diagnostics/symbolication.txt || true
+          grep -q "MATCH" diagnostics/symbolication.txt
+      - name: Upload text diagnostics (temporary one day)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ember-v051-symbolication
+          path: diagnostics
+          retention-days: 1
+          if-no-files-found: warn
