@@ -3864,3 +3864,29 @@ Requires the observed executable library base, scans the exact private-image ran
 |---|---|---|---|---|---|
 | Godot Editor | 4.7.2-stable | Linux | x86_64 | `godot-editor.zip` | `cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4` |
 
+
+
+## Artifact Record: Android NDK ARM64 API35 sysroot r28c-api35-v1 (2026-11-20)
+
+- Artifact Name: `ndk-r28c-arm64-api35-sysroot-v1`
+- Artifact ID: `14623866983`
+- Run ID: `44725688545`
+- Workflow: `.github/workflows/cache-ndk-arm64-sysroot-20261120.yml` on `work/ydw5-ndk-sysroot-20261120`
+- File: `ndk-r28c-arm64-api35-sysroot-v1.zip` (outer Artifact)
+- Size: `9095330` bytes
+- SHA256: `sha256:6ae33473dc5a6015c1c12675657a594812ed638b4b0fc72a09488d9ed060722e` (outer Artifact digest)
+- Created At: `2026-11-20T11:13:19Z`
+- Expires At: `2027-02-18T11:12:33Z` (actual GitHub response)
+- Storage Mode: SINGLE
+- Original File: `ndk-r28c-arm64-api35-sysroot.tar.xz`
+- Original Size: `8619872` bytes
+- Original SHA256: `466450d800b12146db0b2b633793e1cda723c50d8fdfea020a1bd8356c036489`
+- Part Count: 1
+- Source: existing verified NDK r28c Run `39019800471`; NO upstream download; source SHA256 `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f`
+- Requested retention-days: 400; actual expiry above governs
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Android NDK ARM64 API35 sysroot | r28c-api35-v1 | Android API35 / Linux | AArch64 target, any host | `ndk-r28c-arm64-api35-sysroot.tar.xz` | `466450d800b12146db0b2b633793e1cda723c50d8fdfea020a1bd8356c036489` |
+
+Includes NDK headers, libc++ headers, ARM64 target support libraries and API35 link stubs; not Android runtime libraries. Per-file hashes in MANIFEST.json. Compiler/LLD separately cached in Run 39121838147. All files are public toolchain files; no private target or reconstructed source is uploaded.
