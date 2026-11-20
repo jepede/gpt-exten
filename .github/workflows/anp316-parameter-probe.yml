@@ -1,4 +1,4 @@
-name: Temporary ANP316 parameter service probe
+name: Temporary ANP316 live parameter query
 on:
   push:
     branches: [work/anp316-keyquery-20261120]
@@ -10,34 +10,35 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: Read public parameter endpoint
+      - name: Relay captured ephemeral public-key request
         run: |
           python3 - <<'PY'
           import urllib.request, urllib.error, socket, json, hashlib, pathlib, time
           out=pathlib.Path('response');out.mkdir()
-          info={'host':'yz.hdelf.com','path':'/md5api.php','time':int(time.time()),'probe_only':True}
-          try:
-              info['addresses']=sorted(set(a[4][0] for a in socket.getaddrinfo('yz.hdelf.com',80,socket.AF_INET)))
+          body="act=query_pk&task_id=16468&tag=L2&eph=991062eca629fa3b3c5d319839d7a344ac4ce7fde87f46da5102a29c33196d27&a=a6fb3b1f18491c&b=c09b32935549142c&t=1795181304&nonce=T0wlYi5UAoFpnu7aM755kYxRCbPEQxq7&sign=0cad85b5806ef9e6a5e6e4228f2185bde46447b1084314155dfc572c58c003cc".encode('ascii')
+          info={'host':'yz.hdelf.com','path':'/md5api.php','time':int(time.time()),'request_sha256':hashlib.sha256(body).hexdigest(),'attempts':[]}
+          try: info['addresses']=sorted(set(a[4][0] for a in socket.getaddrinfo('yz.hdelf.com',80,socket.AF_INET)))
           except Exception as e: info['dns_error']=type(e).__name__+': '+str(e)
-          body=b'act=query_pk&task_id=16468&tag=L2'
-          req=urllib.request.Request('http://yz.hdelf.com/md5api.php',data=body,headers={'Content-Type':'application/x-www-form-urlencoded'})
-          data=b''
-          try:
-              with urllib.request.urlopen(req,timeout=20) as response:
-                  info['http_status']=response.status
-                  info['content_type']=response.headers.get('Content-Type')
-                  data=response.read(1048577)
-          except urllib.error.HTTPError as e:
-              info['http_status']=e.code;data=e.read(1048577)
-          except Exception as e: info['error']=type(e).__name__+': '+str(e)
-          if len(data)>1048576: raise RuntimeError('Response exceeds limit')
-          info['size']=len(data);info['sha256']=hashlib.sha256(data).hexdigest()
-          (out/'response.bin').write_bytes(data)
-          (out/'transfer.json').write_text(json.dumps(info,indent=2))
+          chosen=b''
+          for scheme in ('http','https'):
+              row={'scheme':scheme};started=time.monotonic();data=b''
+              req=urllib.request.Request(scheme+'://yz.hdelf.com/md5api.php',data=body,headers={'Content-Type':'application/x-www-form-urlencoded'})
+              try:
+                  with urllib.request.urlopen(req,timeout=15) as response:
+                      row['http_status']=response.status;row['content_type']=response.headers.get('Content-Type');data=response.read(1048577)
+              except urllib.error.HTTPError as e: row['http_status']=e.code;data=e.read(1048577)
+              except Exception as e: row['error']=type(e).__name__+': '+str(e)
+              if len(data)>1048576: raise RuntimeError('Response exceeds limit')
+              row['elapsed']=round(time.monotonic()-started,3);row['size']=len(data);row['sha256']=hashlib.sha256(data).hexdigest()
+              info['attempts'].append(row);(out/(scheme+'_response.bin')).write_bytes(data)
+              if row.get('http_status')==200 and data:
+                  chosen=data;info['selected']=scheme;info['http_status']=200;break
+          info['size']=len(chosen);info['sha256']=hashlib.sha256(chosen).hexdigest()
+          (out/'response.bin').write_bytes(chosen);(out/'transfer.json').write_text(json.dumps(info,indent=2))
           print(json.dumps(info))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: anp316-parameter-service-probe
+          name: anp316-live-query-01
           path: response/
           retention-days: 1
