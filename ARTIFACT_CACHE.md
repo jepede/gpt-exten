@@ -3811,3 +3811,29 @@ Requires the observed executable library base, scans the exact private-image ran
 | SCAR L by Daniel Abeleira | 2026-11-20-source | cross-platform | any | scar_detailed/model.glb | a435e0d3f28f2b1b71ac9250113ec48b8154f6b40aa8b277113f4af702b367cc |
 | Modern Military Weapons Sound Pack v0.2 | v0.2 | cross-platform | any | audio/military_sfx_pack_v0.2.zip | 82fba2bc98d3ee1361b9aeac35d41fd2dcf9c78747752ac4f22f81061f764015 |
 
+
+## Artifact Record — Ember CC0 AR15 field recording v05
+
+- Artifact Name: ember-ar15-v05
+- Artifact ID: 14603065365
+- Run ID: 44677263585
+- Workflow: .github/workflows/ember-v05-ar15.yml
+- File: ember-ar15-v05.zip (GitHub artifact wrapper)
+- Size: 3302689 bytes
+- SHA256: 6af5d2bc3bb5e85e22445d56cca94d9f5b0bc2c3cb06918cdedec55acaf54ead
+- Created At: 2026-11-20T04:52:27Z
+- Expires At: 2027-02-18T04:52:22Z (actual; requested 400 days)
+- Storage Mode: SINGLE
+- Original File: ember-ar15-v05.zip
+- Original Size: 3302539 bytes
+- Original SHA256: 7a00b8d1ace95a55d2125e10af92b60d66e8f822ad9a1410d40ca5e2a578df93
+- Part Count: 1
+- Part 1: Artifact ID 14603065365, ember-ar15-v05, sequence 1/1, 3302539 bytes, SHA256 7a00b8d1ace95a55d2125e10af92b60d66e8f822ad9a1410d40ca5e2a578df93
+- Manifest Artifact: 14602024991, ember-ar15-v05-manifest, 884 bytes, SHA256 bb21236f6cb9b7e8a64d33ae042a5a5c79ecdd51206a23c968f66c7015492e3c, Created At 2026-11-20T04:52:27Z, Expires At 2027-02-18T04:52:22Z
+- Validation: Actual artifact existence and expiry checked; wrapper and inner SHA256, ZIP CRC, and all member hashes verified locally.
+- Source: https://opengameart.org/content/the-free-firearm-sound-library ; CC0 by Ben Jaszczak, Brian Nelson, Kevin Heras and Matthew Nanney. File downloaded from public fps-asset-kit mirror. AR15 source, not a literal SCAR-L/HK416 recording.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Free Firearm Sound Library AR-15 D_32P | 2014-prepared / 2026-11-20-mirror | cross-platform | any | AR15-D_32P.wav | acee9d2106b68fe5956225a19d7aedf943d97793817f9bda9d486a2b74b0a812 |
+| fps-asset-kit mirror license description | 2026-11-20 | cross-platform | any | mirror-README.md | 2718226f4134568f3bb214f2858865cb6e2ae662fd8979c3edc97867282e16e8 |
