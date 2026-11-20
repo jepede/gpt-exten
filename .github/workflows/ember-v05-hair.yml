@@ -1,0 +1,55 @@
+name: Ember v05 CC0 character hair
+on:
+  push:
+    branches: [work/ember-realism-v05-20261120]
+    paths: [.github/workflows/ember-v05-hair.yml]
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch selected official CC0 hair assets
+        shell: python
+        run: |
+          import pathlib, urllib.request, zipfile, hashlib, json
+          url = "https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip"
+          source = pathlib.Path("system-assets.zip")
+          urllib.request.urlretrieve(url, source)
+          out = pathlib.Path("hair-assets")
+          out.mkdir()
+          wanted = ("hair/short02/", "hair/short03/", "hair/short04/", "hair/ponytail01/")
+          records = []
+          with zipfile.ZipFile(source) as z:
+              for item in z.infolist():
+                  if item.is_dir():
+                      continue
+                  lower = item.filename.lower()
+                  match = next((prefix for prefix in wanted if prefix in lower), None)
+                  if not match:
+                      continue
+                  relative = item.filename[lower.index(match):]
+                  target = out / relative
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  body = z.read(item)
+                  target.write_bytes(body)
+                  records.append({"path": relative, "size": len(body), "sha256": hashlib.sha256(body).hexdigest()})
+          if not records:
+              raise RuntimeError("Selected hair assets absent")
+          manifest = {"name":"MakeHuman selected CC0 hair","version":"system-assets-20261120","platform":"Any","architecture":"Any","source":url,"license":"CC0","license_url":"https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html","files":records}
+          (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
+          with zipfile.ZipFile("ember-hair-v05.zip", "w", zipfile.ZIP_DEFLATED) as z:
+              for path in sorted(out.rglob("*")):
+                  if path.is_file():
+                      z.write(path, path.relative_to(out))
+          packed = pathlib.Path("ember-hair-v05.zip")
+          print(json.dumps({"file":packed.name, "bytes":packed.stat().st_size,"sha256":hashlib.sha256(packed.read_bytes()).hexdigest(),"members":len(records)}))
+          if packed.stat().st_size >= 95*1024*1024:
+              raise RuntimeError("Unexpectedly large bundle; split required")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ember-hair-v05-cc0
+          path: ember-hair-v05.zip
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
