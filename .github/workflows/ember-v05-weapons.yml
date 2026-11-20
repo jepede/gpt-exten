@@ -1,0 +1,86 @@
+name: Ember v05 licensed weapon sources
+on:
+  push:
+    branches: [work/ember-realism-v05-20261120]
+    paths: [.github/workflows/ember-v05-weapons.yml, scripts/ember-v05-fetch-weapons.py]
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch licensed models and audio
+        run: python3 scripts/ember-v05-fetch-weapons.py
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && hashFiles('parts/bundle.part00') != '' }}
+        with:
+          name: ember-weapons-v05-part00
+          path: parts/bundle.part00
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && hashFiles('parts/bundle.part01') != '' }}
+        with:
+          name: ember-weapons-v05-part01
+          path: parts/bundle.part01
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && hashFiles('parts/bundle.part02') != '' }}
+        with:
+          name: ember-weapons-v05-part02
+          path: parts/bundle.part02
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && hashFiles('parts/bundle.part03') != '' }}
+        with:
+          name: ember-weapons-v05-part03
+          path: parts/bundle.part03
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && hashFiles('parts/bundle.part04') != '' }}
+        with:
+          name: ember-weapons-v05-part04
+          path: parts/bundle.part04
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && hashFiles('parts/bundle.part05') != '' }}
+        with:
+          name: ember-weapons-v05-part05
+          path: parts/bundle.part05
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && hashFiles('parts/bundle.part06') != '' }}
+        with:
+          name: ember-weapons-v05-part06
+          path: parts/bundle.part06
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && hashFiles('parts/bundle.part07') != '' }}
+        with:
+          name: ember-weapons-v05-part07
+          path: parts/bundle.part07
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ember-weapons-v05-manifest
+          path: bundle-manifest.json
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
