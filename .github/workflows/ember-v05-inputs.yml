@@ -1,0 +1,32 @@
+name: Ember v05 realism inputs
+on:
+  push:
+    branches: [work/ember-realism-v05-20261120]
+    paths: [.github/workflows/ember-v05-inputs.yml]
+permissions:
+  contents: read
+  actions: write
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch missing licensed inputs without repeating model downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/ember-v05-fetch-inputs.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ember-realism-inputs-v05
+          path: ember-realism-inputs-v05.zip
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ember-realism-inputs-v05-manifest
+          path: input-manifest.json
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
