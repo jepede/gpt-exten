@@ -3,6 +3,7 @@
 GitHub Actions 可复用 Artifact 索引。下载资源前优先按 `Name + Version + Platform + Architecture` 查询；是否仍可用以 GitHub 实际返回的 `expires_at` 为准。
 
 ## Index
+| Godot 4.7.2 Editor | 4.7.2-stable | Linux | x86_64 | `44689846405` | SINGLE | `2027-02-18T06:43:45Z` |
 | IL2CPP managed Linux tools | Il2CppDumper 6.7.46 + ILSpy 11.2.0.10050 + .NET 10.0.15 + Keystone 0.9.2 | Linux | x86_64 / AArch64 (Keystone x86_64) | `43712010762` | SINGLE | `2027-02-13T12:04:50Z` |
 | Il2CppDumper source | v6.7.46 | Any | Any | `38414524682` | SINGLE | `2027-01-11T14:34:29Z` |
 | ARM64 RE offline analysis wheels | unicorn 2.1.4 + capstone 5.0.6 + pyelftools 0.32 | Linux / Python 3.13 | x86_64 host / AArch64 target | `41417939591` | SINGLE | `2027-01-31T09:06:13Z` |
@@ -3837,3 +3838,29 @@ Requires the observed executable library base, scans the exact private-image ran
 |---|---|---|---|---|---|
 | Free Firearm Sound Library AR-15 D_32P | 2014-prepared / 2026-11-20-mirror | cross-platform | any | AR15-D_32P.wav | acee9d2106b68fe5956225a19d7aedf943d97793817f9bda9d486a2b74b0a812 |
 | fps-asset-kit mirror license description | 2026-11-20 | cross-platform | any | mirror-README.md | 2718226f4134568f3bb214f2858865cb6e2ae662fd8979c3edc97867282e16e8 |
+
+## Godot 4.7.2 Editor — Ember biomechanics validation
+
+- Artifact Name: `godot-472-linux-x86_64-editor`
+- Artifact ID: `14608196249`
+- Run ID: `44689846405`
+- Workflow: `.github/workflows/ember-godot472-relay.yml` (branch `work/ember-godot472-20261120`)
+- File: `godot-editor.zip`
+- Size: `77860424` bytes
+- SHA256: `cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4`
+- Created At: `2026-11-20T06:43:52Z`
+- Expires At: `2027-02-18T06:43:45Z`
+- Storage Mode: SINGLE
+- Original File: `Godot_v4.7.2-stable_linux.x86_64.zip`
+- Original Size: `77860424` bytes
+- Original SHA256: `cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4`
+- Part Count: 1
+- Artifact Archive Size: `77860783` bytes
+- Artifact Archive SHA256: `85ba2d80ed116b33f0b992b24e391247e717a592f508081bf0adcc26dc137007`
+
+### Contents
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Godot Editor | 4.7.2-stable | Linux | x86_64 | `godot-editor.zip` | `cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4` |
+
