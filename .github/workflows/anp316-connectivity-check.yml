@@ -1,0 +1,111 @@
+name: ANP316 authorized endpoint DNS and connectivity
+on:
+  push:
+    branches: [work/anp316-keyquery-20261120]
+    paths: [.github/workflows/anp316-connectivity-check.yml]
+permissions:
+  contents: read
+jobs:
+  connectivity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Check target endpoint without sample or device identifiers
+        shell: python
+        run: |
+          """Check the sample's public endpoint and DNS from an authorized CI runner.
+          
+          No sample, device identity, ephemeral private key or real signed request is
+          embedded. Only the endpoint's public task/tag identifiers are used here.
+          """
+          
+          import hashlib
+          import json
+          from pathlib import Path
+          import socket
+          import ssl
+          import time
+          import urllib.request
+          
+          host = "yz.hdelf.com"
+          out = Path("response")
+          out.mkdir(exist_ok=True)
+          report = {"host": host, "dns": [], "attempts": []}
+          addresses = set()
+          try:
+              for row in socket.getaddrinfo(host, 80, type=socket.SOCK_STREAM):
+                  addresses.add(row[4][0])
+              report["system_dns"] = sorted(addresses)
+          except Exception as error:
+              report["system_dns_error"] = type(error).__name__ + ": " + str(error)
+          
+          for resolver in ["https://dns.google/resolve", "https://dns.alidns.com/resolve"]:
+              for kind in ["A", "AAAA"]:
+                  row = {"resolver": resolver, "type": kind}
+                  try:
+                      request = urllib.request.Request(
+                          resolver + "?name=" + host + "&type=" + kind,
+                          headers={"Accept": "application/dns-json"},
+                      )
+                      with urllib.request.urlopen(request, timeout=6) as response:
+                          answer = json.loads(response.read(65536))
+                      row["result"] = answer
+                      for item in answer.get("Answer", []):
+                          if item.get("type") in [1, 28]:
+                              addresses.add(item["data"])
+                  except Exception as error:
+                      row["error"] = type(error).__name__ + ": " + str(error)
+                  report["dns"].append(row)
+          
+          # Previously observed A record is tested as historical evidence as well.
+          addresses.add("110.42.37.167")
+          body = b"act=query_pk&task_id=16468&tag=L2"
+          request = (
+              "POST /md5api.php HTTP/1.1\r\nHost: "
+              + host
+              + "\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: "
+              + str(len(body))
+              + "\r\nConnection: close\r\n\r\n"
+          ).encode() + body
+          for address in sorted(addresses)[:6]:
+              for port in [80, 443]:
+                  row = {"address": address, "port": port}
+                  started = time.monotonic()
+                  response = b""
+                  try:
+                      connection = socket.create_connection((address, port), timeout=5)
+                      if port == 443:
+                          connection = ssl.create_default_context().wrap_socket(
+                              connection, server_hostname=host
+                          )
+                      with connection:
+                          connection.settimeout(6)
+                          connection.sendall(request)
+                          while len(response) < 16384:
+                              data = connection.recv(min(4096, 16384 - len(response)))
+                              if not data:
+                                  break
+                              response += data
+                      row["status_line"] = response.split(b"\r\n", 1)[0].decode(
+                          "ascii", "replace"
+                      )
+                  except Exception as error:
+                      row["error"] = type(error).__name__ + ": " + str(error)
+                  row["elapsed"] = round(time.monotonic() - started, 3)
+                  row["response_size"] = len(response)
+                  if response:
+                      name = "endpoint_%02d.bin" % len(report["attempts"])
+                      (out / name).write_bytes(response)
+                      row["file"] = name
+                      row["sha256"] = hashlib.sha256(response).hexdigest()
+                  report["attempts"].append(row)
+                  print("ENDPOINT_CONNECTIVITY", json.dumps(row), flush=True)
+          report["addresses"] = sorted(addresses)
+          (out / "transfer.json").write_text(json.dumps(report, indent=2))
+          print("ENDPOINT_DNS", json.dumps(report["dns"]), flush=True)
+          
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anp316-authorized-connectivity
+          path: response/
+          retention-days: 1
