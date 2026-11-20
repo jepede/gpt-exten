@@ -1,0 +1,28 @@
+name: Ember Godot 4.7.2 editor relay
+on:
+  push:
+    branches: [work/ember-godot472-20261120]
+    paths: ['.github/workflows/ember-godot472-relay.yml']
+  workflow_dispatch:
+jobs:
+  editor:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch pinned official Linux editor
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-delay 4 --output godot-editor.zip "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip"
+          unzip -t godot-editor.zip | tail -2
+          sha256sum godot-editor.zip | tee godot-editor.sha256
+          stat -c '%s' godot-editor.zip
+      - name: Upload editor package
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-472-linux-x86_64-editor
+          path: |
+            godot-editor.zip
+            godot-editor.sha256
+          if-no-files-found: error
+          retention-days: 400
+          compression-level: 0
