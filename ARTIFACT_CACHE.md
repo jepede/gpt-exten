@@ -3763,3 +3763,51 @@ Requires the observed executable library base, scans the exact private-image ran
 | kar98_danscrivy | 20261120-v05 | Any | Any | `kar98_danscrivy/model.glb` | `3efcc2fe427cbeb4aacd97df8ceb4838665efc03a9e3c9f4e3457e624749c22f` |
 | Objaverse object-paths index | archive-20261120 | Any | Any | `object-paths.json.gz` | `db88ff78942613f10566ec4723fb8b8f558c37ffe8e78a8fc5428a20b93886a0` |
 
+
+## Artifact Record — Ember realism inputs v05 (hair, detailed SCAR, recorded audio)
+
+- Artifact Name: ember-realism-inputs-v05
+- Artifact ID: 14601893765
+- Run ID: 44676453079
+- Workflow: .github/workflows/ember-v05-inputs.yml
+- File: ember-realism-inputs-v05.zip (GitHub artifact wrapper)
+- Size: 47848770 bytes
+- SHA256: 4c1c04d0a7913379bd0e10a6521babd59378b61beed2a3feaf32c1029d5917e5
+- Created At: 2026-11-20T04:45:53Z
+- Expires At: 2027-02-18T04:44:54Z (actual GitHub expiry; requested 400 days)
+- Storage Mode: SINGLE
+- Original File: ember-realism-inputs-v05.zip
+- Original Size: 47848600 bytes
+- Original SHA256: 8bd6e676ddc60da4649516d755ff5544c2b38056b237e33e1b56b03c8ea06776
+- Part Count: 1
+- Part 1: Artifact ID 14601893765, name ember-realism-inputs-v05, sequence 1/1, original payload 47848600 bytes, SHA256 8bd6e676ddc60da4649516d755ff5544c2b38056b237e33e1b56b03c8ea06776
+- Manifest Artifact: 14602448058, ember-realism-inputs-v05-manifest, wrapper 9227 bytes, SHA256 7686a5a88e8a0eb01612636bf13fed47ee1ea9826d47a8fc6ef3eda757c74e0b, Created At 2026-11-20T04:45:54Z, Expires At 2027-02-18T04:44:54Z
+- Verification: GitHub artifact existence confirmed, wrapper SHA256, inner ZIP CRC and every recorded member SHA256 verified locally on 2026-11-20. No failed inputs.
+- Notes: MakeHuman CC0 archive fetched with verified byte ranges for selected hair only. SCAR model embedded asset.extras confirms DelthorGames CC-BY-4.0. Audio original author pack includes manifest.csv and SOURCES_CC0.txt.
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| hair/short03/short03.thumb | 2026-11-20-source | cross-platform | any | hair/short03/short03.thumb | aba276c3ddbcb6b2c5dc29eef595bd2e447bfd8ff530731454319ce301b1b782 |
+| hair/short03/short03_diffuse.png | 2026-11-20-source | cross-platform | any | hair/short03/short03_diffuse.png | fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da |
+| hair/short03/short03.obj | 2026-11-20-source | cross-platform | any | hair/short03/short03.obj | 4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c |
+| hair/short03/short03.mhclo | 2026-11-20-source | cross-platform | any | hair/short03/short03.mhclo | d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f |
+| hair/short03/short03.mhmat | 2026-11-20-source | cross-platform | any | hair/short03/short03.mhmat | 8dcf42b677301ab6a66f96ff41751ecf88fba6c6cd7c564e6953f9c78e40a8fd |
+| hair/ponytail01/ponytail01.obj | 2026-11-20-source | cross-platform | any | hair/ponytail01/ponytail01.obj | d9f5fe96fbedbc8006220d87aad0e4a33d15286eb6b21f5929661cdc490ebf5a |
+| hair/ponytail01/ponytail01_diffuse.png | 2026-11-20-source | cross-platform | any | hair/ponytail01/ponytail01_diffuse.png | dcb364300cac06ce8bef91b2f7c0970baf310898bbdd06b0c6b884ee9306eb97 |
+| hair/ponytail01/ponytail01.mhclo | 2026-11-20-source | cross-platform | any | hair/ponytail01/ponytail01.mhclo | 97fc50b12bcb3b1c7b33edddd8d427a2604ffb06fe79b31132bf47f82d7afbac |
+| hair/ponytail01/ponytail01.thumb | 2026-11-20-source | cross-platform | any | hair/ponytail01/ponytail01.thumb | 1dd14d9ce1c7bb7368f49757e3299a961190ea374c8dc140ff964b5f437d3383 |
+| hair/ponytail01/ponytail01.mhmat | 2026-11-20-source | cross-platform | any | hair/ponytail01/ponytail01.mhmat | b145f5a7c9606859ad523f5113482a1cf989cf0e26dccc2ea95c377cb1c2557f |
+| hair/short02/short02.thumb | 2026-11-20-source | cross-platform | any | hair/short02/short02.thumb | af21a0e84bfcc294b9840d90a04f1b6655ad909bc09328251886adffbc0727e8 |
+| hair/short02/short02.obj | 2026-11-20-source | cross-platform | any | hair/short02/short02.obj | 48f979114adfa712165a69cc55c45a70831af1fb3cba8e2a89120f0c87407b64 |
+| hair/short02/short02.mhclo | 2026-11-20-source | cross-platform | any | hair/short02/short02.mhclo | 625736cdb73e6d094df6e5a2df18f371781f1d2cd37b0ae15795c5d7051c3ec2 |
+| hair/short02/short02.mhmat | 2026-11-20-source | cross-platform | any | hair/short02/short02.mhmat | 2ed04c8aad9c1a35d858ca72091525d32b1da3b61b5a031634dd528fd8530f6d |
+| hair/short02/short02_diffuse.png | 2026-11-20-source | cross-platform | any | hair/short02/short02_diffuse.png | 47fe33831a3929567c733356dd66243116e05df2ace1f884ddca0080b728229f |
+| hair/short02/short02_normal.png | 2026-11-20-source | cross-platform | any | hair/short02/short02_normal.png | 2cfac7619f8eec77dd90df979d912415058f4f0fc16940cba40a8eb1ae6d74b5 |
+| hair/short04/short04.mhmat | 2026-11-20-source | cross-platform | any | hair/short04/short04.mhmat | 7a3ac74db8478aa0afdb8a596c6fe3997d1a8a09d12211d70e8f1e9f0b7e0e97 |
+| hair/short04/short04.obj | 2026-11-20-source | cross-platform | any | hair/short04/short04.obj | 676964a133ee35ffcea1195382bf75542da7a298931e4001bc7b0d7b707225de |
+| hair/short04/short04.mhclo | 2026-11-20-source | cross-platform | any | hair/short04/short04.mhclo | d60640aa4c4ffce1aa269647ba436b6ee0bb21bb948f927b84e27a48d2107157 |
+| hair/short04/short04_diffuse.png | 2026-11-20-source | cross-platform | any | hair/short04/short04_diffuse.png | 0bef7fc0e403db5a40fabb2111ebfa6f7e8158e204c6e56b8da98e9ef527846e |
+| hair/short04/short04.thumb | 2026-11-20-source | cross-platform | any | hair/short04/short04.thumb | a7db8f3db6e2a53194993de73b875d000f928b66a8ac4d6efab51bfd8e6664fd |
+| SCAR L by Daniel Abeleira | 2026-11-20-source | cross-platform | any | scar_detailed/model.glb | a435e0d3f28f2b1b71ac9250113ec48b8154f6b40aa8b277113f4af702b367cc |
+| Modern Military Weapons Sound Pack v0.2 | v0.2 | cross-platform | any | audio/military_sfx_pack_v0.2.zip | 82fba2bc98d3ee1361b9aeac35d41fd2dcf9c78747752ac4f22f81061f764015 |
+
