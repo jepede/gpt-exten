@@ -1,0 +1,72 @@
+name: ANP316 public DNS geographic comparison
+on:
+  push:
+    branches: [work/anp316-keyquery-20261120]
+    paths: [.github/workflows/anp316-connectivity-ecs.yml]
+permissions:
+  contents: read
+jobs:
+  connectivity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Compare generic Chinese DNS prefixes
+        shell: python
+        run: |
+          """Ask public DNS with generic Chinese network prefixes, no user IP involved."""
+          
+          import json, socket, ssl, time, urllib.request
+          from pathlib import Path
+          
+          out = Path("response")
+          out.mkdir(exist_ok=True)
+          host = "yz.hdelf.com"
+          rows = []
+          addresses = set()
+          for subnet in ["223.5.5.0/24", "114.114.114.0/24", "180.76.0.0/16", "1.0.1.0/24"]:
+              row = {"generic_subnet": subnet}
+              try:
+                  url = (
+                      "https://dns.google/resolve?name="
+                      + host
+                      + "&type=A&edns_client_subnet="
+                      + subnet
+                  )
+                  with urllib.request.urlopen(url, timeout=7) as r:
+                      d = json.loads(r.read(65536))
+                  row["dns"] = d
+                  for a in d.get("Answer", []):
+                      if a.get("type") == 1:
+                          addresses.add(a["data"])
+              except Exception as e:
+                  row["error"] = type(e).__name__ + ": " + str(e)
+              rows.append(row)
+          result = {"dns_ecs": rows, "addresses": sorted(addresses), "attempts": []}
+          for address in sorted(addresses - {"110.42.37.167"})[:6]:
+              for port in [80, 443]:
+                  row = {"address": address, "port": port}
+                  t = time.monotonic()
+                  try:
+                      s = socket.create_connection((address, port), timeout=5)
+                      if port == 443:
+                          s = ssl.create_default_context().wrap_socket(s, server_hostname=host)
+                      with s:
+                          s.settimeout(5)
+                          s.sendall(
+                              ("GET /md5api.php HTTP/1.0\r\nHost: " + host + "\r\n\r\n").encode()
+                          )
+                          data = s.recv(8192)
+                      row["status_line"] = data.split(b"\r\n", 1)[0].decode("ascii", "replace")
+                      (out / ("endpoint_%02d.bin" % len(result["attempts"]))).write_bytes(data)
+                  except Exception as e:
+                      row["error"] = type(e).__name__ + ": " + str(e)
+                  row["elapsed"] = round(time.monotonic() - t, 3)
+                  result["attempts"].append(row)
+          (out / "transfer.json").write_text(json.dumps(result, indent=2))
+          print(json.dumps(result))
+          
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anp316-authorized-dns-ecs
+          path: response/
+          retention-days: 1
