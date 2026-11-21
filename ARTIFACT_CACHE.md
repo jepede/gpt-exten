@@ -3915,3 +3915,29 @@ Part Count: 1
 | unluac source | 9c59af46483a932a47224bf2ac84ad8a63094da5 | Java source | Any | unluac-9c59af46483a-source.tar.gz | a45b975ab54a159d13baa48180fdf0387c5ca159dd79f39e44b86add0fbf89d2 |
 
 Requested retention 400 days; actual expires_at above. Jar was compiled by runner default Java25. For older runtimes, reuse the included source and compile locally; do not download upstream again. The LuaSafe semantic reconstruction task rebuilt it with the installed Java21 compiler module.
+
+
+## Artifact Record: Android NDK ARM64 unwind link support r28c-unwind-v1 (2026-11-21)
+
+- Artifact Name: `ndk-r28c-arm64-unwind-v1`
+- Artifact ID: `14692642171`
+- Run ID: `44867458349`
+- Workflow: `.github/workflows/cache-ndk-arm64-unwind-20261121.yml`
+- File: `ndk-r28c-arm64-unwind-v1.zip`
+- Size: `79297`
+- SHA256: `sha256:de49283229c7421da3e0d5cd69704b3de0f33a6f753b7ea608a6ac77519b255b`
+- Created At: `2026-11-21T04:43:16Z`
+- Expires At: `2027-02-19T04:43:05Z`
+- Storage Mode: `SINGLE`
+- Original File: `ndk-r28c-arm64-unwind.tar.xz`
+- Original Size: `77324`
+- Original SHA256: `45c18212fd4eb70ebd5227e5ce36a9f88507b81299b59e969b200c4057d9413c`
+- Part Count: `1`
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| Android NDK ARM64 link support | r28c-unwind-v1 | Android / Linux | AArch64 target | `ndk-clang/lib/aarch64-unknown-linux-musl/libunwind.a` | `4eee3306883d27c9fb3d296995d06bd7ca33b8378641a51aaaa9fd1d822ef914` |
+| Android NDK ARM64 link support | r28c-unwind-v1 | Android / Linux | AArch64 target | `ndk-clang/lib/clang/19/lib/linux/aarch64/libunwind.a` | `cee1176cb585dbd90891470f8c40ae913922515edb225698d819290fc0132787` |
+| Android NDK ARM64 link support | r28c-unwind-v1 | Android / Linux | AArch64 target | `ndk-clang/lib/clang/19/lib/linux/aarch64/libatomic.a` | `64247f041b2bab4fc609e5189e9e19f67810a20f2ebec7c86654160ab22e8de1` |
+
+Source: verified existing NDK Run 39019800471, SHA256 `dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f`; no upstream download. Requested retention 400 days; use actual expires_at above. Complements compiler Run 39121838147 and sysroot Run 44725688545. Contains only public toolchain files; no private sample or reconstructed program.
