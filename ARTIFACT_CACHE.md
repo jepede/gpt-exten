@@ -3890,3 +3890,28 @@ Requires the observed executable library base, scans the exact private-image ran
 | Android NDK ARM64 API35 sysroot | r28c-api35-v1 | Android API35 / Linux | AArch64 target, any host | `ndk-r28c-arm64-api35-sysroot.tar.xz` | `466450d800b12146db0b2b633793e1cda723c50d8fdfea020a1bd8356c036489` |
 
 Includes NDK headers, libc++ headers, ARM64 target support libraries and API35 link stubs; not Android runtime libraries. Per-file hashes in MANIFEST.json. Compiler/LLD separately cached in Run 39121838147. All files are public toolchain files; no private target or reconstructed source is uploaded.
+
+
+## Artifact Record: unluac pinned source and Java bytecode 20261121
+
+Artifact Name: unluac-9c59af46483a-java-any
+Artifact ID: 14691304567
+Run ID: 44866037342
+Workflow: .github/workflows/luasafe-semantic-tools-20261121.yml
+File: unluac-9c59af46483a-java-any.zip
+Size: 448958
+SHA256: add3c8a809485b51e69e57b9e026c4fd3e0be7c8e4b1578bbebe629d7b50d045
+Created At: 2026-11-21T04:25:35Z
+Expires At: 2027-02-19T04:25:26Z
+Storage Mode: SINGLE
+Original File: unluac-9c59af46483a.jar + pinned source tar.gz
+Original Size: 767356
+Original SHA256: per-member table below
+Part Count: 1
+
+| Name | Version | Platform | Architecture | File/Path | SHA256 |
+|---|---|---|---|---|---|
+| unluac JAR | 9c59af46483a932a47224bf2ac84ad8a63094da5 | Java 25 class69 | Any | unluac-9c59af46483a.jar | 360f2020a6b9602ffa6f29d4f16c7886551c8f819abfba80232fe814568b40a7 |
+| unluac source | 9c59af46483a932a47224bf2ac84ad8a63094da5 | Java source | Any | unluac-9c59af46483a-source.tar.gz | a45b975ab54a159d13baa48180fdf0387c5ca159dd79f39e44b86add0fbf89d2 |
+
+Requested retention 400 days; actual expires_at above. Jar was compiled by runner default Java25. For older runtimes, reuse the included source and compile locally; do not download upstream again. The LuaSafe semantic reconstruction task rebuilt it with the installed Java21 compiler module.
