@@ -57,6 +57,7 @@ jobs:
           
           summary = {
               "target": TARGET,
+              "additional_target": "http://yz.hdelf.com/",
               "method": "HEAD; DNS and certificate-verifying TLS diagnostics",
               "started_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
               "runner_os": platform.platform(),
@@ -96,8 +97,8 @@ jobs:
           summary["tls"] = tls
           
           summary["http"] = []
-          for label, version_flags in (("https-default", []), ("https-http1", ["--http1.1"])):
-              argv = ["curl", "--silent", "--show-error", "--head", "--proto", "=https", "--connect-timeout", "10", "--max-time", "30", "--dump-header", str(OUT / (label + ".headers.txt")), "--output", "/dev/null", "--write-out", "%{json}", *version_flags, TARGET]
+          for label, url, version_flags in (("https-default", TARGET, []), ("https-http1", TARGET, ["--http1.1"]), ("http-port80", "http://yz.hdelf.com/", [])):
+              argv = ["curl", "--silent", "--show-error", "--head", "--proto", "=http,https", "--connect-timeout", "10", "--max-time", "30", "--dump-header", str(OUT / (label + ".headers.txt")), "--output", "/dev/null", "--write-out", "%{json}", *version_flags, url]
               result, data = run(label, argv, timeout=35)
               try:
                   metrics = json.loads(data)
