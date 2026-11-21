@@ -12,9 +12,9 @@ jobs:
     timeout-minutes: 25
     env:
       GH_RELAY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      RELAY_CONFIG: '{"session":"anp316-key-15957dc1bf","host_public_spki":"MCowBQYDK2VuAyEA5Lxcqge36Y61wWPd7+oKHGw0wwBBmr2MoQoriNQ9BgA=","branch":"codex/anp316-key-15957dc1bf","repository":"jepede/gpt-exten","prefix":"relay-data/anp316-key-15957dc1bf","candidates":[{"host":"123.121.122.125","port":8888},{"host":"139.198.113.42","port":10023},{"host":"222.211.216.201","port":7890},{"host":"101.251.204.174","port":8080},{"host":"114.244.218.227","port":8888},{"host":"111.192.19.3","port":8888},{"host":"111.192.215.62","port":8888},{"host":"114.249.221.241","port":8888},{"host":"114.248.85.85","port":8888},{"host":"222.128.174.236","port":8888},{"host":"114.249.211.7","port":8888},{"host":"114.253.7.197","port":8888}]}'
+      RELAY_CONFIG: '{"session":"anp316-live-3127d7814c","host_public_spki":"MCowBQYDK2VuAyEAYHJ6qB4IIZqSXHiYF35Q6ay19KG4J03+SDKpoUlZEzU=","branch":"codex/anp316-key-15957dc1bf","repository":"jepede/gpt-exten","prefix":"relay-data/anp316-live-3127d7814c","candidates":[{"host":"123.121.122.125","port":8888},{"host":"139.198.113.42","port":10023},{"host":"222.211.216.201","port":7890},{"host":"101.251.204.174","port":8080},{"host":"114.244.218.227","port":8888},{"host":"111.192.19.3","port":8888},{"host":"111.192.215.62","port":8888},{"host":"114.249.221.241","port":8888},{"host":"114.248.85.85","port":8888},{"host":"222.128.174.236","port":8888},{"host":"114.249.211.7","port":8888},{"host":"114.253.7.197","port":8888}]}'
     steps:
-      - name: Forward genuine native requests using a verified mainland route
+      - name: Verify endpoint route and forward genuine native requests
         shell: bash
         run: |
           node --input-type=module <<'JS'
@@ -175,7 +175,15 @@ jobs:
           try {
             let selected = null;
             stats.route_probes = [];
-            for (const candidate of cfg.candidates.slice(0,12)) {
+            let candidates=cfg.candidates;
+            try{
+              const list=await execute('curl',['-fsSL','--connect-timeout','10','--max-time','30','https://raw.githubusercontent.com/monosans/proxy-list/main/proxies.json'],{timeout:35000,maxBuffer:20*1024*1024});
+              const parsed=JSON.parse(list.stdout);
+              const fresh=parsed.filter(p=>p.protocol==='http'&&!p.username&&!p.password&&p.geolocation?.country?.iso_code==='CN').map(p=>({host:p.host,port:p.port}));
+              if(fresh.length)candidates=fresh;
+              await fs.writeFile('evidence/proxy-candidates.json',JSON.stringify({fetched_at_utc:new Date().toISOString(),source:'monosans/proxy-list',candidates},null,2));
+            }catch(error){stats.proxy_list_error='refresh_failed_using_prior_candidates';}
+            for (const candidate of candidates.slice(0,24)) {
               const proxy = `http://${candidate.host}:${candidate.port}`;
               try {
                 const geo = await execute('curl',['-fsS','--noproxy','','--proxy',proxy,'--connect-timeout','5','--max-time','10','https://ipinfo.io/json'],{timeout:15000});
@@ -183,7 +191,7 @@ jobs:
                 if(exit.country!=='CN'||/hong kong|macau|macao|taiwan/i.test(`${exit.region} ${exit.city}`))continue;
                 const probe=await execute('curl',['-sS','--noproxy','','--proxy',proxy,'--connect-timeout','5','--max-time','12','--head','--output','/dev/null','--write-out','%{http_code}','http://yz.hdelf.com/md5api.php'],{timeout:17000});
                 const status=Number(probe.stdout);stats.route_probes.push({proxy,reported_exit:exit.ip,status});
-                if(status>=100 && status<500){selected={candidate,exit};break;}
+                if([200,301,302,400,404,405,422].includes(status)){selected={candidate,exit};break;}
               } catch(error){stats.route_probes.push({proxy,error:'route_probe_failed'});}
             }
             if(!selected)throw new Error('No verified mainland proxy reached the actual HTTP80 endpoint');
