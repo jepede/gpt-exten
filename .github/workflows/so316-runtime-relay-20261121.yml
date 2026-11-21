@@ -1,0 +1,201 @@
+name: 316 original runtime TCP relay
+
+on:
+  push:
+    branches: ["codex/so316-ab2d5e790c-relay"]
+    paths: [".github/workflows/so316-runtime-relay-20261121.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  relay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GH_RELAY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELAY_CONFIG: '{"session":"so316-ab2d5e790c","host_public_spki":"MCowBQYDK2VuAyEA6VIWOKV7/zQ/3RUPTvbXuzYF4mNdZD3yT/0rKD3Znxk=","branch":"codex/so316-ab2d5e790c-relay","repository":"jepede/gpt-exten","prefix":"relay-data/so316-ab2d5e790c"}'
+    steps:
+      - name: Run an encrypted fixed-destination TCP relay
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          // Relay only yz.hdelf.com:80/443. Queue contents are encrypted end to end.
+          import fs from 'node:fs/promises';
+          import net from 'node:net';
+          import { execFile } from 'node:child_process';
+          import { promisify } from 'node:util';
+          import { setTimeout as pause } from 'node:timers/promises';
+          import { generateKeyPairSync, createPublicKey, diffieHellman, hkdfSync, randomBytes, createCipheriv, createDecipheriv } from 'node:crypto';
+          
+          const cfg = JSON.parse(process.env.RELAY_CONFIG);
+          const token = process.env.GH_RELAY_TOKEN;
+          const runId = process.env.GITHUB_RUN_ID;
+          const execute = promisify(execFile);
+          const started = Date.now();
+          const sockets = new Map();
+          const pendingOutput = [];
+          const opening = new Map();
+          const deferred = new Map();
+          let nextInput = 1, nextOutput = 1, apiCalls = 0, stopped = false;
+          const stats = { target: 'yz.hdelf.com', allowed_ports: [80,443], started_at_utc: new Date().toISOString(),
+            run_url: `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}`,
+            connections: [], errors: [], input_bytes: 0, output_bytes: 0 };
+          await fs.mkdir('evidence', { recursive: true });
+          const pair = generateKeyPairSync('x25519');
+          const client = createPublicKey({ key: Buffer.from(cfg.host_public_spki, 'base64'), format: 'der', type: 'spki' });
+          const secret = diffieHellman({ privateKey: pair.privateKey, publicKey: client });
+          const key = Buffer.from(hkdfSync('sha256', secret, Buffer.from('so316-relay-v1'), Buffer.from(String(runId)), 32));
+          const aad = (direction, seq) => Buffer.from(`${cfg.session}:${runId}:${direction}:${seq}`);
+          function encrypt(events, seq) {
+            const iv = randomBytes(12), cipher = createCipheriv('aes-256-gcm', key, iv);
+            cipher.setAAD(aad('runner-to-host', seq));
+            const data = Buffer.concat([cipher.update(JSON.stringify(events)), cipher.final(), cipher.getAuthTag()]);
+            return { run_id: runId, seq, iv: iv.toString('base64'), data: data.toString('base64') };
+          }
+          function decrypt(packet, seq) {
+            if (String(packet.run_id) !== String(runId) || packet.seq !== seq) throw new Error('Incorrect queue sequence/run');
+            const iv = Buffer.from(packet.iv, 'base64'), data = Buffer.from(packet.data, 'base64');
+            if (iv.length !== 12 || data.length < 16 || data.length > 524288) throw new Error('Invalid encrypted packet size');
+            const decipher = createDecipheriv('aes-256-gcm', key, iv);
+            decipher.setAAD(aad('host-to-runner', seq)); decipher.setAuthTag(data.subarray(-16));
+            const clear = Buffer.concat([decipher.update(data.subarray(0,-16)), decipher.final()]);
+            const events = JSON.parse(clear);
+            if (!Array.isArray(events) || events.length > 64) throw new Error('Invalid packet events');
+            return events;
+          }
+          async function api(method, endpoint, data) {
+            if (++apiCalls > 900) throw new Error('API safety budget reached');
+            const result = await fetch(`https://api.github.com/repos/${cfg.repository}/${endpoint}`, {
+              method, headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28', ...(data ? { 'Content-Type': 'application/json' } : {}) },
+              body: data ? JSON.stringify(data) : undefined, signal: AbortSignal.timeout(20000),
+            });
+            if (result.status === 404 && method === 'GET') return null;
+            if (!result.ok) throw new Error(`GitHub API ${method}: ${result.status}`);
+            return result.json();
+          }
+          async function put(name, data) {
+            const content = Buffer.from(JSON.stringify(data)).toString('base64');
+            return api('PUT', `contents/${cfg.prefix}/${name}`, { message: 'Relay encrypted test packet [skip ci]', branch: cfg.branch, content });
+          }
+          function emit(conn_id, op, fields={}) { pendingOutput.push({ conn_id, op, ...fields }); }
+          function closeConnection(id) { sockets.get(id)?.destroy(); sockets.delete(id); deferred.delete(id); }
+          async function connectTarget(event) {
+            if (!/^[0-9a-f]{32}$/.test(event.conn_id) || ![80,443].includes(event.port) || stats.connections.length >= 32) throw new Error('Target connection rejected');
+            const id = event.conn_id, port = event.port;
+            const item = { conn_id: id, target_port: port, connected: false, sent: 0, received: 0 };
+            stats.connections.push(item);
+            const socket = net.createConnection({ host: '123.121.122.125', port: 8888 });
+            socket.setNoDelay(true); socket.setTimeout(90000);
+            sockets.set(id, socket);
+            socket.on('timeout', () => socket.destroy(new Error('upstream_idle_timeout')));
+            socket.on('error', () => { emit(id, 'error', { error: 'upstream_socket_error' }); item.socket_error = true; });
+            socket.on('close', () => { emit(id, 'closed'); sockets.delete(id); });
+            await new Promise((resolve, reject) => {
+              const timer = setTimeout(() => reject(new Error('proxy_connect_timeout')), 10000);
+              socket.once('connect', () => { clearTimeout(timer); resolve(); });
+              socket.once('error', () => { clearTimeout(timer); reject(new Error('proxy_connect_failed')); });
+            });
+            await new Promise((resolve, reject) => {
+              const timer = setTimeout(() => { cleanup(); reject(new Error('proxy_tunnel_timeout')); }, 12000);
+              let header = Buffer.alloc(0);
+              const cleanup = () => { clearTimeout(timer); socket.removeListener('data', receive); socket.removeListener('error', failed); };
+              const failed = () => { cleanup(); reject(new Error('proxy_tunnel_failed')); };
+              const receive = chunk => {
+                header = Buffer.concat([header,chunk]);
+                if (header.length > 16384) { cleanup(); reject(new Error('proxy_header_limit')); return; }
+                const end = header.indexOf('\r\n\r\n'); if (end < 0) return;
+                const status = Number(header.toString('latin1',0,header.indexOf('\r\n')).split(' ')[1]);
+                item.proxy_status = status; cleanup();
+                if (status !== 200) { reject(new Error(`proxy_tunnel_status_${status}`)); return; }
+                const extra = header.subarray(end+4);
+                if (extra.length) emit(id,'data',{data:extra.toString('base64')});
+                resolve();
+              };
+              socket.on('data', receive); socket.once('error', failed);
+              socket.write(`CONNECT yz.hdelf.com:${port} HTTP/1.1\r\nHost: yz.hdelf.com:${port}\r\nProxy-Connection: keep-alive\r\n\r\n`);
+            });
+            item.connected = true;
+            socket.on('data', chunk => {
+              if (item.received + chunk.length > 8*1024*1024) { socket.destroy(); return; }
+              item.received += chunk.length; stats.output_bytes += chunk.length;
+              emit(id,'data',{data:chunk.toString('base64')});
+            });
+            emit(id,'open_ok');
+            opening.delete(id);
+            const queuedEvents = deferred.get(id) ?? [];
+            deferred.delete(id);
+            for (const queued of queuedEvents) forward(queued);
+          }
+          function forward(event) {
+            const socket = sockets.get(event.conn_id);
+            if (!socket || opening.has(event.conn_id)) {
+              const list = deferred.get(event.conn_id) ?? []; list.push(event); deferred.set(event.conn_id,list); return;
+            }
+            if (event.op === 'data') {
+              const data = Buffer.from(event.data,'base64');
+              if (data.length > 65536) throw new Error('TCP chunk limit');
+              const item = stats.connections.find(x=>x.conn_id===event.conn_id);
+              if (!item || item.sent+data.length > 8*1024*1024) throw new Error('TCP transfer limit');
+              item.sent += data.length; stats.input_bytes += data.length; socket.write(data);
+            } else if (event.op === 'eof') socket.end();
+            else if (event.op === 'close') closeConnection(event.conn_id);
+          }
+          try {
+            const geo = await execute('curl',['-fsS','--noproxy','','--proxy','http://123.121.122.125:8888',
+              '--connect-timeout','8','--max-time','20','--retry','2','--retry-all-errors','--retry-delay','1','https://ipinfo.io/json'], {timeout:75000});
+            const exit = JSON.parse(geo.stdout);
+            if (exit.country !== 'CN' || /hong kong|macau|macao|taiwan/i.test(`${exit.region} ${exit.city}`)) throw new Error('Mainland exit verification failed');
+            stats.verified_exit = { ip:exit.ip,country:exit.country,region:exit.region,city:exit.city,org:exit.org };
+            const ready = { run_id:runId,session:cfg.session,server_public_spki:pair.publicKey.export({type:'spki',format:'der'}).toString('base64'),
+              target:'yz.hdelf.com',ports:[80,443],verified_exit:stats.verified_exit,started_at_utc:stats.started_at_utc };
+            await put('state.json',ready);
+            console.log('RELAY_READY '+JSON.stringify({run_id:runId,verified_exit:stats.verified_exit,session:cfg.session}));
+            while (!stopped && Date.now()-started < 20*60*1000 && apiCalls < 880) {
+              const name = `requests/in-${String(nextInput).padStart(6,'0')}.json`;
+              const file = await api('GET',`contents/${cfg.prefix}/${name}?ref=${encodeURIComponent(cfg.branch)}`);
+              if (file) {
+                const packet = JSON.parse(Buffer.from(file.content,'base64'));
+                for (const event of decrypt(packet,nextInput)) {
+                  if (event.op === 'stop') { stopped = true; break; }
+                  if (event.op === 'open') {
+                    const task = connectTarget(event).catch(error=>{stats.errors.push(String(error));emit(event.conn_id,'error',{error:String(error)});closeConnection(event.conn_id);})
+                      .finally(()=>opening.delete(event.conn_id));
+                    opening.set(event.conn_id,task);
+                  } else if (['data','eof','close'].includes(event.op)) forward(event);
+                }
+                nextInput++;
+              }
+              if (pendingOutput.length) {
+                const events=[]; let bytes=0;
+                while(pendingOutput.length && events.length < 32 && bytes < 131072) {const event=pendingOutput.shift();events.push(event);bytes+=JSON.stringify(event).length;}
+                await put(`responses/out-${String(nextOutput).padStart(6,'0')}.json`,encrypt(events,nextOutput)); nextOutput++;
+              }
+              await pause(sockets.size || opening.size ? 300 : 1400);
+            }
+          } catch(error) { stats.errors.push(String(error)); console.log('RELAY_FAILURE '+String(error)); process.exitCode=1; }
+          finally {
+            for (const id of sockets.keys()) closeConnection(id);
+            stats.finished_at_utc=new Date().toISOString();stats.api_calls=apiCalls;stats.input_packets=nextInput-1;stats.output_packets=nextOutput-1;
+            await fs.writeFile('evidence/relay-statistics.json',JSON.stringify(stats,null,2)+'\n');
+            console.log('RELAY_FINISHED '+JSON.stringify(stats));
+          }
+          JS
+      - name: Hash relay diagnostics
+        if: always()
+        shell: bash
+        run: |
+          if [ -f evidence/relay-statistics.json ]; then
+            cd evidence
+            sha256sum relay-statistics.json > SHA256SUMS.txt
+          fi
+      - name: Preserve metadata without application payloads
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: so316-runtime-relay-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          retention-days: 1
+          if-no-files-found: warn
