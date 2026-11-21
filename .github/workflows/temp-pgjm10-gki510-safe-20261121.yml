@@ -1,0 +1,126 @@
+name: PGJM10 Android12 5.10 safe module build 20261121
+on:
+  push:
+    paths:
+      - .github/workflows/temp-pgjm10-gki510-safe-20261121.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      ARCH: arm64
+      LLVM: "1"
+    steps:
+      - name: Install host build dependencies
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq git ca-certificates build-essential bc bison flex libssl-dev libelf-dev libdw-dev llvm lld clang kmod cpio rsync python3 gcc-aarch64-linux-gnu
+          mkdir -p outdir
+          (uname -a; git --version; df -h .; clang --version | head -2) > outdir/host.txt
+      - name: Fetch exact AOSP android12-5.10-2023-05_r1 kernel source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git -c http.version=HTTP/1.1 clone --depth 1 --filter=blob:none --branch android12-5.10-2023-05_r1 https://android.googlesource.com/kernel/common.git kernel
+          git -C kernel rev-parse HEAD | tee outdir/kernel-source-commit.txt
+          grep -E '^(VERSION|PATCHLEVEL|SUBLEVEL|EXTRAVERSION)\s*=' kernel/Makefile | tee outdir/kernel-makefile-version.txt
+          du -sh kernel >> outdir/kernel-makefile-version.txt
+      - name: Fetch exact Android Clang 12 r416183b toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git -c http.version=HTTP/1.1 clone --depth=1 --filter=blob:none --sparse --branch android12-release https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86.git prebuilts
+          git -C prebuilts sparse-checkout set clang-r416183b
+          git -C prebuilts rev-parse HEAD | tee outdir/toolchain-repo-commit.txt
+          test -x prebuilts/clang-r416183b/bin/clang
+          prebuilts/clang-r416183b/bin/clang --version | tee outdir/android-clang-version.txt
+          prebuilts/clang-r416183b/bin/ld.lld --version | tee outdir/android-lld-version.txt
+          if ! grep -q 'r416183b' outdir/android-clang-version.txt; then
+            echo "ERROR: fetched compiler revision does not match target r416183b" | tee outdir/compiler-mismatch.txt
+            exit 2
+          fi
+      - name: Configure ARM64 GKI and compare target security options
+        shell: bash
+        run: |
+          set -euxo pipefail
+          export PATH="$GITHUB_WORKSPACE/prebuilts/clang-r416183b/bin:$PATH"
+          mkdir -p kout
+          make -C kernel O="$GITHUB_WORKSPACE/kout" ARCH=arm64 LLVM=1 gki_defconfig >outdir/defconfig.log 2>&1 || { tail -100 outdir/defconfig.log; exit 1; }
+          kernel/scripts/config --file kout/.config \
+            -e MODULES -e MODULE_UNLOAD -e MODVERSIONS -e LTO_CLANG_FULL -e CFI_CLANG \
+            -e SHADOW_CALL_STACK -e STRICT_KERNEL_RWX -e STRICT_MODULE_RWX \
+            -d MODULE_SIG -d CFI_PERMISSIVE -d DEBUG_INFO_BTF
+          make -C kernel O="$GITHUB_WORKSPACE/kout" ARCH=arm64 LLVM=1 olddefconfig >outdir/olddefconfig.log 2>&1 || { tail -100 outdir/olddefconfig.log; exit 1; }
+          cp kout/.config outdir/aosp-gki-5.10-config.txt
+          grep -E '^(CONFIG_(MODULES|MODULE_UNLOAD|MODVERSIONS|LTO_CLANG|CFI_CLANG|SHADOW_CALL_STACK|STRICT_KERNEL_RWX|STRICT_MODULE_RWX|MODULE_SIG|CFI_PERMISSIVE|DEBUG_INFO_BTF)=|# CONFIG_(MODULE_SIG|CFI_PERMISSIVE|DEBUG_INFO_BTF) is not set)' kout/.config | tee outdir/target-config-summary.txt || true
+          make -C kernel O="$GITHUB_WORKSPACE/kout" ARCH=arm64 LLVM=1 -j2 modules_prepare >outdir/modules-prepare.log 2>&1 || { tail -120 outdir/modules-prepare.log; exit 1; }
+          cat kout/include/generated/utsrelease.h | tee outdir/utsrelease.txt
+          if [ -s kout/Module.symvers ]; then
+            echo "Full symbol versions present" >outdir/symbols-status.txt
+          else
+            echo "WARNING: modules_prepare does not generate Module.symvers. Vendor CRC matching unavailable; build only, do not load on phone." >outdir/symbols-status.txt
+          fi
+      - name: Build exact hello_kernel diagnostic example from PGJM10 document
+        shell: bash
+        run: |
+          set -euxo pipefail
+          export PATH="$GITHUB_WORKSPACE/prebuilts/clang-r416183b/bin:$PATH"
+          mkdir -p hello
+          cat >hello/Makefile <<'MK'
+          obj-m += hello_kernel.o
+          MK
+          cat >hello/hello_kernel.c <<'C'
+          // SPDX-License-Identifier: GPL-2.0
+          #include <linux/init.h>
+          #include <linux/module.h>
+          #include <linux/printk.h>
+          static int __init hello_kernel_init(void)
+          {
+              pr_info("hello_kernel: loaded (AOSP module demo)\n");
+              return 0;
+          }
+          static void __exit hello_kernel_exit(void)
+          {
+              pr_info("hello_kernel: unloaded\n");
+          }
+          module_init(hello_kernel_init);
+          module_exit(hello_kernel_exit);
+          MODULE_LICENSE("GPL");
+          MODULE_AUTHOR("Kernel module demo");
+          MODULE_DESCRIPTION("Minimal load/unload logging module for PGJM10");
+          C
+          make -C kernel O="$GITHUB_WORKSPACE/kout" ARCH=arm64 LLVM=1 KBUILD_MODPOST_WARN=1 -j2 V=1 M="$GITHUB_WORKSPACE/hello" modules >outdir/hello-build.log 2>&1 || { tail -140 outdir/hello-build.log; exit 1; }
+          test -s hello/hello_kernel.ko
+          file hello/hello_kernel.ko | tee outdir/ko-file.txt
+          readelf -h hello/hello_kernel.ko | tee outdir/ko-elf-header.txt
+          modinfo hello/hello_kernel.ko | tee outdir/ko-modinfo.txt
+          readelf -S hello/hello_kernel.ko | tee outdir/ko-sections.txt
+          readelf -s hello/hello_kernel.ko | tee outdir/ko-symbols.txt
+          cp hello/hello_kernel.ko outdir/
+          cp hello/hello_kernel.c outdir/
+          cp hello/Makefile outdir/Makefile
+          sha256sum outdir/hello_kernel.ko | tee outdir/ko-sha256.txt
+          echo "NOT VERIFIED FOR DEVICE LOADING: this uses AOSP source GKI config and missing real PGJM10 vendor Module.symvers, exact kernel.config and device SDK." >outdir/NOT_LOAD_VERIFIED.txt
+      - name: Record full build scope and checksums
+        shell: bash
+        if: always()
+        run: |
+          mkdir -p outdir
+          printf '%s\n' 'Build scope: visible, unloadable logging-only example based on PGJM10 document.' 'No hidden module, clandestine channel, kernel hooks or cross-process memory operations.' 'AOSP GKI may not match vendor kernel; no device access, no runtime load attempted.' >outdir/BUILD_SCOPE.txt
+          cp .github/workflows/temp-pgjm10-gki510-safe-20261121.yml outdir/workflow.yml
+          ( cd outdir && find . -maxdepth 1 -type f ! -name 'SHA256SUMS' -print0 | sort -z | xargs -0 sha256sum >SHA256SUMS )
+          du -ah outdir | sort -h | tail -20
+      - name: Upload source, diagnostics and built file
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pgjm10-gki510-clang12-safe-build-20261121
+          path: outdir/
+          retention-days: 1
+          if-no-files-found: error
