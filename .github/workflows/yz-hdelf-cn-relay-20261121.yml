@@ -31,28 +31,84 @@ jobs:
           OUT = pathlib.Path("evidence")
           OUT.mkdir(exist_ok=True)
           TARGET = "https://yz.hdelf.com/"
-          CANDIDATES = json.loads(r'''[{"host":"222.211.216.201","port":7890,"protocol":"http","listed_country":"CN"},{"host":"101.251.204.174","port":8080,"protocol":"http","listed_country":"CN"},{"host":"123.57.0.163","port":8888,"protocol":"http","listed_country":"CN"},{"host":"110.40.178.232","port":8080,"protocol":"http","listed_country":"CN"},{"host":"180.125.216.109","port":8118,"protocol":"http","listed_country":"CN"},{"host":"221.176.85.230","port":1080,"protocol":"socks5","listed_country":"CN"},{"host":"222.184.87.224","port":8989,"protocol":"socks5","listed_country":"CN"},{"host":"218.26.101.226","port":53813,"protocol":"socks4","listed_country":"CN"},{"host":"221.225.48.67","port":8989,"protocol":"socks5","listed_country":"CN"},{"host":"27.115.33.94","port":4153,"protocol":"socks4","listed_country":"CN"}]''')
+          CANDIDATES = [
+              {"protocol": "http", "host": "139.198.113.42", "port": 10023},
+              {"protocol": "http", "host": "114.244.218.227", "port": 8888},
+              {"protocol": "http", "host": "123.121.122.125", "port": 8888},
+              {"protocol": "http", "host": "111.192.19.3", "port": 8888},
+              {"protocol": "http", "host": "111.192.215.62", "port": 8888},
+              {"protocol": "http", "host": "114.249.221.241", "port": 8888},
+              {"protocol": "http", "host": "114.248.85.85", "port": 8888},
+              {"protocol": "http", "host": "222.128.174.236", "port": 8888},
+              {"protocol": "http", "host": "114.249.211.7", "port": 8888},
+              {"protocol": "http", "host": "114.253.7.197", "port": 8888},
+              {"protocol": "http", "host": "111.192.41.53", "port": 8888},
+              {"protocol": "http", "host": "114.244.211.247", "port": 8888},
+              {"protocol": "http", "host": "114.253.67.30", "port": 8888},
+              {"protocol": "http", "host": "114.246.194.159", "port": 8888},
+              {"protocol": "http", "host": "111.192.54.49", "port": 8888},
+              {"protocol": "http", "host": "111.192.28.24", "port": 8888},
+              {"protocol": "http", "host": "114.246.207.179", "port": 8888},
+              {"protocol": "http", "host": "111.192.51.36", "port": 8888},
+              {"protocol": "http", "host": "123.57.213.24", "port": 3539},
+              {"protocol": "http", "host": "123.121.101.115", "port": 8888},
+              {"protocol": "http", "host": "123.119.192.126", "port": 8888},
+              {"protocol": "http", "host": "111.192.55.29", "port": 8888},
+              {"protocol": "socks4", "host": "222.184.87.224", "port": 8989},
+              {"protocol": "socks4", "host": "60.217.64.237", "port": 35292},
+              {"protocol": "http", "host": "123.115.143.194", "port": 8888},
+              {"protocol": "socks4", "host": "61.191.119.134", "port": 10800},
+              {"protocol": "http", "host": "114.249.212.245", "port": 8888},
+              {"protocol": "socks4", "host": "222.211.216.201", "port": 7890},
+              {"protocol": "http", "host": "111.192.44.13", "port": 8888},
+          ]
           SUMMARY = {
               "target": TARGET,
               "started_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-              "run_url": "https://github.com/{}/actions/runs/{}".format(os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_RUN_ID"]),
-              "candidates_source": "Previously retrieved monosans/proxy-list CN records; no new list download",
+              "run_url": "https://github.com/{}/actions/runs/{}".format(
+                  os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_RUN_ID"]
+              ),
+              "candidates_source": "Previously retrieved monosans/proxy-list CN records; remaining untested protocols, no new list download",
+              "batch": 2,
+              "prior_batch_run_id": 44873946215,
               "attempts": [],
               "verified_mainland_exit": None,
               "target_requests": [],
               "website_fetched": False,
           }
           
+          
           def save(name, value):
               (OUT / name).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+          
           
           def fetch(label, url, proxy, seconds, limit):
               headers = OUT / (label + ".headers.txt")
               body = OUT / (label + ".body")
-              args = ["curl", "--silent", "--show-error", "--noproxy", "", "--proxy", proxy,
-                      "--proto", "=https", "--connect-timeout", "5", "--max-time", str(seconds),
-                      "--max-filesize", str(limit), "--dump-header", str(headers),
-                      "--output", str(body), "--write-out", "%{json}", url]
+              args = [
+                  "curl",
+                  "--silent",
+                  "--show-error",
+                  "--noproxy",
+                  "",
+                  "--proxy",
+                  proxy,
+                  "--proto",
+                  "=https",
+                  "--connect-timeout",
+                  "8",
+                  "--max-time",
+                  str(seconds),
+                  "--max-filesize",
+                  str(limit),
+                  "--dump-header",
+                  str(headers),
+                  "--output",
+                  str(body),
+                  "--write-out",
+                  "%{json}",
+                  url,
+              ]
               started = time.monotonic()
               try:
                   p = subprocess.run(args, capture_output=True, timeout=seconds + 5)
@@ -64,38 +120,76 @@ jobs:
                   metrics = json.loads(stdout)
               except (ValueError, UnicodeError):
                   metrics = {}
-              result = {"url": url, "proxy": proxy, "exit_code": code, "elapsed_seconds": round(time.monotonic() - started, 3),
-                        "metrics": {key: metrics[key] for key in ["http_code", "remote_ip", "time_connect", "time_appconnect", "time_total", "ssl_verify_result", "errormsg"] if key in metrics},
-                        "body_file": body.name, "headers_file": headers.name}
+              result = {
+                  "url": url,
+                  "proxy": proxy,
+                  "exit_code": code,
+                  "elapsed_seconds": round(time.monotonic() - started, 3),
+                  "metrics": {
+                      key: metrics[key]
+                      for key in [
+                          "http_code",
+                          "remote_ip",
+                          "time_connect",
+                          "time_appconnect",
+                          "time_total",
+                          "ssl_verify_result",
+                          "errormsg",
+                      ]
+                      if key in metrics
+                  },
+                  "body_file": body.name,
+                  "headers_file": headers.name,
+              }
               save(label + ".json", result)
               return result, body.read_bytes() if body.exists() else b""
+          
           
           for index, candidate in enumerate(CANDIDATES):
               if not ipaddress.ip_address(candidate["host"]).is_global:
                   continue
-              scheme = {"http": "http", "socks5": "socks5h", "socks4": "socks4a"}[candidate["protocol"]]
+              scheme = {"http": "http", "socks5": "socks5h", "socks4": "socks4a"}[
+                  candidate["protocol"]
+              ]
               proxy = "{}://{}:{}".format(scheme, candidate["host"], candidate["port"])
-              result, data = fetch("proxy-{:02d}-exit".format(index), "https://ipinfo.io/json", proxy, 10, 65536)
+              result, data = fetch(
+                  "proxy-{:02d}-exit".format(index), "https://ipinfo.io/json", proxy, 15, 65536
+              )
               try:
                   geo = json.loads(data)
               except (ValueError, UnicodeError):
                   geo = {}
-              result["reported_exit"] = {k: geo[k] for k in ["ip", "country", "region", "city", "org"] if k in geo}
+              result["reported_exit"] = {
+                  k: geo[k] for k in ["ip", "country", "region", "city", "org"] if k in geo
+              }
               SUMMARY["attempts"].append(result)
               print(json.dumps(result, ensure_ascii=False), flush=True)
-              if result["exit_code"] != 0 or result["metrics"].get("http_code") != 200 or geo.get("country") != "CN":
+              if (
+                  result["exit_code"] != 0
+                  or result["metrics"].get("http_code") != 200
+                  or geo.get("country") != "CN"
+              ):
                   continue
-              if any(word in (geo.get("region", "") + " " + geo.get("city", "")).lower() for word in ["hong kong", "macao", "macau", "taiwan"]):
+              if any(
+                  word in (geo.get("region", "") + " " + geo.get("city", "")).lower()
+                  for word in ["hong kong", "macao", "macau", "taiwan"]
+              ):
                   continue
               try:
                   if not ipaddress.ip_address(geo.get("ip", "")).is_global:
                       continue
               except ValueError:
                   continue
-              SUMMARY["verified_mainland_exit"] = {"proxy": proxy, "reported_exit": result["reported_exit"], "verification": "TLS-verified ipinfo.io response"}
+              SUMMARY["verified_mainland_exit"] = {
+                  "proxy": proxy,
+                  "reported_exit": result["reported_exit"],
+                  "verification": "TLS-verified ipinfo.io response",
+              }
               current = TARGET
               for step in range(3):
-                  response, data = fetch("target-{:02d}".format(step), current, proxy, 20, 2097152)
+                  response, data = fetch(
+                      "target-{:02d}".format(step), current, proxy, 20, 2097152
+                  )
                   SUMMARY["target_requests"].append(response)
                   status = response["metrics"].get("http_code", 0)
                   if response["exit_code"] == 0 and status == 200:
@@ -103,21 +197,34 @@ jobs:
                   if response["exit_code"] != 0 or status not in [301, 302, 303, 307, 308]:
                       break
                   raw_headers = (OUT / response["headers_file"]).read_text(errors="replace")
-                  locations = [line.split(":", 1)[1].strip() for line in raw_headers.splitlines() if line.lower().startswith("location:")]
+                  locations = [
+                      line.split(":", 1)[1].strip()
+                      for line in raw_headers.splitlines()
+                      if line.lower().startswith("location:")
+                  ]
                   if not locations:
                       break
                   next_url = urljoin(current, locations[-1])
                   parsed = urlsplit(next_url)
-                  if parsed.scheme != "https" or parsed.hostname != "yz.hdelf.com" or parsed.port not in [None, 443]:
+                  if (
+                      parsed.scheme != "https"
+                      or parsed.hostname != "yz.hdelf.com"
+                      or parsed.port not in [None, 443]
+                  ):
                       break
                   current = next_url
               break
           
           SUMMARY["finished_at_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
           save("summary.json", SUMMARY)
-          (OUT / "SHA256SUMS.txt").write_text("".join(hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n" for p in sorted(OUT.iterdir()) if p.is_file() and p.name != "SHA256SUMS.txt"))
+          (OUT / "SHA256SUMS.txt").write_text(
+              "".join(
+                  hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n"
+                  for p in sorted(OUT.iterdir())
+                  if p.is_file() and p.name != "SHA256SUMS.txt"
+              )
+          )
           print("FINAL_SUMMARY " + json.dumps(SUMMARY, ensure_ascii=False), flush=True)
-          
           PY
       - name: Upload diagnostic evidence
         if: always()
@@ -127,3 +234,4 @@ jobs:
           path: evidence/
           retention-days: 1
           if-no-files-found: error
+
