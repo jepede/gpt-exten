@@ -1,0 +1,67 @@
+name: Temp lsdriver ARM64 codec cross-build 20261121
+on:
+  push:
+    paths:
+      - .github/workflows/temp-lsdriver-codec-arm64-20261121.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  codec:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Set up AArch64 cross compiler
+        run: |
+          set -euxo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu clang llvm
+          mkdir -p output artifacts
+          aarch64-linux-gnu-gcc --version | head -1 | tee output/toolchain.txt
+      - name: Reuse previously created exact-commit source artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          gh run download 44910479829 --repo jepede/gpt-exten --name lsdriver-source-audit-20261121 --dir artifacts
+          (cd artifacts && sha256sum -c lsdriver-source.tar.gz.sha256)
+          grep -F 37fc9b7bc5f5095aa57cef1c31b0bcc3648e68cf artifacts/source_info.txt
+          mkdir -p src
+          tar -xzf artifacts/lsdriver-source.tar.gz -C src
+          cp artifacts/source_info.txt output/
+      - name: Build original ARM64 decoder and encoder standalone sources only
+        run: |
+          set -euxo pipefail
+          mkdir -p output/arm64-objects
+          for source in src/lsdriver/arm64_decode/*.c src/lsdriver/arm64_encode/*.c; do
+            name="$(basename "${source%.c}")"
+            aarch64-linux-gnu-gcc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Werror -Isrc/lsdriver -c "$source" -o "output/arm64-objects/$name.o"
+          done
+          aarch64-linux-gnu-ar rcs output/liblsdriver_arm64_codec.a output/arm64-objects/*.o
+          file output/arm64-objects/*.o output/liblsdriver_arm64_codec.a | tee output/file.txt
+          aarch64-linux-gnu-readelf -h output/arm64-objects/arm64_decode.o | tee output/elf-header.txt
+          sha256sum output/liblsdriver_arm64_codec.a | tee output/lib-sha256.txt
+      - name: Run original host-only contract tests
+        run: |
+          set -euxo pipefail
+          command -v clang
+          mkdir -p output/contract-logs
+          make -C src/lsdriver/arm64_tests/decoder contract-test LLVM_TOOLCHAIN=/usr 2>&1 | tee output/contract-logs/decoder.log
+          make -C src/lsdriver/arm64_tests/encoder contract-test LLVM_TOOLCHAIN=/usr 2>&1 | tee output/contract-logs/encoder.log
+      - name: Retain logs and artifacts
+        if: always()
+        run: |
+          set +e
+          mkdir -p output
+          printf "Only original ARM64 instruction encoder/decoder sources were compiled. No lsdriver.ko, hidden module, kernel hook or memory access binaries were built.\n" > output/BUILD_SCOPE.txt
+          (cd output && find . -type f -print0 | sort -z | xargs -0 sha256sum > ../SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lsdriver-arm64-codec-crossbuild-20261121
+          path: |
+            output/
+            SHA256SUMS
+          retention-days: 1
+          if-no-files-found: error
