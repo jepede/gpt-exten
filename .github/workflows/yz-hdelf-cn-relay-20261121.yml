@@ -1,4 +1,4 @@
-name: yz.hdelf.com live CN screenshot 20261121
+name: yz.hdelf.com CDP live CN screenshot 20261121
 
 on:
   push:
@@ -17,153 +17,161 @@ jobs:
       - name: Verify CN exit and capture the live website
         shell: bash
         run: |
-          python3 - <<'PY'
-          import datetime
-          import hashlib
-          import html
-          import ipaddress
-          import json
-          import os
-          import pathlib
-          import re
-          import shutil
-          import subprocess
-          import tempfile
+          node --input-type=module <<'JS'
+          import fs from 'node:fs/promises';
+          import { createWriteStream } from 'node:fs';
+          import { spawn, execFile } from 'node:child_process';
+          import { promisify } from 'node:util';
+          import { setTimeout as pause } from 'node:timers/promises';
+          import path from 'node:path';
+          import os from 'node:os';
+          import { createHash } from 'node:crypto';
           
-          OUT = pathlib.Path("evidence")
-          OUT.mkdir(exist_ok=True)
-          PROXY = "http://123.121.122.125:8888"
-          TARGET = "https://yz.hdelf.com/"
-          summary = {
-              "started_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-              "proxy": PROXY,
-              "target": TARGET,
-              "run_url": "https://github.com/{}/actions/runs/{}".format(
-                  os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_RUN_ID"]
-              ),
-              "tls_verification": "enabled; no certificate errors ignored",
-              "browser_profile": "new temporary profile; no login",
-          }
-          
-          try:
-              check = subprocess.run(
-                  [
-                      "curl",
-                      "--silent",
-                      "--show-error",
-                      "--noproxy",
-                      "",
-                      "--proxy",
-                      PROXY,
-                      "--proto",
-                      "=https",
-                      "--connect-timeout",
-                      "8",
-                      "--max-time",
-                      "20",
-                      "--max-filesize",
-                      "65536",
-                      "--dump-header",
-                      str(OUT / "exit.headers.txt"),
-                      "--output",
-                      str(OUT / "exit.body"),
-                      "--write-out",
-                      "%{json}",
-                      "https://ipinfo.io/json",
-                  ],
-                  capture_output=True,
-                  timeout=25,
-              )
-              (OUT / "exit.stderr.txt").write_bytes(check.stderr)
-              metrics = json.loads(check.stdout)
-              geo = json.loads((OUT / "exit.body").read_bytes())
-              summary["exit_check"] = {
-                  "returncode": check.returncode,
-                  "metrics": metrics,
-                  "reported_exit": geo,
+          const run = promisify(execFile);
+          const out = path.resolve('evidence');
+          await fs.mkdir(out, { recursive: true });
+          const proxy = 'http://123.121.122.125:8888';
+          const target = 'https://yz.hdelf.com/';
+          const expectedTitle = '汇安加固 - Android ELF 二进制保护平台';
+          const summary = {
+            started_at_utc: new Date().toISOString(), proxy, target,
+            run_url: `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+            tls_verification: 'enabled; certificate errors not ignored',
+            browser_profile: 'fresh temporary profile',
+            network: [], blocked_urls: [],
+          };
+          let chrome, socket, profile, browserLog;
+          let nextId = 0;
+          const pending = new Map();
+          const save = (name, data) => fs.writeFile(path.join(out, name), data);
+          const send = (method, params = {}, sessionId, timeout = 20000) => new Promise((resolve, reject) => {
+            const id = ++nextId;
+            const timer = setTimeout(() => { pending.delete(id); reject(new Error(`CDP timeout: ${method}`)); }, timeout);
+            pending.set(id, { resolve, reject, timer });
+            socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+          });
+          try {
+            const check = await run('curl', [
+              '--silent', '--show-error', '--noproxy', '', '--proxy', proxy,
+              '--proto', '=https', '--connect-timeout', '8', '--max-time', '20',
+              '--max-filesize', '65536', '--dump-header', path.join(out, 'exit.headers.txt'),
+              '--output', path.join(out, 'exit.body'), '--write-out', '%{json}', 'https://ipinfo.io/json',
+            ], { timeout: 25000 });
+            await save('exit.stderr.txt', check.stderr);
+            const metrics = JSON.parse(check.stdout);
+            const geo = JSON.parse(await fs.readFile(path.join(out, 'exit.body'), 'utf8'));
+            summary.exit_check = { metrics, reported_exit: geo };
+            if (metrics.http_code !== 200 || geo.country !== 'CN' || /hong kong|macau|macao|taiwan/i.test(`${geo.region} ${geo.city}`)) {
+              throw new Error('Verified mainland exit required');
+            }
+            const version = await run('google-chrome', ['--version']);
+            summary.browser_version = version.stdout.trim();
+            profile = await fs.mkdtemp(path.join(os.tmpdir(), 'yz-cdp-'));
+            browserLog = createWriteStream(path.join(out, 'browser.stderr.txt'));
+            chrome = spawn('google-chrome', [
+              '--headless=new', '--disable-gpu', '--disable-quic', '--disable-background-networking',
+              '--disable-component-update', '--disable-sync', '--no-first-run', '--no-default-browser-check',
+              `--user-data-dir=${profile}`, `--proxy-server=${proxy}`, '--remote-debugging-port=0',
+              '--window-size=1440,1100', 'about:blank',
+            ], { stdio: ['ignore', 'ignore', 'pipe'] });
+            chrome.stderr.pipe(browserLog);
+            chrome.on('error', error => { summary.browser_spawn_error = String(error); });
+            let port, browserPath;
+            for (let i = 0; i < 150; i++) {
+              if (chrome.exitCode !== null) throw new Error(`Chrome exited before CDP ready: ${chrome.exitCode}`);
+              try {
+                [port, browserPath] = (await fs.readFile(path.join(profile, 'DevToolsActivePort'), 'utf8')).trim().split('\n');
+                if (port && browserPath) break;
+              } catch {}
+              await pause(100);
+            }
+            if (!port || !browserPath) throw new Error('CDP endpoint not ready after 15 seconds');
+            socket = new WebSocket(`ws://127.0.0.1:${port}${browserPath}`);
+            await new Promise((resolve, reject) => {
+              const timer = setTimeout(() => reject(new Error('CDP websocket open timeout')), 10000);
+              socket.addEventListener('open', () => { clearTimeout(timer); resolve(); }, { once: true });
+              socket.addEventListener('error', () => { clearTimeout(timer); reject(new Error('CDP websocket open failed')); }, { once: true });
+            });
+            socket.addEventListener('message', event => {
+              const message = JSON.parse(String(event.data));
+              if (message.id) {
+                const wait = pending.get(message.id);
+                if (!wait) return;
+                clearTimeout(wait.timer); pending.delete(message.id);
+                message.error ? wait.reject(new Error(JSON.stringify(message.error))) : wait.resolve(message.result);
+                return;
               }
-              assert (
-                  check.returncode == 0
-                  and metrics["http_code"] == 200
-                  and geo.get("country") == "CN"
-              )
-              assert ipaddress.ip_address(geo["ip"]).is_global
-              assert not any(
-                  s in (geo.get("region", "") + " " + geo.get("city", "")).lower()
-                  for s in ["hong kong", "macao", "macau", "taiwan"]
-              )
-              chrome = next(
-                  (
-                      shutil.which(x)
-                      for x in [
-                          "google-chrome",
-                          "google-chrome-stable",
-                          "chromium",
-                          "chromium-browser",
-                      ]
-                      if shutil.which(x)
-                  ),
-                  None,
-              )
-              assert chrome, "No installed Chrome; no dependency download attempted"
-              summary["browser_version"] = subprocess.check_output(
-                  [chrome, "--version"], text=True
-              ).strip()
-              with tempfile.TemporaryDirectory(prefix="yz-screenshot-") as profile:
-                  args = [
-                      chrome,
-                      "--headless=new",
-                      "--disable-gpu",
-                      "--disable-background-networking",
-                      "--disable-component-update",
-                      "--disable-sync",
-                      "--no-first-run",
-                      "--no-default-browser-check",
-                      "--user-data-dir=" + profile,
-                      "--proxy-server=" + PROXY,
-                      "--window-size=1440,1100",
-                      "--timeout=45000",
-                      "--virtual-time-budget=10000",
-                      "--screenshot=" + str((OUT / "yz-hdelf-desktop.png").resolve()),
-                      "--dump-dom",
-                      TARGET,
-                  ]
-                  browser = subprocess.run(args, capture_output=True, timeout=70)
-              (OUT / "browser-dom.html").write_bytes(browser.stdout)
-              (OUT / "browser.stderr.txt").write_bytes(browser.stderr)
-              summary["browser_exit_code"] = browser.returncode
-              found = re.search(
-                  r"<title>(.*?)</title>", browser.stdout.decode(errors="replace"), re.S | re.I
-              )
-              summary["rendered_title"] = html.unescape(found.group(1)).strip() if found else None
-              summary["screenshot_exists"] = (OUT / "yz-hdelf-desktop.png").is_file()
-              summary["expected_title_present"] = (
-                  summary["rendered_title"] == "汇安加固 - Android ELF 二进制保护平台"
-              )
-              assert (
-                  browser.returncode == 0
-                  and summary["screenshot_exists"]
-                  and summary["expected_title_present"]
-              )
-          except Exception as error:
-              summary["error"] = type(error).__name__ + ": " + str(error)
-              raise
-          finally:
-              summary["finished_at_utc"] = datetime.datetime.now(
-                  datetime.timezone.utc
-              ).isoformat()
-              (OUT / "screenshot-summary.json").write_text(
-                  json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
-              )
-              (OUT / "SHA256SUMS.txt").write_text(
-                  "".join(
-                      hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n"
-                      for p in sorted(OUT.iterdir())
-                      if p.is_file() and p.name != "SHA256SUMS.txt"
-                  )
-              )
-              print("SCREENSHOT_SUMMARY " + json.dumps(summary, ensure_ascii=False), flush=True)
-          PY
+              if (message.method === 'Network.responseReceived') {
+                const r = message.params.response;
+                summary.network.push({ url: r.url, type: message.params.type, status: r.status, protocol: r.protocol,
+                  securityState: r.securityState, tlsProtocol: r.securityDetails?.protocol, certificateIssuer: r.securityDetails?.issuer });
+              }
+              if (message.method === 'Network.loadingFailed') {
+                summary.network.push({ requestId: message.params.requestId, errorText: message.params.errorText, type: message.params.type });
+              }
+              if (message.method === 'Fetch.requestPaused') {
+                const { requestId, request } = message.params;
+                let allowed = false;
+                try { const u = new URL(request.url); allowed = u.protocol === 'https:' && u.hostname === 'yz.hdelf.com' && (!u.port || u.port === '443'); } catch {}
+                if (!allowed) summary.blocked_urls.push(request.url);
+                send(allowed ? 'Fetch.continueRequest' : 'Fetch.failRequest', allowed ? { requestId } : { requestId, errorReason: 'BlockedByClient' }, message.sessionId)
+                  .catch(error => summary.network.push({ interceptionError: String(error) }));
+              }
+            });
+            const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
+            const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
+            await send('Page.enable', {}, sessionId);
+            await send('Network.enable', {}, sessionId);
+            await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] }, sessionId);
+            await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false }, sessionId);
+            summary.navigation = await send('Page.navigate', { url: target }, sessionId, 30000);
+            for (let i = 0; i < 25; i++) {
+              const value = await send('Runtime.evaluate', {
+                expression: `({title:document.title,url:location.href,state:document.readyState,stylesheets:document.styleSheets.length,images:[...document.images].map(i=>({src:i.currentSrc,complete:i.complete,width:i.naturalWidth}))})`,
+                returnByValue: true,
+              }, sessionId);
+              summary.page_state = value.result.value;
+              const s = summary.page_state;
+              if (s?.title === expectedTitle && s.stylesheets > 0 && s.state === 'complete' && s.images.every(i => i.complete && i.width > 0)) break;
+              await pause(1000);
+            }
+            const dom = await send('Runtime.evaluate', { expression: 'document.documentElement.outerHTML', returnByValue: true }, sessionId);
+            await save('browser-dom.html', dom.result.value ?? '');
+            summary.rendered_title = summary.page_state?.title;
+            summary.expected_title_present = summary.rendered_title === expectedTitle;
+            const shot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false }, sessionId);
+            await save('yz-hdelf-desktop.png', Buffer.from(shot.data, 'base64'));
+            summary.screenshot_exists = true;
+            const layout = await send('Page.getLayoutMetrics', {}, sessionId);
+            const size = layout.cssContentSize;
+            if (size && size.height < 12000) {
+              const full = await send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: true,
+                clip: { x: 0, y: 0, width: size.width, height: size.height, scale: 1 } }, sessionId);
+              await save('yz-hdelf-fullpage.png', Buffer.from(full.data, 'base64'));
+            }
+            if (!summary.expected_title_present) throw new Error(`Unexpected rendered title: ${summary.rendered_title}`);
+            summary.browser_exit_code = 0;
+            await send('Browser.close').catch(() => {});
+          } catch (error) {
+            summary.error = String(error); summary.stack = error.stack; process.exitCode = 1;
+          } finally {
+            if (socket) socket.close();
+            for (const wait of pending.values()) { clearTimeout(wait.timer); wait.reject(new Error('Browser session finished')); }
+            pending.clear();
+            if (chrome && chrome.exitCode === null) { chrome.kill('SIGTERM'); await pause(1000); if (chrome.exitCode === null) chrome.kill('SIGKILL'); }
+            if (browserLog && !browserLog.writableFinished) await new Promise(resolve => browserLog.end(resolve));
+            if (profile) await fs.rm(profile, { recursive: true, force: true }).catch(() => {});
+            summary.finished_at_utc = new Date().toISOString();
+            await save('screenshot-summary.json', JSON.stringify(summary, null, 2) + '\n');
+            const manifest = [];
+            for (const name of (await fs.readdir(out)).sort()) {
+              if (name === 'SHA256SUMS.txt') continue;
+              manifest.push(createHash('sha256').update(await fs.readFile(path.join(out, name))).digest('hex') + '  ' + name);
+            }
+            await save('SHA256SUMS.txt', manifest.join('\n') + '\n');
+            console.log('SCREENSHOT_SUMMARY ' + JSON.stringify(summary));
+          }
+          JS
       - name: Upload live screenshot evidence
         if: always()
         uses: actions/upload-artifact@v4
