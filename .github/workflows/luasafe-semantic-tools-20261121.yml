@@ -1,0 +1,31 @@
+name: LuaSafe semantic reconstruction tools 20261121
+on:
+  push:
+    paths:
+      - '.github/workflows/luasafe-semantic-tools-20261121.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tools:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build pinned unluac source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifact
+          git clone https://github.com/viruscamp/unluac.git unluac
+          git -C unluac checkout 9c59af46483a932a47224bf2ac84ad8a63094da5
+          mkdir -p classes
+          find unluac/src -name '*.java' -print0 | xargs -0 javac -encoding UTF-8 -d classes
+          jar --create --file artifact/unluac-9c59af46483a.jar --main-class unluac.Main -C classes .
+          tar -czf artifact/unluac-9c59af46483a-source.tar.gz --exclude=.git unluac
+          cp unluac/license.txt artifact/
+          printf '%s\n' '9c59af46483a932a47224bf2ac84ad8a63094da5' > artifact/UPSTREAM_COMMIT
+          (cd artifact && sha256sum unluac-* > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unluac-9c59af46483a-java-any
+          path: artifact/
+          retention-days: 400
