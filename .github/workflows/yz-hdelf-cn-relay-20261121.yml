@@ -1,4 +1,4 @@
-name: yz.hdelf.com verified CN relay 20261121
+name: yz.hdelf.com live CN screenshot 20261121
 
 on:
   push:
@@ -10,228 +10,165 @@ permissions:
   contents: read
 
 jobs:
-  probe:
+  screenshot:
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 5
     steps:
-      - name: Verify a CN exit and fetch the public target
+      - name: Verify CN exit and capture the live website
         shell: bash
         run: |
           python3 - <<'PY'
           import datetime
           import hashlib
+          import html
           import ipaddress
           import json
           import os
           import pathlib
+          import re
+          import shutil
           import subprocess
-          import time
-          from urllib.parse import urljoin, urlsplit
+          import tempfile
           
           OUT = pathlib.Path("evidence")
           OUT.mkdir(exist_ok=True)
+          PROXY = "http://123.121.122.125:8888"
           TARGET = "https://yz.hdelf.com/"
-          CANDIDATES = [
-              {"protocol": "http", "host": "139.198.113.42", "port": 10023},
-              {"protocol": "http", "host": "114.244.218.227", "port": 8888},
-              {"protocol": "http", "host": "123.121.122.125", "port": 8888},
-              {"protocol": "http", "host": "111.192.19.3", "port": 8888},
-              {"protocol": "http", "host": "111.192.215.62", "port": 8888},
-              {"protocol": "http", "host": "114.249.221.241", "port": 8888},
-              {"protocol": "http", "host": "114.248.85.85", "port": 8888},
-              {"protocol": "http", "host": "222.128.174.236", "port": 8888},
-              {"protocol": "http", "host": "114.249.211.7", "port": 8888},
-              {"protocol": "http", "host": "114.253.7.197", "port": 8888},
-              {"protocol": "http", "host": "111.192.41.53", "port": 8888},
-              {"protocol": "http", "host": "114.244.211.247", "port": 8888},
-              {"protocol": "http", "host": "114.253.67.30", "port": 8888},
-              {"protocol": "http", "host": "114.246.194.159", "port": 8888},
-              {"protocol": "http", "host": "111.192.54.49", "port": 8888},
-              {"protocol": "http", "host": "111.192.28.24", "port": 8888},
-              {"protocol": "http", "host": "114.246.207.179", "port": 8888},
-              {"protocol": "http", "host": "111.192.51.36", "port": 8888},
-              {"protocol": "http", "host": "123.57.213.24", "port": 3539},
-              {"protocol": "http", "host": "123.121.101.115", "port": 8888},
-              {"protocol": "http", "host": "123.119.192.126", "port": 8888},
-              {"protocol": "http", "host": "111.192.55.29", "port": 8888},
-              {"protocol": "socks4", "host": "222.184.87.224", "port": 8989},
-              {"protocol": "socks4", "host": "60.217.64.237", "port": 35292},
-              {"protocol": "http", "host": "123.115.143.194", "port": 8888},
-              {"protocol": "socks4", "host": "61.191.119.134", "port": 10800},
-              {"protocol": "http", "host": "114.249.212.245", "port": 8888},
-              {"protocol": "socks4", "host": "222.211.216.201", "port": 7890},
-              {"protocol": "http", "host": "111.192.44.13", "port": 8888},
-          ]
-          SUMMARY = {
-              "target": TARGET,
+          summary = {
               "started_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "proxy": PROXY,
+              "target": TARGET,
               "run_url": "https://github.com/{}/actions/runs/{}".format(
                   os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_RUN_ID"]
               ),
-              "candidates_source": "Previously retrieved monosans/proxy-list CN records; remaining untested protocols, no new list download",
-              "batch": 2,
-              "prior_batch_run_id": 44873946215,
-              "attempts": [],
-              "verified_mainland_exit": None,
-              "target_requests": [],
-              "website_fetched": False,
+              "tls_verification": "enabled; no certificate errors ignored",
+              "browser_profile": "new temporary profile; no login",
           }
           
-          
-          def save(name, value):
-              (OUT / name).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
-          
-          
-          def fetch(label, url, proxy, seconds, limit):
-              headers = OUT / (label + ".headers.txt")
-              body = OUT / (label + ".body")
-              args = [
-                  "curl",
-                  "--silent",
-                  "--show-error",
-                  "--noproxy",
-                  "",
-                  "--proxy",
-                  proxy,
-                  "--proto",
-                  "=https",
-                  "--connect-timeout",
-                  "8",
-                  "--max-time",
-                  str(seconds),
-                  "--max-filesize",
-                  str(limit),
-                  "--dump-header",
-                  str(headers),
-                  "--output",
-                  str(body),
-                  "--write-out",
-                  "%{json}",
-                  url,
-              ]
-              started = time.monotonic()
-              try:
-                  p = subprocess.run(args, capture_output=True, timeout=seconds + 5)
-                  code, stdout, stderr = p.returncode, p.stdout, p.stderr
-              except subprocess.TimeoutExpired as error:
-                  code, stdout, stderr = 124, error.stdout or b"", error.stderr or b""
-              (OUT / (label + ".stderr.txt")).write_bytes(stderr)
-              try:
-                  metrics = json.loads(stdout)
-              except (ValueError, UnicodeError):
-                  metrics = {}
-              result = {
-                  "url": url,
-                  "proxy": proxy,
-                  "exit_code": code,
-                  "elapsed_seconds": round(time.monotonic() - started, 3),
-                  "metrics": {
-                      key: metrics[key]
-                      for key in [
-                          "http_code",
-                          "remote_ip",
-                          "time_connect",
-                          "time_appconnect",
-                          "time_total",
-                          "ssl_verify_result",
-                          "errormsg",
+          try:
+              check = subprocess.run(
+                  [
+                      "curl",
+                      "--silent",
+                      "--show-error",
+                      "--noproxy",
+                      "",
+                      "--proxy",
+                      PROXY,
+                      "--proto",
+                      "=https",
+                      "--connect-timeout",
+                      "8",
+                      "--max-time",
+                      "20",
+                      "--max-filesize",
+                      "65536",
+                      "--dump-header",
+                      str(OUT / "exit.headers.txt"),
+                      "--output",
+                      str(OUT / "exit.body"),
+                      "--write-out",
+                      "%{json}",
+                      "https://ipinfo.io/json",
+                  ],
+                  capture_output=True,
+                  timeout=25,
+              )
+              (OUT / "exit.stderr.txt").write_bytes(check.stderr)
+              metrics = json.loads(check.stdout)
+              geo = json.loads((OUT / "exit.body").read_bytes())
+              summary["exit_check"] = {
+                  "returncode": check.returncode,
+                  "metrics": metrics,
+                  "reported_exit": geo,
+              }
+              assert (
+                  check.returncode == 0
+                  and metrics["http_code"] == 200
+                  and geo.get("country") == "CN"
+              )
+              assert ipaddress.ip_address(geo["ip"]).is_global
+              assert not any(
+                  s in (geo.get("region", "") + " " + geo.get("city", "")).lower()
+                  for s in ["hong kong", "macao", "macau", "taiwan"]
+              )
+              chrome = next(
+                  (
+                      shutil.which(x)
+                      for x in [
+                          "google-chrome",
+                          "google-chrome-stable",
+                          "chromium",
+                          "chromium-browser",
                       ]
-                      if key in metrics
-                  },
-                  "body_file": body.name,
-                  "headers_file": headers.name,
-              }
-              save(label + ".json", result)
-              return result, body.read_bytes() if body.exists() else b""
-          
-          
-          for index, candidate in enumerate(CANDIDATES):
-              if not ipaddress.ip_address(candidate["host"]).is_global:
-                  continue
-              scheme = {"http": "http", "socks5": "socks5h", "socks4": "socks4a"}[
-                  candidate["protocol"]
-              ]
-              proxy = "{}://{}:{}".format(scheme, candidate["host"], candidate["port"])
-              result, data = fetch(
-                  "proxy-{:02d}-exit".format(index), "https://ipinfo.io/json", proxy, 15, 65536
+                      if shutil.which(x)
+                  ),
+                  None,
               )
-              try:
-                  geo = json.loads(data)
-              except (ValueError, UnicodeError):
-                  geo = {}
-              result["reported_exit"] = {
-                  k: geo[k] for k in ["ip", "country", "region", "city", "org"] if k in geo
-              }
-              SUMMARY["attempts"].append(result)
-              print(json.dumps(result, ensure_ascii=False), flush=True)
-              if (
-                  result["exit_code"] != 0
-                  or result["metrics"].get("http_code") != 200
-                  or geo.get("country") != "CN"
-              ):
-                  continue
-              if any(
-                  word in (geo.get("region", "") + " " + geo.get("city", "")).lower()
-                  for word in ["hong kong", "macao", "macau", "taiwan"]
-              ):
-                  continue
-              try:
-                  if not ipaddress.ip_address(geo.get("ip", "")).is_global:
-                      continue
-              except ValueError:
-                  continue
-              SUMMARY["verified_mainland_exit"] = {
-                  "proxy": proxy,
-                  "reported_exit": result["reported_exit"],
-                  "verification": "TLS-verified ipinfo.io response",
-              }
-              current = TARGET
-              for step in range(3):
-                  response, data = fetch(
-                      "target-{:02d}".format(step), current, proxy, 20, 2097152
-                  )
-                  SUMMARY["target_requests"].append(response)
-                  status = response["metrics"].get("http_code", 0)
-                  if response["exit_code"] == 0 and status == 200:
-                      SUMMARY["website_fetched"] = True
-                  if response["exit_code"] != 0 or status not in [301, 302, 303, 307, 308]:
-                      break
-                  raw_headers = (OUT / response["headers_file"]).read_text(errors="replace")
-                  locations = [
-                      line.split(":", 1)[1].strip()
-                      for line in raw_headers.splitlines()
-                      if line.lower().startswith("location:")
+              assert chrome, "No installed Chrome; no dependency download attempted"
+              summary["browser_version"] = subprocess.check_output(
+                  [chrome, "--version"], text=True
+              ).strip()
+              with tempfile.TemporaryDirectory(prefix="yz-screenshot-") as profile:
+                  args = [
+                      chrome,
+                      "--headless=new",
+                      "--disable-gpu",
+                      "--disable-background-networking",
+                      "--disable-component-update",
+                      "--disable-sync",
+                      "--no-first-run",
+                      "--no-default-browser-check",
+                      "--user-data-dir=" + profile,
+                      "--proxy-server=" + PROXY,
+                      "--window-size=1440,1100",
+                      "--timeout=45000",
+                      "--virtual-time-budget=10000",
+                      "--screenshot=" + str((OUT / "yz-hdelf-desktop.png").resolve()),
+                      "--dump-dom",
+                      TARGET,
                   ]
-                  if not locations:
-                      break
-                  next_url = urljoin(current, locations[-1])
-                  parsed = urlsplit(next_url)
-                  if (
-                      parsed.scheme != "https"
-                      or parsed.hostname != "yz.hdelf.com"
-                      or parsed.port not in [None, 443]
-                  ):
-                      break
-                  current = next_url
-              break
-          
-          SUMMARY["finished_at_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
-          save("summary.json", SUMMARY)
-          (OUT / "SHA256SUMS.txt").write_text(
-              "".join(
-                  hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n"
-                  for p in sorted(OUT.iterdir())
-                  if p.is_file() and p.name != "SHA256SUMS.txt"
+                  browser = subprocess.run(args, capture_output=True, timeout=70)
+              (OUT / "browser-dom.html").write_bytes(browser.stdout)
+              (OUT / "browser.stderr.txt").write_bytes(browser.stderr)
+              summary["browser_exit_code"] = browser.returncode
+              found = re.search(
+                  r"<title>(.*?)</title>", browser.stdout.decode(errors="replace"), re.S | re.I
               )
-          )
-          print("FINAL_SUMMARY " + json.dumps(SUMMARY, ensure_ascii=False), flush=True)
+              summary["rendered_title"] = html.unescape(found.group(1)).strip() if found else None
+              summary["screenshot_exists"] = (OUT / "yz-hdelf-desktop.png").is_file()
+              summary["expected_title_present"] = (
+                  summary["rendered_title"] == "汇安加固 - Android ELF 二进制保护平台"
+              )
+              assert (
+                  browser.returncode == 0
+                  and summary["screenshot_exists"]
+                  and summary["expected_title_present"]
+              )
+          except Exception as error:
+              summary["error"] = type(error).__name__ + ": " + str(error)
+              raise
+          finally:
+              summary["finished_at_utc"] = datetime.datetime.now(
+                  datetime.timezone.utc
+              ).isoformat()
+              (OUT / "screenshot-summary.json").write_text(
+                  json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
+              )
+              (OUT / "SHA256SUMS.txt").write_text(
+                  "".join(
+                      hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n"
+                      for p in sorted(OUT.iterdir())
+                      if p.is_file() and p.name != "SHA256SUMS.txt"
+                  )
+              )
+              print("SCREENSHOT_SUMMARY " + json.dumps(summary, ensure_ascii=False), flush=True)
           PY
-      - name: Upload diagnostic evidence
+      - name: Upload live screenshot evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: yz-hdelf-cn-relay-${{ github.run_id }}-${{ github.run_attempt }}
+          name: yz-hdelf-cn-live-screenshot-${{ github.run_id }}-${{ github.run_attempt }}
           path: evidence/
           retention-days: 1
           if-no-files-found: error
-
