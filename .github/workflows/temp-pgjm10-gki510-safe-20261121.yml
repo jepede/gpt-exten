@@ -14,6 +14,8 @@ jobs:
       DEBIAN_FRONTEND: noninteractive
       ARCH: arm64
       LLVM: "1"
+      LLVM_IAS: "1"
+      CROSS_COMPILE: aarch64-linux-gnu-
     steps:
       - name: Install host build dependencies
         shell: bash
@@ -58,6 +60,9 @@ jobs:
             -d MODULE_SIG -d CFI_PERMISSIVE -d DEBUG_INFO_BTF
           make -C kernel O="$GITHUB_WORKSPACE/kout" ARCH=arm64 LLVM=1 olddefconfig >outdir/olddefconfig.log 2>&1 || { tail -100 outdir/olddefconfig.log; exit 1; }
           cp kout/.config outdir/aosp-gki-5.10-config.txt
+          for opt in CONFIG_MODULES=y CONFIG_MODULE_UNLOAD=y CONFIG_MODVERSIONS=y CONFIG_LTO_CLANG_FULL=y CONFIG_CFI_CLANG=y CONFIG_SHADOW_CALL_STACK=y; do
+            if ! grep -Fxq "$opt" kout/.config; then echo "CONFIG WARNING: $opt not enabled in generated Kconfig" | tee -a outdir/config-mismatches.txt; fi
+          done
           grep -E '^(CONFIG_(MODULES|MODULE_UNLOAD|MODVERSIONS|LTO_CLANG|CFI_CLANG|SHADOW_CALL_STACK|STRICT_KERNEL_RWX|STRICT_MODULE_RWX|MODULE_SIG|CFI_PERMISSIVE|DEBUG_INFO_BTF)=|# CONFIG_(MODULE_SIG|CFI_PERMISSIVE|DEBUG_INFO_BTF) is not set)' kout/.config | tee outdir/target-config-summary.txt || true
           make -C kernel O="$GITHUB_WORKSPACE/kout" ARCH=arm64 LLVM=1 -j2 modules_prepare >outdir/modules-prepare.log 2>&1 || { tail -120 outdir/modules-prepare.log; exit 1; }
           cat kout/include/generated/utsrelease.h | tee outdir/utsrelease.txt
@@ -113,7 +118,7 @@ jobs:
         run: |
           mkdir -p outdir
           printf '%s\n' 'Build scope: visible, unloadable logging-only example based on PGJM10 document.' 'No hidden module, clandestine channel, kernel hooks or cross-process memory operations.' 'AOSP GKI may not match vendor kernel; no device access, no runtime load attempted.' >outdir/BUILD_SCOPE.txt
-          cp .github/workflows/temp-pgjm10-gki510-safe-20261121.yml outdir/workflow.yml
+          if [ -f .github/workflows/temp-pgjm10-gki510-safe-20261121.yml ]; then cp .github/workflows/temp-pgjm10-gki510-safe-20261121.yml outdir/workflow.yml; fi
           ( cd outdir && find . -maxdepth 1 -type f ! -name 'SHA256SUMS' -print0 | sort -z | xargs -0 sha256sum >SHA256SUMS )
           du -ah outdir | sort -h | tail -20
       - name: Upload source, diagnostics and built file
