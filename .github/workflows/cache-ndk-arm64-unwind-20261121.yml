@@ -1,0 +1,100 @@
+name: Cache NDK r28c ARM64 unwind support
+on:
+  push:
+    branches: ['work/ydw5-ndk-sysroot-20261120']
+    paths: ['.github/workflows/cache-ndk-arm64-unwind-20261121.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  repack:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse verified source artifacts, no upstream download
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ndk-r28c-five-part-0*
+          run-id: 39019800471
+          github-token: ${{ github.token }}
+          path: cached
+          merge-multiple: true
+      - name: Verify and extract ARM64 unwind support
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,zipfile,json,tarfile
+          expected=['5171e5cc785cc062e090c3edecf594ce355fa83143c6fb2e62aafdba9c70a621','56983eda293816841e9c87bb90adc2a41e80f216fdb0fce3a927083c677fded7','342c5394c75929a11ce8538997ae16a8a1213728440efcded5560c07c794faf5','fe4905960f15b33defa09a871d5f44c18076b02f5334d6bdf6eef94ae6da7394','f853ef4464dab98c084336ea80b8da9986770803e2718a01f4f0fea66e70d1d1']
+          whole=Path('ndk.zip')
+          with whole.open('wb') as out:
+              for i,h in enumerate(expected):
+                  b=Path(f'cached/ndk-r28c.part.{i:02d}').read_bytes()
+                  assert hashlib.sha256(b).hexdigest()==h
+                  out.write(b)
+          source_sha='dfb20d396df28ca02a8c708314b814a4d961dc9074f9a161932746f815aa552f'
+          assert whole.stat().st_size==722261334
+          assert hashlib.sha256(whole.read_bytes()).hexdigest()==source_sha
+          root=Path('stage');root.mkdir()
+          prefix='android-ndk-r28c/toolchains/llvm/prebuilt/linux-x86_64/'
+          records=[]
+          with zipfile.ZipFile(whole) as z:
+              for n in z.namelist():
+                  if n.startswith(prefix) and 'aarch64' in n and n.endswith(('/libunwind.a','/libatomic.a')):
+                      rel=n[len(prefix):];dst=root/'ndk-clang'/rel
+                  elif n in ('android-ndk-r28c/NOTICE','android-ndk-r28c/NOTICE.toolchain','android-ndk-r28c/source.properties'):
+                      dst=root/'licenses'/Path(n).name
+                  else:continue
+                  b=z.read(n);dst.parent.mkdir(parents=True,exist_ok=True);dst.write_bytes(b)
+                  records.append({'path':str(dst.relative_to(root)),'size':len(b),'sha256':hashlib.sha256(b).hexdigest()})
+          assert any(x['path'].endswith('/libunwind.a') for x in records)
+          out=Path('out');out.mkdir()
+          archive=out/'ndk-r28c-arm64-unwind.tar.xz'
+          with tarfile.open(archive,'w:xz',preset=6) as t:
+              for p in root.iterdir():t.add(p,arcname=p.name)
+          assert archive.stat().st_size<95000000
+          m={'name':'Android NDK ARM64 unwind link support','version':'r28c-unwind-v1','platform':'Android / Linux','architecture':'AArch64 target, any host','source_run_id':39019800471,'source_sha256':source_sha,'file':archive.name,'size':archive.stat().st_size,'sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'files':records}
+          (out/'MANIFEST.json').write_text(json.dumps(m,indent=2)+'\n')
+          (out/'SHA256SUMS.txt').write_text(m['sha256']+'  '+archive.name+'\n')
+          print(json.dumps(m,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        id: upload
+        with:
+          name: ndk-r28c-arm64-unwind-v1
+          path: out/*
+          compression-level: 0
+          retention-days: 400
+          if-no-files-found: error
+      - name: Record actual expiry and provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+        run: |
+          python3 - <<'PY'
+          import os,json,subprocess,base64,time
+          from pathlib import Path
+          repo=os.environ['GITHUB_REPOSITORY'];aid=os.environ['ARTIFACT_ID'];run=os.environ['GITHUB_RUN_ID']
+          def api(path,method='GET',data=None):
+              cmd=['gh','api','--method',method,path]
+              if data is not None:cmd+=['--input','-']
+              return json.loads(subprocess.check_output(cmd,input=None if data is None else json.dumps(data).encode()))
+          a=api(f'repos/{repo}/actions/artifacts/{aid}');m=json.loads(Path('out/MANIFEST.json').read_text())
+          lines=['','', '## Artifact Record: Android NDK ARM64 unwind link support r28c-unwind-v1 (2026-11-21)','']
+          fields={'Artifact Name':a['name'],'Artifact ID':aid,'Run ID':run,'Workflow':'.github/workflows/cache-ndk-arm64-unwind-20261121.yml','File':a['name']+'.zip','Size':a['size_in_bytes'],'SHA256':a.get('digest','unavailable'),'Created At':a['created_at'],'Expires At':a['expires_at'],'Storage Mode':'SINGLE','Original File':m['file'],'Original Size':m['size'],'Original SHA256':m['sha256'],'Part Count':1}
+          lines += [f'- {k}: `{v}`' for k,v in fields.items()]
+          lines += ['', '| Name | Version | Platform | Architecture | File/Path | SHA256 |','|---|---|---|---|---|---|']
+          lines += [f"| Android NDK ARM64 link support | r28c-unwind-v1 | Android / Linux | AArch64 target | `{r['path']}` | `{r['sha256']}` |" for r in m['files'] if r['path'].endswith('.a')]
+          lines += ['',f"Source: verified existing NDK Run 39019800471, SHA256 `{m['source_sha256']}`; no upstream download. Requested retention 400 days; use actual expires_at above. Complements compiler Run 39121838147 and sysroot Run 44725688545. Contains only public toolchain files; no private sample or reconstructed program.",'']
+          record='\n'.join(lines)
+          for attempt in range(4):
+              old=api(f'repos/{repo}/contents/ARTIFACT_CACHE.md?ref=main');text=base64.b64decode(old['content']).decode()
+              if f'Artifact ID: `{aid}`' in text:break
+              body={'message':'Record verified NDK ARM64 unwind support cache','sha':old['sha'],'branch':'main','content':base64.b64encode((text+record).encode()).decode()}
+              try:api(f'repos/{repo}/contents/ARTIFACT_CACHE.md','PUT',body);break
+              except subprocess.CalledProcessError:
+                  if attempt==3:raise
+                  time.sleep(2)
+          print(record)
+          PY
