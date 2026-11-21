@@ -1,0 +1,131 @@
+name: yz.hdelf.com connectivity 20261121
+
+on:
+  push:
+    branches: [codex/yz-hdelf-connectivity-20261121]
+    paths:
+      - .github/workflows/yz-hdelf-connectivity-20261121.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - name: DNS, verified TLS and HTTP HEAD
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import datetime
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import platform
+          import socket
+          import subprocess
+          import time
+          
+          TARGET = "https://yz.hdelf.com/"
+          HOST = "yz.hdelf.com"
+          OUT = pathlib.Path("evidence")
+          OUT.mkdir(exist_ok=True)
+          
+          
+          def save_json(name, data):
+              (OUT / name).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+          
+          
+          def run(name, argv, timeout=45):
+              start = time.monotonic()
+              try:
+                  p = subprocess.run(argv, input=b"", capture_output=True, timeout=timeout)
+                  code, stdout, stderr = p.returncode, p.stdout, p.stderr
+              except subprocess.TimeoutExpired as e:
+                  code, stdout, stderr = 124, e.stdout or b"", (e.stderr or b"") + b"\nProcess timed out\n"
+              except OSError as e:
+                  code, stdout, stderr = 127, b"", str(e).encode()
+              (OUT / (name + ".stdout.txt")).write_bytes(stdout)
+              (OUT / (name + ".stderr.txt")).write_bytes(stderr)
+              result = {"argv": argv, "exit_code": code, "elapsed_seconds": round(time.monotonic() - start, 3)}
+              save_json(name + ".command.json", result)
+              return result, stdout
+          
+          
+          summary = {
+              "target": TARGET,
+              "method": "HEAD; DNS and certificate-verifying TLS diagnostics",
+              "started_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "runner_os": platform.platform(),
+              "run_url": "https://github.com/{}/actions/runs/{}".format(os.environ.get("GITHUB_REPOSITORY", ""), os.environ.get("GITHUB_RUN_ID", "")),
+              "commit_sha": os.environ.get("GITHUB_SHA"),
+              "limitations": ["HEAD responses do not prove browser rendering or login works.", "A GitHub-hosted runner is not a verified mainland China proxy."],
+          }
+          
+          run("curl-version", ["curl", "--version"])
+          run("openssl-version", ["openssl", "version", "-a"])
+          
+          dns = []
+          try:
+              for family, _, _, _, addr in socket.getaddrinfo(HOST, 443, type=socket.SOCK_STREAM):
+                  item = {"family": "IPv6" if family == socket.AF_INET6 else "IPv4", "address": addr[0]}
+                  if item not in dns:
+                      dns.append(item)
+              summary["dns"] = {"ok": True, "addresses": dns}
+          except OSError as e:
+              summary["dns"] = {"ok": False, "error": str(e)}
+          save_json("dns.json", summary["dns"])
+          
+          geo_cmd, geo_bytes = run("egress-ipinfo", ["curl", "--silent", "--show-error", "--fail", "--proto", "=https", "--connect-timeout", "10", "--max-time", "20", "--max-filesize", "65536", "https://ipinfo.io/json"], timeout=25)
+          try:
+              geo = json.loads(geo_bytes)
+          except (ValueError, UnicodeError):
+              geo = {}
+          summary["egress"] = {"exit_code": geo_cmd["exit_code"], **{k: geo[k] for k in ("ip", "country", "region", "city", "org") if k in geo}}
+          if not geo.get("ip"):
+              fallback, data = run("egress-ipify", ["curl", "--silent", "--show-error", "--fail", "--proto", "=https", "--connect-timeout", "10", "--max-time", "15", "https://api.ipify.org?format=json"], timeout=20)
+              try:
+                  summary["egress"]["fallback"] = json.loads(data)
+              except (ValueError, UnicodeError):
+                  summary["egress"]["fallback_exit_code"] = fallback["exit_code"]
+          
+          tls, _ = run("tls", ["timeout", "25", "openssl", "s_client", "-connect", HOST + ":443", "-servername", HOST, "-verify_hostname", HOST, "-verify_return_error", "-brief"], timeout=30)
+          summary["tls"] = tls
+          
+          summary["http"] = []
+          for label, version_flags in (("https-default", []), ("https-http1", ["--http1.1"])):
+              argv = ["curl", "--silent", "--show-error", "--head", "--proto", "=https", "--connect-timeout", "10", "--max-time", "30", "--dump-header", str(OUT / (label + ".headers.txt")), "--output", "/dev/null", "--write-out", "%{json}", *version_flags, TARGET]
+              result, data = run(label, argv, timeout=35)
+              try:
+                  metrics = json.loads(data)
+              except (ValueError, UnicodeError):
+                  metrics = {}
+              result["label"] = label
+              result["metrics"] = {k: metrics[k] for k in ("url_effective", "remote_ip", "remote_port", "http_code", "http_version", "ssl_verify_result", "time_namelookup", "time_connect", "time_appconnect", "time_starttransfer", "time_total", "redirect_url", "errormsg") if k in metrics}
+              summary["http"].append(result)
+          
+          summary["finished_at_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+          save_json("summary.json", summary)
+          lines = ["# yz.hdelf.com GitHub Actions connectivity probe", "", "Target: " + TARGET, "Method: HEAD (no page body or screenshot)", "Run: " + summary["run_url"], "UTC: " + summary["started_at_utc"], "", "```json", json.dumps(summary, ensure_ascii=False, indent=2), "```", "", "Probe completion is not equivalent to website success. Inspect HTTP and TLS results above."]
+          (OUT / "REPORT.md").write_text("\n".join(lines) + "\n")
+          if os.environ.get("GITHUB_STEP_SUMMARY"):
+              pathlib.Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text("\n".join(lines) + "\n")
+          manifest = []
+          for path in sorted(OUT.iterdir()):
+              if path.is_file() and path.name != "SHA256SUMS.txt":
+                  manifest.append(hashlib.sha256(path.read_bytes()).hexdigest() + "  " + path.name)
+          (OUT / "SHA256SUMS.txt").write_text("\n".join(manifest) + "\n")
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+      - name: Upload raw diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yz-hdelf-connectivity-20261121
+          path: evidence/
+          retention-days: 1
+          if-no-files-found: error
+          compression-level: 6
