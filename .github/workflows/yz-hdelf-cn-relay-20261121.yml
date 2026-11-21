@@ -38,6 +38,7 @@ jobs:
             run_url: `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
             tls_verification: 'enabled; certificate errors not ignored',
             browser_profile: 'fresh temporary profile',
+            node_version: process.version,
             network: [], blocked_urls: [],
           };
           let chrome, socket, profile, browserLog;
@@ -54,9 +55,14 @@ jobs:
             const check = await run('curl', [
               '--silent', '--show-error', '--noproxy', '', '--proxy', proxy,
               '--proto', '=https', '--connect-timeout', '8', '--max-time', '20',
+              '--retry', '2', '--retry-all-errors', '--retry-delay', '1',
               '--max-filesize', '65536', '--dump-header', path.join(out, 'exit.headers.txt'),
               '--output', path.join(out, 'exit.body'), '--write-out', '%{json}', 'https://ipinfo.io/json',
-            ], { timeout: 25000 });
+            ], { timeout: 75000 }).catch(async error => {
+              await save('exit.stderr.txt', error.stderr ?? String(error));
+              await save('exit.curl-output.txt', error.stdout ?? '');
+              throw error;
+            });
             await save('exit.stderr.txt', check.stderr);
             const metrics = JSON.parse(check.stdout);
             const geo = JSON.parse(await fs.readFile(path.join(out, 'exit.body'), 'utf8'));
