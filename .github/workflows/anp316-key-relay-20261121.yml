@@ -1,0 +1,235 @@
+name: ANP316 encrypted live key request relay
+on:
+  push:
+    branches: ["codex/anp316-key-15957dc1bf"]
+    paths: [".github/workflows/anp316-key-relay-20261121.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  relay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      GH_RELAY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELAY_CONFIG: '{"session":"anp316-key-15957dc1bf","host_public_spki":"MCowBQYDK2VuAyEA5Lxcqge36Y61wWPd7+oKHGw0wwBBmr2MoQoriNQ9BgA=","branch":"codex/anp316-key-15957dc1bf","repository":"jepede/gpt-exten","prefix":"relay-data/anp316-key-15957dc1bf","candidates":[{"host":"123.121.122.125","port":8888},{"host":"139.198.113.42","port":10023},{"host":"222.211.216.201","port":7890},{"host":"101.251.204.174","port":8080},{"host":"114.244.218.227","port":8888},{"host":"111.192.19.3","port":8888},{"host":"111.192.215.62","port":8888},{"host":"114.249.221.241","port":8888},{"host":"114.248.85.85","port":8888},{"host":"222.128.174.236","port":8888},{"host":"114.249.211.7","port":8888},{"host":"114.253.7.197","port":8888}]}'
+    steps:
+      - name: Forward genuine native requests using a verified mainland route
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          // Relay only yz.hdelf.com:80/443. Queue contents are encrypted end to end.
+          import fs from 'node:fs/promises';
+          import net from 'node:net';
+          import { execFile } from 'node:child_process';
+          import { promisify } from 'node:util';
+          import { setTimeout as pause } from 'node:timers/promises';
+          import { generateKeyPairSync, createPublicKey, diffieHellman, hkdfSync, randomBytes, createCipheriv, createDecipheriv, createHash } from 'node:crypto';
+          
+          const cfg = JSON.parse(process.env.RELAY_CONFIG);
+          const token = process.env.GH_RELAY_TOKEN;
+          const runId = process.env.GITHUB_RUN_ID;
+          const execute = promisify(execFile);
+          const started = Date.now();
+          const sockets = new Map();
+          const pendingOutput = [];
+          const opening = new Map();
+          const deferred = new Map();
+          let nextInput = 1, nextOutput = 1, apiCalls = 0, stopped = false;
+          let proxyHost='123.121.122.125', proxyPort=8888;
+          const httpBuffers = new Map();
+          
+          const stats = { target: 'yz.hdelf.com', allowed_ports: [80,443], started_at_utc: new Date().toISOString(),
+            run_url: `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}`,
+            connections: [], errors: [], http_requests: [], input_bytes: 0, output_bytes: 0 };
+          await fs.mkdir('evidence', { recursive: true });
+          const pair = generateKeyPairSync('x25519');
+          const client = createPublicKey({ key: Buffer.from(cfg.host_public_spki, 'base64'), format: 'der', type: 'spki' });
+          const secret = diffieHellman({ privateKey: pair.privateKey, publicKey: client });
+          const key = Buffer.from(hkdfSync('sha256', secret, Buffer.from('so316-relay-v1'), Buffer.from(String(runId)), 32));
+          const aad = (direction, seq) => Buffer.from(`${cfg.session}:${runId}:${direction}:${seq}`);
+          function encrypt(events, seq) {
+            const iv = randomBytes(12), cipher = createCipheriv('aes-256-gcm', key, iv);
+            cipher.setAAD(aad('runner-to-host', seq));
+            const data = Buffer.concat([cipher.update(JSON.stringify(events)), cipher.final(), cipher.getAuthTag()]);
+            return { run_id: runId, seq, iv: iv.toString('base64'), data: data.toString('base64') };
+          }
+          function decrypt(packet, seq) {
+            if (String(packet.run_id) !== String(runId) || packet.seq !== seq) throw new Error('Incorrect queue sequence/run');
+            const iv = Buffer.from(packet.iv, 'base64'), data = Buffer.from(packet.data, 'base64');
+            if (iv.length !== 12 || data.length < 16 || data.length > 524288) throw new Error('Invalid encrypted packet size');
+            const decipher = createDecipheriv('aes-256-gcm', key, iv);
+            decipher.setAAD(aad('host-to-runner', seq)); decipher.setAuthTag(data.subarray(-16));
+            const clear = Buffer.concat([decipher.update(data.subarray(0,-16)), decipher.final()]);
+            const events = JSON.parse(clear);
+            if (!Array.isArray(events) || events.length > 64) throw new Error('Invalid packet events');
+            return events;
+          }
+          async function api(method, endpoint, data) {
+            if (++apiCalls > 900) throw new Error('API safety budget reached');
+            const result = await fetch(`https://api.github.com/repos/${cfg.repository}/${endpoint}`, {
+              method, headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28', ...(data ? { 'Content-Type': 'application/json' } : {}) },
+              body: data ? JSON.stringify(data) : undefined, signal: AbortSignal.timeout(20000),
+            });
+            if (result.status === 404 && method === 'GET') return null;
+            if (!result.ok) throw new Error(`GitHub API ${method}: ${result.status}`);
+            return result.json();
+          }
+          async function put(name, data) {
+            const content = Buffer.from(JSON.stringify(data)).toString('base64');
+            return api('PUT', `contents/${cfg.prefix}/${name}`, { message: 'Relay encrypted test packet [skip ci]', branch: cfg.branch, content });
+          }
+          function emit(conn_id, op, fields={}) { pendingOutput.push({ conn_id, op, ...fields }); }
+          function closeConnection(id) { sockets.get(id)?.destroy(); sockets.delete(id); deferred.delete(id); }
+          async function connectTarget(event) {
+            if (!/^[0-9a-f]{32}$/.test(event.conn_id) || ![80,443].includes(event.port) || stats.connections.length >= 32) throw new Error('Target connection rejected');
+            const id = event.conn_id, port = event.port;
+            const item = { conn_id: id, target_port: port, connected: false, sent: 0, received: 0 };
+            stats.connections.push(item);
+            const socket = net.createConnection({ host: proxyHost, port: proxyPort });
+            socket.setNoDelay(true); socket.setTimeout(90000);
+            sockets.set(id, socket);
+            socket.on('timeout', () => socket.destroy(new Error('upstream_idle_timeout')));
+            socket.on('error', () => { emit(id, 'error', { error: 'upstream_socket_error' }); item.socket_error = true; });
+            socket.on('close', () => { emit(id, 'closed'); sockets.delete(id); });
+            await new Promise((resolve, reject) => {
+              const timer = setTimeout(() => reject(new Error('proxy_connect_timeout')), 10000);
+              socket.once('connect', () => { clearTimeout(timer); resolve(); });
+              socket.once('error', () => { clearTimeout(timer); reject(new Error('proxy_connect_failed')); });
+            });
+            if (port === 443) {
+            await new Promise((resolve, reject) => {
+              const timer = setTimeout(() => { cleanup(); reject(new Error('proxy_tunnel_timeout')); }, 12000);
+              let header = Buffer.alloc(0);
+              const cleanup = () => { clearTimeout(timer); socket.removeListener('data', receive); socket.removeListener('error', failed); };
+              const failed = () => { cleanup(); reject(new Error('proxy_tunnel_failed')); };
+              const receive = chunk => {
+                header = Buffer.concat([header,chunk]);
+                if (header.length > 16384) { cleanup(); reject(new Error('proxy_header_limit')); return; }
+                const end = header.indexOf('\r\n\r\n'); if (end < 0) return;
+                const status = Number(header.toString('latin1',0,header.indexOf('\r\n')).split(' ')[1]);
+                item.proxy_status = status; cleanup();
+                if (status !== 200) { reject(new Error(`proxy_tunnel_status_${status}`)); return; }
+                const extra = header.subarray(end+4);
+                if (extra.length) emit(id,'data',{data:extra.toString('base64')});
+                resolve();
+              };
+              socket.on('data', receive); socket.once('error', failed);
+              socket.write(`CONNECT yz.hdelf.com:${port} HTTP/1.1\r\nHost: yz.hdelf.com:${port}\r\nProxy-Connection: keep-alive\r\n\r\n`);
+            });
+            } else item.proxy_mode='absolute-form-http';
+            item.connected = true;
+            socket.on('data', chunk => {
+              if (item.received + chunk.length > 8*1024*1024) { socket.destroy(); return; }
+              item.received += chunk.length; stats.output_bytes += chunk.length;
+              emit(id,'data',{data:chunk.toString('base64')});
+            });
+            emit(id,'open_ok');
+            opening.delete(id);
+            const queuedEvents = deferred.get(id) ?? [];
+            deferred.delete(id);
+            for (const queued of queuedEvents) forward(queued);
+          }
+          function forwardHttp(id,socket,chunk){
+            let buffer=Buffer.concat([httpBuffers.get(id)??Buffer.alloc(0),chunk]);
+            if(buffer.length>2097152)throw new Error('HTTP message limit');
+            while(true){
+              const end=buffer.indexOf('\r\n\r\n');if(end<0)break;
+              const head=buffer.subarray(0,end).toString('latin1'), lines=head.split('\r\n');
+              const request=lines[0].match(/^(GET|POST|HEAD) ([^ ]+) (HTTP\/1\.[01])$/);
+              if(!request)throw new Error('HTTP request line rejected');
+              const lengths=lines.filter(x=>/^content-length:/i.test(x));
+              if(lengths.length>1)throw new Error('Ambiguous HTTP content length');
+              const length=lengths.length?Number(lengths[0].split(':').slice(1).join(':').trim()):0;
+              if(!Number.isInteger(length)||length<0||length>1048576)throw new Error('HTTP content length limit');
+              if(lines.some(x=>/^transfer-encoding:/i.test(x)))throw new Error('Unsupported request transfer encoding');
+              if(buffer.length<end+4+length)break;
+              let url=request[2];if(url.startsWith('/'))url='http://yz.hdelf.com'+url;
+              const parsed=new URL(url);
+              if(parsed.protocol!=='http:'||parsed.hostname!=='yz.hdelf.com'||(parsed.port&&parsed.port!=='80'))throw new Error('HTTP target rejected');
+              const body=buffer.subarray(end+4,end+4+length);
+              lines[0]=`${request[1]} ${url} ${request[3]}`;
+              socket.write(Buffer.concat([Buffer.from(lines.join('\r\n')+'\r\n\r\n','latin1'),body]));
+              stats.http_requests.push({conn_id:id,method:request[1],path:parsed.pathname,body_bytes:length,body_sha256:createHash('sha256').update(body).digest('hex')});
+              buffer=buffer.subarray(end+4+length);
+            }
+            httpBuffers.set(id,buffer);
+          }
+          
+          function forward(event) {
+            const socket = sockets.get(event.conn_id);
+            if (!socket || opening.has(event.conn_id)) {
+              const list = deferred.get(event.conn_id) ?? []; list.push(event); deferred.set(event.conn_id,list); return;
+            }
+            if (event.op === 'data') {
+              const data = Buffer.from(event.data,'base64');
+              if (data.length > 65536) throw new Error('TCP chunk limit');
+              const item = stats.connections.find(x=>x.conn_id===event.conn_id);
+              if (!item || item.sent+data.length > 8*1024*1024) throw new Error('TCP transfer limit');
+              item.sent += data.length; stats.input_bytes += data.length;
+              if (item.target_port === 80) forwardHttp(event.conn_id, socket, data); else socket.write(data);
+            } else if (event.op === 'eof') socket.end();
+            else if (event.op === 'close') closeConnection(event.conn_id);
+          }
+          try {
+            let selected = null;
+            stats.route_probes = [];
+            for (const candidate of cfg.candidates.slice(0,12)) {
+              const proxy = `http://${candidate.host}:${candidate.port}`;
+              try {
+                const geo = await execute('curl',['-fsS','--noproxy','','--proxy',proxy,'--connect-timeout','5','--max-time','10','https://ipinfo.io/json'],{timeout:15000});
+                const exit=JSON.parse(geo.stdout);
+                if(exit.country!=='CN'||/hong kong|macau|macao|taiwan/i.test(`${exit.region} ${exit.city}`))continue;
+                const probe=await execute('curl',['-sS','--noproxy','','--proxy',proxy,'--connect-timeout','5','--max-time','12','--head','--output','/dev/null','--write-out','%{http_code}','http://yz.hdelf.com/md5api.php'],{timeout:17000});
+                const status=Number(probe.stdout);stats.route_probes.push({proxy,reported_exit:exit.ip,status});
+                if(status>=100 && status<500){selected={candidate,exit};break;}
+              } catch(error){stats.route_probes.push({proxy,error:'route_probe_failed'});}
+            }
+            if(!selected)throw new Error('No verified mainland proxy reached the actual HTTP80 endpoint');
+            proxyHost=selected.candidate.host;proxyPort=selected.candidate.port;
+            const exit=selected.exit;
+            stats.verified_exit={ip:exit.ip,country:exit.country,region:exit.region,city:exit.city,org:exit.org};
+            stats.selected_proxy={host:proxyHost,port:proxyPort};
+            const ready = { run_id:runId,session:cfg.session,server_public_spki:pair.publicKey.export({type:'spki',format:'der'}).toString('base64'),
+              target:'yz.hdelf.com',ports:[80,443],verified_exit:stats.verified_exit,started_at_utc:stats.started_at_utc };
+            await put('state.json',ready);
+            console.log('RELAY_READY '+JSON.stringify({run_id:runId,verified_exit:stats.verified_exit,session:cfg.session}));
+            while (!stopped && Date.now()-started < 20*60*1000 && apiCalls < 880) {
+              const name = `requests/in-${String(nextInput).padStart(6,'0')}.json`;
+              const file = await api('GET',`contents/${cfg.prefix}/${name}?ref=${encodeURIComponent(cfg.branch)}`);
+              if (file) {
+                const packet = JSON.parse(Buffer.from(file.content,'base64'));
+                for (const event of decrypt(packet,nextInput)) {
+                  if (event.op === 'stop') { stopped = true; break; }
+                  if (event.op === 'open') {
+                    const task = connectTarget(event).catch(error=>{stats.errors.push(String(error));emit(event.conn_id,'error',{error:String(error)});closeConnection(event.conn_id);})
+                      .finally(()=>opening.delete(event.conn_id));
+                    opening.set(event.conn_id,task);
+                  } else if (['data','eof','close'].includes(event.op)) forward(event);
+                }
+                nextInput++;
+              }
+              if (pendingOutput.length) {
+                const events=[]; let bytes=0;
+                while(pendingOutput.length && events.length < 32 && bytes < 131072) {const event=pendingOutput.shift();events.push(event);bytes+=JSON.stringify(event).length;}
+                await put(`responses/out-${String(nextOutput).padStart(6,'0')}.json`,encrypt(events,nextOutput)); nextOutput++;
+              }
+              await pause(sockets.size || opening.size ? 300 : 1400);
+            }
+          } catch(error) { stats.errors.push(String(error)); console.log('RELAY_FAILURE '+String(error)); process.exitCode=1; }
+          finally {
+            for (const id of sockets.keys()) closeConnection(id);
+            stats.finished_at_utc=new Date().toISOString();stats.api_calls=apiCalls;stats.input_packets=nextInput-1;stats.output_packets=nextOutput-1;
+            await fs.writeFile('evidence/relay-statistics.json',JSON.stringify(stats,null,2)+'\n');
+            console.log('RELAY_FINISHED '+JSON.stringify(stats));
+          }
+          JS
+      - name: Preserve metadata only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anp316-key-relay-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          retention-days: 1
+          if-no-files-found: warn
