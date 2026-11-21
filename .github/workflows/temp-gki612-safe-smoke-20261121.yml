@@ -1,0 +1,97 @@
+name: Temp Android16 GKI 6.12 ARM64 safe module compile 20261121
+on:
+  push:
+    paths:
+      - .github/workflows/temp-gki612-safe-smoke-20261121.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gki-safe-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      ARCH: arm64
+      LLVM: "1"
+      KBUILD_MODPOST_WARN: "1"
+    steps:
+      - name: Install Linux kernel build tools
+        run: |
+          set -euxo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang lld llvm bc flex bison libssl-dev libelf-dev dwarves cpio rsync make kmod gcc-aarch64-linux-gnu
+          mkdir -p results
+          ( uname -a; clang --version; ld.lld --version; aarch64-linux-gnu-gcc --version | head -1; git --version; df -h . ) | tee results/toolchain.txt
+      - name: Fetch Android16 kernel common GKI 6.12 sources
+        run: |
+          set -euxo pipefail
+          git -c http.version=HTTP/1.1 clone --depth=1 --filter=blob:none --single-branch --branch android16-6.12 https://android.googlesource.com/kernel/common.git common
+          git -C common rev-parse HEAD | tee results/kernel_commit.txt
+          grep -E '^(VERSION|PATCHLEVEL|SUBLEVEL)\s*=' common/Makefile | tee results/kernel_version.txt
+          du -sh common | tee results/source_size.txt
+      - name: Configure and prepare genuine ARM64 GKI kernel build headers
+        run: |
+          set -euo pipefail
+          mkdir -p kout
+          make -C common O="${GITHUB_WORKSPACE}/kout" ARCH=arm64 LLVM=1 gki_defconfig >results/kconfig.log 2>&1 || { cat results/kconfig.log; exit 1; }
+          make -C common O="${GITHUB_WORKSPACE}/kout" ARCH=arm64 LLVM=1 -j2 modules_prepare >results/modules_prepare.log 2>&1 || { tail -150 results/modules_prepare.log; exit 1; }
+          grep -E '^CONFIG_(MODULES|MODVERSIONS|LTO|KALLSYMS|ARM64_4K_PAGES)=' kout/.config | tee results/gki-config-summary.txt || :
+          cat kout/include/generated/utsrelease.h | tee results/gki-release.txt
+      - name: Compile visible no-memory-access diagnostic kernel module
+        run: |
+          set -euo pipefail
+          mkdir -p safe-probe
+          cat >safe-probe/Makefile <<'EOF'
+          obj-m += lsdriver_audit_probe.o
+          EOF
+          cat >safe-probe/lsdriver_audit_probe.c <<'EOF'
+          // SPDX-License-Identifier: GPL-2.0
+          // A visible, unloadable compile-smoke diagnostic module. No memory
+          // access, process hiding, hooks, external commands or networking.
+          #include <linux/init.h>
+          #include <linux/module.h>
+          #include <linux/kernel.h>
+          static int __init lsdriver_audit_probe_init(void)
+          {
+              pr_info("lsdriver_audit_probe: loaded (diagnostics only)\n");
+              return 0;
+          }
+          static void __exit lsdriver_audit_probe_exit(void)
+          {
+              pr_info("lsdriver_audit_probe: unloaded\n");
+          }
+          module_init(lsdriver_audit_probe_init);
+          module_exit(lsdriver_audit_probe_exit);
+          MODULE_LICENSE("GPL");
+          MODULE_AUTHOR("GKI audit build");
+          MODULE_DESCRIPTION("Android16 ARM64 GKI compile smoke test, no memory access");
+          EOF
+          make -C common O="${GITHUB_WORKSPACE}/kout" ARCH=arm64 LLVM=1 KBUILD_MODPOST_WARN=1 -j2 M="${GITHUB_WORKSPACE}/safe-probe" modules >results/module-build.log 2>&1 || { tail -180 results/module-build.log; exit 1; }
+          file safe-probe/lsdriver_audit_probe.ko | tee results/module-file.txt
+          llvm-readelf -h safe-probe/lsdriver_audit_probe.ko | tee results/module-elf-header.txt
+          modinfo safe-probe/lsdriver_audit_probe.ko | tee results/module-info.txt
+          sha256sum safe-probe/lsdriver_audit_probe.ko > results/module-sha256.txt
+          cp safe-probe/lsdriver_audit_probe.ko results/
+          cp safe-probe/lsdriver_audit_probe.c results/
+          cp safe-probe/Makefile results/Makefile
+          cp kout/.config results/kout.config
+          if [ -f kout/Module.symvers ]; then cp kout/Module.symvers results/; else echo 'Module.symvers not produced by modules_prepare; this is not a loadability or KMI verification.' | tee results/NOT_LOAD_VERIFIED.txt; fi
+      - name: Record build metadata
+        if: always()
+        run: |
+          set +e
+          mkdir -p results
+          echo "AOSP android16-6.12 GKI source, host clang, modules_prepare, safe visible audit probe only" > results/BUILD_SCOPE.txt
+          echo "The original lsdriver rootkit is not compiled; this is a toolchain smoke test." >> results/BUILD_SCOPE.txt
+          find results -maxdepth 1 -type f -printf '%f (%s bytes)\n' | sort > results/FILE_LIST.txt
+          (cd results && sha256sum * 2>/dev/null > ../SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gki612-arm64-safe-smoke-20261121
+          path: |
+            results/
+            SHA256SUMS
+          if-no-files-found: error
+          retention-days: 1
